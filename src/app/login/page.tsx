@@ -2,15 +2,10 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { safeAuthRedirect } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
-
-function safeNextPath(): string {
-  if (typeof window === "undefined") return "/en";
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next?.startsWith("/") && !next.startsWith("//") ? next : "/en";
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,7 +36,8 @@ export default function LoginPage() {
         });
 
         if (signInError) throw signInError;
-        continueTo(safeNextPath());
+        const next = new URLSearchParams(window.location.search).get("next");
+        continueTo(safeAuthRedirect(next));
         return;
       }
 
