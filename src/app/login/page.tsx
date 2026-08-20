@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
@@ -12,6 +13,7 @@ function safeNextPath(): string {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -19,6 +21,11 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function continueTo(path: string) {
+    router.push(path);
+    router.refresh();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,7 +41,7 @@ export default function LoginPage() {
         });
 
         if (signInError) throw signInError;
-        window.location.assign(safeNextPath());
+        continueTo(safeNextPath());
         return;
       }
 
@@ -50,7 +57,7 @@ export default function LoginPage() {
       if (signUpError) throw signUpError;
 
       if (data.session) {
-        window.location.assign(next);
+        continueTo(next);
         return;
       }
 
