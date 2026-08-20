@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Naskh_Arabic, Noto_Nastaliq_Urdu } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
 import { getDirection, type Locale } from "@/lib/i18n/config";
+import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -56,6 +57,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     notFound();
   }
 
+  const workspace = await getTenantContext();
+
+  if (!workspace) {
+    redirect("/onboarding");
+  }
+
   const typedLocale = locale as Locale;
   const messages = await getMessages();
 
@@ -65,7 +72,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         className={`${geistSans.variable} ${geistMono.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable}`}
       >
         <NextIntlClientProvider messages={messages}>
-          <AppShell locale={typedLocale}>{children}</AppShell>
+          <AppShell locale={typedLocale} workspace={workspace}>
+            {children}
+          </AppShell>
         </NextIntlClientProvider>
       </body>
     </html>
