@@ -24,6 +24,11 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dysfnytqpbfxpmerkyaz.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JE-qS9os44gw9TKy4GxYSA_5ZH_17H7
 
   e2e:
     needs: checks
