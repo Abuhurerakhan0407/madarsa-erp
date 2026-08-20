@@ -25,6 +25,15 @@ begin
     raise exception 'identity is required';
   end if;
 
+  if exists (
+    select 1
+    from public.memberships m
+    where m.identity_id = p_identity_id
+      and m.status in ('active', 'invited')
+  ) then
+    raise exception 'identity is already onboarded';
+  end if;
+
   if length(btrim(p_display_name)) not between 2 and 160 then
     raise exception 'display name must be between 2 and 160 characters';
   end if;
