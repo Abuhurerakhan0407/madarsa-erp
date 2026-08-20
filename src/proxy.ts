@@ -5,7 +5,6 @@ import { routing } from "@/i18n/routing";
 import { updateSession } from "@/lib/supabase/proxy";
 
 const handleI18nRouting = createMiddleware(routing);
-const standaloneRoutes = new Set(["/login", "/onboarding"]);
 
 function copySessionCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach(({ name, value, ...options }) => {
@@ -18,9 +17,12 @@ export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (!hasSupabasePublicEnv()) {
-    return standaloneRoutes.has(pathname)
-      ? NextResponse.next({ request })
-      : handleI18nRouting(request);
+    return new NextResponse("Application configuration unavailable.", {
+      status: 503,
+      headers: {
+        "cache-control": "no-store"
+      }
+    });
   }
 
   const baseResponse = NextResponse.next({ request });
