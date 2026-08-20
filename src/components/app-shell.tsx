@@ -45,7 +45,13 @@ export async function AppShell({ children, locale }: AppShellProps) {
         <nav aria-label={app("openMenu")} className="primary-nav">
           {navigationKeys.map((key, index) => (
             <a
-              href={index === 0 ? `/${locale}` : `/${locale}#${key}`}
+              href={
+                index === 0
+                  ? `/${locale}`
+                  : key === "settings"
+                    ? `/${locale}/settings/configuration`
+                    : `/${locale}#${key}`
+              }
               key={key}
               aria-current={index === 0 ? "page" : undefined}
               className="nav-link"

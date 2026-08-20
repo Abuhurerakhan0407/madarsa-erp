@@ -273,6 +273,11 @@ create index tenant_lifecycle_events_tenant_occurred_idx
   on public.tenant_lifecycle_events (tenant_id, occurred_at desc);
 create index tenant_lifecycle_events_correlation_idx
   on public.tenant_lifecycle_events (tenant_id, correlation_id);
+create index tenant_lifecycle_events_actor_identity_idx
+  on public.tenant_lifecycle_events (actor_identity_id, occurred_at desc);
+create index tenant_lifecycle_events_actor_membership_idx
+  on public.tenant_lifecycle_events (tenant_id, actor_membership_id)
+  where actor_membership_id is not null;
 create index role_permissions_permission_idx
   on public.role_permissions (permission_code, tenant_id, role_id);
 create index membership_roles_role_idx
@@ -289,10 +294,15 @@ create index delegations_issuer_idx
 create index delegations_branch_idx
   on public.delegations (tenant_id, branch_id, recipient_membership_id)
   where branch_id is not null and revoked_at is null;
+create index delegations_permission_idx
+  on public.delegations (permission_code, tenant_id, recipient_membership_id);
 create index access_relationships_identity_idx
   on public.access_relationships (identity_id, tenant_id, status, related_person_key);
 create index access_relationships_tenant_person_idx
   on public.access_relationships (tenant_id, related_person_key, status, identity_id);
+create index access_relationships_verifier_idx
+  on public.access_relationships (tenant_id, verified_by_membership_id)
+  where verified_by_membership_id is not null;
 create index audit_events_tenant_occurred_idx
   on public.audit_events (tenant_id, occurred_at desc);
 create index audit_events_tenant_branch_occurred_idx
@@ -301,6 +311,15 @@ create index audit_events_tenant_branch_occurred_idx
 create index audit_events_actor_idx
   on public.audit_events (tenant_id, actor_identity_id, occurred_at desc)
   where actor_identity_id is not null;
+create index audit_events_actor_identity_idx
+  on public.audit_events (actor_identity_id, occurred_at desc)
+  where actor_identity_id is not null;
+create index audit_events_actor_membership_idx
+  on public.audit_events (tenant_id, actor_membership_id)
+  where actor_membership_id is not null;
+create index audit_events_impersonator_identity_idx
+  on public.audit_events (impersonator_identity_id, occurred_at desc)
+  where impersonator_identity_id is not null;
 create index audit_events_correlation_idx
   on public.audit_events (tenant_id, correlation_id);
 create index security_events_tenant_occurred_idx
@@ -311,6 +330,9 @@ create index security_events_actor_occurred_idx
   where actor_identity_id is not null;
 create index security_events_correlation_idx
   on public.security_events (correlation_id);
+create index security_events_tenant_branch_idx
+  on public.security_events (tenant_id, branch_id)
+  where branch_id is not null;
 
 insert into public.permissions (code, description) values
   ('settings.tenant.manage', 'Manage tenant settings and lifecycle'),

@@ -60,3 +60,16 @@ test("health endpoint responds", async ({ request }) => {
     service: "madarsa-erp"
   });
 });
+
+test("previews contrasting configuration presets", async ({ page }) => {
+  await page.goto("/en/settings/configuration");
+
+  await expect(page.getByRole("heading", { name: "Configure your institution" })).toBeVisible();
+  await page.getByRole("button", { name: /Hifz Academy/ }).click();
+  await expect(page.getByRole("heading", { name: "Hifz Academy" })).toBeVisible();
+  await expect(page.getByText("Parent portal", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: /Islamic School/ }).click();
+  await expect(page.getByRole("heading", { name: "Islamic School" })).toBeVisible();
+  await expect(page.getByText("Academics", { exact: true })).toBeVisible();
+});

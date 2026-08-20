@@ -87,6 +87,10 @@ describe("Phase 2 tenancy database contract", () => {
   });
 
   it("scopes private storage objects by tenant and permission", () => {
+    expect(storageSql).toContain("insert into storage.buckets");
+    expect(storageSql).toContain("'tenant-documents'");
+    expect(storageSql).toContain("false");
+    expect(storageSql).toContain("26214400");
     expect(storageSql).toContain("on storage.objects for select to authenticated");
     expect(storageSql).toContain("on storage.objects for insert to authenticated");
     expect(storageSql).toContain("on storage.objects for update to authenticated");

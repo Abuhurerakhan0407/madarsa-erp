@@ -1,5 +1,32 @@
 -- Private tenant document policies only; no custom storage schema objects.
--- Apply after phase2_tenancy.sql and after creating a private tenant-documents bucket.
+-- Apply after phase2_tenancy.sql; this creates the private tenant-documents bucket.
+
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+values (
+  'tenant-documents',
+  'tenant-documents',
+  false,
+  26214400,
+  array[
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ]
+)
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 create or replace function private.storage_tenant_id(p_object_name text)
 returns bigint
