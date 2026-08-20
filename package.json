@@ -38,13 +38,5 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.2",
     "vitest": "3.2.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "@swc/core",
-      "esbuild",
-      "unrs-resolver"
-    ]
   }
 }
