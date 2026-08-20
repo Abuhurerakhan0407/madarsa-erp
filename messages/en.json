@@ -113,6 +113,48 @@
       "exams": "Exams", "library": "Library", "academics": "Academics", "homework": "Homework", "transport": "Transport"
     }
   },
+  "PeopleAcademics": {
+    "phase": "Phase 4 · People, academics and documents",
+    "title": "Build your academic foundation",
+    "subtitle": "Keep people, verified relationships, programs, enrollments, timetables and documents inside one safe tenant model.",
+    "foundationReady": "Foundation ready",
+    "governedFoundation": "Governed records",
+    "modulesTitle": "Foundation capabilities",
+    "modulesCount": "{count} capabilities",
+    "ready": "Ready",
+    "sample": "Sample structure",
+    "structureKicker": "Academic hierarchy",
+    "structureTitle": "Flexible across institution types",
+    "session": "Session",
+    "program": "Program",
+    "level": "Level",
+    "group": "Group",
+    "enrollment": "Enrollment",
+    "programsTitle": "Program summary",
+    "groups": "Groups",
+    "students": "Students",
+    "privacyKicker": "Relationship access",
+    "relationshipsTitle": "Guardian access stays verified",
+    "privacyTitle": "Sensitive fields stay server-only",
+    "privacyBody": "Contacts, custody restrictions and identity links never become broad browser-readable tables.",
+    "relationshipSteps": {
+      "record": "Record person relationship",
+      "verify": "Verify evidence and actor",
+      "restrict": "Apply custody and visibility limits",
+      "link": "Enable only approved portal views"
+    },
+    "modules": {
+      "people": { "title": "People profiles", "body": "One person record supports student, guardian and employee roles." },
+      "relationships": { "title": "Verified relationships", "body": "Guardian, pickup and portal access use explicit verification." },
+      "sessions": { "title": "Academic sessions", "body": "Dated sessions close safely without rewriting history." },
+      "programs": { "title": "Programs and levels", "body": "School, Hifz, Nazra, Qaida and Dars structures coexist." },
+      "enrollment": { "title": "Enrollment history", "body": "Concurrent programs, transfers and status events remain auditable." },
+      "timetable": { "title": "Timetable", "body": "Branch, group and teacher conflicts are detected before publish." },
+      "documents": { "title": "Documents", "body": "Private versioned files retain checksums, expiry and ownership." },
+      "portals": { "title": "Portal links", "body": "Identity links expose only relationship-approved read models." }
+    },
+    "programs": { "general": "General school", "hifz": "Hifz", "nazra": "Nazra", "dars": "Dars-e-Nizami" }
+  },
   "State": {
     "loading": "Loading",
     "errorKicker": "Something went wrong",

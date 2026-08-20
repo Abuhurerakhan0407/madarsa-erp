@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "product": "Madarsa ERP",
+  "gates": [
+    { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": true },
+    { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": true },
+    { "key": "production_build_green", "owner": "engineering", "required": true, "complete": false },
+    { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": false },
+    { "key": "pricing_approved", "owner": "commercial", "required": true, "complete": false },
+    { "key": "tax_boundary_approved", "owner": "finance_legal", "required": true, "complete": false },
+    { "key": "retention_schedule_approved", "owner": "privacy_legal", "required": true, "complete": false },
+    { "key": "backup_restore_drill_passed", "owner": "operations", "required": true, "complete": false },
+    { "key": "payment_webhooks_verified", "owner": "engineering", "required": true, "complete": false },
+    { "key": "messaging_packaging_approved", "owner": "commercial", "required": true, "complete": false },
+    { "key": "pilot_institution_signed_off", "owner": "product", "required": true, "complete": false },
+    { "key": "support_runbook_ready", "owner": "operations", "required": true, "complete": false }
+  ]
+}

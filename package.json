@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "env:check": "node scripts/check-env.mjs",
+    "launch:check": "node scripts/check-launch.mjs",
     "check": "pnpm env:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {

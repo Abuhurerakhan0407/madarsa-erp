@@ -48,6 +48,8 @@ export async function AppShell({ children, locale }: AppShellProps) {
               href={
                 index === 0
                   ? `/${locale}`
+                  : key === "students"
+                    ? `/${locale}/people-academics`
                   : key === "settings"
                     ? `/${locale}/settings/configuration`
                     : `/${locale}#${key}`
@@ -84,7 +86,13 @@ export async function AppShell({ children, locale }: AppShellProps) {
       <nav className="mobile-nav" aria-label={app("openMenu")}>
         {navigationKeys.slice(0, 4).map((key, index) => (
           <a
-            href={index === 0 ? `/${locale}` : `/${locale}#${key}`}
+            href={
+              index === 0
+                ? `/${locale}`
+                : key === "students"
+                  ? `/${locale}/people-academics`
+                  : `/${locale}#${key}`
+            }
             key={key}
             aria-current={index === 0 ? "page" : undefined}
           >
