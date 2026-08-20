@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: #f6f7f3;
+  --foreground: #172019;
+  --surface: #ffffff;
+  --surface-muted: #eef1eb;
+  --border: #d9dfd6;
+  --accent: #176b43;
+  --accent-strong: #0e4b2e;
+  --accent-soft: #dff2e8;
+  --danger: #b42318;
+  --radius: 1rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans), "Noto Sans Arabic", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), "Noto Sans Arabic", system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+[lang="ur"] {
+  font-family: "Noto Nastaliq Urdu", "Noto Sans Arabic", serif;
+}
+
+[lang="ar"] {
+  font-family: "Noto Sans Arabic", var(--font-geist-sans), sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, white);
+  outline-offset: 3px;
+}
