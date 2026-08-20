@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 function slugify(value: string): string {
   return value
@@ -12,6 +13,7 @@ function slugify(value: string): string {
 }
 
 export function OnboardingForm({ email }: { email?: string }) {
+  const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [institutionName, setInstitutionName] = useState("");
   const [slug, setSlug] = useState("");
@@ -45,7 +47,8 @@ export function OnboardingForm({ email }: { email?: string }) {
         throw new Error(payload.error || "Institution setup failed.");
       }
 
-      window.location.assign("/en");
+      router.push("/en");
+      router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Institution setup failed.");
     } finally {
