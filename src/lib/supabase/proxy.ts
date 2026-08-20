@@ -19,7 +19,9 @@ export async function updateSession(request: NextRequest, response: NextResponse
     }
   });
 
-  await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
+  const identityId =
+    !error && typeof data?.claims?.sub === "string" ? data.claims.sub : null;
 
-  return response;
+  return { response, identityId } as const;
 }
