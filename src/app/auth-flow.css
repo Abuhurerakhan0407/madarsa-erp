@@ -1,0 +1,192 @@
+.auth-screen,
+.onboarding-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  background:
+    radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 32rem),
+    var(--background);
+}
+
+.auth-card,
+.onboarding-card {
+  width: min(100%, 36rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgb(20 49 32 / 12%);
+}
+
+.auth-card {
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-brand > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.auth-brand span:not(.brand-mark),
+.auth-heading p,
+.onboarding-header p,
+.onboarding-section p,
+.onboarding-actions p,
+.field-label small {
+  color: var(--muted);
+}
+
+.auth-brand span:not(.brand-mark) {
+  font-size: 0.78rem;
+}
+
+.auth-heading {
+  margin-block: 2rem 1.25rem;
+}
+
+.auth-heading h1,
+.onboarding-header h1 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.auth-heading p,
+.onboarding-header p {
+  margin: 0.6rem 0 0;
+}
+
+.auth-card .field-label {
+  margin-block: 1rem;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-block-start: 0.35rem;
+}
+
+.auth-submit:disabled,
+.onboarding-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.auth-mode-switch {
+  width: 100%;
+  margin-block-start: 1rem;
+  padding: 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.form-message {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  font-size: 0.875rem;
+}
+
+.form-error {
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  color: var(--danger);
+}
+
+.onboarding-card {
+  width: min(100%, 62rem);
+  overflow: hidden;
+}
+
+.onboarding-header {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.45fr) minmax(0, 1fr);
+  gap: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-block-end: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface), var(--surface-muted));
+}
+
+.onboarding-form {
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.onboarding-section {
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.42fr) minmax(0, 1fr);
+  gap: 2rem;
+  padding-block: 1.5rem;
+  border-block-end: 1px solid var(--border);
+}
+
+.onboarding-section:first-child {
+  padding-block-start: 0;
+}
+
+.onboarding-section h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+}
+
+.onboarding-section p {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.onboarding-step {
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.onboarding-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.onboarding-section .field-label {
+  margin: 0;
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block-start: 1.5rem;
+}
+
+.onboarding-actions p {
+  max-width: 48ch;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .onboarding-header,
+  .onboarding-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .onboarding-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
