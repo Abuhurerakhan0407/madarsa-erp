@@ -16,12 +16,16 @@ export type SecurityEventInput = {
   entityType?: string;
   entityId?: string;
   correlationId: string;
+  beforeState?: Record<string, AuditValue>;
+  afterState?: Record<string, AuditValue>;
   metadata?: Record<string, AuditValue>;
 };
 
 export type SecurityEvent = Readonly<
-  Omit<SecurityEventInput, "occurredAt" | "metadata"> & {
+  Omit<SecurityEventInput, "occurredAt" | "beforeState" | "afterState" | "metadata"> & {
     occurredAt: string;
+    beforeState?: Readonly<Record<string, AuditValue>>;
+    afterState?: Readonly<Record<string, AuditValue>>;
     metadata: Readonly<Record<string, AuditValue>>;
   }
 >;
@@ -56,9 +60,17 @@ export function createSecurityEvent(input: SecurityEventInput): SecurityEvent {
     throw new Error("Impersonation events require a reason");
   }
 
+  const { beforeState, afterState, metadata, ...event } = input;
+
   return Object.freeze({
-    ...input,
+    ...event,
     occurredAt: input.occurredAt.toISOString(),
-    metadata: Object.freeze(sanitizeAuditMetadata(input.metadata ?? {}))
+    beforeState: beforeState
+      ? Object.freeze(sanitizeAuditMetadata(beforeState))
+      : undefined,
+    afterState: afterState
+      ? Object.freeze(sanitizeAuditMetadata(afterState))
+      : undefined,
+    metadata: Object.freeze(sanitizeAuditMetadata(metadata ?? {}))
   });
 }

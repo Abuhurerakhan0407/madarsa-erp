@@ -5,8 +5,12 @@ const publicKeys = [
 
 type PublicKey = (typeof publicKeys)[number];
 
+export function hasSupabasePublicEnv(): boolean {
+  return publicKeys.every((key) => Boolean(process.env[key]?.trim()));
+}
+
 function requireEnv(key: PublicKey): string {
-  const value = process.env[key];
+  const value = process.env[key]?.trim();
 
   if (!value) {
     throw new Error(`Missing required environment key: ${key}`);

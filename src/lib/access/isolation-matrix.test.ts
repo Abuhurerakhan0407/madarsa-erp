@@ -34,4 +34,30 @@ describe("tenant isolation matrix", () => {
       branchId: "branch-a1"
     })).toBe(false);
   });
+
+  it.each(["invited", "suspended", "expired", "revoked"] as const)(
+    "denies a %s membership",
+    (membershipStatus) => {
+      expect(authorize({ ...tenantAContext, membershipStatus }, {
+        permission: "students.profile.read",
+        tenantId: "tenant-a",
+        branchId: "branch-a1"
+      })).toBe(false);
+    }
+  );
+
+  it("isolates relationship-bound records", () => {
+    expect(authorize(tenantAContext, {
+      permission: "students.profile.read",
+      tenantId: "tenant-a",
+      branchId: "branch-a1",
+      relatedPersonId: "student-a"
+    })).toBe(true);
+    expect(authorize(tenantAContext, {
+      permission: "students.profile.read",
+      tenantId: "tenant-a",
+      branchId: "branch-a1",
+      relatedPersonId: "student-b"
+    })).toBe(false);
+  });
 });

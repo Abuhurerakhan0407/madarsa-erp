@@ -74,4 +74,54 @@ describe("authorization", () => {
       now: new Date("2026-08-20T10:00:00Z")
     })).toBe(false);
   });
+
+  it("enforces explicit data scopes", () => {
+    const scopedContext = {
+      ...context,
+      scopeBindings: new Set(["group:group-a"] as const)
+    };
+
+    expect(authorize(scopedContext, {
+      permission: "students.profile.read",
+      tenantId: "tenant-a",
+      scope: { type: "group", key: "group-a" }
+    })).toBe(true);
+    expect(authorize(scopedContext, {
+      permission: "students.profile.read",
+      tenantId: "tenant-a",
+      scope: { type: "group", key: "group-b" }
+    })).toBe(false);
+  });
+
+  it("enforces delegated permission windows and branch limits", () => {
+    const delegatedContext: AccessContext = {
+      ...context,
+      permissions: new Set(),
+      delegatedPermissions: [{
+        permission: "students.profile.update",
+        branchId: "branch-a",
+        startsAt: new Date("2026-08-20T09:00:00Z"),
+        endsAt: new Date("2026-08-20T10:00:00Z")
+      }]
+    };
+
+    expect(authorize(delegatedContext, {
+      permission: "students.profile.update",
+      tenantId: "tenant-a",
+      branchId: "branch-a",
+      now: new Date("2026-08-20T09:30:00Z")
+    })).toBe(true);
+    expect(authorize(delegatedContext, {
+      permission: "students.profile.update",
+      tenantId: "tenant-a",
+      branchId: "branch-a",
+      now: new Date("2026-08-20T10:00:00Z")
+    })).toBe(false);
+    expect(authorize(delegatedContext, {
+      permission: "students.profile.update",
+      tenantId: "tenant-a",
+      branchId: "branch-b",
+      now: new Date("2026-08-20T09:30:00Z")
+    })).toBe(false);
+  });
 });

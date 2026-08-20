@@ -10,6 +10,28 @@ export const membershipStatuses = [
 
 export type MembershipStatus = (typeof membershipStatuses)[number];
 
+export const accessScopeTypes = [
+  "program",
+  "cohort",
+  "group",
+  "student",
+  "department",
+  "fund",
+  "self",
+  "linked_person"
+] as const;
+
+export type AccessScopeType = (typeof accessScopeTypes)[number];
+export type ScopeBinding = `${AccessScopeType}:${string}`;
+
+export type DelegatedPermission = {
+  permission: Permission;
+  startsAt: Date;
+  endsAt: Date;
+  branchId?: string;
+  revokedAt?: Date;
+};
+
 export type AccessContext = {
   identityId: string;
   membershipId: string;
@@ -17,6 +39,8 @@ export type AccessContext = {
   tenantId: string;
   branchIds: readonly string[] | "all";
   permissions: ReadonlySet<Permission>;
+  delegatedPermissions?: readonly DelegatedPermission[];
+  scopeBindings?: ReadonlySet<ScopeBinding>;
   relatedPersonIds: ReadonlySet<string>;
   accessStartsAt?: Date;
   accessEndsAt?: Date;
@@ -27,6 +51,7 @@ export type AccessRequest = {
   tenantId: string;
   branchId?: string;
   relatedPersonId?: string;
+  scope?: { type: AccessScopeType; key: string };
   now?: Date;
 };
 
@@ -35,11 +60,23 @@ export function authorize(context: AccessContext | null, request: AccessRequest)
     return false;
   }
 
-  if (context.tenantId !== request.tenantId || !context.permissions.has(request.permission)) {
+  if (context.tenantId !== request.tenantId) {
     return false;
   }
 
   const now = (request.now ?? new Date()).getTime();
+
+  const hasDelegatedPermission = context.delegatedPermissions?.some((delegation) =>
+    delegation.permission === request.permission &&
+    delegation.startsAt.getTime() <= now &&
+    delegation.endsAt.getTime() > now &&
+    !delegation.revokedAt &&
+    (!delegation.branchId || delegation.branchId === request.branchId)
+  ) ?? false;
+
+  if (!context.permissions.has(request.permission) && !hasDelegatedPermission) {
+    return false;
+  }
 
   if (context.accessStartsAt && now < context.accessStartsAt.getTime()) {
     return false;
@@ -58,6 +95,13 @@ export function authorize(context: AccessContext | null, request: AccessRequest)
   }
 
   if (request.relatedPersonId && !context.relatedPersonIds.has(request.relatedPersonId)) {
+    return false;
+  }
+
+  if (
+    request.scope &&
+    !context.scopeBindings?.has(`${request.scope.type}:${request.scope.key}`)
+  ) {
     return false;
   }
 

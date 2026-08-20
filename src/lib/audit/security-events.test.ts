@@ -39,6 +39,20 @@ describe("security events", () => {
     });
   });
 
+  it("sanitizes before and after state snapshots", () => {
+    const event = createSecurityEvent({
+      ...baseInput,
+      beforeState: { status: "invited", resetToken: "never-store-this" },
+      afterState: { status: "active", nested: { credential: "never-store-this" } }
+    });
+
+    expect(event.beforeState).toEqual({ status: "invited", resetToken: "[REDACTED]" });
+    expect(event.afterState).toEqual({
+      status: "active",
+      nested: { credential: "[REDACTED]" }
+    });
+  });
+
   it("requires a reason for support impersonation", () => {
     expect(() => createSecurityEvent({
       ...baseInput,
