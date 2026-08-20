@@ -43,7 +43,10 @@ test("opens the admission dialog with an accessible form", async ({ page }) => {
 
   const dialog = page.getByRole("dialog", { name: "New admission" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("textbox", { name: "Student name" })).toBeRequired();
+  await expect(dialog.getByRole("textbox", { name: "Student name" })).toHaveAttribute(
+    "required",
+    ""
+  );
   await dialog.getByRole("button", { name: "Cancel" }).click();
   await expect(dialog).toBeHidden();
 });
