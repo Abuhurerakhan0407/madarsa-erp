@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SignOutButton } from "@/components/sign-out-button";
 import type { Locale } from "@/lib/i18n/config";
 import type { TenantContext } from "@/lib/tenancy/context";
 
@@ -84,14 +85,11 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
             </p>
           </div>
           <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
-          <button
-            type="button"
-            className="user-button"
-            aria-label={`${app("userMenu")}: ${workspace.displayName}`}
+          <SignOutButton
+            label={app("userMenu")}
+            initials={initials(workspace.displayName)}
             title={workspace.displayName}
-          >
-            {initials(workspace.displayName)}
-          </button>
+          />
         </header>
 
         <main id="main-content" className="main-content">
