@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 
@@ -17,23 +18,12 @@ function cleanText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function isSameOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: Request) {
-  if (!isSameOrigin(request)) {
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
   }
 
-  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+  if (!isJsonRequest(request)) {
     return NextResponse.json({ error: "JSON request required." }, { status: 415 });
   }
 
