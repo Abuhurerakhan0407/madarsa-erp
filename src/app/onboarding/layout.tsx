@@ -1,4 +1,5 @@
 import "../globals.css";
+import "../auth-flow.css";
 
 export default function OnboardingLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
