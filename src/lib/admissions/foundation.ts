@@ -1,5 +1,5 @@
-import type { LocalizedLabels, StatusNode, StatusTransition } from "@/lib/configuration/model";
-import { validateStatusMachine } from "@/lib/configuration/validators";
+import type { LocalizedLabels, StatusNode, StatusTransition } from "../configuration/model";
+import { validateStatusMachine } from "../configuration/validators";
 
 export const admissionProgramTypes = [
   "general",
