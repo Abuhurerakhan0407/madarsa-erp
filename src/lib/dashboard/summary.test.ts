@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateProgramAttendance, dateKeyInTimeZone } from "./summary";
+import { aggregateProgramAttendance, dateKeyInTimeZone } from "./summary-helpers";
 
 describe("dashboard summary helpers", () => {
   it("uses the institution timezone for the local date", () => {
