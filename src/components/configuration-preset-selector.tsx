@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { PresetActionLabels } from "@/lib/configuration/preset-action-labels";
 
 type PresetView = {
   key: string;
@@ -16,6 +18,7 @@ type ConfigurationPresetSelectorProps = {
   terminologyLabel: string;
   domainsLabel: string;
   draftLabel: string;
+  actionLabels: PresetActionLabels;
 };
 
 export function ConfigurationPresetSelector({
@@ -23,12 +26,42 @@ export function ConfigurationPresetSelector({
   selectedLabel,
   terminologyLabel,
   domainsLabel,
-  draftLabel
+  draftLabel,
+  actionLabels
 }: ConfigurationPresetSelectorProps) {
+  const router = useRouter();
   const [selectedKey, setSelectedKey] = useState(presets[0]?.key ?? "");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const selected = presets.find((preset) => preset.key === selectedKey) ?? presets[0];
 
   if (!selected) return null;
+
+  async function createDrafts() {
+    setBusy(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/configuration/preset", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ presetKey: selected.key })
+      });
+
+      if (!response.ok) {
+        throw new Error(actionLabels.failed);
+      }
+
+      setMessage(actionLabels.applied);
+      router.refresh();
+    } catch {
+      setError(actionLabels.failed);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="preset-workspace">
@@ -38,7 +71,11 @@ export function ConfigurationPresetSelector({
             aria-pressed={preset.key === selected.key}
             className="preset-card"
             key={preset.key}
-            onClick={() => setSelectedKey(preset.key)}
+            onClick={() => {
+              setSelectedKey(preset.key);
+              setMessage(null);
+              setError(null);
+            }}
             type="button"
           >
             <strong>{preset.name}</strong>
@@ -76,6 +113,17 @@ export function ConfigurationPresetSelector({
             </dl>
           </section>
         </div>
+
+        <button
+          className="action-button action-button-primary"
+          disabled={busy}
+          onClick={createDrafts}
+          type="button"
+        >
+          {busy ? actionLabels.applying : actionLabels.apply}
+        </button>
+        {message ? <p className="form-message" role="status">{message}</p> : null}
+        {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
       </article>
     </div>
   );
