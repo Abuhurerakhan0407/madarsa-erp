@@ -146,3 +146,36 @@ test("admissions foundation requires JSON", async ({ request }) => {
 
   expect(response.status()).toBe(415);
 });
+
+test("public admission submission requires a browser origin", async ({ request }) => {
+  const response = await request.post("/api/public/admissions/test-institution/submit", {
+    headers: { "content-type": "application/json" },
+    data: {}
+  });
+
+  expect(response.status()).toBe(403);
+});
+
+test("public admission submission rejects cross-origin callers", async ({ request }) => {
+  const response = await request.post("/api/public/admissions/test-institution/submit", {
+    headers: {
+      "content-type": "application/json",
+      origin: "https://attacker.example"
+    },
+    data: {}
+  });
+
+  expect(response.status()).toBe(403);
+});
+
+test("public admission submission requires JSON before database access", async ({ request }) => {
+  const response = await request.post("/api/public/admissions/test-institution/submit", {
+    headers: {
+      "content-type": "text/plain",
+      origin: "http://localhost:3000"
+    },
+    data: "application"
+  });
+
+  expect(response.status()).toBe(415);
+});
