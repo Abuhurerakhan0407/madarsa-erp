@@ -78,3 +78,33 @@ test("tenant bootstrap rejects cross-origin mutation attempts first", async ({ r
 
   expect(response.status()).toBe(403);
 });
+
+test("configuration preset drafts reject anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/configuration/preset", {
+    headers: { "content-type": "application/json" },
+    data: { presetKey: "maktab" }
+  });
+
+  expect(response.status()).toBe(401);
+});
+
+test("configuration preset drafts reject cross-origin callers first", async ({ request }) => {
+  const response = await request.post("/api/configuration/preset", {
+    headers: {
+      "content-type": "application/json",
+      origin: "https://attacker.example"
+    },
+    data: { presetKey: "maktab" }
+  });
+
+  expect(response.status()).toBe(403);
+});
+
+test("configuration preset drafts require JSON", async ({ request }) => {
+  const response = await request.post("/api/configuration/preset", {
+    headers: { "content-type": "text/plain" },
+    data: "maktab"
+  });
+
+  expect(response.status()).toBe(415);
+});
