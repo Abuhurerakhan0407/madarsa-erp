@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { AdmissionsFoundationSetup } from "@/components/admissions-foundation-setup";
 import { ConfigurationPresetSelector } from "@/components/configuration-preset-selector";
 import { presetActionLabels } from "@/lib/configuration/preset-action-labels";
 import { configurationPresets } from "@/lib/configuration/presets";
@@ -102,6 +103,8 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
           terminologyLabel={t("terminologyPreview")}
         />
       </section>
+
+      <AdmissionsFoundationSetup locale={selectedLocale} />
 
       <section className="configuration-detail-grid">
         <article className="configuration-detail-card">
