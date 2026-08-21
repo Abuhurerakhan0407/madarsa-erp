@@ -146,9 +146,14 @@ begin
   elsif exists (
     select 1 from public.academic_sessions s
     where s.id = v_session_id and s.tenant_id = p_tenant_id
-      and (s.starts_on <> p_starts_on or s.ends_on <> p_ends_on or s.status in ('closed','archived'))
+      and (
+        s.starts_on <> p_starts_on
+        or s.ends_on <> p_ends_on
+        or s.labels <> p_session_labels
+        or s.status <> 'active'
+      )
   ) then
-    raise exception 'academic session key already exists with incompatible dates or state';
+    raise exception 'academic session key already exists with incompatible labels, dates, or state';
   end if;
 
   select p.id
@@ -173,9 +178,14 @@ begin
   elsif exists (
     select 1 from public.programs p
     where p.id = v_program_id and p.tenant_id = p_tenant_id
-      and (p.program_type <> p_program_type or p.status <> 'active')
+      and (
+        p.branch_id is distinct from p_branch_id
+        or p.labels <> p_program_labels
+        or p.program_type <> p_program_type
+        or p.status <> 'active'
+      )
   ) then
-    raise exception 'program key already exists with incompatible type or state';
+    raise exception 'program key already exists with incompatible branch, labels, type, or state';
   end if;
 
   select fd.id
@@ -190,6 +200,16 @@ begin
     ) values (
       p_tenant_id, 'admission_application', 'admission_application', 'public', 'active'
     ) returning id into v_form_definition_id;
+  elsif exists (
+    select 1 from public.form_definitions fd
+    where fd.id = v_form_definition_id and fd.tenant_id = p_tenant_id
+      and (
+        fd.entity_type <> 'admission_application'
+        or fd.audience <> 'public'
+        or fd.status <> 'active'
+      )
+  ) then
+    raise exception 'admission form definition already exists with incompatible audience, entity, or state';
   end if;
 
   select fv.id
@@ -253,6 +273,12 @@ begin
       ),
       'active'
     ) returning id into v_workflow_definition_id;
+  elsif exists (
+    select 1 from public.workflow_definitions wd
+    where wd.id = v_workflow_definition_id and wd.tenant_id = p_tenant_id
+      and (wd.workflow_type <> 'admission' or wd.status <> 'active')
+  ) then
+    raise exception 'admission workflow definition already exists with incompatible type or state';
   end if;
 
   select wv.id
