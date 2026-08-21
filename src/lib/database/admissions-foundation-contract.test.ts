@@ -27,6 +27,15 @@ describe("admissions foundation migration", () => {
     expect(sql).toContain("having count(distinct rp.permission_code) = 3");
   });
 
+  it("rejects silent reuse of incompatible prerequisite keys", () => {
+    expect(sql).toContain("s.labels <> p_session_labels");
+    expect(sql).toContain("s.status <> 'active'");
+    expect(sql).toContain("p.branch_id is distinct from p_branch_id");
+    expect(sql).toContain("p.labels <> p_program_labels");
+    expect(sql).toContain("fd.audience <> 'public'");
+    expect(sql).toContain("wd.workflow_type <> 'admission'");
+  });
+
   it("publishes only the form and workflow while keeping browser execution denied", () => {
     expect(sql).not.toContain("security definer");
     expect(sql).toContain("'published'");
