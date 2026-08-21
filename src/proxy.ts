@@ -32,6 +32,10 @@ export default async function proxy(request: NextRequest) {
     });
   }
 
+  if (pathname.startsWith("/apply/")) {
+    return NextResponse.next({ request });
+  }
+
   const baseResponse = NextResponse.next({ request });
   const { response: sessionResponse, identityId } = await updateSession(
     request,
