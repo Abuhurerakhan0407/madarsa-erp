@@ -7,6 +7,7 @@ import type { TenantContext } from "@/lib/tenancy/context";
 
 const navigationKeys = [
   "overview",
+  "admissions",
   "students",
   "attendance",
   "fees",
@@ -29,6 +30,12 @@ const disabledNavStyle = {
   opacity: 0.55
 } as const;
 
+const admissionsNavigationLabels: Record<Locale, string> = {
+  en: "Admissions",
+  ur: "داخلہ",
+  ar: "القبول"
+};
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
@@ -36,6 +43,7 @@ function initials(name: string): string {
 
 function navigationHref(locale: Locale, key: NavigationKey): string | null {
   if (key === "overview") return `/${locale}`;
+  if (key === "admissions") return `/${locale}/admissions`;
   if (key === "students") return `/${locale}/people-academics`;
   if (key === "settings") return `/${locale}/settings/configuration`;
   return null;
@@ -48,6 +56,8 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   ]);
 
   const branchLabel = workspace.branchName || "Branch setup pending";
+  const navigationLabel = (key: NavigationKey) =>
+    key === "admissions" ? admissionsNavigationLabels[locale] : nav(key);
 
   return (
     <div className="app-shell">
@@ -77,14 +87,14 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
                   key={key}
                   style={disabledNavStyle}
                 >
-                  {nav(key)}
+                  {navigationLabel(key)}
                 </span>
               );
             }
 
             return (
               <a href={href} key={key} className="nav-link">
-                {nav(key)}
+                {navigationLabel(key)}
               </a>
             );
           })}
@@ -120,14 +130,14 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
           if (!href) {
             return (
               <a aria-disabled="true" key={key} style={disabledNavStyle}>
-                {nav(key)}
+                {navigationLabel(key)}
               </a>
             );
           }
 
           return (
             <a href={href} key={key}>
-              {nav(key)}
+              {navigationLabel(key)}
             </a>
           );
         })}
