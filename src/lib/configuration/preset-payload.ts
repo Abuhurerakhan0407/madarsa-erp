@@ -1,4 +1,4 @@
-import type { AttendanceStatus } from "@/lib/attendance/model";
+import type { AttendanceStatus } from "../attendance/model";
 import { configurationLocales, type ConfigurationPreset } from "./model";
 
 export type TerminologyPresetRow = {
