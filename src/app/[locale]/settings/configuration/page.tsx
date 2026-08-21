@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { ConfigurationPresetSelector } from "@/components/configuration-preset-selector";
+import { presetActionLabels } from "@/lib/configuration/preset-action-labels";
 import { configurationPresets } from "@/lib/configuration/presets";
 import {
   configurationModuleKeys,
@@ -93,6 +94,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         </header>
 
         <ConfigurationPresetSelector
+          actionLabels={presetActionLabels[selectedLocale]}
           domainsLabel={t("enabledDomains")}
           draftLabel={t("draftPreview")}
           presets={presets}
