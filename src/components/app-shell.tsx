@@ -24,6 +24,11 @@ type AppShellProps = {
   workspace: TenantContext;
 };
 
+const disabledNavStyle = {
+  pointerEvents: "none",
+  opacity: 0.55
+} as const;
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
@@ -66,7 +71,12 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
             const href = navigationHref(locale, key);
             if (!href) {
               return (
-                <span className="nav-link" aria-disabled="true" key={key}>
+                <span
+                  className="nav-link"
+                  aria-disabled="true"
+                  key={key}
+                  style={disabledNavStyle}
+                >
                   {nav(key)}
                 </span>
               );
@@ -109,9 +119,9 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
           const href = navigationHref(locale, key);
           if (!href) {
             return (
-              <span aria-disabled="true" key={key}>
+              <a aria-disabled="true" key={key} style={disabledNavStyle}>
                 {nav(key)}
-              </span>
+              </a>
             );
           }
 
