@@ -16,6 +16,8 @@ const navigationKeys = [
   "settings"
 ] as const;
 
+type NavigationKey = (typeof navigationKeys)[number];
+
 type AppShellProps = {
   children: ReactNode;
   locale: Locale;
@@ -25,6 +27,13 @@ type AppShellProps = {
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
+}
+
+function navigationHref(locale: Locale, key: NavigationKey): string | null {
+  if (key === "overview") return `/${locale}`;
+  if (key === "students") return `/${locale}/people-academics`;
+  if (key === "settings") return `/${locale}/settings/configuration`;
+  return null;
 }
 
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
@@ -53,24 +62,22 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </div>
 
         <nav aria-label={app("openMenu")} className="primary-nav">
-          {navigationKeys.map((key, index) => (
-            <a
-              href={
-                index === 0
-                  ? `/${locale}`
-                  : key === "students"
-                    ? `/${locale}/people-academics`
-                  : key === "settings"
-                    ? `/${locale}/settings/configuration`
-                    : `/${locale}#${key}`
-              }
-              key={key}
-              aria-current={index === 0 ? "page" : undefined}
-              className="nav-link"
-            >
-              {nav(key)}
-            </a>
-          ))}
+          {navigationKeys.map((key) => {
+            const href = navigationHref(locale, key);
+            if (!href) {
+              return (
+                <span className="nav-link" aria-disabled="true" key={key}>
+                  {nav(key)}
+                </span>
+              );
+            }
+
+            return (
+              <a href={href} key={key} className="nav-link">
+                {nav(key)}
+              </a>
+            );
+          })}
         </nav>
 
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
@@ -98,21 +105,22 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
       </div>
 
       <nav className="mobile-nav" aria-label={app("openMenu")}>
-        {navigationKeys.slice(0, 4).map((key, index) => (
-          <a
-            href={
-              index === 0
-                ? `/${locale}`
-                : key === "students"
-                  ? `/${locale}/people-academics`
-                  : `/${locale}#${key}`
-            }
-            key={key}
-            aria-current={index === 0 ? "page" : undefined}
-          >
-            {nav(key)}
-          </a>
-        ))}
+        {navigationKeys.slice(0, 4).map((key) => {
+          const href = navigationHref(locale, key);
+          if (!href) {
+            return (
+              <span aria-disabled="true" key={key}>
+                {nav(key)}
+              </span>
+            );
+          }
+
+          return (
+            <a href={href} key={key}>
+              {nav(key)}
+            </a>
+          );
+        })}
       </nav>
     </div>
   );
