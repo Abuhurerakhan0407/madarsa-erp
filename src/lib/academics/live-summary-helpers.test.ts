@@ -35,7 +35,7 @@ describe("academic program summary", () => {
       "ur"
     );
 
-    expect(result[0].label).toBe("حفظ");
-    expect(result[1].label).toBe("برنامج");
+    expect(result.find((row) => row.key === "hifz")?.label).toBe("حفظ");
+    expect(result.find((row) => row.key === "custom_program")?.label).toBe("برنامج");
   });
 });
