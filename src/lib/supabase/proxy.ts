@@ -10,16 +10,21 @@ export async function updateSession(request: NextRequest, response: NextResponse
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
+        });
+        Object.entries(headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
         });
       }
     }
   });
 
-  await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
+  const identityId =
+    !error && typeof data?.claims?.sub === "string" ? data.claims.sub : null;
 
-  return response;
+  return { response, identityId } as const;
 }

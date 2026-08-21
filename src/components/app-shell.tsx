@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SignOutButton } from "@/components/sign-out-button";
 import type { Locale } from "@/lib/i18n/config";
+import type { TenantContext } from "@/lib/tenancy/context";
 
 const navigationKeys = [
   "overview",
@@ -17,13 +19,21 @@ const navigationKeys = [
 type AppShellProps = {
   children: ReactNode;
   locale: Locale;
+  workspace: TenantContext;
 };
 
-export async function AppShell({ children, locale }: AppShellProps) {
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
+}
+
+export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const [app, nav] = await Promise.all([
     getTranslations("App"),
     getTranslations("Navigation")
   ]);
+
+  const branchLabel = workspace.branchName || "Branch setup pending";
 
   return (
     <div className="app-shell">
@@ -38,8 +48,8 @@ export async function AppShell({ children, locale }: AppShellProps) {
         </div>
 
         <div className="institution-card">
-          <strong>{app("institution")}</strong>
-          <span>{app("branch")}</span>
+          <strong>{workspace.tenantName}</strong>
+          <span>{branchLabel}</span>
         </div>
 
         <nav aria-label={app("openMenu")} className="primary-nav">
@@ -69,13 +79,17 @@ export async function AppShell({ children, locale }: AppShellProps) {
       <div className="workspace">
         <header className="topbar">
           <div>
-            <p className="topbar-context">{app("institution")}</p>
-            <p className="topbar-session">{app("session")}</p>
+            <p className="topbar-context">{workspace.tenantName}</p>
+            <p className="topbar-session">
+              {branchLabel} · {workspace.tenantState}
+            </p>
           </div>
           <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
-          <button type="button" className="user-button" aria-label={app("userMenu")}>
-            UK
-          </button>
+          <SignOutButton
+            label={app("userMenu")}
+            initials={initials(workspace.displayName)}
+            title={workspace.displayName}
+          />
         </header>
 
         <main id="main-content" className="main-content">

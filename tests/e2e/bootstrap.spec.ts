@@ -1,57 +1,42 @@
 import { expect, test } from "@playwright/test";
 
-test("redirects to the English dashboard", async ({ page }) => {
+test("protects the root workspace behind sign in", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/en$/);
-  await expect(page.getByRole("heading", { name: "Assalamu alaikum, Usman" })).toBeVisible();
+
+  await expect(page).toHaveURL(/\/login\?next=%2F$/);
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("renders Urdu right to left", async ({ page }) => {
+test("protects localized institution routes", async ({ page }) => {
   await page.goto("/ur");
-  await expect(page.locator("html")).toHaveAttribute("lang", "ur");
-  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("heading", { name: "السلام علیکم، عثمان صاحب" })).toBeVisible();
+  await expect(page).toHaveURL(/\/login\?next=%2Fur$/);
+
+  await page.goto("/ar/settings/configuration");
+  await expect(page).toHaveURL(/\/login\?next=%2Far%2Fsettings%2Fconfiguration$/);
 });
 
-test("renders Arabic right to left", async ({ page }) => {
-  await page.goto("/ar");
-  await expect(page.locator("html")).toHaveAttribute("lang", "ar");
-  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("heading", { name: "السلام عليكم، عثمان" })).toBeVisible();
+test("protects onboarding until an identity is authenticated", async ({ page }) => {
+  await page.goto("/onboarding");
+
+  await expect(page).toHaveURL(/\/login\?next=%2Fonboarding$/);
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("uses the compact teacher navigation on mobile", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/en");
+test("renders accessible sign in and signup modes", async ({ page }) => {
+  await page.goto("/login");
 
-  await expect(page.locator(".sidebar")).toBeHidden();
-  await expect(page.locator(".mobile-nav")).toBeVisible();
-  await expect(page.locator(".mobile-nav").getByRole("link")).toHaveCount(4);
+  await expect(page.getByLabel("Email address")).toHaveAttribute("type", "email");
+  await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
+  await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
+
+  await page.getByRole("button", { name: "New institution? Create an account" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Create your institution account" })
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
 });
 
-test("renders empty and forbidden states", async ({ page }) => {
-  await page.goto("/en/empty");
-  await expect(page.getByRole("heading", { name: "Nothing pending" })).toBeVisible();
-
-  await page.goto("/en/forbidden");
-  await expect(page.getByRole("heading", { name: "Access restricted" })).toBeVisible();
-});
-
-test("opens the admission dialog with an accessible form", async ({ page }) => {
-  await page.goto("/en");
-  await page.getByRole("button", { name: "New admission" }).click();
-
-  const dialog = page.getByRole("dialog", { name: "New admission" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("textbox", { name: "Student name" })).toHaveAttribute(
-    "required",
-    ""
-  );
-  await dialog.getByRole("button", { name: "Cancel" }).click();
-  await expect(dialog).toBeHidden();
-});
-
-test("health endpoint responds", async ({ request }) => {
+test("health endpoint remains public", async ({ request }) => {
   const response = await request.get("/api/health");
 
   expect(response.ok()).toBe(true);
@@ -61,15 +46,35 @@ test("health endpoint responds", async ({ request }) => {
   });
 });
 
-test("previews contrasting configuration presets", async ({ page }) => {
-  await page.goto("/en/settings/configuration");
+test("tenant bootstrap rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/onboarding/bootstrap", {
+    headers: { "content-type": "application/json" },
+    data: {
+      displayName: "Test Owner",
+      institutionName: "Test Institution",
+      slug: "test-institution",
+      branchName: "Main Branch",
+      branchCode: "MAIN"
+    }
+  });
 
-  await expect(page.getByRole("heading", { name: "Configure your institution" })).toBeVisible();
-  await page.getByRole("button", { name: /Hifz Academy/ }).click();
-  await expect(page.getByRole("heading", { name: "Hifz Academy" })).toBeVisible();
-  await expect(page.getByText("Parent portal", { exact: true })).toBeVisible();
+  expect(response.status()).toBe(401);
+});
 
-  await page.getByRole("button", { name: /Islamic School/ }).click();
-  await expect(page.getByRole("heading", { name: "Islamic School" })).toBeVisible();
-  await expect(page.getByText("Academics", { exact: true })).toBeVisible();
+test("tenant bootstrap rejects cross-origin mutation attempts first", async ({ request }) => {
+  const response = await request.post("/api/onboarding/bootstrap", {
+    headers: {
+      "content-type": "application/json",
+      origin: "https://attacker.example"
+    },
+    data: {
+      displayName: "Test Owner",
+      institutionName: "Test Institution",
+      slug: "test-institution",
+      branchName: "Main Branch",
+      branchCode: "MAIN"
+    }
+  });
+
+  expect(response.status()).toBe(403);
 });

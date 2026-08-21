@@ -10,6 +10,7 @@ describe("safeAuthRedirect", () => {
     null,
     "https://attacker.example",
     "//attacker.example/path",
+    "/\\attacker.example/path",
     "javascript:alert(1)"
   ])("rejects unsafe redirect value %s", (value) => {
     expect(safeAuthRedirect(value)).toBe("/en");

@@ -5,21 +5,65 @@ import { routing } from "@/i18n/routing";
 import { updateSession } from "@/lib/supabase/proxy";
 
 const handleI18nRouting = createMiddleware(routing);
+const sessionCacheHeaders = ["cache-control", "expires", "pragma"] as const;
 
-export default async function proxy(request: NextRequest) {
-  if (!hasSupabasePublicEnv()) {
-    return handleI18nRouting(request);
-  }
-
-  const sessionResponse = NextResponse.next({ request });
-  await updateSession(request, sessionResponse);
-
-  const localizedResponse = handleI18nRouting(request);
-  sessionResponse.cookies.getAll().forEach(({ name, value, ...options }) => {
-    localizedResponse.cookies.set(name, value, options);
+function copySessionState(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach(({ name, value, ...options }) => {
+    to.cookies.set(name, value, options);
   });
 
-  return localizedResponse;
+  sessionCacheHeaders.forEach((header) => {
+    const value = from.headers.get(header);
+    if (value) to.headers.set(header, value);
+  });
+
+  return to;
+}
+
+export default async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (!hasSupabasePublicEnv()) {
+    return new NextResponse("Application configuration unavailable.", {
+      status: 503,
+      headers: {
+        "cache-control": "no-store"
+      }
+    });
+  }
+
+  const baseResponse = NextResponse.next({ request });
+  const { response: sessionResponse, identityId } = await updateSession(
+    request,
+    baseResponse
+  );
+
+  if (pathname === "/login") {
+    if (!identityId) return sessionResponse;
+    return copySessionState(
+      sessionResponse,
+      NextResponse.redirect(new URL("/en", request.url))
+    );
+  }
+
+  if (pathname === "/onboarding") {
+    if (identityId) return sessionResponse;
+
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", "/onboarding");
+    return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
+  }
+
+  if (!identityId) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set(
+      "next",
+      `${pathname}${request.nextUrl.search}`
+    );
+    return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
+  }
+
+  return copySessionState(sessionResponse, handleI18nRouting(request));
 }
 
 export const config = {
