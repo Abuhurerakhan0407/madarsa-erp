@@ -32,7 +32,7 @@ export default async function proxy(request: NextRequest) {
     });
   }
 
-  if (pathname.startsWith("/apply/")) {
+  if (pathname.startsWith("/apply/") || pathname === "/track") {
     return NextResponse.next({ request });
   }
 
