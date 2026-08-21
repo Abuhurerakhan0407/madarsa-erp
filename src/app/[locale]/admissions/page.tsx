@@ -14,8 +14,9 @@ const labels = {
     count: "applications",
     empty: "No applications yet",
     emptyBody: "New submitted applications will appear here automatically.",
-    submitted: "Submitted",
-    reference: "Reference"
+    submitted: "Admissions workflow",
+    reference: "Reference",
+    review: "Review application"
   },
   ur: {
     kicker: "داخلہ · براہ راست درخواستیں",
@@ -28,8 +29,9 @@ const labels = {
     count: "درخواستیں",
     empty: "ابھی کوئی درخواست نہیں",
     emptyBody: "نئی جمع شدہ درخواستیں خودکار طور پر یہاں ظاہر ہوں گی۔",
-    submitted: "جمع شدہ",
-    reference: "حوالہ"
+    submitted: "داخلہ ورک فلو",
+    reference: "حوالہ",
+    review: "درخواست کا جائزہ لیں"
   },
   ar: {
     kicker: "القبول · الطلبات المباشرة",
@@ -42,8 +44,9 @@ const labels = {
     count: "طلبات",
     empty: "لا توجد طلبات حتى الآن",
     emptyBody: "ستظهر الطلبات الجديدة هنا تلقائيًا.",
-    submitted: "مُقدّم",
-    reference: "المرجع"
+    submitted: "مسار القبول",
+    reference: "المرجع",
+    review: "مراجعة الطلب"
   }
 } as const;
 
@@ -113,9 +116,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
                 <span className="module-state module-state-attention">{item.state}</span>
                 <h3>{item.applicantName}</h3>
                 <p>{localized(item.programLabels, locale)} · {localized(item.sessionLabels, locale)}</p>
-                <p>
-                  {text.reference}: <code>{item.trackingId.slice(0, 8)}</code>
-                </p>
+                <p>{text.reference}: <code>{item.trackingId.slice(0, 8)}</code></p>
                 {item.submittedAt ? (
                   <small>
                     {new Intl.DateTimeFormat(dateLocales[locale], {
@@ -124,6 +125,11 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
                     }).format(new Date(item.submittedAt))}
                   </small>
                 ) : null}
+                <p>
+                  <a className="action-button" href={`/${locale}/admissions/${item.id}`}>
+                    {text.review}
+                  </a>
+                </p>
               </article>
             ))}
           </div>
