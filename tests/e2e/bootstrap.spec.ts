@@ -108,3 +108,41 @@ test("configuration preset drafts require JSON", async ({ request }) => {
 
   expect(response.status()).toBe(415);
 });
+
+test("admissions foundation rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/admissions/foundation", {
+    headers: { "content-type": "application/json" },
+    data: {
+      sessionKey: "2026_27",
+      sessionLabels: { en: "2026-27", ur: "تعلیمی سال", ar: "العام الدراسي" },
+      startsOn: "2026-06-01",
+      endsOn: "2027-05-31",
+      programKey: "dars_e_nizami",
+      programLabels: { en: "Dars-e-Nizami", ur: "درس نظامی", ar: "الدرس النظامي" },
+      programType: "dars_e_nizami"
+    }
+  });
+
+  expect(response.status()).toBe(401);
+});
+
+test("admissions foundation rejects cross-origin callers first", async ({ request }) => {
+  const response = await request.post("/api/admissions/foundation", {
+    headers: {
+      "content-type": "application/json",
+      origin: "https://attacker.example"
+    },
+    data: {}
+  });
+
+  expect(response.status()).toBe(403);
+});
+
+test("admissions foundation requires JSON", async ({ request }) => {
+  const response = await request.post("/api/admissions/foundation", {
+    headers: { "content-type": "text/plain" },
+    data: "setup"
+  });
+
+  expect(response.status()).toBe(415);
+});
