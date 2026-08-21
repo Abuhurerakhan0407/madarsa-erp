@@ -12,6 +12,8 @@ export type ProgramAttendance = {
 };
 
 export type DashboardSummary = {
+  tenantName: string;
+  displayName: string;
   dateKey: string;
   timeZone: string;
   activeStudents: number;
@@ -201,6 +203,8 @@ export async function getDashboardSummary(locale: string): Promise<DashboardSumm
     .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
 
   return {
+    tenantName: workspace.tenantName,
+    displayName: workspace.displayName,
     dateKey,
     timeZone,
     activeStudents: students.count ?? 0,
