@@ -17,6 +17,7 @@ const labels = {
     submitted: "Admissions workflow",
     reference: "Reference",
     review: "Review application"
+    , enquiries: "Enquiries and follow-ups"
   },
   ur: {
     kicker: "داخلہ · براہ راست درخواستیں",
@@ -32,6 +33,7 @@ const labels = {
     submitted: "داخلہ ورک فلو",
     reference: "حوالہ",
     review: "درخواست کا جائزہ لیں"
+    , enquiries: "استفسارات اور رابطے"
   },
   ar: {
     kicker: "القبول · الطلبات المباشرة",
@@ -47,6 +49,7 @@ const labels = {
     submitted: "مسار القبول",
     reference: "المرجع",
     review: "مراجعة الطلب"
+    , enquiries: "الاستفسارات والمتابعة"
   }
 } as const;
 
@@ -93,6 +96,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
         <a className="action-button action-button-primary" href={publicHref} target="_blank" rel="noreferrer">
           {text.openForm}
         </a>
+        <a className="action-button" href={`/${locale}/admissions/enquiries`}>{text.enquiries}</a>
       </section>
 
       <section className="configuration-section" aria-labelledby="admissions-list-title">
