@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { AdmissionsFoundationSetup } from "@/components/admissions-foundation-setup";
 import { ConfigurationPresetSelector } from "@/components/configuration-preset-selector";
+import { StudentNumberingSetup } from "@/components/student-numbering-setup";
 import { presetActionLabels } from "@/lib/configuration/preset-action-labels";
 import { configurationPresets } from "@/lib/configuration/presets";
 import {
@@ -105,6 +106,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
       </section>
 
       <AdmissionsFoundationSetup locale={selectedLocale} />
+      <StudentNumberingSetup locale={selectedLocale} currentPattern={readiness.numberPattern} />
 
       <section className="configuration-detail-grid">
         <article className="configuration-detail-card">
