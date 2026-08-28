@@ -3,7 +3,7 @@
   "product": "Madarsa ERP",
   "gates": [
     { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": true },
-    { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": true },
+    { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": false },
     { "key": "production_build_green", "owner": "engineering", "required": true, "complete": false },
     { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": false },
     { "key": "pricing_approved", "owner": "commercial", "required": true, "complete": false },

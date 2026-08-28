@@ -67,3 +67,11 @@ Ten post-fix rollback checks passed: authorized owner access, unscoped denial, e
 4. Select the next incomplete Phase 5 requirement from the master specification. Do not silently jump to Fees.
 
 No guardian messaging, payments, destructive resets, or architecture changes were part of this checkpoint.
+
+## Post-acceptance audit
+
+The follow-up audit found that nine admissions child-table read policies checked tenant permission with a null branch. A rollback-only reproduction showed application #11 itself hidden while its version, review and decision remained visible to an unscoped membership. Forward migration `20260828115335_scope_admissions_child_reads.sql` makes each child inherit its parent application/enquiry branch boundary. A 9-table × 9-scenario database matrix passed 81 checks.
+
+The same audit found inactive roles still authorized five service-role runtime RPCs and found no immutable `admission_conversions` row for the accepted application. Forward migration `20260828115931_harden_runtime_roles_and_conversion_linkage.sql` rejects inactive roles, applies missing membership timing/branch checks, backfills only uniquely provable links from the original successful audit event, writes links for future conversions, and reads those links on retry. Application #11 now has a permanent link to person #4 and enrollment #3. A second rollback matrix passed 34 denials plus two positive/idempotency checks, including a simulated later matching enrollment.
+
+Public submission body enforcement now counts streamed bytes instead of trusting `Content-Length`; the media-type check no longer accepts `application/jsonp`. Launch readiness correctly keeps `security_advisors_clear` false while leaked-password protection remains disabled. These post-acceptance source changes still require their own PR CI, preview, merge and production browser verification; this paragraph does not claim those gates passed.

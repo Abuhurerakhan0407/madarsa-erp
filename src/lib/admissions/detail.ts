@@ -102,8 +102,8 @@ export async function getAdmissionDetail(
   if (decisionsResult.error) throw new Error(`Unable to load admission decisions: ${decisionsResult.error.message}`);
 
   let convertedStudent: ConvertedStudent = null;
-  if (application.applicant_person_id) {
-    const [profileResult, enrollmentResult] = await Promise.all([
+  if (application.state === "enrolled" && application.applicant_person_id) {
+    const [profileResult, conversionResult] = await Promise.all([
       supabase
         .from("student_profiles")
         .select("person_id, student_number")
@@ -111,26 +111,22 @@ export async function getAdmissionDetail(
         .eq("person_id", application.applicant_person_id)
         .maybeSingle(),
       supabase
-        .from("enrollments")
-        .select("id")
+        .from("admission_conversions")
+        .select("student_person_id, enrollment_id")
         .eq("tenant_id", workspace.tenantId)
+        .eq("application_id", application.id)
         .eq("student_person_id", application.applicant_person_id)
-        .eq("branch_id", application.branch_id)
-        .eq("session_id", application.session_id)
-        .eq("program_id", application.program_id)
-        .order("id", { ascending: false })
-        .limit(1)
         .maybeSingle()
     ]);
 
     if (profileResult.error) throw new Error(`Unable to load converted student profile: ${profileResult.error.message}`);
-    if (enrollmentResult.error) throw new Error(`Unable to load converted enrollment: ${enrollmentResult.error.message}`);
+    if (conversionResult.error) throw new Error(`Unable to load admission conversion: ${conversionResult.error.message}`);
 
-    if (profileResult.data && enrollmentResult.data) {
+    if (profileResult.data && conversionResult.data) {
       convertedStudent = {
         personId: profileResult.data.person_id,
         studentNumber: profileResult.data.student_number,
-        enrollmentId: enrollmentResult.data.id
+        enrollmentId: conversionResult.data.enrollment_id
       };
     }
   }
