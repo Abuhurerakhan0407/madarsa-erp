@@ -43,6 +43,7 @@ const ui = {
     successBody: "Keep this private tracking information. It will be required for applicant tracking and future updates.",
     reference: "Tracking reference",
     secret: "Private tracking key",
+    trackApplication: "Track this application",
     newApplication: "Submit another application",
     error: "We could not submit the application. Check the highlighted information and try again.",
     language: "Language"
@@ -60,6 +61,7 @@ const ui = {
     successBody: "یہ نجی ٹریکنگ معلومات محفوظ رکھیں۔ درخواست کی پیش رفت اور آئندہ اپ ڈیٹس کے لیے اس کی ضرورت ہوگی۔",
     reference: "ٹریکنگ حوالہ",
     secret: "نجی ٹریکنگ کلید",
+    trackApplication: "اس درخواست کی پیش رفت دیکھیں",
     newApplication: "ایک اور درخواست جمع کریں",
     error: "درخواست جمع نہیں ہو سکی۔ معلومات چیک کریں اور دوبارہ کوشش کریں۔",
     language: "زبان"
@@ -77,6 +79,7 @@ const ui = {
     successBody: "احتفظ بمعلومات التتبع الخاصة هذه. ستُطلب لتتبع الطلب والتحديثات المستقبلية.",
     reference: "مرجع التتبع",
     secret: "مفتاح التتبع الخاص",
+    trackApplication: "تتبع هذا الطلب",
     newApplication: "إرسال طلب آخر",
     error: "تعذر إرسال الطلب. تحقق من المعلومات وحاول مرة أخرى.",
     language: "اللغة"
@@ -174,6 +177,11 @@ export function PublicAdmissionForm({
               <dd><code>{result.trackingToken}</code></dd>
             </div>
           </dl>
+          <p>
+            <a href={`/track?lang=${locale}&ref=${encodeURIComponent(result.trackingId)}`}>
+              {text.trackApplication}
+            </a>
+          </p>
           <button className="public-submit secondary" type="button" onClick={() => setResult(null)}>
             {text.newApplication}
           </button>
