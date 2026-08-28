@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdmissionActionPanel } from "@/components/admission-action-panel";
+import { AdmissionConversionPanel } from "@/components/admission-conversion-panel";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
 import type { Locale } from "@/lib/i18n/config";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -132,6 +133,13 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
         </article>
 
         <AdmissionActionPanel applicationId={detail.id} locale={locale} state={detail.state} />
+        <AdmissionConversionPanel
+          applicationId={detail.id}
+          convertedStudent={detail.convertedStudent}
+          duplicateReviewStatus={detail.duplicateReviewStatus}
+          locale={locale}
+          state={detail.state}
+        />
       </section>
 
       <section className="configuration-section" aria-labelledby="admission-history-title">

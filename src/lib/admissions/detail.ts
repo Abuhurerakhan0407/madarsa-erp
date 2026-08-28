@@ -20,6 +20,12 @@ type AdmissionDecisionRecord = {
   decidedAt: string;
 };
 
+export type ConvertedStudent = {
+  personId: number;
+  studentNumber: string;
+  enrollmentId: number;
+} | null;
+
 export type AdmissionDetail = {
   id: number;
   trackingId: string;
@@ -27,11 +33,14 @@ export type AdmissionDetail = {
   revision: number;
   preferredLocale: string;
   submittedAt: string | null;
+  convertedAt: string | null;
+  duplicateReviewStatus: string;
   applicantData: Record<string, string>;
   programLabels: Labels | null;
   sessionLabels: Labels | null;
   reviews: AdmissionReview[];
   decisions: AdmissionDecisionRecord[];
+  convertedStudent: ConvertedStudent;
 };
 
 function stringAnswers(value: unknown): Record<string, string> {
@@ -52,7 +61,7 @@ export async function getAdmissionDetail(
   const supabase = await createClient();
   const { data: application, error: applicationError } = await supabase
     .from("applications")
-    .select("id, tracking_id, state, revision, preferred_locale, submitted_at, applicant_data, program_id, session_id")
+    .select("id, tracking_id, state, revision, preferred_locale, submitted_at, converted_at, duplicate_review_status, applicant_person_id, applicant_data, program_id, session_id, branch_id")
     .eq("tenant_id", workspace.tenantId)
     .eq("id", applicationId)
     .maybeSingle();
@@ -92,6 +101,40 @@ export async function getAdmissionDetail(
   if (reviewsResult.error) throw new Error(`Unable to load admission reviews: ${reviewsResult.error.message}`);
   if (decisionsResult.error) throw new Error(`Unable to load admission decisions: ${decisionsResult.error.message}`);
 
+  let convertedStudent: ConvertedStudent = null;
+  if (application.applicant_person_id) {
+    const [profileResult, enrollmentResult] = await Promise.all([
+      supabase
+        .from("student_profiles")
+        .select("person_id, student_number")
+        .eq("tenant_id", workspace.tenantId)
+        .eq("person_id", application.applicant_person_id)
+        .maybeSingle(),
+      supabase
+        .from("enrollments")
+        .select("id")
+        .eq("tenant_id", workspace.tenantId)
+        .eq("student_person_id", application.applicant_person_id)
+        .eq("branch_id", application.branch_id)
+        .eq("session_id", application.session_id)
+        .eq("program_id", application.program_id)
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    ]);
+
+    if (profileResult.error) throw new Error(`Unable to load converted student profile: ${profileResult.error.message}`);
+    if (enrollmentResult.error) throw new Error(`Unable to load converted enrollment: ${enrollmentResult.error.message}`);
+
+    if (profileResult.data && enrollmentResult.data) {
+      convertedStudent = {
+        personId: profileResult.data.person_id,
+        studentNumber: profileResult.data.student_number,
+        enrollmentId: enrollmentResult.data.id
+      };
+    }
+  }
+
   return {
     id: application.id,
     trackingId: application.tracking_id,
@@ -99,6 +142,8 @@ export async function getAdmissionDetail(
     revision: application.revision,
     preferredLocale: application.preferred_locale,
     submittedAt: application.submitted_at,
+    convertedAt: application.converted_at,
+    duplicateReviewStatus: application.duplicate_review_status,
     applicantData: stringAnswers(application.applicant_data),
     programLabels: (programResult.data?.labels as Labels | null | undefined) ?? null,
     sessionLabels: (sessionResult.data?.labels as Labels | null | undefined) ?? null,
@@ -116,6 +161,7 @@ export async function getAdmissionDetail(
       reason: row.reason,
       applicationRevision: row.application_revision,
       decidedAt: row.decided_at
-    }))
+    })),
+    convertedStudent
   };
 }

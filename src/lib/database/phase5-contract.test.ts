@@ -6,6 +6,11 @@ const contract = readFileSync(
   "utf8"
 );
 
+const runtimeScopes = readFileSync(
+  new URL("../../../supabase/migrations/20260828112449_enforce_admissions_runtime_membership_scopes.sql", import.meta.url),
+  "utf8"
+);
+
 const tables = [
   "enquiries",
   "applications",
@@ -21,6 +26,26 @@ const tables = [
 ] as const;
 
 describe("Phase 5 database contract", () => {
+  it.each([
+    ["progress_admission_staff", "v_application.branch_id"],
+    ["setup_student_number_sequence", "p_branch_id"]
+  ])("checks membership timing and branch scope in %s", (name, branch) => {
+    const body = runtimeScopes.split(`create or replace function public.${name}(`)[1].split("$$;")[0];
+    expect(body).toContain("m.starts_at is null or m.starts_at <= now()");
+    expect(body).toContain("m.ends_at is null or m.ends_at > now()");
+    expect(body).toContain("m.all_branches");
+    expect(body).toContain("mbs.tenant_id = m.tenant_id");
+    expect(body).toContain("mbs.membership_id = m.id");
+    expect(body).toContain(`mbs.branch_id = ${branch}`);
+    expect(body).not.toMatch(/security\s+definer/i);
+  });
+
+  it("authorizes staff before revealing transition conflicts", () => {
+    expect(runtimeScopes.indexOf("admission action permission denied")).toBeLessThan(
+      runtimeScopes.indexOf("admission state transition conflict")
+    );
+  });
+
   it("declares complete admission records", () => {
     for (const table of tables) expect(contract).toContain(`create table public.${table}`);
   });
