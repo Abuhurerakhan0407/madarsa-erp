@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getPublicAdmissionsContext } from "@/lib/admissions/public-intake-context";
 import { validatePublicAdmissionSubmission } from "@/lib/admissions/public-intake-model";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RouteContext = {
@@ -31,17 +31,10 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "JSON request required." }, { status: 415 });
   }
 
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 32_768) {
-    return NextResponse.json({ error: "Submission is too large." }, { status: 413 });
-  }
-
   const { tenantSlug } = await params;
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const body = await readBoundedJson(request);
+  if (!body.ok) {
+    return NextResponse.json({ error: body.error }, { status: body.status });
   }
 
   let intake;
@@ -55,7 +48,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Admissions are not available for this institution." }, { status: 404 });
   }
 
-  const validation = validatePublicAdmissionSubmission(body, intake.form.sections);
+  const validation = validatePublicAdmissionSubmission(body.value, intake.form.sections);
   if (!validation.value) {
     return NextResponse.json({ error: "Please correct the application.", details: validation.errors }, { status: 400 });
   }
