@@ -22,7 +22,7 @@ Scope: the next Phase 5 slice in issue #14. This does not complete all admission
 - Result: 16/16 flow and denial assertions passed; helper/create RPC execute denied to authenticated and allowed only to service_role.
 - After rollback: zero enquiries/follow-ups; original application #11 remains enrolled revision 5; one student profile, one active enrollment and conversion link to person #4/enrollment #3.
 - Initial feature commit `394f4ad8488a51ed0d3f18687a4f2f282a290878`: GitHub Actions run `33206637634` passed and its Vercel preview reached `READY`.
-- Post-implementation React audit fixed three omissions: network/non-JSON failures can no longer leave forms busy, database duplicate hints now reach the staff UI, and enquiry/application states plus follow-up channels are localized instead of exposing raw enum values.
+- Post-implementation React/browser audit fixed four omissions: network/non-JSON failures can no longer leave forms busy, database duplicate hints now reach the staff UI, enquiry/application states plus follow-up channels are localized instead of exposing raw enum values, and public Urdu/Arabic surfaces now declare subtree language/direction while loading the intended fonts in every top-level layout.
 - Final local suite after the React audit: 62 files / 296 tests passed; lint has zero errors and one existing PostCSS warning; TypeScript passed; the 41-page production build passed.
 
 ## Remaining acceptance gates

@@ -1,10 +1,11 @@
+import { appFontVariables } from "@/lib/i18n/fonts";
 import "../globals.css";
 import "../auth-flow.css";
 
 export default function OnboardingLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={appFontVariables}>{children}</body>
     </html>
   );
 }
