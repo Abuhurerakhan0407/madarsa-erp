@@ -50,7 +50,10 @@ function isValidFieldValue(type: string, value: string): boolean {
   if (type === "date") {
     if (!datePattern.test(value)) return false;
     const parsed = Date.parse(`${value}T00:00:00.000Z`);
-    return Number.isFinite(parsed);
+    // Date.parse normalizes impossible days; PostgreSQL rejects them at conversion.
+    return value.slice(0, 4) !== "0000"
+      && Number.isFinite(parsed)
+      && new Date(parsed).toISOString().slice(0, 10) === value;
   }
   return true;
 }
@@ -102,6 +105,10 @@ export function validatePublicAdmissionSubmission(
     }
 
     const value = rawValue.trim();
+    if (key === "applicant_name" && value && (value.length < 2 || value.length > 160)) {
+      errors.push("applicant_name must contain between 2 and 160 characters.");
+      continue;
+    }
     if (value.length > maxLengthForType(field.type)) {
       errors.push(`${key} is too long.`);
       continue;

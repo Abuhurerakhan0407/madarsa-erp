@@ -20,12 +20,57 @@ const sections: PublicAdmissionSection[] = [
         key: "guardian_email",
         type: "email",
         labels: { en: "Email", ur: "ای میل", ar: "البريد" }
+      },
+      {
+        key: "date_of_birth",
+        type: "date",
+        labels: { en: "Date of birth", ur: "تاریخ پیدائش", ar: "تاريخ الميلاد" }
       }
     ]
   }
 ];
 
 describe("public admissions intake validation", () => {
+  function submitAnswers(answers: Record<string, string>) {
+    return validatePublicAdmissionSubmission({
+      sessionKey: "2026_27",
+      programKey: "dars_e_nizami",
+      preferredLocale: "en",
+      consent: true,
+      answers
+    }, sections);
+  }
+
+  it.each(["2026-02-29", "2026-02-30", "2026-04-31", "0000-01-01"])(
+    "rejects a date that cannot be stored during enrollment: %s",
+    (date) => {
+      const result = submitAnswers({ applicant_name: "Amina", date_of_birth: date });
+      expect(result.value).toBeUndefined();
+      expect(result.errors).toContain("date_of_birth has an invalid value.");
+    }
+  );
+
+  it.each(["2024-02-29", "2026-04-30", ""])(
+    "accepts a valid or omitted optional birth date: %s",
+    (date) => {
+      const result = submitAnswers({ applicant_name: "Amina", date_of_birth: date });
+      expect(result.errors).toEqual([]);
+      expect(result.value?.answers.date_of_birth).toBe(date);
+    }
+  );
+
+  it.each(["A", "A".repeat(161)])("rejects names outside enrollment limits", (name) => {
+    const result = submitAnswers({ applicant_name: name });
+    expect(result.value).toBeUndefined();
+    expect(result.errors).toContain("applicant_name must contain between 2 and 160 characters.");
+  });
+
+  it("accepts a trimmed applicant name at the enrollment limit", () => {
+    const result = submitAnswers({ applicant_name: `  ${"A".repeat(160)}  ` });
+    expect(result.errors).toEqual([]);
+    expect(result.value?.answers.applicant_name).toHaveLength(160);
+  });
+
   it("accepts only configured fields with required consent", () => {
     const result = validatePublicAdmissionSubmission(
       {
