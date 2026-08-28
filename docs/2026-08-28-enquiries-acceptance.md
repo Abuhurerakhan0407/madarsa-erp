@@ -21,10 +21,12 @@ Scope: the next Phase 5 slice in issue #14. This does not complete all admission
 - Rollback denials: unscoped branch, future, expired, revoked, inactive role, missing permission, wrong identity and wrong tenant.
 - Result: 16/16 flow and denial assertions passed; helper/create RPC execute denied to authenticated and allowed only to service_role.
 - After rollback: zero enquiries/follow-ups; original application #11 remains enrolled revision 5; one student profile, one active enrollment and conversion link to person #4/enrollment #3.
-- Local suite after implementation: 60 files / 291 tests passed before the final workspace selection tests; focused final tests passed. Lint has zero errors and one existing PostCSS warning; TypeScript passed; 41-page production build passed before the final small workspace resolver change.
+- Initial feature commit `394f4ad8488a51ed0d3f18687a4f2f282a290878`: GitHub Actions run `33206637634` passed and its Vercel preview reached `READY`.
+- Post-implementation React audit fixed three omissions: network/non-JSON failures can no longer leave forms busy, database duplicate hints now reach the staff UI, and enquiry/application states plus follow-up channels are localized instead of exposing raw enum values.
+- Final local suite after the React audit: 62 files / 296 tests passed; lint has zero errors and one existing PostCSS warning; TypeScript passed; the 41-page production build passed.
 
 ## Remaining acceptance gates
 
-- Feature branch commit, GitHub CI, Vercel preview and browser verification remain pending at document creation.
+- The final React-audit commit still requires GitHub CI and Vercel preview verification before merge.
 - A real preview flow would create records. It requires explicit action-time approval before browser submission. Read-only preview checks do not.
 - Full Phase 5 still retains documents, assessments, guardian/household linkage, portal invitations, waitlists, imports, reporting, renewal/readmission and broader mobile acceptance.
