@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { getTranslations } from "next-intl/server";
 import { getDashboardSummary } from "@/lib/dashboard/summary";
 
@@ -19,12 +18,6 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     timeZone: summary.timeZone
   }).format(new Date());
 
-  const feesLabel = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: summary.currencyCode,
-    maximumFractionDigits: 0
-  }).format(summary.feesReceivedToday);
-
   return (
     <>
       <section className="page-heading">
@@ -38,14 +31,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
       <section className="metric-grid" aria-label={t("today")}>
         <article className="metric metric-primary">
-          <span>{t("present")}</span>
-          <strong>{summary.presentToday}</strong>
-          <small>{summary.activeStudents} {t("studentCount")}</small>
-        </article>
-        <article className="metric">
-          <span>{t("feesReceived")}</span>
-          <strong>{feesLabel}</strong>
-          <small>{t("today")}</small>
+          <span>{t("studentCount")}</span>
+          <strong>{summary.activeStudents}</strong>
         </article>
         <article className="metric">
           <span>{t("pendingReviews")}</span>
@@ -55,34 +42,6 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       </section>
 
       <section className="dashboard-grid">
-        <article className="panel chart-panel">
-          <header className="panel-header">
-            <h2>{t("attendanceByProgram")}</h2>
-            <span>{dateLabel}</span>
-          </header>
-
-          {summary.attendanceByProgram.length > 0 ? (
-            <div className="bar-chart" role="img" aria-label={t("attendanceByProgram")}>
-              {summary.attendanceByProgram.map((item) => (
-                <div className="bar-row" key={item.id}>
-                  <span>{item.label}</span>
-                  <div
-                    className="bar-value"
-                    style={{ "--bar-size": `${item.value}%` } as CSSProperties}
-                  >
-                    <span>{item.value}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div>
-              <strong>{t("emptyTitle")}</strong>
-              <p>{t("emptyBody")}</p>
-            </div>
-          )}
-        </article>
-
         <article className="panel task-panel">
           <header className="panel-header">
             <h2>{t("recentTasks")}</h2>

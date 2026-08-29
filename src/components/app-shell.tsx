@@ -8,13 +8,7 @@ import type { TenantContext } from "@/lib/tenancy/context";
 const navigationKeys = [
   "overview",
   "admissions",
-  "students",
-  "attendance",
-  "fees",
-  "exams",
-  "donations",
-  "reports",
-  "settings"
+  "students"
 ] as const;
 
 type NavigationKey = (typeof navigationKeys)[number];
@@ -25,15 +19,16 @@ type AppShellProps = {
   workspace: TenantContext;
 };
 
-const disabledNavStyle = {
-  pointerEvents: "none",
-  opacity: 0.55
-} as const;
-
 const admissionsNavigationLabels: Record<Locale, string> = {
   en: "Admissions",
   ur: "داخلہ",
   ar: "القبول"
+};
+
+const demoLabels: Record<Locale, { badge: string; workspace: string }> = {
+  en: { badge: "Demo", workspace: "Client demonstration" },
+  ur: { badge: "ڈیمو", workspace: "کلائنٹ کے لیے عملی نمونہ" },
+  ar: { badge: "تجريبي", workspace: "عرض توضيحي للعميل" }
 };
 
 function initials(name: string): string {
@@ -41,12 +36,10 @@ function initials(name: string): string {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
 }
 
-function navigationHref(locale: Locale, key: NavigationKey): string | null {
+function navigationHref(locale: Locale, key: NavigationKey): string {
   if (key === "overview") return `/${locale}`;
   if (key === "admissions") return `/${locale}/admissions`;
-  if (key === "students") return `/${locale}/people-academics`;
-  if (key === "settings") return `/${locale}/settings/configuration`;
-  return null;
+  return `/${locale}/people-academics`;
 }
 
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
@@ -55,9 +48,10 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
     getTranslations("Navigation")
   ]);
 
-  const branchLabel = workspace.branchName || "Branch setup pending";
+  const branchLabel = workspace.branchName || "Main Branch";
   const navigationLabel = (key: NavigationKey) =>
     key === "admissions" ? admissionsNavigationLabels[locale] : nav(key);
+  const demo = demoLabels[locale];
 
   return (
     <div className="app-shell">
@@ -69,6 +63,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">M</span>
           <span>{app("productName")}</span>
+          <span className="status-pill">{demo.badge}</span>
         </div>
 
         <div className="institution-card">
@@ -77,27 +72,11 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </div>
 
         <nav aria-label={app("openMenu")} className="primary-nav">
-          {navigationKeys.map((key) => {
-            const href = navigationHref(locale, key);
-            if (!href) {
-              return (
-                <span
-                  className="nav-link"
-                  aria-disabled="true"
-                  key={key}
-                  style={disabledNavStyle}
-                >
-                  {navigationLabel(key)}
-                </span>
-              );
-            }
-
-            return (
-              <a href={href} key={key} className="nav-link">
-                {navigationLabel(key)}
-              </a>
-            );
-          })}
+          {navigationKeys.map((key) => (
+            <a href={navigationHref(locale, key)} key={key} className="nav-link">
+              {navigationLabel(key)}
+            </a>
+          ))}
         </nav>
 
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
@@ -108,7 +87,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
           <div>
             <p className="topbar-context">{workspace.tenantName}</p>
             <p className="topbar-session">
-              {branchLabel} · {workspace.tenantState}
+              {branchLabel} · {demo.workspace}
             </p>
           </div>
           <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
@@ -125,22 +104,11 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
       </div>
 
       <nav className="mobile-nav" aria-label={app("openMenu")}>
-        {navigationKeys.slice(0, 4).map((key) => {
-          const href = navigationHref(locale, key);
-          if (!href) {
-            return (
-              <a aria-disabled="true" key={key} style={disabledNavStyle}>
-                {navigationLabel(key)}
-              </a>
-            );
-          }
-
-          return (
-            <a href={href} key={key}>
-              {navigationLabel(key)}
-            </a>
-          );
-        })}
+        {navigationKeys.map((key) => (
+          <a href={navigationHref(locale, key)} key={key}>
+            {navigationLabel(key)}
+          </a>
+        ))}
       </nav>
     </div>
   );
