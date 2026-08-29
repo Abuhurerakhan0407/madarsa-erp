@@ -7,15 +7,20 @@ type DashboardPageProps = {
 };
 
 const copy = {
+  demoData: {
+    en: "Demo data",
+    ur: "ڈیمو ڈیٹا",
+    ar: "بيانات العرض"
+  },
   kicker: {
     en: "Complete ERP demonstration",
     ur: "مکمل ERP ڈیمو",
     ar: "عرض ERP متكامل"
   },
   body: {
-    en: "A realistic 4,000-student operating scenario built for the client presentation. Scripted modules are clearly marked, while Admissions, student conversion and configuration retain live working samples.",
-    ur: "کلائنٹ پریزنٹیشن کے لیے 4,000 طلبہ کا حقیقت پسندانہ آپریشنل منظرنامہ۔ اسکرپٹڈ ماڈیول واضح نشان زد ہیں، جبکہ داخلہ، طالب علم کنورژن اور کنفیگریشن کے حقیقی ورکنگ نمونے موجود ہیں۔",
-    ar: "سيناريو تشغيلي واقعي لمؤسسة تضم 4,000 طالب، جاهز لعرض العميل. الوحدات التجريبية محددة بوضوح، مع نماذج فعلية للقبول وتحويل الطلاب والتهيئة."
+    en: "A realistic 4,000-student operating scenario for the client presentation. Use the module walkthrough for the complete product view, then open the live Admissions, student-conversion and configuration flows when you want to demonstrate working operations.",
+    ur: "کلائنٹ پریزنٹیشن کے لیے 4,000 طلبہ کا حقیقت پسندانہ آپریشنل منظرنامہ۔ مکمل پروڈکٹ کے لیے ماڈیول واک تھرو دکھائیں، پھر حقیقی آپریشن دکھانے کے لیے داخلہ، طالب علم کنورژن اور کنفیگریشن فلو کھولیں۔",
+    ar: "سيناريو تشغيلي واقعي لمؤسسة تضم 4,000 طالب لعرض العميل. استخدم جولة الوحدات لعرض المنتج كاملاً، ثم افتح مسارات القبول وتحويل الطلاب والتهيئة لإظهار العمليات الفعلية."
   },
   operations: {
     en: "Today's institution snapshot",
@@ -62,7 +67,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       <section className="demo-hub-hero demo-overview-hero">
         <div>
           <div className="demo-eyebrow-row">
-            <span className="demo-data-chip">{localize(demoUiCopy.demoData, typedLocale)}</span>
+            <span className="demo-data-chip">{copy.demoData[typedLocale]}</span>
             <span className="demo-scenario-chip">{localize(demoUiCopy.scenario, typedLocale)}</span>
           </div>
           <p className="state-kicker">{copy.kicker[typedLocale]}</p>
@@ -75,7 +80,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       <section className="demo-overview-section">
         <header className="demo-section-heading">
           <div>
-            <p className="sample-label">{localize(demoUiCopy.demoData, typedLocale)}</p>
+            <p className="sample-label">{copy.demoData[typedLocale]}</p>
             <h2>{copy.operations[typedLocale]}</h2>
           </div>
         </header>
@@ -116,7 +121,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       <section className="demo-overview-section">
         <header className="demo-section-heading">
           <div>
-            <p className="sample-label">{localize(demoUiCopy.demoData, typedLocale)}</p>
+            <p className="sample-label">{copy.demoData[typedLocale]}</p>
             <h2>{copy.modules[typedLocale]}</h2>
             <p>{copy.modulesBody[typedLocale]}</p>
           </div>

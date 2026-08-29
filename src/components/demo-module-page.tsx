@@ -10,6 +10,12 @@ type DemoModulePageProps = {
   locale: Locale;
 };
 
+const demoLabel: Record<Locale, string> = {
+  en: "Demo data",
+  ur: "ڈیمو ڈیٹا",
+  ar: "بيانات العرض"
+};
+
 export function DemoModulePage({ module, locale }: DemoModulePageProps) {
   return (
     <>
@@ -17,7 +23,7 @@ export function DemoModulePage({ module, locale }: DemoModulePageProps) {
         <div>
           <div className="demo-eyebrow-row">
             <span className="demo-module-code">{module.code}</span>
-            <span className="demo-data-chip">{localize(demoUiCopy.demoData, locale)}</span>
+            <span className="demo-data-chip">{demoLabel[locale]}</span>
           </div>
           <p className="state-kicker">{localize(demoUiCopy.scenario, locale)}</p>
           <h1>{localize(module.title, locale)}</h1>
@@ -79,7 +85,7 @@ export function DemoModulePage({ module, locale }: DemoModulePageProps) {
       <section className="panel demo-table-panel">
         <header className="panel-header">
           <div>
-            <p className="sample-label">{localize(demoUiCopy.demoData, locale)}</p>
+            <p className="sample-label">{demoLabel[locale]}</p>
             <h2>{localize(demoUiCopy.activity, locale)}</h2>
           </div>
         </header>

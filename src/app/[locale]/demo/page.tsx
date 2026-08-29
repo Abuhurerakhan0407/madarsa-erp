@@ -46,15 +46,25 @@ const extraModules: ExtraModule[] = [
 ];
 
 const hubCopy = {
+  demoData: {
+    en: "Demo data",
+    ur: "ڈیمو ڈیٹا",
+    ar: "بيانات العرض"
+  },
+  body: {
+    en: "A presentation-ready walkthrough of the complete Madrasa ERP product. Every area uses one consistent fictional institution scenario, with live working workflows available for Admissions, student conversion and institution configuration.",
+    ur: "مکمل مدرسہ ERP کا پریزنٹیشن کے لیے تیار واک تھرو۔ ہر حصہ ایک ہی حقیقت پسندانہ فرضی ادارے کے منظرنامے پر مبنی ہے، جبکہ داخلہ، طالب علم کنورژن اور ادارہ کنفیگریشن کے حقیقی ورکنگ فلو بھی دستیاب ہیں۔",
+    ar: "جولة جاهزة لعرض منتج ERP المتكامل للمدرسة. تستخدم جميع الوحدات سيناريو مؤسسة افتراضية موحداً، مع مسارات عملية فعلية للقبول وتحويل الطلاب وتهيئة المؤسسة."
+  },
   liveTitle: {
     en: "Live working flows",
     ur: "حقیقی ورکنگ فلو",
     ar: "المسارات العملية الفعلية"
   },
   liveBody: {
-    en: "Use these when you want to prove the demo is not just static screens.",
-    ur: "جب آپ دکھانا چاہیں کہ ڈیمو صرف اسٹیٹک اسکرین نہیں ہے تو یہ فلو استعمال کریں۔",
-    ar: "استخدم هذه المسارات لإثبات أن العرض ليس مجرد شاشات ثابتة."
+    en: "Use these when the client wants to go beyond the product walkthrough and see a real workflow in action.",
+    ur: "جب کلائنٹ پروڈکٹ واک تھرو سے آگے بڑھ کر حقیقی ورک فلو دیکھنا چاہے تو یہ فلو استعمال کریں۔",
+    ar: "استخدم هذه عندما يريد العميل تجاوز جولة المنتج ورؤية مسار عمل فعلي."
   },
   admissions: {
     en: "Open live Admissions",
@@ -82,12 +92,12 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
       <section className="demo-hub-hero">
         <div>
           <div className="demo-eyebrow-row">
-            <span className="demo-data-chip">{localize(demoUiCopy.demoData, typedLocale)}</span>
+            <span className="demo-data-chip">{hubCopy.demoData[typedLocale]}</span>
             <span className="demo-scenario-chip">{localize(demoUiCopy.scenario, typedLocale)}</span>
           </div>
           <p className="state-kicker">Madarsa ERP</p>
           <h1>{localize(demoUiCopy.moduleHubTitle, typedLocale)}</h1>
-          <p>{localize(demoUiCopy.moduleHubBody, typedLocale)}</p>
+          <p>{hubCopy.body[typedLocale]}</p>
         </div>
         <div className="demo-hero-stat">
           <strong>{demoModules.length + extraModules.length}</strong>
@@ -171,7 +181,7 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
       <section className="panel demo-live-panel">
         <header className="panel-header">
           <div>
-            <p className="sample-label">{localize(demoUiCopy.demoData, typedLocale)}</p>
+            <p className="sample-label">{hubCopy.demoData[typedLocale]}</p>
             <h2>{hubCopy.liveTitle[typedLocale]}</h2>
             <p>{hubCopy.liveBody[typedLocale]}</p>
           </div>
