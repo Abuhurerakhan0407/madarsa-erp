@@ -8,6 +8,7 @@ import { getDirection, type Locale } from "@/lib/i18n/config";
 import { appFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
+import "../demo.css";
 
 export const metadata: Metadata = {
   title: {
