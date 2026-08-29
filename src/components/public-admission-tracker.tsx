@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { PublicAdmissionLocale } from "@/lib/admissions/public-intake-model";
 
 type TrackingResult = {
@@ -112,7 +113,7 @@ export function PublicAdmissionTracker({ locale, initialReference = "" }: Public
     }
   }
 
-  const stateLabel = result?.state === "submitted" ? text.submitted : result?.state || "—";
+  const stateLabel = result?.state ? admissionStateLabel(locale, result.state) : "—";
 
   return (
     <main className="tracking-shell" dir={locale === "en" ? "ltr" : "rtl"} lang={locale}>

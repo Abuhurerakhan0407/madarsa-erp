@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
 
 type ConvertedStudent = {
@@ -134,7 +135,7 @@ export function AdmissionConversionPanel({
   if (convertedStudent) {
     return (
       <section className="configuration-detail-card" aria-labelledby="admission-conversion-title">
-        <span>{state}</span>
+        <span>{admissionStateLabel(locale, state)}</span>
         <h2 id="admission-conversion-title">{text.existing}</h2>
         <p>{text.studentNumber}: <code>{convertedStudent.studentNumber}</code></p>
         <p>{text.enrollment}: #{convertedStudent.enrollmentId}</p>
@@ -147,7 +148,7 @@ export function AdmissionConversionPanel({
 
   return (
     <section className="configuration-detail-card" aria-labelledby="admission-conversion-title">
-      <span>{state}</span>
+      <span>{admissionStateLabel(locale, state)}</span>
       <h2 id="admission-conversion-title">{text.title}</h2>
       <p>{text.body}</p>
 
