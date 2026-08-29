@@ -8,13 +8,17 @@ import { getDirection, type Locale } from "@/lib/i18n/config";
 import { appFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
+import "../demo.css";
 
 export const metadata: Metadata = {
   title: {
     default: "Madarsa ERP",
     template: "%s | Madarsa ERP"
   },
-  description: "Multi-tenant operating system for Madrasas and Islamic institutions."
+  description: "Multi-tenant operating system for Madrasas and Islamic institutions.",
+  other: {
+    google: "notranslate"
+  }
 };
 
 export function generateStaticParams() {
@@ -43,7 +47,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const messages = await getMessages();
 
   return (
-    <html lang={typedLocale} dir={getDirection(typedLocale)} suppressHydrationWarning>
+    <html lang={typedLocale} dir={getDirection(typedLocale)} translate="no" suppressHydrationWarning>
       <body className={appFontVariables}>
         <NextIntlClientProvider messages={messages}>
           <AppShell locale={typedLocale} workspace={workspace}>
