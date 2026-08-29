@@ -161,7 +161,7 @@ export function PublicAdmissionForm({
 
   if (result) {
     return (
-      <main className="public-intake-shell" dir={locale === "en" ? "ltr" : "rtl"}>
+      <main className="public-intake-shell" dir={locale === "en" ? "ltr" : "rtl"} lang={locale}>
         <section className="public-intake-card public-intake-success" aria-live="polite">
           <div className="public-intake-brand">M</div>
           <p className="public-intake-kicker">{tenantName} · {text.admissions}</p>
@@ -191,7 +191,7 @@ export function PublicAdmissionForm({
   }
 
   return (
-    <main className="public-intake-shell" dir={locale === "en" ? "ltr" : "rtl"}>
+    <main className="public-intake-shell" dir={locale === "en" ? "ltr" : "rtl"} lang={locale}>
       <section className="public-intake-card">
         <header className="public-intake-header">
           <div>

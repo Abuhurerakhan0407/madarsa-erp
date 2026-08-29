@@ -10,6 +10,9 @@ const runtimeScopes = readFileSync(
   new URL("../../../supabase/migrations/20260828112449_enforce_admissions_runtime_membership_scopes.sql", import.meta.url),
   "utf8"
 );
+const enquiryRuntime = readFileSync(
+  new URL("../../../supabase/migrations/20260828195958_enquiries_followup_runtime.sql", import.meta.url), "utf8"
+);
 
 const tables = [
   "enquiries",
@@ -33,6 +36,35 @@ function latestFunction(name: string) {
 }
 
 describe("Phase 5 database contract", () => {
+  it("keeps enquiry mutations server-only and branch-scoped", () => {
+    for (const name of ["create_admission_enquiry", "record_admission_followup", "start_application_from_enquiry"]) {
+      const body = enquiryRuntime.split(`create or replace function public.${name}(`)[1].split("$$;")[0];
+      expect(body).toContain("private.resolve_staff_membership");
+      expect(body).not.toMatch(/security\s+definer/i);
+      expect(enquiryRuntime).toContain(`revoke all on function public.${name}`);
+    }
+    expect(enquiryRuntime).toContain("r.status='active'");
+    expect(enquiryRuntime).toContain("m.starts_at is null or m.starts_at<=now()");
+    expect(enquiryRuntime).toContain("s.branch_id=p_branch_id");
+    expect(enquiryRuntime).toContain("to service_role");
+  });
+
+  it("detects duplicate contact without automatic merging", () => {
+    expect(enquiryRuntime).toContain("possible_duplicates");
+    expect(enquiryRuntime).toContain("duplicate_review_required");
+    expect(enquiryRuntime).toContain("admissions.application.override");
+    expect(enquiryRuntime).toContain("duplicate override permission and reason required");
+    expect(enquiryRuntime).not.toMatch(/update public\.persons/i);
+  });
+
+  it("pins enquiry applications and synchronizes conversion status", () => {
+    expect(enquiryRuntime).toContain("form_version_id");
+    expect(enquiryRuntime).toContain("workflow_version_id");
+    expect(enquiryRuntime).toContain("source','staff_enquiry'");
+    expect(enquiryRuntime).toContain("applications_sync_enquiry");
+    expect(enquiryRuntime).toContain("when new.state='enrolled' then 'converted'");
+  });
+
   it.each([
     "progress_admission_staff", "setup_student_number_sequence", "convert_admission_to_student",
     "setup_admissions_foundation", "apply_configuration_preset_drafts"

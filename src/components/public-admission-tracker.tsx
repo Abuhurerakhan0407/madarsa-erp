@@ -115,7 +115,7 @@ export function PublicAdmissionTracker({ locale, initialReference = "" }: Public
   const stateLabel = result?.state === "submitted" ? text.submitted : result?.state || "—";
 
   return (
-    <main className="tracking-shell" dir={locale === "en" ? "ltr" : "rtl"}>
+    <main className="tracking-shell" dir={locale === "en" ? "ltr" : "rtl"} lang={locale}>
       <section className="tracking-card">
         <header className="tracking-header">
           <div>

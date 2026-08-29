@@ -9,6 +9,17 @@
   color: #edf7f1;
 }
 
+.tracking-shell[lang="ur"],
+.tracking-shell[lang="ur"] :is(input, button, select, textarea) {
+  font-family: var(--font-nastaliq-urdu), var(--font-naskh-arabic), serif;
+  line-height: 1.8;
+}
+
+.tracking-shell[lang="ar"],
+.tracking-shell[lang="ar"] :is(input, button, select, textarea) {
+  font-family: var(--font-naskh-arabic), sans-serif;
+}
+
 .tracking-card {
   width: min(760px, 100%);
   margin-top: 5vh;

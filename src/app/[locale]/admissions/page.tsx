@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { getAdmissionsInbox } from "@/lib/admissions/inbox";
+import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
 import { getTenantContext } from "@/lib/tenancy/context";
 
@@ -17,6 +19,7 @@ const labels = {
     submitted: "Admissions workflow",
     reference: "Reference",
     review: "Review application"
+    , enquiries: "Enquiries and follow-ups"
   },
   ur: {
     kicker: "داخلہ · براہ راست درخواستیں",
@@ -32,6 +35,7 @@ const labels = {
     submitted: "داخلہ ورک فلو",
     reference: "حوالہ",
     review: "درخواست کا جائزہ لیں"
+    , enquiries: "استفسارات اور رابطے"
   },
   ar: {
     kicker: "القبول · الطلبات المباشرة",
@@ -47,6 +51,7 @@ const labels = {
     submitted: "مسار القبول",
     reference: "المرجع",
     review: "مراجعة الطلب"
+    , enquiries: "الاستفسارات والمتابعة"
   }
 } as const;
 
@@ -90,9 +95,10 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
           <h2>{workspace.tenantName}</h2>
           <p>{text.publicBody}</p>
         </div>
-        <a className="action-button action-button-primary" href={publicHref} target="_blank" rel="noreferrer">
+        <Link className="action-button action-button-primary" href={publicHref} target="_blank" rel="noreferrer">
           {text.openForm}
-        </a>
+        </Link>
+        <Link className="action-button" href={`/${locale}/admissions/enquiries`}>{text.enquiries}</Link>
       </section>
 
       <section className="configuration-section" aria-labelledby="admissions-list-title">
@@ -113,7 +119,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
           <div className="configuration-module-grid">
             {items.map((item) => (
               <article className="configuration-module" key={item.id}>
-                <span className="module-state module-state-attention">{item.state}</span>
+                <span className="module-state module-state-attention">{admissionStateLabel(locale, item.state)}</span>
                 <h3>{item.applicantName}</h3>
                 <p>{localized(item.programLabels, locale)} · {localized(item.sessionLabels, locale)}</p>
                 <p>{text.reference}: <code>{item.trackingId.slice(0, 8)}</code></p>
@@ -126,9 +132,9 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
                   </small>
                 ) : null}
                 <p>
-                  <a className="action-button" href={`/${locale}/admissions/${item.id}`}>
+                  <Link className="action-button" href={`/${locale}/admissions/${item.id}`}>
                     {text.review}
-                  </a>
+                  </Link>
                 </p>
               </article>
             ))}

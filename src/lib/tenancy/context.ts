@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
+import { selectWorkspaceBranchId } from "./workspace";
 
 export type TenantContext = {
   identityId: string;
@@ -20,11 +21,14 @@ export async function getTenantContext(): Promise<TenantContext | null> {
   if (!identity) return null;
 
   const supabase = await createClient();
+  const now = new Date().toISOString();
   const { data: membership, error: membershipError } = await supabase
     .from("memberships")
-    .select("id, tenant_id")
+    .select("id, tenant_id, all_branches")
     .eq("identity_id", identity.id)
     .eq("status", "active")
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gt.${now}`)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -57,14 +61,33 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     throw new Error(`Unable to resolve profile: ${profileError.message}`);
   }
 
+  let scopedBranchIds: number[] = [];
+  if (!membership.all_branches) {
+    const { data, error } = await supabase
+      .from("membership_branch_scopes")
+      .select("branch_id")
+      .eq("tenant_id", tenant.id)
+      .eq("membership_id", membership.id)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (error) throw new Error(`Unable to resolve membership branch: ${error.message}`);
+    scopedBranchIds = (data ?? []).map((row) => row.branch_id);
+    if (scopedBranchIds.length === 0) return null;
+  }
+
+  const workspaceBranchId = selectWorkspaceBranchId(
+    tenant.primary_branch_id,
+    membership.all_branches,
+    scopedBranchIds
+  );
   let branch: { id: number; name: string; code: string } | null = null;
 
-  if (tenant.primary_branch_id) {
+  if (workspaceBranchId) {
     const { data, error } = await supabase
       .from("branches")
       .select("id, name, code")
       .eq("tenant_id", tenant.id)
-      .eq("id", tenant.primary_branch_id)
+        .eq("id", workspaceBranchId)
       .maybeSingle();
 
     if (error) {
