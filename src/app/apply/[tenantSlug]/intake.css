@@ -9,6 +9,17 @@
   place-items: start center;
 }
 
+.public-intake-shell[lang="ur"],
+.public-intake-shell[lang="ur"] :is(input, button, select, textarea) {
+  font-family: var(--font-nastaliq-urdu), var(--font-naskh-arabic), serif;
+  line-height: 1.8;
+}
+
+.public-intake-shell[lang="ar"],
+.public-intake-shell[lang="ar"] :is(input, button, select, textarea) {
+  font-family: var(--font-naskh-arabic), sans-serif;
+}
+
 .public-intake-card {
   width: min(920px, 100%);
   background: rgba(16, 31, 24, 0.96);
