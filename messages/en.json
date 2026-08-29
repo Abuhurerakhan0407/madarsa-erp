@@ -7,7 +7,7 @@
     "branch": "Main branch",
     "session": "Academic year 1448 AH / 2026-27",
     "welcome": "Assalamu alaikum, Usman",
-    "subtitle": "Here is today's operational overview.",
+    "subtitle": "Admissions and student operations at a glance.",
     "openMenu": "Open navigation",
     "closeMenu": "Close navigation",
     "changeLanguage": "Change language",
@@ -56,7 +56,7 @@
     "studentName": "Student name"
   },
   "Configuration": {
-    "phase": "Phase 3 · Configuration engine",
+    "phase": "Institution settings",
     "title": "Configure your institution",
     "subtitle": "Start with a preset, then safely adapt terminology, workflows, grading, attendance and documents.",
     "readiness": "Setup readiness",
@@ -87,18 +87,53 @@
     "workflowDraft": "Draft and validate",
     "workflowReview": "Impact review",
     "workflowPublish": "Privileged publish",
-    "states": { "complete": "Ready", "attention": "Needs review", "pending": "Pending" },
-    "concepts": { "student": "Student", "teacher": "Teacher", "class": "Class" },
+    "states": {
+      "complete": "Ready",
+      "attention": "Needs review",
+      "pending": "Pending"
+    },
+    "concepts": {
+      "student": "Student",
+      "teacher": "Teacher",
+      "class": "Class"
+    },
     "modules": {
-      "institution": { "title": "Institution profile", "body": "Identity, timezone, calendars and operating model." },
-      "branches": { "title": "Branches", "body": "Branch codes, scope and approved local overrides." },
-      "languages": { "title": "Languages", "body": "English, Urdu and Arabic display priorities." },
-      "terminology": { "title": "Terminology", "body": "Stable concepts with multilingual display labels." },
-      "grading": { "title": "Grading", "body": "Versioned bands, pass rules and rounding." },
-      "attendance": { "title": "Attendance", "body": "Status sets, ratios, corrections and alerts." },
-      "workflows": { "title": "Workflows", "body": "Safe tasks, approvals and state transitions." },
-      "documents": { "title": "Documents", "body": "Structured certificates, receipts and reports." },
-      "numbering": { "title": "Numbering", "body": "Immutable, concurrency-safe identifier sequences." }
+      "institution": {
+        "title": "Institution profile",
+        "body": "Identity, timezone, calendars and operating model."
+      },
+      "branches": {
+        "title": "Branches",
+        "body": "Branch codes, scope and approved local overrides."
+      },
+      "languages": {
+        "title": "Languages",
+        "body": "English, Urdu and Arabic display priorities."
+      },
+      "terminology": {
+        "title": "Terminology",
+        "body": "Stable concepts with multilingual display labels."
+      },
+      "grading": {
+        "title": "Grading",
+        "body": "Versioned bands, pass rules and rounding."
+      },
+      "attendance": {
+        "title": "Attendance",
+        "body": "Status sets, ratios, corrections and alerts."
+      },
+      "workflows": {
+        "title": "Workflows",
+        "body": "Safe tasks, approvals and state transitions."
+      },
+      "documents": {
+        "title": "Documents",
+        "body": "Structured certificates, receipts and reports."
+      },
+      "numbering": {
+        "title": "Numbering",
+        "body": "Immutable, concurrency-safe identifier sequences."
+      }
     },
     "presets": {
       "maktab": "Foundational Islamic learning and daily attendance.",
@@ -108,15 +143,25 @@
       "urdu_medium_school": "Urdu-first academic setup with multilingual documents."
     },
     "domains": {
-      "admissions": "Admissions", "attendance": "Attendance", "nazra": "Nazra", "qaida": "Qaida",
-      "fees": "Fees", "hifz": "Hifz", "parent_portal": "Parent portal", "dars_e_nizami": "Dars-e-Nizami",
-      "exams": "Exams", "library": "Library", "academics": "Academics", "homework": "Homework", "transport": "Transport"
+      "admissions": "Admissions",
+      "attendance": "Attendance",
+      "nazra": "Nazra",
+      "qaida": "Qaida",
+      "fees": "Fees",
+      "hifz": "Hifz",
+      "parent_portal": "Parent portal",
+      "dars_e_nizami": "Dars-e-Nizami",
+      "exams": "Exams",
+      "library": "Library",
+      "academics": "Academics",
+      "homework": "Homework",
+      "transport": "Transport"
     }
   },
   "PeopleAcademics": {
-    "phase": "Phase 4 · People, academics and documents",
-    "title": "Build your academic foundation",
-    "subtitle": "Keep people, verified relationships, programs, enrollments, timetables and documents inside one safe tenant model.",
+    "phase": "Student information system",
+    "title": "Students and academic structure",
+    "subtitle": "Review active students, programs, enrollments and safeguarded academic records.",
     "foundationReady": "Foundation ready",
     "governedFoundation": "Governed records",
     "modulesTitle": "Foundation capabilities",
@@ -144,16 +189,45 @@
       "link": "Enable only approved portal views"
     },
     "modules": {
-      "people": { "title": "People profiles", "body": "One person record supports student, guardian and employee roles." },
-      "relationships": { "title": "Verified relationships", "body": "Guardian, pickup and portal access use explicit verification." },
-      "sessions": { "title": "Academic sessions", "body": "Dated sessions close safely without rewriting history." },
-      "programs": { "title": "Programs and levels", "body": "School, Hifz, Nazra, Qaida and Dars structures coexist." },
-      "enrollment": { "title": "Enrollment history", "body": "Concurrent programs, transfers and status events remain auditable." },
-      "timetable": { "title": "Timetable", "body": "Branch, group and teacher conflicts are detected before publish." },
-      "documents": { "title": "Documents", "body": "Private versioned files retain checksums, expiry and ownership." },
-      "portals": { "title": "Portal links", "body": "Identity links expose only relationship-approved read models." }
+      "people": {
+        "title": "People profiles",
+        "body": "One person record supports student, guardian and employee roles."
+      },
+      "relationships": {
+        "title": "Verified relationships",
+        "body": "Guardian, pickup and portal access use explicit verification."
+      },
+      "sessions": {
+        "title": "Academic sessions",
+        "body": "Dated sessions close safely without rewriting history."
+      },
+      "programs": {
+        "title": "Programs and levels",
+        "body": "School, Hifz, Nazra, Qaida and Dars structures coexist."
+      },
+      "enrollment": {
+        "title": "Enrollment history",
+        "body": "Concurrent programs, transfers and status events remain auditable."
+      },
+      "timetable": {
+        "title": "Timetable",
+        "body": "Branch, group and teacher conflicts are detected before publish."
+      },
+      "documents": {
+        "title": "Documents",
+        "body": "Private versioned files retain checksums, expiry and ownership."
+      },
+      "portals": {
+        "title": "Portal links",
+        "body": "Identity links expose only relationship-approved read models."
+      }
     },
-    "programs": { "general": "General school", "hifz": "Hifz", "nazra": "Nazra", "dars": "Dars-e-Nizami" }
+    "programs": {
+      "general": "General school",
+      "hifz": "Hifz",
+      "nazra": "Nazra",
+      "dars": "Dars-e-Nizami"
+    }
   },
   "State": {
     "loading": "Loading",
