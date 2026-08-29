@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { AdmissionStaffAction } from "@/lib/admissions/staff-action-model";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -126,7 +127,7 @@ export function AdmissionActionPanel({ applicationId, state, locale }: Admission
 
   return (
     <section className="configuration-detail-card" aria-labelledby="admission-actions-title">
-      <span>{state}</span>
+      <span>{admissionStateLabel(locale, state)}</span>
       <h2 id="admission-actions-title">{text.title}</h2>
       <p>{text.body}</p>
 

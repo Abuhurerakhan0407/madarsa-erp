@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdmissionActionPanel } from "@/components/admission-action-panel";
 import { AdmissionConversionPanel } from "@/components/admission-conversion-panel";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
+import { admissionDecisionOutcomeLabel, admissionReviewOutcomeLabel, admissionReviewTypeLabel, admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
 import { getTenantContext } from "@/lib/tenancy/context";
 
@@ -101,7 +102,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
         <div>
           <p className="state-kicker">{text.kicker}</p>
           <h1>{text.title}</h1>
-          <p>{detail.state} · {text.reference}: <code>{detail.trackingId.slice(0, 8)}</code></p>
+          <p>{admissionStateLabel(locale, detail.state)} · {text.reference}: <code>{detail.trackingId.slice(0, 8)}</code></p>
         </div>
         <a className="action-button" href={`/${locale}/admissions`}>{text.back}</a>
       </section>
@@ -157,7 +158,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
             {detail.decisions.map((decision) => (
               <article className="configuration-module" key={`decision-${decision.id}`}>
                 <span className="module-state module-state-attention">{text.decision}</span>
-                <h3>{decision.outcome}</h3>
+                <h3>{admissionDecisionOutcomeLabel(locale, decision.outcome)}</h3>
                 <p>{text.reason}: {decision.reason}</p>
                 <small>{new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeStyle: "short" }).format(new Date(decision.decidedAt))}</small>
               </article>
@@ -165,7 +166,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
             {detail.reviews.map((review) => (
               <article className="configuration-module" key={`review-${review.id}`}>
                 <span className="module-state module-state-complete">{text.review}</span>
-                <h3>{review.reviewType} · {review.outcome}</h3>
+                <h3>{admissionReviewTypeLabel(locale, review.reviewType)} · {admissionReviewOutcomeLabel(locale, review.outcome)}</h3>
                 {review.notes ? <p>{text.notes}: {review.notes}</p> : null}
                 <small>{new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeStyle: "short" }).format(new Date(review.createdAt))}</small>
               </article>
