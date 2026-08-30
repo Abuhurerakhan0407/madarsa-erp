@@ -116,7 +116,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   }).format(new Date());
 
   const featuredIds = new Set(["attendance", "quran", "fees", "whatsapp", "ai", "reports"]);
-  const featured = demoModules.filter((module) => featuredIds.has(module.id));
+  const featured = demoModules.filter((item) => featuredIds.has(item.id));
 
   return (
     <>
@@ -178,17 +178,22 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
             <h2>{copy.modules[typedLocale]}</h2>
             <p>{copy.modulesBody[typedLocale]}</p>
           </div>
-          <Link className="action-button" href={`/${typedLocale}/demo`} prefetch>
+          <Link className="action-button" href={`/${typedLocale}/demo`}>
             {copy.allModules[typedLocale]}
           </Link>
         </header>
         <div className="demo-module-grid demo-featured-grid">
-          {featured.map((module) => (
-            <Link className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id} prefetch>
-              <span className="demo-module-code">{module.code}</span>
+          {featured.map((item) => (
+            <Link
+              className="demo-module-card"
+              href={`/${typedLocale}/demo/${item.id}`}
+              key={item.id}
+              prefetch={false}
+            >
+              <span className="demo-module-code">{item.code}</span>
               <div>
-                <h3>{localize(module.title, typedLocale)}</h3>
-                <p>{localize(module.description, typedLocale)}</p>
+                <h3>{localize(item.title, typedLocale)}</h3>
+                <p>{localize(item.description, typedLocale)}</p>
               </div>
               <span className="demo-card-arrow" aria-hidden="true">→</span>
             </Link>
@@ -205,13 +210,13 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
           </div>
         </header>
         <div className="demo-live-actions">
-          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`} prefetch>
+          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
             {copy.buttons.admissions[typedLocale]}
           </Link>
-          <Link className="action-button" href={`/${typedLocale}/people-academics`} prefetch>
+          <Link className="action-button" href={`/${typedLocale}/people-academics`}>
             {copy.buttons.students[typedLocale]}
           </Link>
-          <Link className="action-button" href={`/${typedLocale}/settings/configuration`} prefetch>
+          <Link className="action-button" href={`/${typedLocale}/settings/configuration`}>
             {copy.buttons.configuration[typedLocale]}
           </Link>
         </div>
