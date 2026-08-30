@@ -11,7 +11,7 @@ function localized(labels:{en?:string;ur?:string;ar?:string},locale:Locale,fallb
 
 export function ExamsResultsWorkspace({locale,data}:{locale:Locale;data:ExamWorkspace}){
   const t=examsCopy[locale];const router=useRouter();const [busy,setBusy]=useState<string|null>(null);const [error,setError]=useState<string|null>(null);
-  const exam=data.exam;if(!exam)return <section className="panel exams-empty">{t.noResult}</section>;
+  const exam=data.exam;if(!exam)return <section className="panel exams-empty">{t.noResult}</section>;const examId=exam.id;
   const complete=data.summary.marksExpected>0&&data.summary.marksRecorded>=data.summary.marksExpected;
 
   async function post(path:string,body:Record<string,unknown>,key:string){
@@ -24,7 +24,7 @@ export function ExamsResultsWorkspace({locale,data}:{locale:Locale;data:ExamWork
   async function moderateMark(form:HTMLFormElement,markEntryId:number){
     const fd=new FormData(form);const marks=String(fd.get("rawMarks")||"").trim();await post("/api/exams/moderate",{markEntryId,rawMarks:marks,reason:String(fd.get("moderationReason")||"")},`moderate-${markEntryId}`);
   }
-  async function workflow(action:"calculate"|"approve"|"publish"){await post("/api/exams/workflow",{examSeriesId:exam.id,action},`workflow-${action}`);}
+  async function workflow(action:"calculate"|"approve"|"publish"){await post("/api/exams/workflow",{examSeriesId:examId,action},`workflow-${action}`);}
 
   const metrics=[[t.candidates,data.summary.candidates],[t.subjects,data.summary.subjects],[t.marksRecorded,`${data.summary.marksRecorded}/${data.summary.marksExpected}`],[t.average,data.summary.averagePercentage===null?"—":`${data.summary.averagePercentage}%`]];
   return <div className="exams-workspace">
