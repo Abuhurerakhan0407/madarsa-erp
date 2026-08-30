@@ -1,18 +1,19 @@
+import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
-import { demoModules, demoUiCopy, localize } from "@/lib/demo/modules";
+import { demoModules, localize } from "@/lib/demo/modules";
 
 type DemoHubPageProps = {
   params: Promise<{ locale: string }>;
 };
 
-type ExtraModule = {
+type ModuleSummary = {
   id: string;
   code: string;
   title: Record<Locale, string>;
   description: Record<Locale, string>;
 };
 
-const extraModules: ExtraModule[] = [
+const extraModules: ModuleSummary[] = [
   {
     id: "academics",
     code: "AC",
@@ -46,166 +47,131 @@ const extraModules: ExtraModule[] = [
 ];
 
 const hubCopy = {
-  demoData: {
-    en: "Demo data",
-    ur: "ڈیمو ڈیٹا",
-    ar: "بيانات العرض"
+  eyebrow: {
+    en: "Administration suite",
+    ur: "انتظامی سسٹم",
+    ar: "منظومة الإدارة"
   },
   title: {
-    en: "Complete Madarsa ERP demo",
-    ur: "مکمل مدرسہ ERP ڈیمو",
-    ar: "عرض Madarsa ERP متكامل"
+    en: "All modules",
+    ur: "تمام ماڈیولز",
+    ar: "جميع الوحدات"
   },
   moduleCount: {
-    en: "ERP modules",
-    ur: "ERP ماڈیولز",
-    ar: "وحدات ERP"
+    en: "operational areas",
+    ur: "آپریشنل شعبے",
+    ar: "مجالاً تشغيلياً"
   },
   body: {
-    en: "A presentation-ready walkthrough of the complete Madarsa ERP product. Every area uses one consistent fictional institution scenario, with live working workflows available for Admissions, student conversion and institution configuration.",
-    ur: "مکمل مدرسہ ERP کا پریزنٹیشن کے لیے تیار واک تھرو۔ ہر حصہ ایک ہی حقیقت پسندانہ فرضی ادارے کے منظرنامے پر مبنی ہے، جبکہ داخلہ، طالب علم کنورژن اور ادارہ کنفیگریشن کے حقیقی ورکنگ فلو بھی دستیاب ہیں۔",
-    ar: "جولة جاهزة لعرض منتج Madarsa ERP المتكامل. تستخدم جميع الوحدات سيناريو مؤسسة افتراضية موحداً، مع مسارات عملية فعلية للقبول وتحويل الطلاب وتهيئة المؤسسة."
+    en: "Everything your institution team needs—from admissions and academics to finance, campus operations, communication and reporting.",
+    ur: "داخلہ اور اکیڈمکس سے لے کر فنانس، کیمپس آپریشنز، کمیونیکیشن اور رپورٹنگ تک ادارے کی مکمل انتظامیہ۔",
+    ar: "كل ما يحتاجه فريق المؤسسة، من القبول والأكاديميات إلى المالية وعمليات الحرم والتواصل والتقارير."
   },
-  liveTitle: {
-    en: "Live working flows",
-    ur: "حقیقی ورکنگ فلو",
-    ar: "المسارات العملية الفعلية"
+  quickTitle: {
+    en: "Frequently used workspaces",
+    ur: "زیادہ استعمال ہونے والی ورک اسپیسز",
+    ar: "مساحات العمل الأكثر استخداماً"
   },
-  liveBody: {
-    en: "Use these when the client wants to go beyond the product walkthrough and see a real workflow in action.",
-    ur: "جب کلائنٹ پروڈکٹ واک تھرو سے آگے بڑھ کر حقیقی ورک فلو دیکھنا چاہے تو یہ فلو استعمال کریں۔",
-    ar: "استخدم هذه عندما يريد العميل تجاوز جولة المنتج ورؤية مسار عمل فعلي."
+  quickBody: {
+    en: "Jump straight into admissions, student structure or institution configuration.",
+    ur: "داخلہ، طالب علم اسٹرکچر یا ادارہ کنفیگریشن میں براہ راست جائیں۔",
+    ar: "انتقل مباشرة إلى القبول أو هيكل الطلاب أو تهيئة المؤسسة."
   },
   admissions: {
-    en: "Open live Admissions",
-    ur: "حقیقی داخلہ کھولیں",
-    ar: "فتح القبول الفعلي"
+    en: "Admissions workspace",
+    ur: "داخلہ ورک اسپیس",
+    ar: "مساحة القبول"
   },
   students: {
-    en: "Open live Student structure",
-    ur: "حقیقی طالب علم اسٹرکچر",
-    ar: "فتح هيكل الطلاب الفعلي"
+    en: "Student records",
+    ur: "طالب علم ریکارڈز",
+    ar: "سجلات الطلاب"
   },
   configuration: {
-    en: "Open live Configuration",
-    ur: "حقیقی کنفیگریشن",
-    ar: "فتح التهيئة الفعلية"
+    en: "Configuration",
+    ur: "کنفیگریشن",
+    ar: "التهيئة"
   }
 } as const;
+
+const groups: Array<{ title: Record<Locale, string>; ids: string[] }> = [
+  {
+    title: { en: "Students & learning", ur: "طلبہ و تعلیم", ar: "الطلاب والتعلم" },
+    ids: ["admissions", "students", "academics", "attendance", "quran", "exams", "portals"]
+  },
+  {
+    title: { en: "Finance & campus operations", ur: "فنانس و کیمپس آپریشنز", ar: "المالية وعمليات الحرم" },
+    ids: ["fees", "operations", "donations", "hostel", "transport", "staff", "library", "certificates"]
+  },
+  {
+    title: { en: "Administration & intelligence", ur: "انتظامیہ و انٹیلیجنس", ar: "الإدارة والذكاء" },
+    ids: ["reports", "whatsapp", "ai", "branches", "configuration"]
+  }
+];
 
 export default async function DemoHubPage({ params }: DemoHubPageProps) {
   const { locale } = await params;
   const typedLocale = (locale === "ur" || locale === "ar" ? locale : "en") as Locale;
+  const moduleSummaries: ModuleSummary[] = [...demoModules, ...extraModules];
+  const moduleMap = new Map(moduleSummaries.map((module) => [module.id, module]));
 
   return (
     <>
-      <section className="demo-hub-hero">
+      <section className="demo-hub-hero professional-modules-hero" data-page-section>
         <div>
-          <div className="demo-eyebrow-row">
-            <span className="demo-data-chip">{hubCopy.demoData[typedLocale]}</span>
-            <span className="demo-scenario-chip">{localize(demoUiCopy.scenario, typedLocale)}</span>
-          </div>
-          <p className="state-kicker">Madarsa ERP</p>
+          <p className="state-kicker">{hubCopy.eyebrow[typedLocale]}</p>
           <h1>{hubCopy.title[typedLocale]}</h1>
           <p>{hubCopy.body[typedLocale]}</p>
         </div>
         <div className="demo-hero-stat">
-          <strong>{demoModules.length + extraModules.length}</strong>
+          <strong>{moduleSummaries.length}</strong>
           <span>{hubCopy.moduleCount[typedLocale]}</span>
         </div>
       </section>
 
-      <section className="demo-module-grid" aria-label={hubCopy.title[typedLocale]}>
-        {demoModules.slice(0, 2).map((module) => (
-          <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
-            <span className="demo-module-code">{module.code}</span>
-            <div>
-              <h2>{localize(module.title, typedLocale)}</h2>
-              <p>{localize(module.description, typedLocale)}</p>
-            </div>
-            <span className="demo-card-arrow" aria-hidden="true">→</span>
-          </a>
-        ))}
+      {groups.map((group) => (
+        <section className="demo-module-group" key={group.title.en} data-page-section>
+          <header className="demo-section-heading demo-module-group-heading">
+            <h2>{group.title[typedLocale]}</h2>
+          </header>
+          <div className="demo-module-grid">
+            {group.ids.map((id) => {
+              const module = moduleMap.get(id);
+              if (!module) return null;
 
-        <a className="demo-module-card" href={`/${typedLocale}/demo/academics`}>
-          <span className="demo-module-code">{extraModules[0].code}</span>
-          <div>
-            <h2>{extraModules[0].title[typedLocale]}</h2>
-            <p>{extraModules[0].description[typedLocale]}</p>
+              return (
+                <Link className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id} prefetch>
+                  <span className="demo-module-code">{module.code}</span>
+                  <div>
+                    <h3>{localize(module.title, typedLocale)}</h3>
+                    <p>{localize(module.description, typedLocale)}</p>
+                  </div>
+                  <span className="demo-card-arrow" aria-hidden="true">→</span>
+                </Link>
+              );
+            })}
           </div>
-          <span className="demo-card-arrow" aria-hidden="true">→</span>
-        </a>
+        </section>
+      ))}
 
-        {demoModules.slice(2, 7).map((module) => (
-          <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
-            <span className="demo-module-code">{module.code}</span>
-            <div>
-              <h2>{localize(module.title, typedLocale)}</h2>
-              <p>{localize(module.description, typedLocale)}</p>
-            </div>
-            <span className="demo-card-arrow" aria-hidden="true">→</span>
-          </a>
-        ))}
-
-        <a className="demo-module-card" href={`/${typedLocale}/demo/operations`}>
-          <span className="demo-module-code">{extraModules[1].code}</span>
-          <div>
-            <h2>{extraModules[1].title[typedLocale]}</h2>
-            <p>{extraModules[1].description[typedLocale]}</p>
-          </div>
-          <span className="demo-card-arrow" aria-hidden="true">→</span>
-        </a>
-
-        {demoModules.slice(7, 9).map((module) => (
-          <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
-            <span className="demo-module-code">{module.code}</span>
-            <div>
-              <h2>{localize(module.title, typedLocale)}</h2>
-              <p>{localize(module.description, typedLocale)}</p>
-            </div>
-            <span className="demo-card-arrow" aria-hidden="true">→</span>
-          </a>
-        ))}
-
-        <a className="demo-module-card" href={`/${typedLocale}/demo/transport`}>
-          <span className="demo-module-code">{extraModules[2].code}</span>
-          <div>
-            <h2>{extraModules[2].title[typedLocale]}</h2>
-            <p>{extraModules[2].description[typedLocale]}</p>
-          </div>
-          <span className="demo-card-arrow" aria-hidden="true">→</span>
-        </a>
-
-        {demoModules.slice(9).map((module) => (
-          <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
-            <span className="demo-module-code">{module.code}</span>
-            <div>
-              <h2>{localize(module.title, typedLocale)}</h2>
-              <p>{localize(module.description, typedLocale)}</p>
-            </div>
-            <span className="demo-card-arrow" aria-hidden="true">→</span>
-          </a>
-        ))}
-      </section>
-
-      <section className="panel demo-live-panel">
+      <section className="panel demo-live-panel professional-quick-panel" data-page-section>
         <header className="panel-header">
           <div>
-            <p className="sample-label">{hubCopy.demoData[typedLocale]}</p>
-            <h2>{hubCopy.liveTitle[typedLocale]}</h2>
-            <p>{hubCopy.liveBody[typedLocale]}</p>
+            <p className="sample-label">{hubCopy.eyebrow[typedLocale]}</p>
+            <h2>{hubCopy.quickTitle[typedLocale]}</h2>
+            <p>{hubCopy.quickBody[typedLocale]}</p>
           </div>
         </header>
         <div className="demo-live-actions">
-          <a className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
+          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`} prefetch>
             {hubCopy.admissions[typedLocale]}
-          </a>
-          <a className="action-button" href={`/${typedLocale}/people-academics`}>
+          </Link>
+          <Link className="action-button" href={`/${typedLocale}/people-academics`} prefetch>
             {hubCopy.students[typedLocale]}
-          </a>
-          <a className="action-button" href={`/${typedLocale}/settings/configuration`}>
+          </Link>
+          <Link className="action-button" href={`/${typedLocale}/settings/configuration`} prefetch>
             {hubCopy.configuration[typedLocale]}
-          </a>
+          </Link>
         </div>
       </section>
     </>
