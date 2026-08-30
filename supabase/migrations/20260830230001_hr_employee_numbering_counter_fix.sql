@@ -16,6 +16,10 @@ begin
   if v_branch is null or v_owner_membership is null then return; end if;
 
   if not exists(select 1 from public.number_sequences ns where ns.tenant_id=v_tenant and ns.branch_id=v_branch and ns.key='employee_default' and ns.version=2) then
+    update public.number_sequences
+       set status='retired',updated_at=clock_timestamp()
+     where tenant_id=v_tenant and branch_id=v_branch and key='employee_default' and status='published';
+
     insert into public.number_sequences(tenant_id,branch_id,key,entity_type,pattern,next_value,padding,reset_period,reserved_values,status,effective_at,published_at,created_by_membership_id,published_by_membership_id,version)
     values(v_tenant,v_branch,'employee_default','employee','EMP-{BRANCH}-{YYYY}-{SEQ}',1,5,'never',array[]::bigint[],'published',clock_timestamp(),clock_timestamp(),v_owner_membership,v_owner_membership,2);
   end if;
