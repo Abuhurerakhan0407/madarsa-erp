@@ -22,7 +22,7 @@ export type StudentDetail = {
   pickupRestrictions: string | null;
   program: string;
   group: string;
-  guardian: { name: string; relationship: string; phone: string | null } | null;
+  guardian: { name: string; relationship: string; phone: string | null; occupation: string | null; education: string | null; canCollect: boolean } | null;
   attendance: AttendanceSummary | null;
   finance: FinanceSummary | null;
   quranAttempts: number | null;
@@ -82,7 +82,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   if (enrollment.error) throw new Error(`Unable to load student enrollment: ${enrollment.error.message}`);
   if (!person.data || !profile.data) return null;
 
-  const relationship = await supabase.from("person_relationships").select("source_person_id,relationship_type").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
+  const relationship = await supabase.from("person_relationships").select("source_person_id,relationship_type,can_collect_student").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
   const admin = createAdminClient();
@@ -97,13 +97,22 @@ export async function getStudentDetail(personId: number, locale: string): Promis
 
   let guardian: StudentDetail["guardian"] = null;
   if (relationship.data?.source_person_id) {
-    const [guardianPerson, guardianContact] = await Promise.all([
+    const [guardianPerson, guardianContact, guardianProfile] = await Promise.all([
       supabase.from("persons").select("display_name").eq("tenant_id", workspace.tenantId).eq("id", relationship.data.source_person_id).maybeSingle(),
-      supabase.from("person_contacts").select("value").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).eq("type", "phone").order("is_primary", { ascending: false }).limit(1).maybeSingle()
+      supabase.from("person_contacts").select("value").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).eq("type", "phone").order("is_primary", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("guardian_profiles").select("occupation,education").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).maybeSingle()
     ]);
     if (guardianPerson.error) throw new Error(`Unable to load guardian: ${guardianPerson.error.message}`);
     if (guardianContact.error) throw new Error(`Unable to load guardian contact: ${guardianContact.error.message}`);
-    if (guardianPerson.data) guardian = { name: guardianPerson.data.display_name, relationship: relationship.data.relationship_type, phone: guardianContact.data?.value ?? null };
+    if (guardianProfile.error) throw new Error(`Unable to load guardian profile: ${guardianProfile.error.message}`);
+    if (guardianPerson.data) guardian = {
+      name: guardianPerson.data.display_name,
+      relationship: relationship.data.relationship_type,
+      phone: guardianContact.data?.value ?? null,
+      occupation: guardianProfile.data?.occupation ?? null,
+      education: guardianProfile.data?.education ?? null,
+      canCollect: relationship.data.can_collect_student === true
+    };
   }
 
   const moduleData = moduleResult.data && typeof moduleResult.data === "object" && !Array.isArray(moduleResult.data) ? moduleResult.data as ModuleSummary : {};
