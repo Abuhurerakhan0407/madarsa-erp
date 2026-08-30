@@ -23,7 +23,7 @@ export function AppNavLink({ href, children, className }: AppNavLinkProps) {
       href={href}
       className={className}
       aria-current={isActive ? "page" : undefined}
-      prefetch
+      prefetch={false}
     >
       {children}
     </Link>
