@@ -51,10 +51,20 @@ const hubCopy = {
     ur: "ڈیمو ڈیٹا",
     ar: "بيانات العرض"
   },
+  title: {
+    en: "Complete Madarsa ERP demo",
+    ur: "مکمل مدرسہ ERP ڈیمو",
+    ar: "عرض Madarsa ERP متكامل"
+  },
+  moduleCount: {
+    en: "ERP modules",
+    ur: "ERP ماڈیولز",
+    ar: "وحدات ERP"
+  },
   body: {
-    en: "A presentation-ready walkthrough of the complete Madrasa ERP product. Every area uses one consistent fictional institution scenario, with live working workflows available for Admissions, student conversion and institution configuration.",
+    en: "A presentation-ready walkthrough of the complete Madarsa ERP product. Every area uses one consistent fictional institution scenario, with live working workflows available for Admissions, student conversion and institution configuration.",
     ur: "مکمل مدرسہ ERP کا پریزنٹیشن کے لیے تیار واک تھرو۔ ہر حصہ ایک ہی حقیقت پسندانہ فرضی ادارے کے منظرنامے پر مبنی ہے، جبکہ داخلہ، طالب علم کنورژن اور ادارہ کنفیگریشن کے حقیقی ورکنگ فلو بھی دستیاب ہیں۔",
-    ar: "جولة جاهزة لعرض منتج ERP المتكامل للمدرسة. تستخدم جميع الوحدات سيناريو مؤسسة افتراضية موحداً، مع مسارات عملية فعلية للقبول وتحويل الطلاب وتهيئة المؤسسة."
+    ar: "جولة جاهزة لعرض منتج Madarsa ERP المتكامل. تستخدم جميع الوحدات سيناريو مؤسسة افتراضية موحداً، مع مسارات عملية فعلية للقبول وتحويل الطلاب وتهيئة المؤسسة."
   },
   liveTitle: {
     en: "Live working flows",
@@ -96,16 +106,16 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
             <span className="demo-scenario-chip">{localize(demoUiCopy.scenario, typedLocale)}</span>
           </div>
           <p className="state-kicker">Madarsa ERP</p>
-          <h1>{localize(demoUiCopy.moduleHubTitle, typedLocale)}</h1>
+          <h1>{hubCopy.title[typedLocale]}</h1>
           <p>{hubCopy.body[typedLocale]}</p>
         </div>
         <div className="demo-hero-stat">
           <strong>{demoModules.length + extraModules.length}</strong>
-          <span>ERP modules</span>
+          <span>{hubCopy.moduleCount[typedLocale]}</span>
         </div>
       </section>
 
-      <section className="demo-module-grid" aria-label={localize(demoUiCopy.moduleHubTitle, typedLocale)}>
+      <section className="demo-module-grid" aria-label={hubCopy.title[typedLocale]}>
         {demoModules.slice(0, 2).map((module) => (
           <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
             <span className="demo-module-code">{module.code}</span>
