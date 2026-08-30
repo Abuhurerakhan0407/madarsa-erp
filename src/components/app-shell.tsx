@@ -36,7 +36,7 @@ const navGroups: NavGroup[] = [
       { key: "donations", labels: { en: "Donations & Sponsorships", ur: "عطیات و کفالت", ar: "التبرعات والكفالات" }, href: (locale) => `/${locale}/demo/donations` },
       { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس", ar: "السكن والإعاشة" }, href: (locale) => `/${locale}/demo/hostel` },
       { key: "transport", labels: { en: "Transport & Routes", ur: "ٹرانسپورٹ و روٹس", ar: "النقل والمسارات" }, href: (locale) => `/${locale}/demo/transport` },
-      { key: "staff", labels: { en: "HR & Payroll", ur: "HR و پے رول", ar: "الموارد البشرية والرواتب" }, href: (locale) => `/${locale}/demo/staff` },
+      { key: "staff", labels: { en: "HR & Payroll", ur: "HR و پے رول", ar: "الموارد البشرية والرواتب" }, href: (locale) => `/${locale}/staff` },
       { key: "library", labels: { en: "Library", ur: "لائبریری", ar: "المكتبة" }, href: (locale) => `/${locale}/demo/library` },
       { key: "certificates", labels: { en: "IDs & Certificates", ur: "ID و سرٹیفکیٹس", ar: "الهويات والشهادات" }, href: (locale) => `/${locale}/demo/certificates` }
     ]
