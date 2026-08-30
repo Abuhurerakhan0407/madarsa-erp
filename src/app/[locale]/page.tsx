@@ -1,72 +1,78 @@
+import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
-import { demoModules, demoUiCopy, localize } from "@/lib/demo/modules";
-import { getDashboardSummary } from "@/lib/dashboard/summary";
+import { demoModules, localize } from "@/lib/demo/modules";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 type DashboardPageProps = {
   params: Promise<{ locale: string }>;
 };
 
 const copy = {
-  demoData: {
-    en: "Demo data",
-    ur: "ڈیمو ڈیٹا",
-    ar: "بيانات العرض"
-  },
-  kicker: {
-    en: "Complete ERP demonstration",
-    ur: "مکمل ERP ڈیمو",
-    ar: "عرض ERP متكامل"
+  academicYear: {
+    en: "Academic year 2026–27",
+    ur: "تعلیمی سال 2026–27",
+    ar: "العام الدراسي 2026–27"
   },
   body: {
-    en: "A realistic 4,000-student operating scenario for the client presentation. Use the module walkthrough for the complete product view, then open the live Admissions, student-conversion and configuration flows when you want to demonstrate working operations.",
-    ur: "کلائنٹ پریزنٹیشن کے لیے 4,000 طلبہ کا حقیقت پسندانہ آپریشنل منظرنامہ۔ مکمل پروڈکٹ کے لیے ماڈیول واک تھرو دکھائیں، پھر حقیقی آپریشن دکھانے کے لیے داخلہ، طالب علم کنورژن اور کنفیگریشن فلو کھولیں۔",
-    ar: "سيناريو تشغيلي واقعي لمؤسسة تضم 4,000 طالب لعرض العميل. استخدم جولة الوحدات لعرض المنتج كاملاً، ثم افتح مسارات القبول وتحويل الطلاب والتهيئة لإظهار العمليات الفعلية."
+    en: "A clear view of students, attendance, fees, Qur'an learning, staffing and day-to-day school operations.",
+    ur: "طلبہ، حاضری، فیس، قرآن کی تعلیم، عملہ اور روزمرہ ادارہ آپریشنز کا واضح جائزہ۔",
+    ar: "نظرة واضحة على الطلاب والحضور والرسوم وتعليم القرآن والموظفين والعمليات اليومية للمؤسسة."
   },
   operations: {
-    en: "Today's institution snapshot",
-    ur: "آج کا ادارہ اسنیپ شاٹ",
-    ar: "ملخص المؤسسة اليوم"
+    en: "Institution overview",
+    ur: "ادارہ جائزہ",
+    ar: "نظرة عامة على المؤسسة"
+  },
+  operationsBody: {
+    en: "The numbers your administration team needs at a glance.",
+    ur: "انتظامیہ کے لیے اہم اعداد ایک نظر میں۔",
+    ar: "أهم الأرقام التي يحتاجها فريق الإدارة في لمحة واحدة."
   },
   modules: {
-    en: "Explore the complete ERP",
-    ur: "مکمل ERP دیکھیں",
-    ar: "استكشف ERP الكامل"
+    en: "Core operational areas",
+    ur: "اہم آپریشنل شعبے",
+    ar: "مجالات التشغيل الأساسية"
   },
   modulesBody: {
-    en: "Every approved area is visible from the demo. Open a module to see metrics, workflow, sample activity and included capabilities.",
-    ur: "ہر منظور شدہ حصہ ڈیمو میں نظر آتا ہے۔ میٹرکس، ورک فلو، سرگرمی اور صلاحیتیں دیکھنے کے لیے ماڈیول کھولیں۔",
-    ar: "كل المجالات المعتمدة ظاهرة في العرض. افتح أي وحدة لرؤية المؤشرات ومسار العمل والنشاط والقدرات."
+    en: "Open the areas used most often, or browse the complete administration suite.",
+    ur: "سب سے زیادہ استعمال ہونے والے شعبے کھولیں یا مکمل انتظامی سسٹم دیکھیں۔",
+    ar: "افتح المجالات الأكثر استخداماً أو استعرض مجموعة الإدارة الكاملة."
   },
-  live: {
-    en: "Live working samples",
-    ur: "حقیقی ورکنگ نمونے",
-    ar: "نماذج عملية فعلية"
+  allModules: {
+    en: "View all modules",
+    ur: "تمام ماڈیولز دیکھیں",
+    ar: "عرض جميع الوحدات"
   },
-  liveTitle: {
-    en: "Admissions → Student record",
-    ur: "داخلہ → طالب علم ریکارڈ",
-    ar: "القبول ← سجل الطالب"
+  quickActions: {
+    en: "Quick access",
+    ur: "فوری رسائی",
+    ar: "وصول سريع"
   },
-  liveBody: {
-    en: "Use these after the product overview when the client wants to see a real workflow.",
-    ur: "پروڈکٹ اوورویو کے بعد جب کلائنٹ حقیقی ورک فلو دیکھنا چاہے تو یہ کھولیں۔",
-    ar: "استخدم هذه بعد عرض المنتج عندما يريد العميل رؤية مسار عمل فعلي."
+  quickTitle: {
+    en: "Admissions and student records",
+    ur: "داخلہ اور طالب علم ریکارڈ",
+    ar: "القبول وسجلات الطلاب"
+  },
+  quickBody: {
+    en: "Move directly into admissions, student structure or institution configuration.",
+    ur: "داخلہ، طالب علم اسٹرکچر یا ادارہ کنفیگریشن میں براہ راست جائیں۔",
+    ar: "انتقل مباشرة إلى القبول أو هيكل الطلاب أو تهيئة المؤسسة."
   },
   buttons: {
     admissions: {
-      en: "Open live Admissions",
-      ur: "حقیقی داخلہ کھولیں",
-      ar: "فتح القبول الفعلي"
+      en: "Admissions workspace",
+      ur: "داخلہ ورک اسپیس",
+      ar: "مساحة القبول"
     },
     students: {
-      en: "Open live Student structure",
-      ur: "حقیقی طالب علم اسٹرکچر کھولیں",
-      ar: "فتح هيكل الطلاب الفعلي"
+      en: "Student records",
+      ur: "طالب علم ریکارڈز",
+      ar: "سجلات الطلاب"
     },
     configuration: {
-      en: "Open live Configuration",
-      ur: "حقیقی کنفیگریشن کھولیں",
-      ar: "فتح التهيئة الفعلية"
+      en: "Configuration",
+      ur: "کنفیگریشن",
+      ar: "التهيئة"
     }
   },
   metrics: {
@@ -100,36 +106,36 @@ const copy = {
 export default async function DashboardPage({ params }: DashboardPageProps) {
   const { locale } = await params;
   const typedLocale = (locale === "ur" || locale === "ar" ? locale : "en") as Locale;
-  const summary = await getDashboardSummary(typedLocale);
+  const workspace = await getTenantContext();
+
+  if (!workspace) return null;
 
   const dateLabel = new Intl.DateTimeFormat(typedLocale, {
     dateStyle: "medium",
-    timeZone: summary.timeZone
+    timeZone: "Asia/Kolkata"
   }).format(new Date());
 
   const featuredIds = new Set(["attendance", "quran", "fees", "whatsapp", "ai", "reports"]);
-  const featured = demoModules.filter((module) => featuredIds.has(module.id));
+  const featured = demoModules.filter((item) => featuredIds.has(item.id));
 
   return (
     <>
-      <section className="demo-hub-hero demo-overview-hero">
+      <section className="demo-hub-hero demo-overview-hero" data-page-section>
         <div>
           <div className="demo-eyebrow-row">
-            <span className="demo-data-chip">{copy.demoData[typedLocale]}</span>
-            <span className="demo-scenario-chip">{localize(demoUiCopy.scenario, typedLocale)}</span>
+            <span className="demo-scenario-chip">{copy.academicYear[typedLocale]}</span>
           </div>
-          <p className="state-kicker">{copy.kicker[typedLocale]}</p>
-          <h1>{summary.tenantName}</h1>
+          <h1>{workspace.tenantName}</h1>
           <p>{copy.body[typedLocale]}</p>
         </div>
-        <time className="demo-date-chip" dateTime={summary.dateKey}>{dateLabel}</time>
+        <time className="demo-date-chip" dateTime={new Date().toISOString()}>{dateLabel}</time>
       </section>
 
-      <section className="demo-overview-section">
+      <section className="demo-overview-section" data-page-section>
         <header className="demo-section-heading">
           <div>
-            <p className="sample-label">{copy.demoData[typedLocale]}</p>
             <h2>{copy.operations[typedLocale]}</h2>
+            <p>{copy.operationsBody[typedLocale]}</p>
           </div>
         </header>
         <div className="demo-metric-grid demo-overview-metrics">
@@ -166,49 +172,53 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         </div>
       </section>
 
-      <section className="demo-overview-section">
+      <section className="demo-overview-section" data-page-section>
         <header className="demo-section-heading">
           <div>
-            <p className="sample-label">{copy.demoData[typedLocale]}</p>
             <h2>{copy.modules[typedLocale]}</h2>
             <p>{copy.modulesBody[typedLocale]}</p>
           </div>
-          <a className="action-button" href={`/${typedLocale}/demo`}>
-            {localize(demoUiCopy.backToModules, typedLocale)}
-          </a>
+          <Link className="action-button" href={`/${typedLocale}/demo`}>
+            {copy.allModules[typedLocale]}
+          </Link>
         </header>
         <div className="demo-module-grid demo-featured-grid">
-          {featured.map((module) => (
-            <a className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id}>
-              <span className="demo-module-code">{module.code}</span>
+          {featured.map((item) => (
+            <Link
+              className="demo-module-card"
+              href={`/${typedLocale}/demo/${item.id}`}
+              key={item.id}
+              prefetch={false}
+            >
+              <span className="demo-module-code">{item.code}</span>
               <div>
-                <h2>{localize(module.title, typedLocale)}</h2>
-                <p>{localize(module.description, typedLocale)}</p>
+                <h3>{localize(item.title, typedLocale)}</h3>
+                <p>{localize(item.description, typedLocale)}</p>
               </div>
               <span className="demo-card-arrow" aria-hidden="true">→</span>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
 
-      <section className="panel demo-live-panel">
+      <section className="panel demo-live-panel professional-quick-panel" data-page-section>
         <header className="panel-header">
           <div>
-            <p className="sample-label">{copy.live[typedLocale]}</p>
-            <h2>{copy.liveTitle[typedLocale]}</h2>
-            <p>{copy.liveBody[typedLocale]}</p>
+            <p className="sample-label">{copy.quickActions[typedLocale]}</p>
+            <h2>{copy.quickTitle[typedLocale]}</h2>
+            <p>{copy.quickBody[typedLocale]}</p>
           </div>
         </header>
         <div className="demo-live-actions">
-          <a className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
+          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
             {copy.buttons.admissions[typedLocale]}
-          </a>
-          <a className="action-button" href={`/${typedLocale}/people-academics`}>
+          </Link>
+          <Link className="action-button" href={`/${typedLocale}/people-academics`}>
             {copy.buttons.students[typedLocale]}
-          </a>
-          <a className="action-button" href={`/${typedLocale}/settings/configuration`}>
+          </Link>
+          <Link className="action-button" href={`/${typedLocale}/settings/configuration`}>
             {copy.buttons.configuration[typedLocale]}
-          </a>
+          </Link>
         </div>
       </section>
     </>

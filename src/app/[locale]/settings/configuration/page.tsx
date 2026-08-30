@@ -37,7 +37,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
 
   return (
     <>
-      <section className="page-heading configuration-heading">
+      <section className="page-heading configuration-heading" data-page-section>
         <div>
           <p className="state-kicker">{t("phase")}</p>
           <h1>{t("title")}</h1>
@@ -49,7 +49,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         </div>
       </section>
 
-      <section className="configuration-banner" aria-labelledby="next-step-title">
+      <section className="configuration-banner" aria-labelledby="next-step-title" data-page-section>
         <div>
           <span>{t("recommended")}</span>
           <h2 id="next-step-title">{t("nextStep")}</h2>
@@ -58,7 +58,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         <a className="action-button action-button-primary" href="#presets">{t("reviewPresets")}</a>
       </section>
 
-      <section aria-labelledby="modules-title" className="configuration-section">
+      <section aria-labelledby="modules-title" className="configuration-section" data-page-section>
         <header className="section-heading">
           <div>
             <p>{t("governedSetup")}</p>
@@ -86,7 +86,7 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         </div>
       </section>
 
-      <section aria-labelledby="presets-title" className="configuration-section" id="presets">
+      <section aria-labelledby="presets-title" className="configuration-section" id="presets" data-page-section>
         <header className="section-heading">
           <div>
             <p>{t("editableStartingPoint")}</p>
@@ -105,10 +105,14 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         />
       </section>
 
-      <AdmissionsFoundationSetup locale={selectedLocale} />
-      <StudentNumberingSetup locale={selectedLocale} currentPattern={readiness.numberPattern} />
+      <div data-page-section>
+        <AdmissionsFoundationSetup locale={selectedLocale} />
+      </div>
+      <div data-page-section>
+        <StudentNumberingSetup locale={selectedLocale} currentPattern={readiness.numberPattern} />
+      </div>
 
-      <section className="configuration-detail-grid">
+      <section className="configuration-detail-grid" data-page-section>
         <article className="configuration-detail-card">
           <span>{t("versioned")}</span>
           <h2>{t("terminologyTitle")}</h2>

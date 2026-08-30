@@ -5,10 +5,12 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
 import { getDirection, type Locale } from "@/lib/i18n/config";
-import { appFontVariables } from "@/lib/i18n/fonts";
+import { getAppFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
 import "../demo.css";
+import "../professional.css";
+import "../professional-flows.css";
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +50,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <html lang={typedLocale} dir={getDirection(typedLocale)} translate="no" suppressHydrationWarning>
-      <body className={appFontVariables}>
+      <body className={getAppFontVariables(typedLocale)}>
         <NextIntlClientProvider messages={messages}>
           <AppShell locale={typedLocale} workspace={workspace}>
             {children}
