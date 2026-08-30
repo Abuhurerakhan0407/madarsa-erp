@@ -31,3 +31,23 @@ test("attendance correction blocks cross-origin mutations before auth", async ({
   const response = await request.post("/api/attendance/correct", { headers: { ...json, origin: "https://attacker.example" }, data: { attendanceRecordId: 1, statusKey: "present", reason: "Incorrect staff entry" } });
   expect(response.status()).toBe(403);
 });
+
+test("attendance lock rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/attendance/lock", { headers: json, data: { attendanceSessionId: 1 } });
+  expect(response.status()).toBe(401);
+});
+
+test("attendance lock blocks cross-origin mutations before auth", async ({ request }) => {
+  const response = await request.post("/api/attendance/lock", { headers: { ...json, origin: "https://attacker.example" }, data: { attendanceSessionId: 1 } });
+  expect(response.status()).toBe(403);
+});
+
+test("attendance correction review rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/attendance/review", { headers: json, data: { correctionId: 1, decision: "approved", reviewReason: "Verified against class register" } });
+  expect(response.status()).toBe(401);
+});
+
+test("attendance correction review requires JSON before authentication", async ({ request }) => {
+  const response = await request.post("/api/attendance/review", { headers: { "content-type": "text/plain" }, data: "approved" });
+  expect(response.status()).toBe(415);
+});
