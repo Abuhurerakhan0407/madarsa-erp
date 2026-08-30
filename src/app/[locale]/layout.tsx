@@ -10,6 +10,7 @@ import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
 import "../demo.css";
 import "../professional.css";
+import "../professional-flows.css";
 
 export const metadata: Metadata = {
   title: {
