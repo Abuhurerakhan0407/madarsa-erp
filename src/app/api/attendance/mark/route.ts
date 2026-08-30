@@ -19,6 +19,7 @@ export async function POST(request: Request) {
   const validation = validateAttendanceMarkInput(body);
   if (!validation.value) return NextResponse.json({ error: validation.errors[0] || "Invalid attendance mark.", details: validation.errors }, { status: 400 });
   const value = validation.value;
+  if (value.source !== "manual" || value.sourceRef) return NextResponse.json({ error: "Device attendance must use the dedicated device ingestion channel." }, { status: 400 });
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("mark_student_attendance", {
     p_identity_id: identity.id,
@@ -27,8 +28,8 @@ export async function POST(request: Request) {
     p_attendance_session_id: value.attendanceSessionId,
     p_person_id: value.personId,
     p_status_key: value.statusKey,
-    p_source: value.source,
-    p_source_ref: value.sourceRef ?? null,
+    p_source: "manual",
+    p_source_ref: null,
     p_note: value.note ?? null
   });
   if (error) {
