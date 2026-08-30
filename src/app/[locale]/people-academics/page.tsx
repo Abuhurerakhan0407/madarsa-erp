@@ -15,7 +15,7 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
 
   return (
     <>
-      <section className="page-heading">
+      <section className="page-heading" data-page-section>
         <div>
           <p className="state-kicker">{t("phase")}</p>
           <h1>{t("title")}</h1>
@@ -23,7 +23,7 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
         </div>
       </section>
 
-      <section className="metric-grid" aria-label={t("programsTitle")}>
+      <section className="metric-grid student-metric-grid" aria-label={t("programsTitle")} data-page-section>
         <article className="metric metric-primary">
           <span>{t("session")}</span>
           <strong>{summary.sessions}</strong>
@@ -47,7 +47,7 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
         </article>
       </section>
 
-      <section className="panel academic-structure-panel">
+      <section className="panel academic-structure-panel" data-page-section>
         <header className="panel-header">
           <div>
             <p>{t("structureKicker")}</p>
