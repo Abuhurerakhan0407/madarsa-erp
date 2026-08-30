@@ -45,10 +45,6 @@ export function MobileNavigation({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -73,9 +69,9 @@ export function MobileNavigation({
     { key: "students", label: studentsLabel, href: `/${locale}/students` }
   ];
 
-  const closeDrawer = () => {
+  const closeDrawer = (restoreFocus = true) => {
     setOpen(false);
-    window.setTimeout(() => triggerRef.current?.focus(), 0);
+    if (restoreFocus) window.setTimeout(() => triggerRef.current?.focus(), 0);
   };
 
   return (
@@ -100,11 +96,11 @@ export function MobileNavigation({
       </nav>
 
       <div className={styles.drawerLayer} data-open={open ? "true" : "false"} aria-hidden={!open}>
-        <button className={styles.backdrop} type="button" tabIndex={open ? 0 : -1} aria-label={closeLabel} onClick={closeDrawer} />
+        <button className={styles.backdrop} type="button" tabIndex={open ? 0 : -1} aria-label={closeLabel} onClick={() => closeDrawer()} />
         <aside id={drawerId} className={styles.drawer} aria-label={navigationLabel}>
           <header className={styles.drawerHeader}>
             <div><strong>{institutionName}</strong><span>{branchLabel}</span></div>
-            <button ref={closeRef} className={styles.closeButton} type="button" tabIndex={open ? 0 : -1} onClick={closeDrawer} aria-label={closeLabel}>×</button>
+            <button ref={closeRef} className={styles.closeButton} type="button" tabIndex={open ? 0 : -1} onClick={() => closeDrawer()} aria-label={closeLabel}>×</button>
           </header>
           <nav className={styles.drawerNav} aria-label={navigationLabel}>
             {groups.map((group) => (
@@ -114,7 +110,15 @@ export function MobileNavigation({
                   {group.items.map((item) => {
                     const current = isCurrentPath(pathname, item.href);
                     return (
-                      <Link className={styles.drawerLink} href={item.href} key={item.key} prefetch={false} tabIndex={open ? 0 : -1} aria-current={current ? "page" : undefined}>
+                      <Link
+                        className={styles.drawerLink}
+                        href={item.href}
+                        key={item.key}
+                        prefetch={false}
+                        tabIndex={open ? 0 : -1}
+                        aria-current={current ? "page" : undefined}
+                        onClick={() => closeDrawer(false)}
+                      >
                         <span className={styles.indicator} aria-hidden="true" />
                         <span>{item.label}</span>
                         <span className={styles.arrow} aria-hidden="true">→</span>
