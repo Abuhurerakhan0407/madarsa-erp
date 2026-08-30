@@ -11,6 +11,7 @@ import "../globals.css";
 import "../demo.css";
 import "../professional.css";
 import "../professional-flows.css";
+import "../hr.css";
 
 export const metadata: Metadata = {
   title: {
