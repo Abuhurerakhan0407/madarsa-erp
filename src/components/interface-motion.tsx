@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { gsap } from "gsap";
 
 export function InterfaceMotion() {
   const pathname = usePathname();
@@ -12,25 +11,38 @@ export function InterfaceMotion() {
       return;
     }
 
-    const elements = gsap.utils.toArray<HTMLElement>("#main-content > [data-page-section]");
-    if (elements.length === 0) return;
+    let cancelled = false;
+    let context: { revert: () => void } | undefined;
 
-    const context = gsap.context(() => {
-      gsap.fromTo(
-        elements,
-        { autoAlpha: 0, y: 10 },
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 0.38,
-          stagger: 0.035,
-          ease: "power2.out",
-          clearProps: "opacity,visibility,transform"
-        }
-      );
-    });
+    const timer = window.setTimeout(() => {
+      void import("gsap").then(({ gsap }) => {
+        if (cancelled) return;
 
-    return () => context.revert();
+        const elements = gsap.utils.toArray<HTMLElement>("#main-content > [data-page-section]");
+        if (elements.length === 0) return;
+
+        context = gsap.context(() => {
+          gsap.fromTo(
+            elements,
+            { autoAlpha: 0, y: 10 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.38,
+              stagger: 0.035,
+              ease: "power2.out",
+              clearProps: "opacity,visibility,transform"
+            }
+          );
+        });
+      });
+    }, 120);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      context?.revert();
+    };
   }, [pathname]);
 
   return null;
