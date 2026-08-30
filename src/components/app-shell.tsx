@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
+import { AppNavLink } from "@/components/app-nav-link";
+import { InterfaceMotion } from "@/components/interface-motion";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SignOutButton } from "@/components/sign-out-button";
 import type { Locale } from "@/lib/i18n/config";
@@ -25,8 +27,8 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
-    key: "core",
-    labels: { en: "Core operations", ur: "بنیادی آپریشنز", ar: "العمليات الأساسية" },
+    key: "academic",
+    labels: { en: "Academic operations", ur: "تعلیمی آپریشنز", ar: "العمليات الأكاديمية" },
     items: [
       { key: "overview", labels: { en: "Overview", ur: "جائزہ", ar: "نظرة عامة" }, href: (locale) => `/${locale}` },
       { key: "admissions", labels: { en: "Admissions", ur: "داخلہ", ar: "القبول" }, href: (locale) => `/${locale}/demo/admissions` },
@@ -39,8 +41,8 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    key: "operations",
-    labels: { en: "Institution operations", ur: "ادارہ آپریشنز", ar: "عمليات المؤسسة" },
+    key: "campus",
+    labels: { en: "Campus operations", ur: "کیمپس آپریشنز", ar: "عمليات الحرم" },
     items: [
       { key: "portals", labels: { en: "Parent & Staff Portals", ur: "والدین و عملہ پورٹلز", ar: "بوابات أولياء الأمور والموظفين" }, href: (locale) => `/${locale}/demo/portals` },
       { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/demo/operations` },
@@ -53,8 +55,8 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    key: "intelligence",
-    labels: { en: "Automation & intelligence", ur: "آٹومیشن و انٹیلیجنس", ar: "الأتمتة والذكاء" },
+    key: "administration",
+    labels: { en: "Administration & intelligence", ur: "انتظامیہ و انٹیلیجنس", ar: "الإدارة والذكاء" },
     items: [
       { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و اینالیٹکس", ar: "التقارير والتحليلات" }, href: (locale) => `/${locale}/demo/reports` },
       { key: "whatsapp", labels: { en: "WhatsApp Automation", ur: "واٹس ایپ آٹومیشن", ar: "أتمتة واتساب" }, href: (locale) => `/${locale}/demo/whatsapp` },
@@ -69,13 +71,25 @@ const mobileNav: NavItem[] = [
   { key: "overview", labels: { en: "Overview", ur: "جائزہ", ar: "نظرة" }, href: (locale) => `/${locale}` },
   { key: "admissions", labels: { en: "Admissions", ur: "داخلہ", ar: "القبول" }, href: (locale) => `/${locale}/demo/admissions` },
   { key: "students", labels: { en: "Students", ur: "طلبہ", ar: "الطلاب" }, href: (locale) => `/${locale}/demo/students` },
-  { key: "modules", labels: { en: "All modules", ur: "تمام ماڈیولز", ar: "كل الوحدات" }, href: (locale) => `/${locale}/demo` }
+  { key: "modules", labels: { en: "Modules", ur: "ماڈیولز", ar: "الوحدات" }, href: (locale) => `/${locale}/demo` }
 ];
 
-const demoLabels: Record<Locale, { badge: string; workspace: string }> = {
-  en: { badge: "Full ERP Demo", workspace: "4,000-student client scenario" },
-  ur: { badge: "مکمل ERP ڈیمو", workspace: "4,000 طلبہ کا کلائنٹ منظرنامہ" },
-  ar: { badge: "عرض ERP كامل", workspace: "سيناريو عميل لـ 4,000 طالب" }
+const shellCopy: Record<Locale, { productLine: string; academicYear: string; navigation: string }> = {
+  en: {
+    productLine: "School administration",
+    academicYear: "Academic year 2026–27",
+    navigation: "Workspace navigation"
+  },
+  ur: {
+    productLine: "ادارہ انتظامیہ",
+    academicYear: "تعلیمی سال 2026–27",
+    navigation: "ورک اسپیس نیویگیشن"
+  },
+  ar: {
+    productLine: "إدارة المؤسسة",
+    academicYear: "العام الدراسي 2026–27",
+    navigation: "تنقل مساحة العمل"
+  }
 };
 
 function initials(name: string): string {
@@ -86,24 +100,27 @@ function initials(name: string): string {
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const app = await getTranslations("App");
   const branchLabel = workspace.branchName || "Main Branch";
-  const demo = demoLabels[locale];
+  const copy = shellCopy[locale];
 
   return (
-    <div className="app-shell">
+    <div className="app-shell professional-shell">
       <a className="skip-link" href="#main-content">
         {app("skipToContent")}
       </a>
 
-      <aside className="sidebar" aria-label={app("productName")}>
-        <div className="brand-lockup">
+      <aside className="sidebar professional-sidebar" aria-label={copy.navigation}>
+        <div className="brand-lockup professional-brand-lockup">
           <span className="brand-mark" aria-hidden="true">M</span>
-          <span>{app("productName")}</span>
+          <span className="brand-copy">
+            <strong>{app("productName")}</strong>
+            <small>{copy.productLine}</small>
+          </span>
         </div>
-        <span className="status-pill demo-status-pill">{demo.badge}</span>
 
-        <div className="institution-card">
+        <div className="institution-card professional-institution-card">
           <strong>{workspace.tenantName}</strong>
           <span>{branchLabel}</span>
+          <small>{copy.academicYear}</small>
         </div>
 
         <nav aria-label={app("openMenu")} className="primary-nav demo-primary-nav">
@@ -111,9 +128,10 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
             <div className="nav-section" key={group.key}>
               <p className="nav-section-label">{group.labels[locale]}</p>
               {group.items.map((item) => (
-                <a href={item.href(locale)} key={item.key} className="nav-link">
-                  {item.labels[locale]}
-                </a>
+                <AppNavLink href={item.href(locale)} key={item.key} className="nav-link">
+                  <span className="nav-indicator" aria-hidden="true" />
+                  <span>{item.labels[locale]}</span>
+                </AppNavLink>
               ))}
             </div>
           ))}
@@ -123,31 +141,32 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
       </aside>
 
       <div className="workspace">
-        <header className="topbar">
-          <div>
+        <header className="topbar professional-topbar">
+          <div className="topbar-school-context">
             <p className="topbar-context">{workspace.tenantName}</p>
-            <p className="topbar-session">
-              {branchLabel} · {demo.workspace}
-            </p>
+            <p className="topbar-session">{branchLabel} · {copy.academicYear}</p>
           </div>
-          <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
-          <SignOutButton
-            label={app("userMenu")}
-            initials={initials(workspace.displayName)}
-            title={workspace.displayName}
-          />
+          <div className="topbar-actions">
+            <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
+            <SignOutButton
+              label={app("userMenu")}
+              initials={initials(workspace.displayName)}
+              title={workspace.displayName}
+            />
+          </div>
         </header>
 
-        <main id="main-content" className="main-content">
+        <main id="main-content" className="main-content professional-main-content">
+          <InterfaceMotion />
           {children}
         </main>
       </div>
 
-      <nav className="mobile-nav demo-mobile-nav" aria-label={app("openMenu")}>
+      <nav className="mobile-nav demo-mobile-nav professional-mobile-nav" aria-label={app("openMenu")}>
         {mobileNav.map((item) => (
-          <a href={item.href(locale)} key={item.key}>
+          <AppNavLink href={item.href(locale)} key={item.key}>
             {item.labels[locale]}
-          </a>
+          </AppNavLink>
         ))}
       </nav>
     </div>
