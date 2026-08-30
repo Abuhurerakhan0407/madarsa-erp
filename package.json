@@ -22,6 +22,7 @@
   "dependencies": {
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
+    "gsap": "3.15.0",
     "next": "16.3.1",
     "next-intl": "4.13.7",
     "react": "19.2.8",
@@ -32,7 +33,7 @@
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.3.0",
     "@types/react": "19.1.12",
-    "@types/react-dom": "19.1.9",
+    "@types/react-dom": "19.2.3",
     "eslint": "9.35.0",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "4.3.3",
