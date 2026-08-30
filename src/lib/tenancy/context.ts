@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { selectWorkspaceBranchId } from "./workspace";
@@ -16,7 +17,7 @@ export type TenantContext = {
   branchCode: string | null;
 };
 
-export async function getTenantContext(): Promise<TenantContext | null> {
+async function resolveTenantContext(): Promise<TenantContext | null> {
   const identity = await getVerifiedIdentity();
   if (!identity) return null;
 
@@ -87,7 +88,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
       .from("branches")
       .select("id, name, code")
       .eq("tenant_id", tenant.id)
-        .eq("id", workspaceBranchId)
+      .eq("id", workspaceBranchId)
       .maybeSingle();
 
     if (error) {
@@ -111,3 +112,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     branchCode: branch?.code ?? null
   };
 }
+
+// Layouts and pages often need the same authenticated workspace in one render pass.
+// React cache keeps that database work request-scoped and prevents duplicate queries.
+export const getTenantContext = cache(resolveTenantContext);
