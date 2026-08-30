@@ -30,7 +30,7 @@ export function QuranEntryForm({locale,personId,studentName,studentNumber,onSave
   async function submit(){
     setBusy(true);setError(null);
     try{
-      const body:any={requestKey:stableRequestKey(),personId,workCategory,targetMode:mode,outcome,accuracyScore:scores.accuracy,fluencyScore:scores.fluency,tajweedScore:scores.tajweed,overallScore:scores.overall,prompts:scores.prompts,teacherRemark:notes.teacher,parentVisibleRemark:notes.parent,privateNote:notes.private,mistakes:mistakeCategories.flatMap(category=>{const count=Number(mistakes[category]||0);return count>0?[{category,severity:count>=4?3:2,count}]:[];})};
+      const body:Record<string,unknown>={requestKey:stableRequestKey(),personId,workCategory,targetMode:mode,outcome,accuracyScore:scores.accuracy,fluencyScore:scores.fluency,tajweedScore:scores.tajweed,overallScore:scores.overall,prompts:scores.prompts,teacherRemark:notes.teacher,parentVisibleRemark:notes.parent,privateNote:notes.private,mistakes:mistakeCategories.flatMap(category=>{const count=Number(mistakes[category]||0);return count>0?[{category,severity:count>=4?3:2,count}]:[];})};
       if(mode==="juz")body.juzNumber=juz;
       if(mode==="ayah")Object.assign(body,{startSurahNumber:range.startSurah,startAyahNumber:range.startAyah,endSurahNumber:range.endSurah,endAyahNumber:range.endAyah});
       if(mode==="page")Object.assign(body,{pageStart:range.pageStart,pageEnd:range.pageEnd});
