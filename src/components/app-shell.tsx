@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { AppNavLink } from "@/components/app-nav-link";
 import { InterfaceMotion } from "@/components/interface-motion";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { MobileNavigation } from "@/components/mobile-navigation";
 import { SignOutButton } from "@/components/sign-out-button";
 import type { Locale } from "@/lib/i18n/config";
 import type { TenantContext } from "@/lib/tenancy/context";
@@ -53,17 +54,10 @@ const navGroups: NavGroup[] = [
   }
 ];
 
-const mobileNav: NavItem[] = [
-  { key: "overview", labels: { en: "Overview", ur: "جائزہ", ar: "نظرة" }, href: (locale) => `/${locale}` },
-  { key: "admissions", labels: { en: "Admissions", ur: "داخلہ", ar: "القبول" }, href: (locale) => `/${locale}/admissions` },
-  { key: "students", labels: { en: "Students", ur: "طلبہ", ar: "الطلاب" }, href: (locale) => `/${locale}/students` },
-  { key: "modules", labels: { en: "Modules", ur: "ماڈیولز", ar: "الوحدات" }, href: (locale) => `/${locale}/demo` }
-];
-
-const shellCopy: Record<Locale, { productLine: string; academicYear: string; navigation: string }> = {
-  en: { productLine: "School administration", academicYear: "Academic year 2026–27", navigation: "Workspace navigation" },
-  ur: { productLine: "ادارہ انتظامیہ", academicYear: "تعلیمی سال 2026–27", navigation: "ورک اسپیس نیویگیشن" },
-  ar: { productLine: "إدارة المؤسسة", academicYear: "العام الدراسي 2026–27", navigation: "تنقل مساحة العمل" }
+const shellCopy: Record<Locale, { productLine: string; academicYear: string; navigation: string; menu: string; close: string }> = {
+  en: { productLine: "School administration", academicYear: "Academic year 2026–27", navigation: "Workspace navigation", menu: "Menu", close: "Close menu" },
+  ur: { productLine: "ادارہ انتظامیہ", academicYear: "تعلیمی سال 2026–27", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں" },
+  ar: { productLine: "إدارة المؤسسة", academicYear: "العام الدراسي 2026–27", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة" }
 };
 
 function initials(name: string): string {
@@ -75,9 +69,16 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const app = await getTranslations("App");
   const branchLabel = workspace.branchName || "Main Branch";
   const copy = shellCopy[locale];
+  const mobileGroups = navGroups.map((group) => ({
+    key: group.key,
+    label: group.labels[locale],
+    items: group.items.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }))
+  }));
+
   return (
     <div className="app-shell professional-shell">
       <a className="skip-link" href="#main-content">{app("skipToContent")}</a>
+
       <aside className="sidebar professional-sidebar" aria-label={copy.navigation}>
         <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">M</span><span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span></div>
         <div className="institution-card professional-institution-card"><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{copy.academicYear}</small></div>
@@ -86,8 +87,27 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </nav>
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
       </aside>
-      <div className="workspace"><header className="topbar professional-topbar"><div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.academicYear}</p></div><div className="topbar-actions"><LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} /></div></header><main id="main-content" className="main-content professional-main-content"><InterfaceMotion />{children}</main></div>
-      <nav className="mobile-nav demo-mobile-nav professional-mobile-nav" aria-label={app("openMenu")}>{mobileNav.map((item) => <AppNavLink href={item.href(locale)} key={item.key}>{item.labels[locale]}</AppNavLink>)}</nav>
+
+      <div className="workspace">
+        <header className="topbar professional-topbar">
+          <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.academicYear}</p></div>
+          <div className="topbar-actions"><LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} /></div>
+        </header>
+        <main id="main-content" className="main-content professional-main-content"><InterfaceMotion />{children}</main>
+      </div>
+
+      <MobileNavigation
+        locale={locale}
+        groups={mobileGroups}
+        overviewLabel={navGroups[0].items[0].labels[locale]}
+        admissionsLabel={navGroups[0].items[1].labels[locale]}
+        studentsLabel={navGroups[0].items[2].labels[locale]}
+        menuLabel={copy.menu}
+        closeLabel={copy.close}
+        navigationLabel={copy.navigation}
+        institutionName={workspace.tenantName}
+        branchLabel={branchLabel}
+      />
     </div>
   );
 }
