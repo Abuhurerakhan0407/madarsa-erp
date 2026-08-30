@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateAttendanceDate } from "@/lib/attendance/model";
+import { getDefaultAttendanceDate } from "@/lib/attendance/workspace";
 import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
@@ -19,6 +20,8 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Request body must be an object." }, { status: 400 });
   const date = validateAttendanceDate((body as Record<string, unknown>).date);
   if (!date) return NextResponse.json({ error: "Attendance date is invalid." }, { status: 400 });
+  const today = await getDefaultAttendanceDate();
+  if (date > today) return NextResponse.json({ error: "Attendance cannot be started for a future date." }, { status: 422 });
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("ensure_student_daily_attendance", { p_identity_id: identity.id, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_attendance_date: date });
   if (error) {
