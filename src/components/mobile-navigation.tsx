@@ -2,21 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
+import styles from "./mobile-navigation.module.css";
 
-type MobileNavItem = {
-  key: string;
-  label: string;
-  href: string;
-};
-
-type MobileNavGroup = {
-  key: string;
-  label: string;
-  items: MobileNavItem[];
-};
-
+type MobileNavItem = { key: string; label: string; href: string };
+type MobileNavGroup = { key: string; label: string; items: MobileNavItem[] };
 type MobileNavigationProps = {
   locale: Locale;
   groups: MobileNavGroup[];
@@ -50,6 +41,8 @@ export function MobileNavigation({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const drawerId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setOpen(false);
@@ -59,11 +52,16 @@ export function MobileNavigation({
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const focusTimer = window.setTimeout(() => closeRef.current?.focus(), 0);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
+      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
@@ -75,64 +73,51 @@ export function MobileNavigation({
     { key: "students", label: studentsLabel, href: `/${locale}/students` }
   ];
 
+  const closeDrawer = () => {
+    setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  };
+
   return (
     <>
-      <nav className="mobile-nav professional-mobile-nav" aria-label={navigationLabel}>
+      <nav className={styles.bottomNav} aria-label={navigationLabel}>
         {quickItems.map((item) => (
-          <Link
-            href={item.href}
-            key={item.key}
-            prefetch={false}
-            aria-current={isCurrentPath(pathname, item.href) ? "page" : undefined}
-          >
+          <Link href={item.href} key={item.key} prefetch={false} aria-current={isCurrentPath(pathname, item.href) ? "page" : undefined}>
             {item.label}
           </Link>
         ))}
         <button
-          className="mobile-menu-tab"
+          ref={triggerRef}
+          className={styles.menuTab}
           type="button"
           aria-expanded={open}
           aria-controls={drawerId}
           onClick={() => setOpen(true)}
         >
-          <span className="mobile-menu-icon" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
+          <span className={styles.menuIcon} aria-hidden="true"><i /><i /><i /></span>
           <span>{menuLabel}</span>
         </button>
       </nav>
 
-      <div className="mobile-drawer-layer" data-open={open ? "true" : "false"} aria-hidden={!open}>
-        <button className="mobile-drawer-backdrop" type="button" tabIndex={open ? 0 : -1} aria-label={closeLabel} onClick={() => setOpen(false)} />
-        <aside id={drawerId} className="mobile-navigation-drawer" aria-label={navigationLabel}>
-          <header className="mobile-drawer-header">
-            <div>
-              <strong>{institutionName}</strong>
-              <span>{branchLabel}</span>
-            </div>
-            <button className="mobile-drawer-close" type="button" onClick={() => setOpen(false)} aria-label={closeLabel}>×</button>
+      <div className={styles.drawerLayer} data-open={open ? "true" : "false"} aria-hidden={!open}>
+        <button className={styles.backdrop} type="button" tabIndex={open ? 0 : -1} aria-label={closeLabel} onClick={closeDrawer} />
+        <aside id={drawerId} className={styles.drawer} aria-label={navigationLabel}>
+          <header className={styles.drawerHeader}>
+            <div><strong>{institutionName}</strong><span>{branchLabel}</span></div>
+            <button ref={closeRef} className={styles.closeButton} type="button" tabIndex={open ? 0 : -1} onClick={closeDrawer} aria-label={closeLabel}>×</button>
           </header>
-
-          <nav className="mobile-drawer-nav" aria-label={navigationLabel}>
+          <nav className={styles.drawerNav} aria-label={navigationLabel}>
             {groups.map((group) => (
-              <section className="mobile-drawer-group" key={group.key}>
+              <section className={styles.drawerGroup} key={group.key}>
                 <p>{group.label}</p>
                 <div>
                   {group.items.map((item) => {
                     const current = isCurrentPath(pathname, item.href);
                     return (
-                      <Link
-                        className="mobile-drawer-link"
-                        href={item.href}
-                        key={item.key}
-                        prefetch={false}
-                        aria-current={current ? "page" : undefined}
-                      >
-                        <span className="mobile-drawer-indicator" aria-hidden="true" />
+                      <Link className={styles.drawerLink} href={item.href} key={item.key} prefetch={false} tabIndex={open ? 0 : -1} aria-current={current ? "page" : undefined}>
+                        <span className={styles.indicator} aria-hidden="true" />
                         <span>{item.label}</span>
-                        <span className="mobile-drawer-arrow" aria-hidden="true">→</span>
+                        <span className={styles.arrow} aria-hidden="true">→</span>
                       </Link>
                     );
                   })}
