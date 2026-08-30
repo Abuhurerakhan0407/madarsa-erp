@@ -140,7 +140,12 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
               if (!item) return null;
 
               return (
-                <Link className="demo-module-card" href={`/${typedLocale}/demo/${item.id}`} key={item.id} prefetch>
+                <Link
+                  className="demo-module-card"
+                  href={`/${typedLocale}/demo/${item.id}`}
+                  key={item.id}
+                  prefetch={false}
+                >
                   <span className="demo-module-code">{item.code}</span>
                   <div>
                     <h3>{localize(item.title, typedLocale)}</h3>
@@ -163,13 +168,13 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
           </div>
         </header>
         <div className="demo-live-actions">
-          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`} prefetch>
+          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
             {hubCopy.admissions[typedLocale]}
           </Link>
-          <Link className="action-button" href={`/${typedLocale}/people-academics`} prefetch>
+          <Link className="action-button" href={`/${typedLocale}/people-academics`}>
             {hubCopy.students[typedLocale]}
           </Link>
-          <Link className="action-button" href={`/${typedLocale}/settings/configuration`} prefetch>
+          <Link className="action-button" href={`/${typedLocale}/settings/configuration`}>
             {hubCopy.configuration[typedLocale]}
           </Link>
         </div>
