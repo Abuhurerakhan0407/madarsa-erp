@@ -24,7 +24,7 @@ const navGroups: NavGroup[] = [
       { key: "attendance", labels: { en: "Attendance & Biometrics", ur: "حاضری و بایومیٹرکس", ar: "الحضور والبيومتري" }, href: (locale) => `/${locale}/attendance` },
       { key: "quran", labels: { en: "Qur'an & Hifz", ur: "قرآن و حفظ", ar: "القرآن والحفظ" }, href: (locale) => `/${locale}/quran` },
       { key: "fees", labels: { en: "Fees & Accounting", ur: "فیس و اکاؤنٹنگ", ar: "الرسوم والمحاسبة" }, href: (locale) => `/${locale}/demo/fees` },
-      { key: "exams", labels: { en: "Exams & Results", ur: "امتحانات و نتائج", ar: "الاختبارات والنتائج" }, href: (locale) => `/${locale}/demo/exams` }
+      { key: "exams", labels: { en: "Exams & Results", ur: "امتحانات و نتائج", ar: "الاختبارات والنتائج" }, href: (locale) => `/${locale}/exams` }
     ]
   },
   {
