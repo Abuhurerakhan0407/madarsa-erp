@@ -113,7 +113,7 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
   const { locale } = await params;
   const typedLocale = (locale === "ur" || locale === "ar" ? locale : "en") as Locale;
   const moduleSummaries: ModuleSummary[] = [...demoModules, ...extraModules];
-  const moduleMap = new Map(moduleSummaries.map((module) => [module.id, module]));
+  const moduleMap = new Map(moduleSummaries.map((item) => [item.id, item]));
 
   return (
     <>
@@ -136,15 +136,15 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
           </header>
           <div className="demo-module-grid">
             {group.ids.map((id) => {
-              const module = moduleMap.get(id);
-              if (!module) return null;
+              const item = moduleMap.get(id);
+              if (!item) return null;
 
               return (
-                <Link className="demo-module-card" href={`/${typedLocale}/demo/${module.id}`} key={module.id} prefetch>
-                  <span className="demo-module-code">{module.code}</span>
+                <Link className="demo-module-card" href={`/${typedLocale}/demo/${item.id}`} key={item.id} prefetch>
+                  <span className="demo-module-code">{item.code}</span>
                   <div>
-                    <h3>{localize(module.title, typedLocale)}</h3>
-                    <p>{localize(module.description, typedLocale)}</p>
+                    <h3>{localize(item.title, typedLocale)}</h3>
+                    <p>{localize(item.description, typedLocale)}</p>
                   </div>
                   <span className="demo-card-arrow" aria-hidden="true">→</span>
                 </Link>
