@@ -16,14 +16,19 @@ export async function POST(request: Request) {
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Request body must be an object." }, { status: 400 });
+  const raw = body as Record<string, unknown>;
+  const requestKey = typeof raw.requestKey === "string" ? raw.requestKey.trim() : "";
+  if (requestKey.length < 16 || requestKey.length > 96) return NextResponse.json({ error: "Valid request key required." }, { status: 400 });
   const validation = validateQuranAttemptInput(body);
   if (!validation.value) return NextResponse.json({ error: validation.errors[0] || "Invalid Qur'an record.", details: validation.errors }, { status: 400 });
   const value = validation.value;
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("record_quran_hifz_attempt", {
+  const { data, error } = await admin.rpc("record_quran_hifz_attempt_idempotent", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
+    p_request_key: requestKey,
     p_student_person_id: value.personId,
     p_work_category: value.workCategory,
     p_juz_number: value.juzNumber ?? null,
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
     const message = error.message.toLowerCase();
     if (message.includes("permission denied")) return NextResponse.json({ error: "Qur'an recording permission required." }, { status: 403 });
     if (message.includes("not actively enrolled")) return NextResponse.json({ error: "Student is not actively enrolled in this branch." }, { status: 404 });
-    if (message.includes("invalid") || message.includes("required") || message.includes("too long") || message.includes("mistake")) return NextResponse.json({ error: error.message }, { status: 422 });
+    if (message.includes("invalid") || message.includes("required") || message.includes("too long") || message.includes("mistake") || message.includes("request key")) return NextResponse.json({ error: error.message }, { status: 422 });
     return NextResponse.json({ error: "Unable to record Qur'an progress." }, { status: 500 });
   }
   return NextResponse.json({ result: data }, { status: 201, headers: { "cache-control": "no-store" } });
