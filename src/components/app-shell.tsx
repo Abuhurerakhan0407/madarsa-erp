@@ -21,7 +21,7 @@ const navGroups: NavGroup[] = [
       { key: "admissions", labels: { en: "Admissions", ur: "داخلہ", ar: "القبول" }, href: (locale) => `/${locale}/admissions` },
       { key: "students", labels: { en: "Students", ur: "طلبہ", ar: "الطلاب" }, href: (locale) => `/${locale}/students` },
       { key: "academics", labels: { en: "Academics & Timetable", ur: "اکیڈمکس و ٹائم ٹیبل", ar: "الأكاديميات والجدول" }, href: (locale) => `/${locale}/people-academics` },
-      { key: "attendance", labels: { en: "Attendance & Biometrics", ur: "حاضری و بایومیٹرکس", ar: "الحضور والبيومتري" }, href: (locale) => `/${locale}/demo/attendance` },
+      { key: "attendance", labels: { en: "Attendance & Biometrics", ur: "حاضری و بایومیٹرکس", ar: "الحضور والبيومتري" }, href: (locale) => `/${locale}/attendance` },
       { key: "quran", labels: { en: "Qur'an & Hifz", ur: "قرآن و حفظ", ar: "القرآن والحفظ" }, href: (locale) => `/${locale}/demo/quran` },
       { key: "fees", labels: { en: "Fees & Accounting", ur: "فیس و اکاؤنٹنگ", ar: "الرسوم والمحاسبة" }, href: (locale) => `/${locale}/demo/fees` },
       { key: "exams", labels: { en: "Exams & Results", ur: "امتحانات و نتائج", ar: "الاختبارات والنتائج" }, href: (locale) => `/${locale}/demo/exams` }
@@ -78,7 +78,6 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   return (
     <div className="app-shell professional-shell">
       <a className="skip-link" href="#main-content">{app("skipToContent")}</a>
-
       <aside className="sidebar professional-sidebar" aria-label={copy.navigation}>
         <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">M</span><span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span></div>
         <div className="institution-card professional-institution-card"><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{copy.academicYear}</small></div>
@@ -87,7 +86,6 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </nav>
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
       </aside>
-
       <div className="workspace">
         <header className="topbar professional-topbar">
           <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.academicYear}</p></div>
@@ -95,19 +93,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </header>
         <main id="main-content" className="main-content professional-main-content"><InterfaceMotion />{children}</main>
       </div>
-
-      <MobileNavigation
-        locale={locale}
-        groups={mobileGroups}
-        overviewLabel={navGroups[0].items[0].labels[locale]}
-        admissionsLabel={navGroups[0].items[1].labels[locale]}
-        studentsLabel={navGroups[0].items[2].labels[locale]}
-        menuLabel={copy.menu}
-        closeLabel={copy.close}
-        navigationLabel={copy.navigation}
-        institutionName={workspace.tenantName}
-        branchLabel={branchLabel}
-      />
+      <MobileNavigation locale={locale} groups={mobileGroups} overviewLabel={navGroups[0].items[0].labels[locale]} admissionsLabel={navGroups[0].items[1].labels[locale]} studentsLabel={navGroups[0].items[2].labels[locale]} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
     </div>
   );
 }
