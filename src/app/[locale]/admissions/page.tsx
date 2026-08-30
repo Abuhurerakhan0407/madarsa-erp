@@ -6,7 +6,7 @@ import { getTenantContext } from "@/lib/tenancy/context";
 
 const labels = {
   en: {
-    kicker: "Admissions · Live intake",
+    kicker: "Admissions operations",
     title: "Admissions inbox",
     subtitle: "Review applications submitted through your institution's published admission form.",
     publicTitle: "Public application link",
@@ -18,11 +18,11 @@ const labels = {
     emptyBody: "New submitted applications will appear here automatically.",
     submitted: "Admissions workflow",
     reference: "Reference",
-    review: "Review application"
-    , enquiries: "Enquiries and follow-ups"
+    review: "Review application",
+    enquiries: "Enquiries and follow-ups"
   },
   ur: {
-    kicker: "داخلہ · براہ راست درخواستیں",
+    kicker: "داخلہ آپریشنز",
     title: "داخلہ درخواستیں",
     subtitle: "ادارے کے شائع شدہ داخلہ فارم کے ذریعے موصول ہونے والی درخواستیں دیکھیں۔",
     publicTitle: "عوامی درخواست لنک",
@@ -34,11 +34,11 @@ const labels = {
     emptyBody: "نئی جمع شدہ درخواستیں خودکار طور پر یہاں ظاہر ہوں گی۔",
     submitted: "داخلہ ورک فلو",
     reference: "حوالہ",
-    review: "درخواست کا جائزہ لیں"
-    , enquiries: "استفسارات اور رابطے"
+    review: "درخواست کا جائزہ لیں",
+    enquiries: "استفسارات اور رابطے"
   },
   ar: {
-    kicker: "القبول · الطلبات المباشرة",
+    kicker: "عمليات القبول",
     title: "صندوق طلبات القبول",
     subtitle: "راجع الطلبات المقدمة من خلال نموذج القبول المنشور للمؤسسة.",
     publicTitle: "رابط طلب الالتحاق العام",
@@ -50,8 +50,8 @@ const labels = {
     emptyBody: "ستظهر الطلبات الجديدة هنا تلقائيًا.",
     submitted: "مسار القبول",
     reference: "المرجع",
-    review: "مراجعة الطلب"
-    , enquiries: "الاستفسارات والمتابعة"
+    review: "مراجعة الطلب",
+    enquiries: "الاستفسارات والمتابعة"
   }
 } as const;
 
@@ -81,7 +81,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
 
   return (
     <>
-      <section className="page-heading">
+      <section className="page-heading" data-page-section>
         <div>
           <p className="state-kicker">{text.kicker}</p>
           <h1>{text.title}</h1>
@@ -89,7 +89,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
         </div>
       </section>
 
-      <section className="configuration-banner">
+      <section className="configuration-banner" data-page-section>
         <div>
           <span>{text.publicTitle}</span>
           <h2>{workspace.tenantName}</h2>
@@ -98,10 +98,10 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
         <Link className="action-button action-button-primary" href={publicHref} target="_blank" rel="noreferrer">
           {text.openForm}
         </Link>
-        <Link className="action-button" href={`/${locale}/admissions/enquiries`}>{text.enquiries}</Link>
+        <Link className="action-button" href={`/${locale}/admissions/enquiries`} prefetch>{text.enquiries}</Link>
       </section>
 
-      <section className="configuration-section" aria-labelledby="admissions-list-title">
+      <section className="configuration-section" aria-labelledby="admissions-list-title" data-page-section>
         <header className="section-heading">
           <div>
             <p>{text.submitted}</p>
@@ -116,9 +116,9 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
             <p>{text.emptyBody}</p>
           </div>
         ) : (
-          <div className="configuration-module-grid">
+          <div className="configuration-module-grid admissions-card-grid">
             {items.map((item) => (
-              <article className="configuration-module" key={item.id}>
+              <article className="configuration-module admissions-application-card" key={item.id}>
                 <span className="module-state module-state-attention">{admissionStateLabel(locale, item.state)}</span>
                 <h3>{item.applicantName}</h3>
                 <p>{localized(item.programLabels, locale)} · {localized(item.sessionLabels, locale)}</p>
@@ -132,7 +132,7 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
                   </small>
                 ) : null}
                 <p>
-                  <Link className="action-button" href={`/${locale}/admissions/${item.id}`}>
+                  <Link className="action-button" href={`/${locale}/admissions/${item.id}`} prefetch>
                     {text.review}
                   </Link>
                 </p>
