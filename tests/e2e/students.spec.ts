@@ -61,6 +61,30 @@ test("student guardian update requires JSON before auth", async ({ request }) =>
   expect(response.status()).toBe(415);
 });
 
+test("student placement update rejects anonymous callers", async ({ request }) => {
+  const response = await request.put("/api/students/4/placement", {
+    headers: { "content-type": "application/json" },
+    data: { groupId: null, reason: "Test" }
+  });
+  expect(response.status()).toBe(401);
+});
+
+test("student placement update blocks cross-origin mutations before auth", async ({ request }) => {
+  const response = await request.put("/api/students/4/placement", {
+    headers: { "content-type": "application/json", origin: "https://attacker.example" },
+    data: { groupId: null, reason: "Test" }
+  });
+  expect(response.status()).toBe(403);
+});
+
+test("student placement update requires JSON before auth", async ({ request }) => {
+  const response = await request.put("/api/students/4/placement", {
+    headers: { "content-type": "text/plain" },
+    data: "placement"
+  });
+  expect(response.status()).toBe(415);
+});
+
 test("student register export is private", async ({ request }) => {
   const response = await request.get("/api/students/export?locale=en");
   expect(response.status()).toBe(401);
