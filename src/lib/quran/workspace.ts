@@ -17,10 +17,11 @@ export type QuranHifzRow = {
   sabqiLabel: string | null;
   manzilLabel: string | null;
   revisionDue: number;
-  memorizedJuz: number;
+  passedJuz: number;
 };
 
 export type QuranHifzWorkspace = {
+  localDate: string | null;
   summary: {
     students: number;
     recordedToday: number;
@@ -71,7 +72,7 @@ function mapRows(value: unknown): QuranHifzRow[] {
       sabqiLabel: stringValue(row.sabqi_label),
       manzilLabel: stringValue(row.manzil_label),
       revisionDue: numberValue(row.revision_due) ?? 0,
-      memorizedJuz: numberValue(row.memorized_juz) ?? 0
+      passedJuz: numberValue(row.memorized_juz) ?? 0
     }];
   });
 }
@@ -80,7 +81,7 @@ export async function getQuranHifzWorkspace(args: { search?: string; page?: numb
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("get_quran_hifz_workspace", {
+  const { data, error } = await admin.rpc("get_quran_hifz_workspace_v2", {
     p_identity_id: workspace.identityId,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
@@ -92,6 +93,7 @@ export async function getQuranHifzWorkspace(args: { search?: string; page?: numb
   const raw: Raw = data && typeof data === "object" && !Array.isArray(data) ? data as Raw : {};
   const summary: Raw = raw.summary && typeof raw.summary === "object" && !Array.isArray(raw.summary) ? raw.summary as Raw : {};
   return {
+    localDate: stringValue(raw.local_date),
     summary: {
       students: numberValue(summary.students) ?? 0,
       recordedToday: numberValue(summary.recorded_today) ?? 0,
