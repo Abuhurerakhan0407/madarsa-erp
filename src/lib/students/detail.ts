@@ -32,13 +32,25 @@ function label(labels: unknown, locale: string, fallback: string): string {
 
 export async function getStudentDetail(personId: number, locale: string): Promise<StudentDetail | null> {
   const workspace = await getTenantContext();
-  if (!workspace) throw new Error("Tenant context is required.");
+  if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
   const supabase = await createClient();
+
+  const association = await supabase
+    .from("enrollments")
+    .select("id")
+    .eq("tenant_id", workspace.tenantId)
+    .eq("branch_id", workspace.branchId)
+    .eq("student_person_id", personId)
+    .neq("status", "cancelled")
+    .limit(1)
+    .maybeSingle();
+  if (association.error) throw new Error(`Unable to verify student branch: ${association.error.message}`);
+  if (!association.data) return null;
 
   const [person, profile, enrollment] = await Promise.all([
     supabase.from("persons").select("id,display_name,name_native,date_of_birth,gender").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
     supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle(),
-    supabase.from("enrollments").select("id,program_id,group_id").eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).eq("status", "active").order("created_at", { ascending: false }).limit(1).maybeSingle()
+    supabase.from("enrollments").select("id,program_id,group_id,status").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
 
   if (person.error) throw new Error(`Unable to load student identity: ${person.error.message}`);
@@ -84,11 +96,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     if (guardianPerson.error) throw new Error(`Unable to load guardian: ${guardianPerson.error.message}`);
     if (guardianContact.error) throw new Error(`Unable to load guardian contact: ${guardianContact.error.message}`);
     if (guardianPerson.data) {
-      guardian = {
-        name: guardianPerson.data.display_name,
-        relationship: relationship.data.relationship_type,
-        phone: guardianContact.data?.value ?? null
-      };
+      guardian = { name: guardianPerson.data.display_name, relationship: relationship.data.relationship_type, phone: guardianContact.data?.value ?? null };
     }
   }
 
