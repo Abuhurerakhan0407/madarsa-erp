@@ -13,7 +13,7 @@ export default function PublicAdmissionLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" translate="no">
+    <html lang="mul" translate="no">
       <body className={appFontVariables}>{children}</body>
     </html>
   );
