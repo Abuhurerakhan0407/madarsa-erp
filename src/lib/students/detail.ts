@@ -9,6 +9,7 @@ export type StudentDetail = {
   nativeName: string | null;
   dateOfBirth: string | null;
   gender: string | null;
+  preferredLocale: "en" | "ur" | "ar";
   status: string;
   joinedOn: string | null;
   medicalSummary: string | null;
@@ -30,25 +31,21 @@ function label(labels: unknown, locale: string, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
+function supportedLocale(value: string): "en" | "ur" | "ar" {
+  return value === "ur" || value === "ar" ? value : "en";
+}
+
 export async function getStudentDetail(personId: number, locale: string): Promise<StudentDetail | null> {
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
   const supabase = await createClient();
 
-  const association = await supabase
-    .from("enrollments")
-    .select("id")
-    .eq("tenant_id", workspace.tenantId)
-    .eq("branch_id", workspace.branchId)
-    .eq("student_person_id", personId)
-    .neq("status", "cancelled")
-    .limit(1)
-    .maybeSingle();
+  const association = await supabase.from("enrollments").select("id").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").limit(1).maybeSingle();
   if (association.error) throw new Error(`Unable to verify student branch: ${association.error.message}`);
   if (!association.data) return null;
 
   const [person, profile, enrollment] = await Promise.all([
-    supabase.from("persons").select("id,display_name,name_native,date_of_birth,gender").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
+    supabase.from("persons").select("id,display_name,name_native,date_of_birth,gender,preferred_locale").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
     supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle(),
     supabase.from("enrollments").select("id,program_id,group_id,status").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
@@ -58,34 +55,19 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   if (enrollment.error) throw new Error(`Unable to load student enrollment: ${enrollment.error.message}`);
   if (!person.data || !profile.data) return null;
 
-  const relationship = await supabase
-    .from("person_relationships")
-    .select("source_person_id,relationship_type")
-    .eq("tenant_id", workspace.tenantId)
-    .eq("target_person_id", personId)
-    .eq("status", "verified")
-    .eq("is_primary", true)
-    .limit(1)
-    .maybeSingle();
+  const relationship = await supabase.from("person_relationships").select("source_person_id,relationship_type").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
   const [program, group, attendance, invoices, payments, quran, results] = await Promise.all([
-    enrollment.data?.program_id
-      ? supabase.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.program_id).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    enrollment.data?.group_id
-      ? supabase.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.group_id).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
+    enrollment.data?.program_id ? supabase.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    enrollment.data?.group_id ? supabase.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     supabase.from("attendance_records").select("status_category").eq("tenant_id", workspace.tenantId).eq("person_id", personId),
     supabase.from("fee_invoices").select("total_amount,currency_code,state").eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).neq("state", "cancelled").neq("state", "reversed"),
     supabase.from("payments").select("amount,currency_code,state").eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).in("state", ["verified", "posted"]),
     supabase.from("recitation_attempts").select("id", { count: "exact", head: true }).eq("tenant_id", workspace.tenantId).eq("student_person_id", personId),
     supabase.from("result_snapshots").select("id", { count: "exact", head: true }).eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).in("state", ["approved", "published"])
   ]);
-
-  for (const result of [program, group, attendance, invoices, payments, quran, results]) {
-    if (result.error) throw new Error(`Unable to load student workspace detail: ${result.error.message}`);
-  }
+  for (const result of [program, group, attendance, invoices, payments, quran, results]) if (result.error) throw new Error(`Unable to load student workspace detail: ${result.error.message}`);
 
   let guardian: StudentDetail["guardian"] = null;
   if (relationship.data?.source_person_id) {
@@ -95,9 +77,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     ]);
     if (guardianPerson.error) throw new Error(`Unable to load guardian: ${guardianPerson.error.message}`);
     if (guardianContact.error) throw new Error(`Unable to load guardian contact: ${guardianContact.error.message}`);
-    if (guardianPerson.data) {
-      guardian = { name: guardianPerson.data.display_name, relationship: relationship.data.relationship_type, phone: guardianContact.data?.value ?? null };
-    }
+    if (guardianPerson.data) guardian = { name: guardianPerson.data.display_name, relationship: relationship.data.relationship_type, phone: guardianContact.data?.value ?? null };
   }
 
   const attendanceRows = attendance.data ?? [];
@@ -122,6 +102,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     nativeName: person.data.name_native,
     dateOfBirth: person.data.date_of_birth,
     gender: person.data.gender,
+    preferredLocale: supportedLocale(person.data.preferred_locale),
     status: profile.data.status,
     joinedOn: profile.data.joined_on,
     medicalSummary: profile.data.medical_summary,
