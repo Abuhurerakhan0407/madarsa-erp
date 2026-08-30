@@ -6,7 +6,6 @@ import { quranCopy, quranOutcomeLabel, quranWorkLabel } from "@/lib/quran/copy";
 
 const mistakeCategories=["makhraj","madd","ghunnah","waqf","ikhfa","qalqalah"] as const;
 type Mode="juz"|"ayah"|"page";
-
 type Props={locale:Locale;personId:number;studentName:string;studentNumber:string;onSaved:()=>void;onCancel:()=>void};
 
 export function QuranEntryForm({locale,personId,studentName,studentNumber,onSaved,onCancel}:Props){
@@ -19,12 +18,19 @@ export function QuranEntryForm({locale,personId,studentName,studentNumber,onSave
   const [outcome,setOutcome]=useState("passed");
   const [notes,setNotes]=useState({teacher:"",parent:"",private:""});
   const [mistakes,setMistakes]=useState<Record<string,string>>(Object.fromEntries(mistakeCategories.map(k=>[k,"0"])));
+  const [requestKey,setRequestKey]=useState("");
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);
+
+  function stableRequestKey(){
+    if(requestKey)return requestKey;
+    const generated=globalThis.crypto?.randomUUID?.() ?? `quran-${personId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setRequestKey(generated);return generated;
+  }
 
   async function submit(){
     setBusy(true);setError(null);
     try{
-      const body:any={personId,workCategory,targetMode:mode,outcome,accuracyScore:scores.accuracy,fluencyScore:scores.fluency,tajweedScore:scores.tajweed,overallScore:scores.overall,prompts:scores.prompts,teacherRemark:notes.teacher,parentVisibleRemark:notes.parent,privateNote:notes.private,mistakes:mistakeCategories.flatMap(category=>{const count=Number(mistakes[category]||0);return count>0?[{category,severity:count>=4?3:2,count}]:[];})};
+      const body:any={requestKey:stableRequestKey(),personId,workCategory,targetMode:mode,outcome,accuracyScore:scores.accuracy,fluencyScore:scores.fluency,tajweedScore:scores.tajweed,overallScore:scores.overall,prompts:scores.prompts,teacherRemark:notes.teacher,parentVisibleRemark:notes.parent,privateNote:notes.private,mistakes:mistakeCategories.flatMap(category=>{const count=Number(mistakes[category]||0);return count>0?[{category,severity:count>=4?3:2,count}]:[];})};
       if(mode==="juz")body.juzNumber=juz;
       if(mode==="ayah")Object.assign(body,{startSurahNumber:range.startSurah,startAyahNumber:range.startAyah,endSurahNumber:range.endSurah,endAyahNumber:range.endAyah});
       if(mode==="page")Object.assign(body,{pageStart:range.pageStart,pageEnd:range.pageEnd});
