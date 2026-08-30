@@ -16,5 +16,6 @@ test("Quran recording requires JSON before auth",async({request})=>{
 });
 
 test("Quran recording rejects oversized body before auth",async({request})=>{
-  const response=await request.post("/api/quran/record",{headers:{...json,"content-length":"40000"},data:body});expect(response.status()).toBe(413);
+  const oversized={...body,privateNote:"x".repeat(40000)};
+  const response=await request.post("/api/quran/record",{headers:json,data:oversized});expect(response.status()).toBe(413);
 });
