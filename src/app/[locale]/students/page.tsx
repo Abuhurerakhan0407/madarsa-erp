@@ -1,0 +1,35 @@
+import Link from "next/link";
+import type { Locale } from "@/lib/i18n/config";
+import { getStudentRegister } from "@/lib/students/register";
+
+const copy = {
+  en: { kicker: "Students", title: "Student register", body: "Search, review and open permanent student records across the institution.", add: "Add student", total: "Total students", active: "Active", other: "Other status", search: "Search name or student number", filter: "Filter", all: "All statuses", name: "Student", number: "Student ID", program: "Program", group: "Class / group", joined: "Joined", status: "Status", open: "Open", empty: "No students match this view.", previous: "Previous", next: "Next" },
+  ur: { kicker: "طلبہ", title: "طلبہ رجسٹر", body: "ادارے کے مستقل طالب علم ریکارڈ تلاش کریں، دیکھیں اور کھولیں۔", add: "طالب علم شامل کریں", total: "کل طلبہ", active: "فعال", other: "دیگر حالت", search: "نام یا طالب علم نمبر تلاش کریں", filter: "فلٹر", all: "تمام حالتیں", name: "طالب علم", number: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت", status: "حالت", open: "کھولیں", empty: "اس منظر میں کوئی طالب علم نہیں ملا۔", previous: "پچھلا", next: "اگلا" },
+  ar: { kicker: "الطلاب", title: "سجل الطلاب", body: "ابحث عن سجلات الطلاب الدائمة وافتحها وراجعها.", add: "إضافة طالب", total: "إجمالي الطلاب", active: "نشط", other: "حالات أخرى", search: "ابحث بالاسم أو رقم الطالب", filter: "تصفية", all: "كل الحالات", name: "الطالب", number: "رقم الطالب", program: "البرنامج", group: "الفصل / المجموعة", joined: "الالتحاق", status: "الحالة", open: "فتح", empty: "لا يوجد طلاب مطابقون لهذا العرض.", previous: "السابق", next: "التالي" }
+} as const;
+
+function pageHref(locale: Locale, page: number, q?: string, status?: string) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (status && status !== "all") params.set("status", status);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return `/${locale}/students${query ? `?${query}` : ""}`;
+}
+
+export default async function StudentsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+  const locale = (await params).locale as Locale;
+  const query = await searchParams;
+  const text = copy[locale];
+  const result = await getStudentRegister({ locale, query: query.q, status: query.status, page: Number(query.page || 1), pageSize: 25 });
+  const other = Math.max(result.total - result.active, 0);
+  return <>
+    <section className="page-heading" data-page-section><div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div><Link className="action-button action-button-primary" href={`/${locale}/students/new`}>{text.add}</Link></section>
+    <section className="metric-grid" data-page-section><article className="metric metric-primary"><span>{text.total}</span><strong>{result.total}</strong></article><article className="metric"><span>{text.active}</span><strong>{result.active}</strong></article><article className="metric"><span>{text.other}</span><strong>{other}</strong></article></section>
+    <section className="panel" data-page-section>
+      <form className="student-filter-bar" method="get"><label className="field-label">{text.search}<input className="text-field" name="q" defaultValue={query.q || ""} /></label><label className="field-label">{text.status}<select className="text-field" name="status" defaultValue={query.status || "all"}><option value="all">{text.all}</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="withdrawn">Withdrawn</option><option value="alumni">Alumni</option></select></label><button className="action-button" type="submit">{text.filter}</button></form>
+      {result.rows.length ? <div className="responsive-table" role="region" aria-label={text.title} tabIndex={0}><table><thead><tr><th scope="col">{text.name}</th><th scope="col">{text.number}</th><th scope="col">{text.program}</th><th scope="col">{text.group}</th><th scope="col">{text.joined}</th><th scope="col">{text.status}</th><th scope="col">{text.open}</th></tr></thead><tbody>{result.rows.map((row) => <tr key={row.personId}><td><strong>{row.name}</strong>{row.nativeName ? <><br /><small>{row.nativeName}</small></> : null}</td><td>{row.studentNumber}</td><td>{row.program}</td><td>{row.group}</td><td>{row.joinedOn || "—"}</td><td><span className="status-pill">{row.status}</span></td><td><Link href={`/${locale}/students/${row.personId}`}>{text.open}</Link></td></tr>)}</tbody></table></div> : <div className="privacy-callout"><strong>{text.empty}</strong></div>}
+      <div className="pagination-row"><span>{result.page} / {result.pages}</span><div className="quick-actions">{result.page > 1 ? <Link className="action-button" href={pageHref(locale, result.page - 1, query.q, query.status)}>{text.previous}</Link> : null}{result.page < result.pages ? <Link className="action-button" href={pageHref(locale, result.page + 1, query.q, query.status)}>{text.next}</Link> : null}</div></div>
+    </section>
+  </>;
+}
