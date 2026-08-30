@@ -66,71 +66,92 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="auth-screen">
-      <section className="auth-card" aria-labelledby="auth-title">
-        <div className="auth-brand">
-          <span className="brand-mark" aria-hidden="true">M</span>
-          <div>
-            <strong>Madarsa ERP</strong>
-            <span>Institution operating system</span>
+    <main className="auth-screen professional-auth-screen">
+      <section className="auth-card professional-auth-card" aria-labelledby="auth-title">
+        <aside className="auth-presentation" aria-label="Madarsa ERP">
+          <div className="auth-brand auth-brand-light">
+            <span className="brand-mark" aria-hidden="true">M</span>
+            <div>
+              <strong>Madarsa ERP</strong>
+              <span>School administration platform</span>
+            </div>
           </div>
-        </div>
 
-        <div className="auth-heading">
-          <p className="state-kicker">Secure workspace</p>
-          <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your institution account"}</h1>
-          <p>
-            {mode === "signin"
-              ? "Sign in to continue to your institution workspace."
-              : "Create an owner account. Institution setup comes next."}
-          </p>
-        </div>
+          <div className="auth-presentation-copy">
+            <p className="auth-presentation-kicker">One connected workspace</p>
+            <h2>Run the institution without fragmented registers and spreadsheets.</h2>
+            <p>
+              Admissions, student records, academics, attendance, finance, Qur&apos;an learning,
+              campus operations and reporting stay together in one system.
+            </p>
+          </div>
 
-        <form onSubmit={submit}>
-          <label className="field-label">
-            Email address
-            <input
-              className="text-field"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </label>
+          <div className="auth-presentation-points" aria-label="Core areas">
+            <span>Admissions</span>
+            <span>Attendance</span>
+            <span>Fees</span>
+            <span>Academics</span>
+            <span>Reports</span>
+          </div>
+        </aside>
 
-          <label className="field-label">
-            Password
-            <input
-              className="text-field"
-              type="password"
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              minLength={8}
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
+        <div className="auth-form-panel">
+          <div className="auth-heading">
+            <p className="state-kicker">Secure workspace</p>
+            <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your institution account"}</h1>
+            <p>
+              {mode === "signin"
+                ? "Sign in to continue to your institution workspace."
+                : "Create an owner account. Institution setup comes next."}
+            </p>
+          </div>
 
-          {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
-          {message ? <p className="form-message" role="status">{message}</p> : null}
+          <form onSubmit={submit}>
+            <label className="field-label">
+              Email address
+              <input
+                className="text-field"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </label>
 
-          <button className="action-button action-button-primary auth-submit" type="submit" disabled={busy}>
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            <label className="field-label">
+              Password
+              <input
+                className="text-field"
+                type="password"
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                minLength={8}
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+
+            {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
+            {message ? <p className="form-message" role="status">{message}</p> : null}
+
+            <button className="action-button action-button-primary auth-submit" type="submit" disabled={busy}>
+              {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            </button>
+          </form>
+
+          <button
+            className="auth-mode-switch"
+            type="button"
+            onClick={() => {
+              setMode((current) => current === "signin" ? "signup" : "signin");
+              setError(null);
+              setMessage(null);
+            }}
+          >
+            {mode === "signin" ? "New institution? Create an account" : "Already have an account? Sign in"}
           </button>
-        </form>
-
-        <button
-          className="auth-mode-switch"
-          type="button"
-          onClick={() => {
-            setMode((current) => current === "signin" ? "signup" : "signin");
-            setError(null);
-            setMessage(null);
-          }}
-        >
-          {mode === "signin" ? "New institution? Create an account" : "Already have an account? Sign in"}
-        </button>
+        </div>
       </section>
     </main>
   );
