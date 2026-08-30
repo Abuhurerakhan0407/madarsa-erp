@@ -29,6 +29,15 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://dysfnytqpbfxpmerkyaz.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JE-qS9os44gw9TKy4GxYSA_5ZH_17H7
+      - name: Package tested source
+        run: git archive --format=zip --output=madarsa-erp-final-demo.zip HEAD
+      - name: Upload tested source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: madarsa-erp-final-demo-source
+          path: madarsa-erp-final-demo.zip
+          if-no-files-found: error
+          retention-days: 7
 
   e2e:
     needs: checks
