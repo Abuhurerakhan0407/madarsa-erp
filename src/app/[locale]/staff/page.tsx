@@ -1,0 +1,5 @@
+import type {Locale} from '@/lib/i18n/config';
+import {hrCopy} from '@/lib/hr/copy';
+import {getHrEmployees} from '@/lib/hr/workspace';
+import {HrEmployeesWorkspace} from '@/components/hr-employees-workspace';
+export default async function StaffPage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{q?:string;state?:string;page?:string}>}){const {locale:raw}=await params;const query=await searchParams;const locale=(raw==='ur'||raw==='ar'?raw:'en') as Locale;const search=(query.q??'').trim().slice(0,160);const state=['active','on_leave','suspended','separated','archived'].includes(query.state??'')?query.state??'':'';const page=Math.max(1,Math.min(Number(query.page)||1,100000));const data=await getHrEmployees({search,state,page,pageSize:40});const t=hrCopy[locale];return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p></div></section><HrEmployeesWorkspace locale={locale} data={data} search={search} state={state}/></>;}
