@@ -1,5 +1,10 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContext } from "@/lib/tenancy/context";
+
+type AttendanceSummary = { present: number; absent: number; late: number; excused: number; total: number };
+type FinanceSummary = { invoiced: number; paid: number; outstanding: number; currency: string };
+type ModuleSummary = { attendance?: unknown; finance?: unknown; quran_attempts?: unknown; result_count?: unknown };
 
 export type StudentDetail = {
   personId: number;
@@ -18,10 +23,10 @@ export type StudentDetail = {
   program: string;
   group: string;
   guardian: { name: string; relationship: string; phone: string | null } | null;
-  attendance: { present: number; absent: number; late: number; excused: number; total: number };
-  finance: { invoiced: number; paid: number; outstanding: number; currency: string };
-  quranAttempts: number;
-  resultCount: number;
+  attendance: AttendanceSummary | null;
+  finance: FinanceSummary | null;
+  quranAttempts: number | null;
+  resultCount: number | null;
 };
 
 function label(labels: unknown, locale: string, fallback: string): string {
@@ -33,6 +38,29 @@ function label(labels: unknown, locale: string, fallback: string): string {
 
 function supportedLocale(value: string): "en" | "ur" | "ar" {
   return value === "ur" || value === "ar" ? value : "en";
+}
+
+function attendanceSummary(value: unknown): AttendanceSummary | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  return {
+    present: Number(row.present ?? 0),
+    absent: Number(row.absent ?? 0),
+    late: Number(row.late ?? 0),
+    excused: Number(row.excused ?? 0),
+    total: Number(row.total ?? 0)
+  };
+}
+
+function financeSummary(value: unknown): FinanceSummary | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  return {
+    invoiced: Number(row.invoiced ?? 0),
+    paid: Number(row.paid ?? 0),
+    outstanding: Number(row.outstanding ?? 0),
+    currency: typeof row.currency === "string" ? row.currency : "INR"
+  };
 }
 
 export async function getStudentDetail(personId: number, locale: string): Promise<StudentDetail | null> {
@@ -49,7 +77,6 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle(),
     supabase.from("enrollments").select("id,program_id,group_id,status").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
-
   if (person.error) throw new Error(`Unable to load student identity: ${person.error.message}`);
   if (profile.error) throw new Error(`Unable to load student profile: ${profile.error.message}`);
   if (enrollment.error) throw new Error(`Unable to load student enrollment: ${enrollment.error.message}`);
@@ -58,16 +85,15 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   const relationship = await supabase.from("person_relationships").select("source_person_id,relationship_type").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
-  const [program, group, attendance, invoices, payments, quran, results] = await Promise.all([
+  const admin = createAdminClient();
+  const [program, group, moduleResult] = await Promise.all([
     enrollment.data?.program_id ? supabase.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     enrollment.data?.group_id ? supabase.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    supabase.from("attendance_records").select("status_category").eq("tenant_id", workspace.tenantId).eq("person_id", personId),
-    supabase.from("fee_invoices").select("total_amount,currency_code,state").eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).neq("state", "cancelled").neq("state", "reversed"),
-    supabase.from("payments").select("amount,currency_code,state").eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).in("state", ["verified", "posted"]),
-    supabase.from("recitation_attempts").select("id", { count: "exact", head: true }).eq("tenant_id", workspace.tenantId).eq("student_person_id", personId),
-    supabase.from("result_snapshots").select("id", { count: "exact", head: true }).eq("tenant_id", workspace.tenantId).eq("student_person_id", personId).in("state", ["approved", "published"])
+    admin.rpc("get_student_module_summary", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_person_id: personId })
   ]);
-  for (const result of [program, group, attendance, invoices, payments, quran, results]) if (result.error) throw new Error(`Unable to load student workspace detail: ${result.error.message}`);
+  if (program.error) throw new Error(`Unable to load student program: ${program.error.message}`);
+  if (group.error) throw new Error(`Unable to load student group: ${group.error.message}`);
+  if (moduleResult.error) throw new Error(`Unable to load student module summary: ${moduleResult.error.message}`);
 
   let guardian: StudentDetail["guardian"] = null;
   if (relationship.data?.source_person_id) {
@@ -80,20 +106,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     if (guardianPerson.data) guardian = { name: guardianPerson.data.display_name, relationship: relationship.data.relationship_type, phone: guardianContact.data?.value ?? null };
   }
 
-  const attendanceRows = attendance.data ?? [];
-  const attendanceSummary = {
-    present: attendanceRows.filter((row) => row.status_category === "present").length,
-    absent: attendanceRows.filter((row) => row.status_category === "absent").length,
-    late: attendanceRows.filter((row) => row.status_category === "late").length,
-    excused: attendanceRows.filter((row) => row.status_category === "excused" || row.status_category === "leave").length,
-    total: attendanceRows.length
-  };
-  const invoiceRows = invoices.data ?? [];
-  const paymentRows = payments.data ?? [];
-  const invoiced = invoiceRows.reduce((sum, row) => sum + Number(row.total_amount ?? 0), 0);
-  const paid = paymentRows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
-  const currency = invoiceRows[0]?.currency_code ?? paymentRows[0]?.currency_code ?? "INR";
-
+  const moduleData = moduleResult.data && typeof moduleResult.data === "object" && !Array.isArray(moduleResult.data) ? moduleResult.data as ModuleSummary : {};
   return {
     personId,
     studentNumber: profile.data.student_number,
@@ -111,9 +124,9 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     program: program.data ? label(program.data.labels, locale, program.data.key) : "—",
     group: group.data ? label(group.data.labels, locale, group.data.key) : "—",
     guardian,
-    attendance: attendanceSummary,
-    finance: { invoiced, paid, outstanding: Math.max(invoiced - paid, 0), currency },
-    quranAttempts: quran.count ?? 0,
-    resultCount: results.count ?? 0
+    attendance: attendanceSummary(moduleData.attendance),
+    finance: financeSummary(moduleData.finance),
+    quranAttempts: moduleData.quran_attempts === null || moduleData.quran_attempts === undefined ? null : Number(moduleData.quran_attempts),
+    resultCount: moduleData.result_count === null || moduleData.result_count === undefined ? null : Number(moduleData.result_count)
   };
 }
