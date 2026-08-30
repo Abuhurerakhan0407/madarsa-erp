@@ -1,0 +1,5 @@
+import type {Locale} from '@/lib/i18n/config';
+import {hrCopy} from '@/lib/hr/copy';
+import {getHrAttendance} from '@/lib/hr/workspace';
+import {HrAttendanceWorkspace} from '@/components/hr-attendance-workspace';
+export default async function StaffAttendancePage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{date?:string}>}){const {locale:raw}=await params;const query=await searchParams;const locale=(raw==='ur'||raw==='ar'?raw:'en') as Locale;const date=/^\d{4}-\d{2}-\d{2}$/.test(query.date??'')?query.date:undefined;const data=await getHrAttendance({date});const t=hrCopy[locale];return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.attendance}</h1><p>{t.attendanceDate}: <strong>{data.date}</strong></p></div><form><input className="text-field" type="date" name="date" defaultValue={data.date}/><button className="action-button" type="submit">{t.searchAction}</button></form></section><HrAttendanceWorkspace locale={locale} data={data}/></>;}
