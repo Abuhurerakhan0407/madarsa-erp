@@ -31,7 +31,7 @@ const navGroups: NavGroup[] = [
     key: "campus",
     labels: { en: "Campus operations", ur: "کیمپس آپریشنز", ar: "عمليات الحرم" },
     items: [
-      { key: "portals", labels: { en: "Parent & Staff Portals", ur: "والدین و عملہ پورٹلز", ar: "بوابات أولياء الأمور والموظفين" }, href: (locale) => `/${locale}/demo/portals` },
+      { key: "portals", labels: { en: "Parent & Staff Portals", ur: "والدین و عملہ پورٹلز", ar: "بوابات أولياء الأمور والموظفين" }, href: (locale) => `/${locale}/portals` },
       { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/demo/operations` },
       { key: "donations", labels: { en: "Donations & Sponsorships", ur: "عطیات و کفالت", ar: "التبرعات والكفالات" }, href: (locale) => `/${locale}/demo/donations` },
       { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس", ar: "السكن والإعاشة" }, href: (locale) => `/${locale}/demo/hostel` },
