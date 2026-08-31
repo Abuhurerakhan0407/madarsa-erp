@@ -1,17 +1,11 @@
-import { notFound } from "next/navigation";
-import { StudentLifecycleCenter } from "@/components/student-lifecycle-center";
+import { redirect } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@/lib/i18n/config";
-import { getStudentLifecycleCenter } from "@/lib/students/lifecycle";
-
-const copy={
- en:{kicker:"Academic lifecycle",title:"Bulk Import, Promotion & Renewal",description:"Import student records through the governed student-creation flow, prepare the next academic year, and plan promotion or renewal without rewriting current-year history.",nextSession:"Prepare next academic session",sourceSession:"Source session",sessionKey:"Session key",sessionLabel:"Session label",startsOn:"Starts on",endsOn:"Ends on",prepare:"Prepare next session",importTitle:"CSV student import",csvFile:"CSV file",placement:"Class / group",joinedOn:"Joining date",preview:"Preview",importAction:"Import students",rolloverTitle:"Promotion & renewal planning",mode:"Mode",targetSession:"Target session",targetGroup:"Target group",students:"Selected",selectAll:"Select / clear all",promotion:"Promotion",renewal:"Renewal",plan:"Plan batch",jobs:"Recent batch jobs",none:"Nothing available yet.",error:"Unable to update student lifecycle operations.",guardrail:"Next-session preparation clones the current branch groups into a draft session. Promotion and renewal create planned enrollments only; the active current-year enrollment remains untouched.",rows:"rows",created:"succeeded",blocked:"blocked",failed:"failed",planned:"planned"},
- ur:{kicker:"تعلیمی لائف سائیکل",title:"بلک امپورٹ، پروموشن و رینیول",description:"منظم طالب علم تخلیق فلو کے ذریعے ریکارڈ امپورٹ کریں، اگلا تعلیمی سال تیار کریں، اور موجودہ سال کی تاریخ بدلے بغیر پروموشن یا رینیول پلان کریں۔",nextSession:"اگلا تعلیمی سال تیار کریں",sourceSession:"موجودہ سیشن",sessionKey:"سیشن کلید",sessionLabel:"سیشن نام",startsOn:"شروع",endsOn:"اختتام",prepare:"اگلا سیشن تیار کریں",importTitle:"CSV طالب علم امپورٹ",csvFile:"CSV فائل",placement:"کلاس / گروپ",joinedOn:"داخلہ تاریخ",preview:"پری ویو",importAction:"طلبہ امپورٹ کریں",rolloverTitle:"پروموشن و رینیول پلان",mode:"موڈ",targetSession:"اگلا سیشن",targetGroup:"ہدف گروپ",students:"منتخب",selectAll:"سب منتخب / صاف",promotion:"پروموشن",renewal:"رینیول",plan:"بیچ پلان کریں",jobs:"حالیہ بیچ جابز",none:"ابھی کوئی ریکارڈ نہیں۔",error:"طالب علم لائف سائیکل اپ ڈیٹ نہیں ہو سکا۔",guardrail:"اگلا سیشن موجودہ برانچ کے گروپس کو ڈرافٹ سیشن میں نقل کرتا ہے۔ پروموشن اور رینیول صرف planned enrollment بناتے ہیں؛ موجودہ سال کا active enrollment تبدیل نہیں ہوتا۔",rows:"قطاریں",created:"کامیاب",blocked:"بلاک",failed:"ناکام",planned:"پلان"},
- ar:{kicker:"دورة الطالب الأكاديمية",title:"الاستيراد الجماعي والترفيع والتجديد",description:"استيراد سجلات الطلاب عبر مسار الإنشاء المحكوم، وتجهيز العام الأكاديمي التالي، والتخطيط للترفيع أو التجديد دون تعديل سجل العام الحالي.",nextSession:"إعداد الجلسة الأكاديمية التالية",sourceSession:"الجلسة الحالية",sessionKey:"مفتاح الجلسة",sessionLabel:"اسم الجلسة",startsOn:"تبدأ",endsOn:"تنتهي",prepare:"إعداد الجلسة التالية",importTitle:"استيراد الطلاب CSV",csvFile:"ملف CSV",placement:"الفصل / المجموعة",joinedOn:"تاريخ الانضمام",preview:"معاينة",importAction:"استيراد الطلاب",rolloverTitle:"تخطيط الترفيع والتجديد",mode:"الوضع",targetSession:"الجلسة المستهدفة",targetGroup:"المجموعة المستهدفة",students:"محدد",selectAll:"تحديد / مسح الكل",promotion:"ترفيع",renewal:"تجديد",plan:"تخطيط الدفعة",jobs:"عمليات الدفعات الأخيرة",none:"لا توجد سجلات بعد.",error:"تعذر تحديث عمليات دورة الطالب.",guardrail:"يتم نسخ مجموعات الفرع الحالية إلى جلسة مسودة. الترفيع والتجديد ينشئان تسجيلات مخططة فقط، ويبقى تسجيل العام الحالي النشط دون تغيير.",rows:"صفوف",created:"ناجح",blocked:"محظور",failed:"فاشل",planned:"مخطط"}
-} as const;
 
 type PageProps={params:Promise<{locale:string}>};
-export default async function OperationsPage({params}:PageProps){
- const{locale:rawLocale}=await params;if(!routing.locales.includes(rawLocale as Locale))notFound();const locale=rawLocale as Locale;const data=await getStudentLifecycleCenter();const t=copy[locale];
- return <><section className="page-heading" data-page-section><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.description}</p></div><span>{data.students.length} students</span></section><StudentLifecycleCenter data={data} copy={t}/></>;
+
+export default async function OperationsDemoRedirect({params}:PageProps){
+ const{locale:rawLocale}=await params;
+ const locale=(routing.locales.includes(rawLocale as Locale)?rawLocale:"en") as Locale;
+ redirect(`/${locale}/students/lifecycle`);
 }
