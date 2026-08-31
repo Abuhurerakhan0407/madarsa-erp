@@ -31,8 +31,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ per
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || "Main Branch"
     });
+    const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     const filename = `report-card-${safeFilename(card.student.studentNumber)}.pdf`;
-    return new Response(pdf, {
+    return new Response(body, {
       status: 200,
       headers: {
         "content-type": "application/pdf",
