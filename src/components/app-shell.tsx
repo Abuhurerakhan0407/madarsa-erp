@@ -38,7 +38,7 @@ const navGroups: NavGroup[] = [
       { key: "transport", labels: { en: "Transport & Routes", ur: "ٹرانسپورٹ و روٹس", ar: "النقل والمسارات" }, href: (locale) => `/${locale}/demo/transport` },
       { key: "staff", labels: { en: "HR & Payroll", ur: "HR و پے رول", ar: "الموارد البشرية والرواتب" }, href: (locale) => `/${locale}/staff` },
       { key: "library", labels: { en: "Library", ur: "لائبریری", ar: "المكتبة" }, href: (locale) => `/${locale}/demo/library` },
-      { key: "certificates", labels: { en: "IDs & Certificates", ur: "ID و سرٹیفکیٹس", ar: "الهويات والشهادات" }, href: (locale) => `/${locale}/demo/certificates` }
+      { key: "certificates", labels: { en: "IDs & Documents", ur: "ID و دستاویزات", ar: "الهويات والمستندات" }, href: (locale) => `/${locale}/documents` }
     ]
   },
   {
