@@ -48,7 +48,7 @@ const navGroups: NavGroup[] = [
       { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و اینالیٹکس", ar: "التقارير والتحليلات" }, href: (locale) => `/${locale}/reports` },
       { key: "whatsapp", labels: { en: "WhatsApp Automation", ur: "واٹس ایپ آٹومیشن", ar: "أتمتة واتساب" }, href: (locale) => `/${locale}/communications/whatsapp` },
       { key: "ai", labels: { en: "AI Assistant", ur: "AI معاون", ar: "مساعد الذكاء الاصطناعي" }, href: (locale) => `/${locale}/demo/ai` },
-      { key: "branches", labels: { en: "Branches & Roles", ur: "برانچز و رولز", ar: "الفروع والأدوار" }, href: (locale) => `/${locale}/demo/branches` },
+      { key: "branches", labels: { en: "Branches & Roles", ur: "برانچز و رولز", ar: "الفروع والأدوار" }, href: (locale) => `/${locale}/access` },
       { key: "configuration", labels: { en: "Configuration", ur: "کنفیگریشن", ar: "التهيئة" }, href: (locale) => `/${locale}/settings/configuration` }
     ]
   }
