@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AttendanceDeviceCenter } from "@/lib/attendance/device-bridge";
 
-type Copy = { register: string; deviceKey: string; deviceLabel: string; modality: string; vendor: string; model: string; create: string; tokenTitle: string; tokenWarning: string; mappings: string; externalSubject: string; subjectType: string; subject: string; map: string; students: string; staff: string; events: string; apply: string; unmapped: string; noEvents: string; noDevices: string; configured: string; lastSeen: string; status: string; error: string };
+type Copy = { register: string; deviceKey: string; deviceLabel: string; modality: string; vendor: string; model: string; create: string; rotate: string; tokenTitle: string; tokenWarning: string; mappings: string; externalSubject: string; subjectType: string; subject: string; map: string; students: string; staff: string; events: string; apply: string; unmapped: string; noEvents: string; noDevices: string; configured: string; lastSeen: string; status: string; error: string };
 
 async function postJson(url: string, body: unknown) {
   const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -25,6 +25,14 @@ export function AttendanceDeviceCenterView({ data, copy }: { data: AttendanceDev
     setBusy(true); setMessage(null); setToken(null);
     try {
       const result = await postJson("/api/attendance/devices", { externalDeviceKey: formData.get("externalDeviceKey"), label: formData.get("label"), modality: formData.get("modality"), vendor: formData.get("vendor"), model: formData.get("model") });
+      setToken(typeof result.ingestToken === "string" ? result.ingestToken : null); router.refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : copy.error); } finally { setBusy(false); }
+  }
+
+  async function rotateDevice(deviceId: number) {
+    setBusy(true); setMessage(null); setToken(null);
+    try {
+      const result = await postJson(`/api/attendance/devices/${deviceId}/rotate`, {});
       setToken(typeof result.ingestToken === "string" ? result.ingestToken : null); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : copy.error); } finally { setBusy(false); }
   }
@@ -56,7 +64,7 @@ export function AttendanceDeviceCenterView({ data, copy }: { data: AttendanceDev
       <div><button className="action-button" type="submit" disabled={busy}>{copy.create}</button></div>
     </form></section>
 
-    <section className="panel"><h2>{copy.configured}</h2>{data.devices.length ? <div className="documents-recent"><div>{data.devices.map((device) => <article key={device.id}><div><strong>{device.label}</strong><small>{device.externalDeviceKey} · {device.modality} · ••••{device.tokenHint}</small></div><div><small>{copy.status}: {device.state}</small><small>{copy.lastSeen}: {device.lastSeenAt ?? "—"}</small></div></article>)}</div></div> : <p className="empty-state">{copy.noDevices}</p>}</section>
+    <section className="panel"><h2>{copy.configured}</h2>{data.devices.length ? <div className="documents-recent"><div>{data.devices.map((device) => <article key={device.id}><div><strong>{device.label}</strong><small>{device.externalDeviceKey} · {device.modality} · ••••{device.tokenHint}</small></div><div><small>{copy.status}: {device.state}</small><small>{copy.lastSeen}: {device.lastSeenAt ?? "—"}</small><button className="secondary-button" type="button" disabled={busy} onClick={() => rotateDevice(device.id)}>{copy.rotate}</button></div></article>)}</div></div> : <p className="empty-state">{copy.noDevices}</p>}</section>
 
     <section className="panel"><h2>{copy.mappings}</h2><form action={mapSubject} className="detail-grid">
       <label className="field-label">{copy.deviceLabel}<select className="text-field" name="deviceId" required>{data.devices.map((device) => <option key={device.id} value={device.id}>{device.label}</option>)}</select></label>
