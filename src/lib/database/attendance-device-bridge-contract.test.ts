@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 const runtime = readFileSync(resolve(process.cwd(), "supabase/migrations/20260831054000_attendance_device_bridge.sql"), "utf8").toLowerCase();
 const hardening = readFileSync(resolve(process.cwd(), "supabase/migrations/20260831054200_attendance_device_bridge_hardening.sql"), "utf8").toLowerCase();
 const applyFix = readFileSync(resolve(process.cwd(), "supabase/migrations/20260831054400_attendance_device_apply_request_key.sql"), "utf8").toLowerCase();
-const sql = `${runtime}\n${hardening}\n${applyFix}`;
+const pgcryptoFix = readFileSync(resolve(process.cwd(), "supabase/migrations/20260831054600_attendance_device_pgcrypto_resolution.sql"), "utf8").toLowerCase();
+const sql = `${runtime}\n${hardening}\n${applyFix}\n${pgcryptoFix}`;
 
 describe("attendance device bridge database contract", () => {
   it("keeps device configuration, subject mappings, and event inbox tenant scoped", () => {
@@ -23,6 +24,11 @@ describe("attendance device bridge database contract", () => {
     expect(sql).toContain("digest(v_token,'sha256')");
     expect(sql).toContain("token_hint");
     expect(sql).not.toContain("ingest_token text not null");
+  });
+
+  it("resolves pgcrypto without opening the function search path to public schemas", () => {
+    expect(pgcryptoFix).toContain("set search_path to pg_catalog, extensions");
+    expect(pgcryptoFix).not.toContain("public,");
   });
 
   it("rejects raw biometric material at the governed ingest boundary", () => {
