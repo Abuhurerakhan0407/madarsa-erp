@@ -7,9 +7,9 @@ import { getTenantContext } from "@/lib/tenancy/context";
 import styles from "../id-card-batch.module.css";
 
 const copy = {
-  en: { kicker: "Print sheet", title: "Bulk student ID cards", back: "Change selection", print: "Print A4 sheet", id: "Student ID", program: "Program", group: "Class / group", dob: "Date of birth", guardian: "Guardian", branch: "Campus", validity: "Academic year 2026–27", institutionCard: "Institution identity card", reverse: "Student information", instruction: "If found, please return this card to the institution administration office." },
-  ur: { kicker: "پرنٹ شیٹ", title: "بلک طالب علم ID کارڈز", back: "انتخاب تبدیل کریں", print: "A4 شیٹ پرنٹ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سال 2026–27", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" },
-  ar: { kicker: "ورقة الطباعة", title: "بطاقات هوية الطلاب", back: "تغيير الاختيار", print: "طباعة ورقة A4", id: "رقم الطالب", program: "البرنامج", group: "الفصل / المجموعة", dob: "تاريخ الميلاد", guardian: "ولي الأمر", branch: "الحرم", validity: "العام الدراسي 2026–27", institutionCard: "بطاقة هوية المؤسسة", reverse: "معلومات الطالب", instruction: "في حال العثور على البطاقة يرجى إعادتها إلى إدارة المؤسسة." }
+  en: { kicker: "Print sheet", title: "Bulk student ID cards", back: "Change selection", print: "Print A4 sheet", pdf: "Download PDF", id: "Student ID", program: "Program", group: "Class / group", dob: "Date of birth", guardian: "Guardian", branch: "Campus", validity: "Academic year 2026–27", institutionCard: "Institution identity card", reverse: "Student information", instruction: "If found, please return this card to the institution administration office." },
+  ur: { kicker: "پرنٹ شیٹ", title: "بلک طالب علم ID کارڈز", back: "انتخاب تبدیل کریں", print: "A4 شیٹ پرنٹ کریں", pdf: "PDF ڈاؤن لوڈ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سال 2026–27", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" },
+  ar: { kicker: "ورقة الطباعة", title: "بطاقات هوية الطلاب", back: "تغيير الاختيار", print: "طباعة ورقة A4", pdf: "تنزيل PDF", id: "رقم الطالب", program: "البرنامج", group: "الفصل / المجموعة", dob: "تاريخ الميلاد", guardian: "ولي الأمر", branch: "الحرم", validity: "العام الدراسي 2026–27", institutionCard: "بطاقة هوية المؤسسة", reverse: "معلومات الطالب", instruction: "في حال العثور على البطاقة يرجى إعادتها إلى إدارة المؤسسة." }
 } as const;
 
 function positive(value: string | undefined): number | null {
@@ -39,11 +39,16 @@ export default async function BulkIdCardPrintPage({ params, searchParams }: { pa
   const text = copy[locale];
   const branch = workspace.branchName || "Main Branch";
   const backHref = `/${locale}/students/id-cards?${new URLSearchParams({ ...(sessionId ? { session: String(sessionId) } : {}), group: String(groupId) }).toString()}`;
+  const pdfParams = new URLSearchParams();
+  if (sessionId) pdfParams.set("session", String(sessionId));
+  pdfParams.set("group", String(groupId));
+  studentIds.forEach((personId) => pdfParams.append("student", String(personId)));
+  const pdfHref = `/api/students/id-cards/pdf?${pdfParams.toString()}`;
 
   return <div className={styles.printPage}>
     <section className={`page-heading ${styles.controls}`}>
       <div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{result.students.length} cards · {branch}</p></div>
-      <div className="quick-actions"><Link className="action-button" href={backHref}>{text.back}</Link><PrintButton label={text.print} /></div>
+      <div className="quick-actions"><Link className="action-button" href={backHref}>{text.back}</Link><a className="action-button" href={pdfHref}>{text.pdf}</a><PrintButton label={text.print} /></div>
     </section>
 
     <section className={styles.sheet} aria-label={text.title}>
