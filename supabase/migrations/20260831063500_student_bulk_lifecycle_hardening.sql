@@ -32,12 +32,17 @@ declare v_membership bigint;v_required integer;begin
   return v_membership;
 end;$fn$;
 
+drop function if exists public.get_student_lifecycle_center_core_v1(uuid,bigint,bigint);
+drop function if exists public.prepare_next_academic_session_core_v1(uuid,bigint,bigint,bigint,text,jsonb,date,date);
+drop function if exists public.import_students_batch_core_v1(uuid,bigint,bigint,bigint,bigint,bigint,date,jsonb,text);
+drop function if exists public.plan_student_rollover_batch_core_v1(uuid,bigint,bigint,bigint[],bigint,bigint,text,text);
+
 alter function public.get_student_lifecycle_center_v1(uuid,bigint,bigint) rename to get_student_lifecycle_center_core_v1;
 alter function public.prepare_next_academic_session_v1(uuid,bigint,bigint,bigint,text,jsonb,date,date) rename to prepare_next_academic_session_core_v1;
 alter function public.import_students_batch_v1(uuid,bigint,bigint,bigint,bigint,bigint,date,jsonb,text) rename to import_students_batch_core_v1;
 alter function public.plan_student_rollover_batch_v1(uuid,bigint,bigint,bigint[],bigint,bigint,text,text) rename to plan_student_rollover_batch_core_v1;
 
-create function public.get_student_lifecycle_center_v1(p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint)
+create or replace function public.get_student_lifecycle_center_v1(p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint)
 returns jsonb language plpgsql stable set search_path to pg_catalog, extensions
 as $fn$ begin
   if public.resolve_student_lifecycle_membership_v1(p_identity_id,p_tenant_id,p_branch_id,array['students.profile.read','academics.enrollment.manage','academics.structure.read']) is null then
@@ -46,7 +51,7 @@ as $fn$ begin
   return public.get_student_lifecycle_center_core_v1(p_identity_id,p_tenant_id,p_branch_id);
 end;$fn$;
 
-create function public.prepare_next_academic_session_v1(
+create or replace function public.prepare_next_academic_session_v1(
   p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint,p_source_session_id bigint,p_key text,p_labels jsonb,p_starts_on date,p_ends_on date
 ) returns jsonb language plpgsql set search_path to pg_catalog, extensions
 as $fn$ begin
@@ -56,7 +61,7 @@ as $fn$ begin
   return public.prepare_next_academic_session_core_v1(p_identity_id,p_tenant_id,p_branch_id,p_source_session_id,p_key,p_labels,p_starts_on,p_ends_on);
 end;$fn$;
 
-create function public.import_students_batch_v1(
+create or replace function public.import_students_batch_v1(
   p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint,p_session_id bigint,p_program_id bigint,p_group_id bigint,p_joined_on date,p_rows jsonb,p_request_key text
 ) returns jsonb language plpgsql set search_path to pg_catalog, extensions
 as $fn$ begin
@@ -66,7 +71,7 @@ as $fn$ begin
   return public.import_students_batch_core_v1(p_identity_id,p_tenant_id,p_branch_id,p_session_id,p_program_id,p_group_id,p_joined_on,p_rows,p_request_key);
 end;$fn$;
 
-create function public.plan_student_rollover_batch_v1(
+create or replace function public.plan_student_rollover_batch_v1(
   p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint,p_student_person_ids bigint[],p_target_session_id bigint,p_target_group_id bigint,p_mode text,p_request_key text
 ) returns jsonb language plpgsql set search_path to pg_catalog, extensions
 as $fn$
