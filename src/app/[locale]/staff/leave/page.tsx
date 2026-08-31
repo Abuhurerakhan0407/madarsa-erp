@@ -1,0 +1,5 @@
+import type {Locale} from '@/lib/i18n/config';
+import {hrCopy} from '@/lib/hr/copy';
+import {getHrEmployees,getHrLeave} from '@/lib/hr/workspace';
+import {HrLeaveWorkspace} from '@/components/hr-leave-workspace';
+export default async function StaffLeavePage({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=(raw==='ur'||raw==='ar'?raw:'en') as Locale;const [data,employeesData]=await Promise.all([getHrLeave(),getHrEmployees({state:'active',page:1,pageSize:100})]);const t=hrCopy[locale];const employees=employeesData.rows.map(e=>({employmentId:e.employmentId,employeeNumber:e.employeeNumber,displayName:e.displayName}));return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.leave}</h1><p>{t.body}</p></div></section><HrLeaveWorkspace locale={locale} data={data} employees={employees}/></>;}
