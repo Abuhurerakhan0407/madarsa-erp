@@ -28,6 +28,14 @@ export type StudentStatusCertificate = {
   snapshot: StudentStatusCertificateSnapshot;
 };
 
+export type VerifiedStudentStatusCertificate = {
+  valid: true;
+  revision: number;
+  verificationCode: string;
+  issuedAt: string;
+  snapshot: StudentStatusCertificateSnapshot;
+};
+
 function obj(value: unknown): Raw {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Raw : {};
 }
@@ -39,43 +47,41 @@ function num(value: unknown): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
-function mapCertificate(value: unknown): StudentStatusCertificate | null {
-  const raw = obj(value);
-  const snapshot = obj(raw.snapshot);
-  const issueId = num(raw.issue_id);
-  const documentId = num(raw.document_id);
-  const revision = num(raw.revision);
-  const verificationCode = str(raw.verification_code);
-  const issuedAt = str(raw.issued_at);
+function mapSnapshot(value: unknown): StudentStatusCertificateSnapshot | null {
+  const snapshot = obj(value);
   const studentPersonId = num(snapshot.student_person_id);
   const studentNumber = str(snapshot.student_number);
   const studentName = str(snapshot.student_name);
   const tenantName = str(snapshot.tenant_name);
   const branchName = str(snapshot.branch_name);
   const issuedOn = str(snapshot.issued_on);
-  if (!issueId || !documentId || !revision || !verificationCode || !issuedAt || !studentPersonId || !studentNumber || !studentName || !tenantName || !branchName || !issuedOn) return null;
+  if (!studentPersonId || !studentNumber || !studentName || !tenantName || !branchName || !issuedOn) return null;
   return {
-    issueId,
-    documentId,
-    revision,
-    verificationCode,
-    issuedAt,
-    state: str(raw.state) ?? "active",
-    snapshot: {
-      studentPersonId,
-      studentNumber,
-      studentName,
-      studentNameNative: str(snapshot.student_name_native),
-      studentStatus: str(snapshot.student_status) ?? "active",
-      joinedOn: str(snapshot.joined_on),
-      tenantName,
-      branchName,
-      program: str(snapshot.program) ?? "—",
-      classGroup: str(snapshot.class_group) ?? "—",
-      academicSession: str(snapshot.academic_session) ?? "—",
-      issuedOn
-    }
+    studentPersonId,
+    studentNumber,
+    studentName,
+    studentNameNative: str(snapshot.student_name_native),
+    studentStatus: str(snapshot.student_status) ?? "active",
+    joinedOn: str(snapshot.joined_on),
+    tenantName,
+    branchName,
+    program: str(snapshot.program) ?? "—",
+    classGroup: str(snapshot.class_group) ?? "—",
+    academicSession: str(snapshot.academic_session) ?? "—",
+    issuedOn
   };
+}
+
+function mapCertificate(value: unknown): StudentStatusCertificate | null {
+  const raw = obj(value);
+  const issueId = num(raw.issue_id);
+  const documentId = num(raw.document_id);
+  const revision = num(raw.revision);
+  const verificationCode = str(raw.verification_code);
+  const issuedAt = str(raw.issued_at);
+  const snapshot = mapSnapshot(raw.snapshot);
+  if (!issueId || !documentId || !revision || !verificationCode || !issuedAt || !snapshot) return null;
+  return { issueId, documentId, revision, verificationCode, issuedAt, state: str(raw.state) ?? "active", snapshot };
 }
 
 export async function getStudentStatusCertificate(personId: number): Promise<StudentStatusCertificate | null> {
@@ -109,9 +115,15 @@ export async function issueStudentStatusCertificate(personId: number, requestKey
   return certificate;
 }
 
-export async function verifyStudentStatusCertificate(code: string): Promise<StudentStatusCertificate | null> {
+export async function verifyStudentStatusCertificate(code: string): Promise<VerifiedStudentStatusCertificate | null> {
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("verify_student_status_certificate_v1", { p_verification_code: code });
   if (error) throw new Error("Unable to verify certificate.");
-  return mapCertificate(data);
+  const raw = obj(data);
+  const revision = num(raw.revision);
+  const verificationCode = str(raw.verification_code);
+  const issuedAt = str(raw.issued_at);
+  const snapshot = mapSnapshot(raw.snapshot);
+  if (raw.valid !== true || !revision || !verificationCode || !issuedAt || !snapshot) return null;
+  return { valid: true, revision, verificationCode, issuedAt, snapshot };
 }
