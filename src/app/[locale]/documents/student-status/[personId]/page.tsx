@@ -18,7 +18,7 @@ export default async function StudentStatusCertificatePage({ params }: { params:
   const locale = rawLocale as Locale;
   const personId = Number(rawPersonId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
-  const [certificate, student] = await Promise.all([getStudentStatusCertificate(personId), getStudentDetail(personId)]);
+  const [certificate, student] = await Promise.all([getStudentStatusCertificate(personId), getStudentDetail(personId, locale)]);
   if (!student) notFound();
   const t = copy[locale];
 
