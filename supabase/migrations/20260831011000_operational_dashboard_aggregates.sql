@@ -43,8 +43,7 @@ begin
   v_local_date := coalesce(p_local_date, public.institution_local_date(p_tenant_id));
   select coalesce(nullif(ip.timezone,''),'UTC') into v_timezone
   from public.institution_profiles ip
-  where ip.tenant_id=p_tenant_id
-  order by ip.id limit 1;
+  where ip.tenant_id=p_tenant_id;
   v_timezone := coalesce(v_timezone,'UTC');
 
   select jsonb_build_object(
