@@ -22,6 +22,11 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  function requestedDestination() {
+    const requested = new URLSearchParams(window.location.search).get("next");
+    return requested ? safeAuthRedirect(requested) : mode === "signup" ? "/onboarding" : "/en";
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -29,6 +34,7 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
+      const next = requestedDestination();
       if (mode === "signin") {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -36,12 +42,10 @@ export default function LoginPage() {
         });
 
         if (signInError) throw signInError;
-        const next = new URLSearchParams(window.location.search).get("next");
-        continueTo(safeAuthRedirect(next));
+        continueTo(next);
         return;
       }
 
-      const next = "/onboarding";
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -57,7 +61,7 @@ export default function LoginPage() {
         return;
       }
 
-      setMessage("Account created. Check your email to confirm your address, then continue setup.");
+      setMessage("Account created. Check your email to confirm your address, then continue.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Authentication failed.");
     } finally {
@@ -97,12 +101,12 @@ export default function LoginPage() {
 
         <div className="auth-form-panel">
           <div className="auth-heading">
-            <p className="state-kicker">Secure workspace</p>
+            <p className="state-kicker">Secure access</p>
             <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your institution account"}</h1>
             <p>
               {mode === "signin"
-                ? "Sign in to continue to your institution workspace."
-                : "Create an owner account. Institution setup comes next."}
+                ? "Sign in to continue."
+                : "Create an account. Your institution or portal setup continues next."}
             </p>
           </div>
 
