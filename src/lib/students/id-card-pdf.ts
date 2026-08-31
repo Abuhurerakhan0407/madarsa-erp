@@ -1,4 +1,4 @@
-import { createLayoutPdf, type PdfLayoutCommand } from "@/lib/documents/layout-pdf";
+import { createLayoutPdf, type PdfLayoutCommand } from "../documents/layout-pdf";
 
 export type IdCardPdfStudent = {
   studentNumber: string;
