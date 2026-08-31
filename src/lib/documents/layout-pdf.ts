@@ -4,6 +4,8 @@ export type PdfLayoutCommand =
 
 type PdfLayoutOptions = {
   pages: PdfLayoutCommand[][];
+  pageWidth?: number;
+  pageHeight?: number;
 };
 
 const encoder = new TextEncoder();
@@ -34,6 +36,9 @@ function pageContent(commands: PdfLayoutCommand[]): string {
 
 export function createLayoutPdf(options: PdfLayoutOptions): Uint8Array {
   const pages = options.pages.length ? options.pages : [[]];
+  const pageWidth = options.pageWidth ?? 595;
+  const pageHeight = options.pageHeight ?? 842;
+  if (pageWidth <= 0 || pageHeight <= 0) throw new Error("PDF page dimensions must be positive.");
   const objects = new Map<number, string>();
   const regularFont = 3;
   const boldFont = 4;
@@ -49,7 +54,7 @@ export function createLayoutPdf(options: PdfLayoutOptions): Uint8Array {
     const contentObject = pageObject + 1;
     pageRefs.push(pageObject);
     const stream = pageContent(commands);
-    objects.set(pageObject, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${regularFont} 0 R /F2 ${boldFont} 0 R >> >> /Contents ${contentObject} 0 R >>`);
+    objects.set(pageObject, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${number(pageWidth)} ${number(pageHeight)}] /Resources << /Font << /F1 ${regularFont} 0 R /F2 ${boldFont} 0 R >> >> /Contents ${contentObject} 0 R >>`);
     objects.set(contentObject, `<< /Length ${encoder.encode(stream).length} >>\nstream\n${stream}\nendstream`);
   });
   objects.set(2, `<< /Type /Pages /Kids [${pageRefs.map((ref) => `${ref} 0 R`).join(" ")}] /Count ${pageRefs.length} >>`);
