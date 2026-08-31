@@ -59,7 +59,7 @@ export function ExamsResultsWorkspace({locale,data}:{locale:Locale;data:ExamWork
       <div className="exams-workflow-actions">
         {data.canApprove&&exam.state==="marks_open"?<button className="action-button action-button-primary" type="button" disabled={!complete||busy!==null} onClick={()=>workflow("calculate")}>{busy==="workflow-calculate"?t.processing:t.calculate}</button>:null}
         {data.canApprove&&data.latestResult?.state==="calculated"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("approve")}>{busy==="workflow-approve"?t.processing:t.approve}</button>:null}
-        {data.canPublish&&data.latestResult?.state==="approved"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("publish")}>{busy==="workflow-publish"?t.processing:t.publish}</button>:null}
+        {data.canPublish&&exam.state==="results_approved"&&data.latestResult?.state==="approved"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("publish")}>{busy==="workflow-publish"?t.processing:t.publish}</button>:null}
       </div>
     </section>
     <section className="exams-metrics" data-page-section>{metrics.map(([label,value])=><article className="exam-metric" key={String(label)}><span>{label}</span><strong>{value}</strong></article>)}</section>
