@@ -1,226 +1,245 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
-import { demoModules, localize } from "@/lib/demo/modules";
+import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
 
-type DashboardPageProps = {
-  params: Promise<{ locale: string }>;
+type DashboardPageProps = { params: Promise<{ locale: string }> };
+
+type DashboardCopy = {
+  year: string;
+  subtitle: string;
+  live: string;
+  metricsTitle: string;
+  metricsBody: string;
+  students: string;
+  attendance: string;
+  attendanceNotStarted: string;
+  admissions: string;
+  quran: string;
+  staff: string;
+  exams: string;
+  total: string;
+  active: string;
+  present: string;
+  absent: string;
+  open: string;
+  converted: string;
+  revisionDue: string;
+  markedToday: string;
+  marks: string;
+  noExam: string;
+  published: string;
+  alerts: string;
+  alertsBody: string;
+  noAlerts: string;
+  trends: string;
+  trendsBody: string;
+  attendanceTrend: string;
+  admissionTrend: string;
+  quranTrend: string;
+  attempts: string;
+  quick: string;
+  quickBody: string;
+  allModules: string;
+  routes: Record<string, string>;
+  alertLabels: Record<string, string>;
 };
 
-const copy = {
-  academicYear: {
-    en: "Academic year 2026–27",
-    ur: "تعلیمی سال 2026–27",
-    ar: "العام الدراسي 2026–27"
+const copy: Record<Locale, DashboardCopy> = {
+  en: {
+    year: "Academic year 2026–27",
+    subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, staff and reporting.",
+    live: "Live operations",
+    metricsTitle: "Institution overview",
+    metricsBody: "These figures come from the same governed records used inside each operational workspace.",
+    students: "Active students",
+    attendance: "Attendance today",
+    attendanceNotStarted: "Not started",
+    admissions: "Open admissions",
+    quran: "Qur'an / Hifz students",
+    staff: "Active staff",
+    exams: "Current exam marks",
+    total: "total",
+    active: "active",
+    present: "present",
+    absent: "absent",
+    open: "open",
+    converted: "converted",
+    revisionDue: "revision due",
+    markedToday: "attendance marked today",
+    marks: "marks recorded",
+    noExam: "No active exam",
+    published: "published",
+    alerts: "Needs attention",
+    alertsBody: "Operational items that need a follow-up now.",
+    noAlerts: "No active operational alerts.",
+    trends: "Last 7 days",
+    trendsBody: "Actual branch activity, not presentation data.",
+    attendanceTrend: "Student attendance",
+    admissionTrend: "Admissions submitted",
+    quranTrend: "Qur'an attempts",
+    attempts: "attempts",
+    quick: "Operational workspaces",
+    quickBody: "Open the live workspaces used for the client walkthrough.",
+    allModules: "View complete suite",
+    routes: { admissions: "Admissions", students: "Students", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "HR & Staff", reports: "Reports", documents: "IDs & Documents" },
+    alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Staff leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
-  body: {
-    en: "A clear view of students, attendance, fees, Qur'an learning, staffing and day-to-day school operations.",
-    ur: "طلبہ، حاضری، فیس، قرآن کی تعلیم، عملہ اور روزمرہ ادارہ آپریشنز کا واضح جائزہ۔",
-    ar: "نظرة واضحة على الطلاب والحضور والرسوم وتعليم القرآن والموظفين والعمليات اليومية للمؤسسة."
+  ur: {
+    year: "تعلیمی سال 2026–27",
+    subtitle: "طلبہ، داخلہ، حاضری، قرآن، امتحانات، عملہ اور رپورٹس کے حقیقی برانچ آپریشنز۔",
+    live: "لائیو آپریشنز",
+    metricsTitle: "ادارہ جائزہ",
+    metricsBody: "یہ اعداد وہی اصل ریکارڈز استعمال کرتے ہیں جو ہر آپریشنل ورک اسپیس میں ہیں۔",
+    students: "فعال طلبہ",
+    attendance: "آج کی حاضری",
+    attendanceNotStarted: "شروع نہیں ہوئی",
+    admissions: "کھلے داخلے",
+    quran: "قرآن / حفظ طلبہ",
+    staff: "فعال عملہ",
+    exams: "موجودہ امتحانی نمبر",
+    total: "کل",
+    active: "فعال",
+    present: "حاضر",
+    absent: "غیر حاضر",
+    open: "کھلے",
+    converted: "طالب علم بنے",
+    revisionDue: "ریویژن باقی",
+    markedToday: "آج حاضری درج",
+    marks: "نمبر درج",
+    noExam: "کوئی فعال امتحان نہیں",
+    published: "شائع شدہ",
+    alerts: "توجہ درکار",
+    alertsBody: "وہ آپریشنل کام جن پر ابھی کارروائی چاہیے۔",
+    noAlerts: "کوئی فعال آپریشنل الرٹ نہیں۔",
+    trends: "گزشتہ 7 دن",
+    trendsBody: "حقیقی برانچ سرگرمی، نمائشی ڈیٹا نہیں۔",
+    attendanceTrend: "طلبہ حاضری",
+    admissionTrend: "جمع شدہ داخلے",
+    quranTrend: "قرآن کوششیں",
+    attempts: "کوششیں",
+    quick: "آپریشنل ورک اسپیسز",
+    quickBody: "کلائنٹ واک تھرو کے لیے حقیقی ورک اسپیسز کھولیں۔",
+    allModules: "مکمل سسٹم دیکھیں",
+    routes: { admissions: "داخلہ", students: "طلبہ", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "HR و عملہ", reports: "رپورٹس", documents: "ID و دستاویزات" },
+    alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "عملے کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
   },
-  operations: {
-    en: "Institution overview",
-    ur: "ادارہ جائزہ",
-    ar: "نظرة عامة على المؤسسة"
-  },
-  operationsBody: {
-    en: "The numbers your administration team needs at a glance.",
-    ur: "انتظامیہ کے لیے اہم اعداد ایک نظر میں۔",
-    ar: "أهم الأرقام التي يحتاجها فريق الإدارة في لمحة واحدة."
-  },
-  modules: {
-    en: "Core operational areas",
-    ur: "اہم آپریشنل شعبے",
-    ar: "مجالات التشغيل الأساسية"
-  },
-  modulesBody: {
-    en: "Open the areas used most often, or browse the complete administration suite.",
-    ur: "سب سے زیادہ استعمال ہونے والے شعبے کھولیں یا مکمل انتظامی سسٹم دیکھیں۔",
-    ar: "افتح المجالات الأكثر استخداماً أو استعرض مجموعة الإدارة الكاملة."
-  },
-  allModules: {
-    en: "View all modules",
-    ur: "تمام ماڈیولز دیکھیں",
-    ar: "عرض جميع الوحدات"
-  },
-  quickActions: {
-    en: "Quick access",
-    ur: "فوری رسائی",
-    ar: "وصول سريع"
-  },
-  quickTitle: {
-    en: "Admissions and student records",
-    ur: "داخلہ اور طالب علم ریکارڈ",
-    ar: "القبول وسجلات الطلاب"
-  },
-  quickBody: {
-    en: "Move directly into admissions, student structure or institution configuration.",
-    ur: "داخلہ، طالب علم اسٹرکچر یا ادارہ کنفیگریشن میں براہ راست جائیں۔",
-    ar: "انتقل مباشرة إلى القبول أو هيكل الطلاب أو تهيئة المؤسسة."
-  },
-  buttons: {
-    admissions: {
-      en: "Admissions workspace",
-      ur: "داخلہ ورک اسپیس",
-      ar: "مساحة القبول"
-    },
-    students: {
-      en: "Student records",
-      ur: "طالب علم ریکارڈز",
-      ar: "سجلات الطلاب"
-    },
-    configuration: {
-      en: "Configuration",
-      ur: "کنفیگریشن",
-      ar: "التهيئة"
-    }
-  },
-  metrics: {
-    students: {
-      label: { en: "Active students", ur: "فعال طلبہ", ar: "الطلاب النشطون" },
-      note: { en: "Across 3 branches", ur: "3 برانچز میں", ar: "عبر 3 فروع" }
-    },
-    attendance: {
-      label: { en: "Attendance today", ur: "آج کی حاضری", ar: "حضور اليوم" },
-      note: { en: "3,784 present", ur: "3,784 حاضر", ar: "3,784 حاضر" }
-    },
-    fees: {
-      label: { en: "Fee collection", ur: "فیس وصولی", ar: "تحصيل الرسوم" },
-      note: { en: "This month", ur: "اس ماہ", ar: "هذا الشهر" }
-    },
-    hifz: {
-      label: { en: "Hifz students", ur: "حفظ طلبہ", ar: "طلاب الحفظ" },
-      note: { en: "Sabaq · Sabqi · Manzil", ur: "سبق · سبقی · منزل", ar: "سبق · سبقي · منزل" }
-    },
-    hostel: {
-      label: { en: "Hostel residents", ur: "ہاسٹل طلبہ", ar: "طلاب السكن" },
-      note: { en: "660-bed capacity", ur: "660 بیڈ گنجائش", ar: "سعة 660 سريراً" }
-    },
-    staff: {
-      label: { en: "Staff", ur: "عملہ", ar: "الموظفون" },
-      note: { en: "182 teachers", ur: "182 اساتذہ", ar: "182 معلماً" }
-    }
+  ar: {
+    year: "العام الدراسي 2026–27",
+    subtitle: "عمليات الفرع الحية للطلاب والقبول والحضور والقرآن والاختبارات والموظفين والتقارير.",
+    live: "عمليات حية",
+    metricsTitle: "نظرة عامة على المؤسسة",
+    metricsBody: "تأتي هذه الأرقام من نفس السجلات المحكومة المستخدمة داخل مساحات العمل التشغيلية.",
+    students: "الطلاب النشطون",
+    attendance: "حضور اليوم",
+    attendanceNotStarted: "لم يبدأ",
+    admissions: "طلبات القبول المفتوحة",
+    quran: "طلاب القرآن / الحفظ",
+    staff: "الموظفون النشطون",
+    exams: "درجات الاختبار الحالي",
+    total: "الإجمالي",
+    active: "نشط",
+    present: "حاضر",
+    absent: "غائب",
+    open: "مفتوح",
+    converted: "تم تسجيلهم",
+    revisionDue: "مراجعة مستحقة",
+    markedToday: "تم تسجيل حضورهم اليوم",
+    marks: "درجات مسجلة",
+    noExam: "لا يوجد اختبار نشط",
+    published: "منشور",
+    alerts: "يحتاج إلى انتباه",
+    alertsBody: "العناصر التشغيلية التي تحتاج متابعة الآن.",
+    noAlerts: "لا توجد تنبيهات تشغيلية نشطة.",
+    trends: "آخر 7 أيام",
+    trendsBody: "نشاط الفرع الحقيقي، وليس بيانات عرض.",
+    attendanceTrend: "حضور الطلاب",
+    admissionTrend: "طلبات القبول المقدمة",
+    quranTrend: "محاولات القرآن",
+    attempts: "محاولات",
+    quick: "مساحات العمل التشغيلية",
+    quickBody: "افتح مساحات العمل الحية المستخدمة في عرض العميل.",
+    allModules: "عرض النظام الكامل",
+    routes: { admissions: "القبول", students: "الطلاب", attendance: "الحضور", quran: "القرآن والحفظ", exams: "الاختبارات والنتائج", staff: "الموارد والموظفون", reports: "التقارير", documents: "الهويات والمستندات" },
+    alertLabels: { attendance_not_started: "لم يبدأ حضور الطلاب اليوم", attendance_unmarked: "هناك طلاب لم يسجل حضورهم بعد", admissions_open: "طلبات قبول تحتاج إلى إجراء", quran_revision_due: "طلاب لديهم مراجعة قرآن مستحقة", staff_leave_pending: "طلبات إجازة الموظفين بانتظار القرار", exam_marks_remaining: "درجات اختبار ما زالت بحاجة إلى إدخال" }
   }
-} as const;
+};
+
+const dateLocales: Record<Locale, string> = { en: "en-IN", ur: "ur-IN", ar: "ar-SA" };
+
+function number(value: number): string {
+  return new Intl.NumberFormat("en-IN").format(value);
+}
+
+function shortDate(date: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(dateLocales[locale], { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
+}
+
+function TrendBars({ points, locale, suffix = "" }: { points: DashboardTrendPoint[]; locale: Locale; suffix?: string }) {
+  const max = Math.max(...points.map((point) => point.value), 1);
+  return (
+    <div className="dashboard-bars" role="img" aria-label={points.map((point) => `${shortDate(point.date, locale)} ${point.value}${suffix}`).join(", ")}>
+      {points.map((point) => (
+        <div className="dashboard-bar-column" key={point.date} title={`${shortDate(point.date, locale)} · ${point.value}${suffix}`}>
+          <div className="dashboard-bar-track"><span style={{ height: `${Math.max((point.value / max) * 100, point.value > 0 ? 8 : 2)}%` }} /></div>
+          <small>{shortDate(point.date, locale)}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
-  const { locale } = await params;
-  const typedLocale = (locale === "ur" || locale === "ar" ? locale : "en") as Locale;
+  const { locale: rawLocale } = await params;
+  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const text = copy[locale];
   const workspace = await getTenantContext();
-
   if (!workspace) return null;
-
-  const dateLabel = new Intl.DateTimeFormat(typedLocale, {
-    dateStyle: "medium",
-    timeZone: "Asia/Kolkata"
-  }).format(new Date());
-
-  const featuredIds = new Set(["attendance", "quran", "fees", "whatsapp", "ai", "reports"]);
-  const featured = demoModules.filter((item) => featuredIds.has(item.id));
+  const dashboard = await getOperationalDashboard(locale);
+  const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
+  const operationalRoutes = [
+    ["admissions", `/${locale}/admissions`],
+    ["students", `/${locale}/students`],
+    ["attendance", `/${locale}/attendance`],
+    ["quran", `/${locale}/quran`],
+    ["exams", `/${locale}/exams`],
+    ["staff", `/${locale}/staff`],
+    ["reports", `/${locale}/reports`],
+    ["documents", `/${locale}/documents`]
+  ] as const;
 
   return (
-    <>
-      <section className="demo-hub-hero demo-overview-hero" data-page-section>
-        <div>
-          <div className="demo-eyebrow-row">
-            <span className="demo-scenario-chip">{copy.academicYear[typedLocale]}</span>
-          </div>
-          <h1>{workspace.tenantName}</h1>
-          <p>{copy.body[typedLocale]}</p>
-        </div>
-        <time className="demo-date-chip" dateTime={new Date().toISOString()}>{dateLabel}</time>
+    <div className="operational-dashboard">
+      <section className="dashboard-hero" data-page-section>
+        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
+        <time dateTime={dashboard.localDate}>{dateLabel}</time>
       </section>
 
-      <section className="demo-overview-section" data-page-section>
-        <header className="demo-section-heading">
-          <div>
-            <h2>{copy.operations[typedLocale]}</h2>
-            <p>{copy.operationsBody[typedLocale]}</p>
-          </div>
-        </header>
-        <div className="demo-metric-grid demo-overview-metrics">
-          <article className="demo-metric-card demo-metric-featured">
-            <span>{copy.metrics.students.label[typedLocale]}</span>
-            <strong>4,000</strong>
-            <small>{copy.metrics.students.note[typedLocale]}</small>
-          </article>
-          <article className="demo-metric-card">
-            <span>{copy.metrics.attendance.label[typedLocale]}</span>
-            <strong>94.6%</strong>
-            <small>{copy.metrics.attendance.note[typedLocale]}</small>
-          </article>
-          <article className="demo-metric-card">
-            <span>{copy.metrics.fees.label[typedLocale]}</span>
-            <strong>₹18.6L</strong>
-            <small>{copy.metrics.fees.note[typedLocale]}</small>
-          </article>
-          <article className="demo-metric-card">
-            <span>{copy.metrics.hifz.label[typedLocale]}</span>
-            <strong>684</strong>
-            <small>{copy.metrics.hifz.note[typedLocale]}</small>
-          </article>
-          <article className="demo-metric-card">
-            <span>{copy.metrics.hostel.label[typedLocale]}</span>
-            <strong>612</strong>
-            <small>{copy.metrics.hostel.note[typedLocale]}</small>
-          </article>
-          <article className="demo-metric-card">
-            <span>{copy.metrics.staff.label[typedLocale]}</span>
-            <strong>214</strong>
-            <small>{copy.metrics.staff.note[typedLocale]}</small>
-          </article>
+      <section className="dashboard-section" data-page-section>
+        <header className="dashboard-section-heading"><div><h2>{text.metricsTitle}</h2><p>{text.metricsBody}</p></div></header>
+        <div className="dashboard-metric-grid">
+          <Link className="dashboard-metric dashboard-metric-primary" href={`/${locale}/students`}><span>{text.students}</span><strong>{number(dashboard.students.active)}</strong><small>{number(dashboard.students.total)} {text.total}</small></Link>
+          <Link className="dashboard-metric" href={`/${locale}/attendance`}><span>{text.attendance}</span><strong>{dashboard.attendance.rate === null ? text.attendanceNotStarted : `${dashboard.attendance.rate}%`}</strong><small>{number(dashboard.attendance.present)} {text.present} · {number(dashboard.attendance.absent)} {text.absent}</small></Link>
+          <Link className="dashboard-metric" href={`/${locale}/admissions`}><span>{text.admissions}</span><strong>{number(dashboard.admissions.open)}</strong><small>{number(dashboard.admissions.total)} {text.total} · {number(dashboard.admissions.converted)} {text.converted}</small></Link>
+          <Link className="dashboard-metric" href={`/${locale}/quran`}><span>{text.quran}</span><strong>{number(dashboard.quran.students)}</strong><small>{number(dashboard.quran.revisionDue)} {text.revisionDue}</small></Link>
+          <Link className="dashboard-metric" href={`/${locale}/staff`}><span>{text.staff}</span><strong>{number(dashboard.staff.active)}</strong><small>{number(dashboard.staff.attendanceMarkedToday)} {text.markedToday}</small></Link>
+          <Link className="dashboard-metric" href={`/${locale}/exams`}><span>{text.exams}</span><strong>{dashboard.exam.label ? `${number(dashboard.exam.marksRecorded)}/${number(dashboard.exam.marksExpected)}` : "—"}</strong><small>{dashboard.exam.label ? `${dashboard.exam.label}${dashboard.exam.published ? ` · ${text.published}` : ""}` : text.noExam}</small></Link>
         </div>
       </section>
 
-      <section className="demo-overview-section" data-page-section>
-        <header className="demo-section-heading">
-          <div>
-            <h2>{copy.modules[typedLocale]}</h2>
-            <p>{copy.modulesBody[typedLocale]}</p>
-          </div>
-          <Link className="action-button" href={`/${typedLocale}/demo`}>
-            {copy.allModules[typedLocale]}
-          </Link>
-        </header>
-        <div className="demo-module-grid demo-featured-grid">
-          {featured.map((item) => (
-            <Link
-              className="demo-module-card"
-              href={`/${typedLocale}/demo/${item.id}`}
-              key={item.id}
-              prefetch={false}
-            >
-              <span className="demo-module-code">{item.code}</span>
-              <div>
-                <h3>{localize(item.title, typedLocale)}</h3>
-                <p>{localize(item.description, typedLocale)}</p>
-              </div>
-              <span className="demo-card-arrow" aria-hidden="true">→</span>
-            </Link>
-          ))}
-        </div>
+      <section className="dashboard-grid" data-page-section>
+        <article className="dashboard-panel dashboard-alert-panel"><header><div><h2>{text.alerts}</h2><p>{text.alertsBody}</p></div><span>{dashboard.alerts.length}</span></header>{dashboard.alerts.length ? <div className="dashboard-alert-list">{dashboard.alerts.map((alert) => <Link className={`dashboard-alert dashboard-alert-${alert.severity}`} href={alert.href} key={alert.key}><div><strong>{text.alertLabels[alert.key] ?? alert.key}</strong><small>{alert.count}</small></div><span aria-hidden="true">→</span></Link>)}</div> : <p className="dashboard-empty">{text.noAlerts}</p>}</article>
+        <article className="dashboard-panel dashboard-route-panel"><header><div><h2>{text.quick}</h2><p>{text.quickBody}</p></div></header><div className="dashboard-route-grid">{operationalRoutes.map(([key, href]) => <Link href={href} key={key}><span>{text.routes[key]}</span><b aria-hidden="true">↗</b></Link>)}</div><Link className="dashboard-suite-link" href={`/${locale}/demo`}>{text.allModules} →</Link></article>
       </section>
 
-      <section className="panel demo-live-panel professional-quick-panel" data-page-section>
-        <header className="panel-header">
-          <div>
-            <p className="sample-label">{copy.quickActions[typedLocale]}</p>
-            <h2>{copy.quickTitle[typedLocale]}</h2>
-            <p>{copy.quickBody[typedLocale]}</p>
-          </div>
-        </header>
-        <div className="demo-live-actions">
-          <Link className="action-button action-button-primary" href={`/${typedLocale}/admissions`}>
-            {copy.buttons.admissions[typedLocale]}
-          </Link>
-          <Link className="action-button" href={`/${typedLocale}/people-academics`}>
-            {copy.buttons.students[typedLocale]}
-          </Link>
-          <Link className="action-button" href={`/${typedLocale}/settings/configuration`}>
-            {copy.buttons.configuration[typedLocale]}
-          </Link>
+      <section className="dashboard-section" data-page-section>
+        <header className="dashboard-section-heading"><div><h2>{text.trends}</h2><p>{text.trendsBody}</p></div></header>
+        <div className="dashboard-trend-grid">
+          <article className="dashboard-panel dashboard-trend-card"><header><div><span>{text.attendanceTrend}</span><strong>{dashboard.attendance.rate === null ? "—" : `${dashboard.attendance.rate}%`}</strong></div></header><TrendBars points={dashboard.trends.attendance} locale={locale} suffix="%" /></article>
+          <article className="dashboard-panel dashboard-trend-card"><header><div><span>{text.admissionTrend}</span><strong>{number(dashboard.trends.admissions.reduce((sum, point) => sum + point.value, 0))}</strong></div></header><TrendBars points={dashboard.trends.admissions} locale={locale} /></article>
+          <article className="dashboard-panel dashboard-trend-card"><header><div><span>{text.quranTrend}</span><strong>{number(dashboard.trends.quran.reduce((sum, point) => sum + point.value, 0))} {text.attempts}</strong></div></header><TrendBars points={dashboard.trends.quran} locale={locale} /></article>
         </div>
       </section>
-    </>
+    </div>
   );
 }

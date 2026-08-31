@@ -14,6 +14,7 @@ import "../professional-flows.css";
 import "../hr.css";
 import "../reports.css";
 import "../documents.css";
+import "../dashboard.css";
 
 export const metadata: Metadata = {
   title: {
