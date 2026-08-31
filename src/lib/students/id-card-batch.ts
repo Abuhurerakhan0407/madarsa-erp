@@ -1,7 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { ID_CARD_BATCH_LIMIT, normalizeIdCardStudentIds } from "./id-card-batch-model";
 
-export const ID_CARD_BATCH_LIMIT = 250;
+export { ID_CARD_BATCH_LIMIT, normalizeIdCardStudentIds };
 
 export type IdCardBatchStudent = {
   personId: number;
@@ -44,17 +45,6 @@ function localizedLabel(labels: unknown, locale: string, fallback: string): stri
   const map = labels as Record<string, unknown>;
   const value = map[locale] ?? map.en;
   return typeof value === "string" && value.trim() ? value : fallback;
-}
-
-export function normalizeIdCardStudentIds(value: string | string[] | undefined): number[] {
-  const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
-  const unique = new Set<number>();
-  for (const raw of values) {
-    const id = Number(raw);
-    if (Number.isInteger(id) && id > 0) unique.add(id);
-    if (unique.size > ID_CARD_BATCH_LIMIT) throw new Error(`Select no more than ${ID_CARD_BATCH_LIMIT} students.`);
-  }
-  return [...unique];
 }
 
 export async function getStudentIdCardBatch(options: {
