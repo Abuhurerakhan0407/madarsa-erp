@@ -11,15 +11,39 @@ function localized(labels:{en?:string;ur?:string;ar?:string},locale:Locale,fallb
 
 export function ExamsResultsWorkspace({locale,data}:{locale:Locale;data:ExamWorkspace}){
   const t=examsCopy[locale];const router=useRouter();const [busy,setBusy]=useState<string|null>(null);const [error,setError]=useState<string|null>(null);
-  const exam=data.exam;if(!exam)return <section className="panel exams-empty">{t.noResult}</section>;const examId=exam.id;
-  const complete=data.summary.marksExpected>0&&data.summary.marksRecorded>=data.summary.marksExpected;
 
   async function post(path:string,body:Record<string,unknown>,key:string){
     setBusy(key);setError(null);try{const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});const payload=await response.json().catch(()=>({})) as {error?:string};if(!response.ok){setError(payload.error||t.error);return false;}router.refresh();return true;}catch{setError(t.error);return false;}finally{setBusy(null);}
   }
 
-  async function saveMark(form:HTMLFormElement,examSubjectId:number,studentPersonId:number,markEntryId:number){
-    const fd=new FormData(form);const entryStatus=String(fd.get("entryStatus")||"present");const marks=String(fd.get("rawMarks")||"").trim();await post("/api/exams/mark",{examSubjectId,studentPersonId,entryStatus,rawMarks:entryStatus==="present"?marks:null,comment:String(fd.get("comment")||"")},`save-${markEntryId}`);
+  async function createExam(form:HTMLFormElement){
+    const fd=new FormData(form);await post("/api/exams/setup",{groupId:String(fd.get("groupId")||""),key:String(fd.get("key")||""),title:String(fd.get("title")||""),startsOn:String(fd.get("startsOn")||""),endsOn:String(fd.get("endsOn")||""),evaluatorPersonId:String(fd.get("evaluatorPersonId")||""),subjectIds:fd.getAll("subjectIds").map(String)},"create-exam");
+  }
+
+  const setupPanel=data.setup.canCreate?<section className="panel" data-page-section>
+    <div className="exam-subject-header"><div><p className="state-kicker">{t.createExam}</p><h2>{t.createExam}</h2><p>{t.createExamBody}</p></div></div>
+    <form className="exam-marks-table" onSubmit={e=>{e.preventDefault();void createExam(e.currentTarget);}}>
+      <div className="exam-mark-row">
+        <label className="field-label">{t.examTitle}<input className="text-field" name="title" minLength={3} maxLength={120} placeholder="Monthly Assessment — September 2026" required/></label>
+        <label className="field-label">{t.examKey}<input className="text-field" name="key" pattern="[a-z0-9][a-z0-9_]{2,63}" placeholder="monthly_assessment_2026_09" required/></label>
+        <label className="field-label">{t.chooseGroup}<select className="text-field" name="groupId" required defaultValue=""><option value="" disabled>{t.chooseGroup}</option>{data.setup.groups.map(group=><option key={group.id} value={group.id}>{localized(group.labels,locale,group.label)} · {group.candidateCount} {t.candidateSuffix}</option>)}</select></label>
+        <label className="field-label">{t.chooseEvaluator}<select className="text-field" name="evaluatorPersonId" required defaultValue=""><option value="" disabled>{t.chooseEvaluator}</option>{data.setup.evaluators.map(evaluator=><option key={evaluator.personId} value={evaluator.personId}>{evaluator.name} · {evaluator.employeeNumber}</option>)}</select></label>
+      </div>
+      <div className="exam-mark-row">
+        <label className="field-label">{t.startsOn}<input className="text-field" name="startsOn" type="date" required/></label>
+        <label className="field-label">{t.endsOn}<input className="text-field" name="endsOn" type="date" required/></label>
+        <fieldset className="exam-comment-field"><legend className="field-label">{t.examSubjects}</legend><div className="exams-workflow-actions">{data.setup.subjects.map(subject=><label key={subject.id}><input name="subjectIds" type="checkbox" value={subject.id}/> {localized(subject.labels,locale,subject.label)}</label>)}</div></fieldset>
+        <button className="action-button action-button-primary" type="submit" disabled={busy!==null||data.setup.groups.length===0||data.setup.evaluators.length===0||data.setup.subjects.length===0}>{busy==="create-exam"?t.creating:t.create}</button>
+      </div>
+    </form>
+  </section>:null;
+
+  const exam=data.exam;
+  if(!exam)return <div className="exams-workspace">{error?<p className="form-message form-error exams-alert" role="alert">{error}</p>:null}{setupPanel}<section className="panel exams-empty">{t.noResult}</section></div>;
+  const examId=exam.id;const complete=data.summary.marksExpected>0&&data.summary.marksRecorded>=data.summary.marksExpected;
+
+  async function saveMark(form:HTMLFormElement,examSubjectId:number,studentPersonId:number){
+    const fd=new FormData(form);const entryStatus=String(fd.get("entryStatus")||"present");const marks=String(fd.get("rawMarks")||"").trim();await post("/api/exams/mark",{examSubjectId,studentPersonId,entryStatus,rawMarks:entryStatus==="present"?marks:null,comment:String(fd.get("comment")||"")},`save-${examSubjectId}-${studentPersonId}`);
   }
   async function moderateMark(form:HTMLFormElement,markEntryId:number){
     const fd=new FormData(form);const marks=String(fd.get("rawMarks")||"").trim();await post("/api/exams/moderate",{markEntryId,rawMarks:marks,reason:String(fd.get("moderationReason")||"")},`moderate-${markEntryId}`);
@@ -29,25 +53,26 @@ export function ExamsResultsWorkspace({locale,data}:{locale:Locale;data:ExamWork
   const metrics=[[t.candidates,data.summary.candidates],[t.subjects,data.summary.subjects],[t.marksRecorded,`${data.summary.marksRecorded}/${data.summary.marksExpected}`],[t.average,data.summary.averagePercentage===null?"—":`${data.summary.averagePercentage}%`]];
   return <div className="exams-workspace">
     {error?<p className="form-message form-error exams-alert" role="alert">{error}</p>:null}
+    {setupPanel}
     <section className="exams-summary panel" data-page-section>
       <div><p className="state-kicker">{localized(exam.labels,locale,exam.label)}</p><h2>{examStateLabel(exam.state,t)}</h2><p>{t.group}: <strong>{exam.groupLabel||"—"}</strong> · {t.examWindow}: <strong>{exam.startsOn} → {exam.endsOn}</strong></p></div>
       <div className="exams-workflow-actions">
         {data.canApprove&&exam.state==="marks_open"?<button className="action-button action-button-primary" type="button" disabled={!complete||busy!==null} onClick={()=>workflow("calculate")}>{busy==="workflow-calculate"?t.processing:t.calculate}</button>:null}
         {data.canApprove&&data.latestResult?.state==="calculated"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("approve")}>{busy==="workflow-approve"?t.processing:t.approve}</button>:null}
-        {data.canPublish&&data.latestResult?.state==="approved"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("publish")}>{busy==="workflow-publish"?t.processing:t.publish}</button>:null}
+        {data.canPublish&&exam.state==="results_approved"&&data.latestResult?.state==="approved"?<button className="action-button action-button-primary" type="button" disabled={busy!==null} onClick={()=>workflow("publish")}>{busy==="workflow-publish"?t.processing:t.publish}</button>:null}
       </div>
     </section>
     <section className="exams-metrics" data-page-section>{metrics.map(([label,value])=><article className="exam-metric" key={String(label)}><span>{label}</span><strong>{value}</strong></article>)}</section>
     {data.latestResult?<section className="panel exams-result-status" data-page-section><div><span>{t.resultState}</span><strong>{examStateLabel(data.latestResult.state,t)}</strong>{data.latestResult.snapshot?<small>{data.latestResult.snapshot.percentage??"—"}% · {t.grade} {data.latestResult.snapshot.gradeKey||"—"}</small>:null}</div>{data.latestResult.state==="approved"||exam.state==="results_published"?<span className="status-chip">{examStateLabel(exam.state,t)}</span>:null}</section>:<section className="panel exams-result-status" data-page-section><span>{t.noResult}</span></section>}
     <section className="exam-subjects" data-page-section>{data.subjects.map(subject=><article className="exam-subject-card panel" key={subject.examSubjectId}>
       <header className="exam-subject-header"><div><p className="state-kicker">{subject.subjectKey.replaceAll("_"," ")}</p><h3>{localized(subject.labels,locale,subject.subjectName)}</h3><p>{t.evaluator}: <strong>{subject.evaluator||"—"}</strong></p></div><div className="exam-score-rule"><span>{t.maximum}: {subject.maximumMarks}</span><span>{t.pass}: {subject.passMarks??"—"}</span></div></header>
-      <div className="exam-marks-table">{subject.marks.map(mark=><form className="exam-mark-row" key={mark.markEntryId} onSubmit={e=>{e.preventDefault();void saveMark(e.currentTarget,subject.examSubjectId,mark.studentPersonId,mark.markEntryId);}}>
+      <div className="exam-marks-table">{subject.marks.map(mark=><form className="exam-mark-row" key={`${subject.examSubjectId}-${mark.studentPersonId}`} onSubmit={e=>{e.preventDefault();void saveMark(e.currentTarget,subject.examSubjectId,mark.studentPersonId);}}>
         <div className="exam-student-cell"><strong>{mark.studentName}</strong><small>{mark.studentNumber} · {t.version} {mark.currentVersion}</small>{exam.state==="results_published"?<Link className="quiet-link" href={`/${locale}/exams/report-card/${mark.studentPersonId}`}>{t.openReport}</Link>:null}</div>
         <label className="field-label">{t.status}<select className="text-field" name="entryStatus" defaultValue={mark.entryStatus} disabled={!data.canEnter||exam.state!=="marks_open"}>{["present","absent","exempt","incomplete","withheld"].map(status=><option key={status} value={status}>{entryStatusLabel(status,t)}</option>)}</select></label>
         <label className="field-label">{t.marks}<input className="text-field" name="rawMarks" type="number" min="0" max={subject.maximumMarks} step="0.01" defaultValue={mark.rawMarks??""} disabled={!data.canEnter||exam.state!=="marks_open"}/></label>
         <label className="field-label exam-comment-field">{t.comment}<input className="text-field" name="comment" maxLength={500} defaultValue={mark.comment||""} disabled={!data.canEnter||exam.state!=="marks_open"}/></label>
-        {data.canEnter&&exam.state==="marks_open"?<button className="action-button" type="submit" disabled={busy!==null}>{busy===`save-${mark.markEntryId}`?t.saving:t.save}</button>:null}
-        {data.canModerate&&exam.state!=="results_published"?<div className="exam-moderation"><label className="field-label">{t.moderationReason}<input className="text-field" name="moderationReason" minLength={4} maxLength={500}/></label><button className="action-button" type="button" disabled={busy!==null} onClick={e=>{if(e.currentTarget.form)void moderateMark(e.currentTarget.form,mark.markEntryId);}}>{busy===`moderate-${mark.markEntryId}`?t.processing:t.moderate}</button></div>:null}
+        {data.canEnter&&exam.state==="marks_open"?<button className="action-button" type="submit" disabled={busy!==null}>{busy===`save-${subject.examSubjectId}-${mark.studentPersonId}`?t.saving:t.save}</button>:null}
+        {mark.markEntryId>0&&data.canModerate&&exam.state!=="results_published"?<div className="exam-moderation"><label className="field-label">{t.moderationReason}<input className="text-field" name="moderationReason" minLength={4} maxLength={500}/></label><button className="action-button" type="button" disabled={busy!==null} onClick={e=>{if(e.currentTarget.form)void moderateMark(e.currentTarget.form,mark.markEntryId);}}>{busy===`moderate-${mark.markEntryId}`?t.processing:t.moderate}</button></div>:null}
       </form>)}</div>
     </article>)}</section>
   </div>;
