@@ -102,7 +102,7 @@ export default function LoginPage() {
         <div className="auth-form-panel">
           <div className="auth-heading">
             <p className="state-kicker">Secure access</p>
-            <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your secure account"}</h1>
+            <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your institution account"}</h1>
             <p>
               {mode === "signin"
                 ? "Sign in to continue."
@@ -153,7 +153,7 @@ export default function LoginPage() {
               setMessage(null);
             }}
           >
-            {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
+            {mode === "signin" ? "New institution? Create an account" : "Already have an account? Sign in"}
           </button>
         </div>
       </section>
