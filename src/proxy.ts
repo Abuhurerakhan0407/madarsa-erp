@@ -44,9 +44,10 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname === "/login") {
     if (!identityId) return sessionResponse;
+    const requested = request.nextUrl.searchParams.get("next");
     return copySessionState(
       sessionResponse,
-      NextResponse.redirect(new URL("/en", request.url))
+      NextResponse.redirect(new URL(requested?.startsWith("/portal") ? requested : "/en", request.url))
     );
   }
 
@@ -55,6 +56,13 @@ export default async function proxy(request: NextRequest) {
 
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", "/onboarding");
+    return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
+  }
+
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) {
+    if (identityId) return sessionResponse;
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
   }
 
