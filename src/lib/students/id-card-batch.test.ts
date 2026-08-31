@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ID_CARD_BATCH_LIMIT, normalizeIdCardStudentIds } from "./id-card-batch";
+import { ID_CARD_BATCH_LIMIT, normalizeIdCardStudentIds } from "./id-card-batch-model";
 
 describe("bulk ID card selection", () => {
   it("normalizes valid unique student ids", () => {
