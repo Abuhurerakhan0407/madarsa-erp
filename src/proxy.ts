@@ -1,5 +1,6 @@
 import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeAuthRedirect } from "@/lib/auth/redirects";
 import { hasSupabasePublicEnv } from "@/lib/env";
 import { routing } from "@/i18n/routing";
 import { updateSession } from "@/lib/supabase/proxy";
@@ -44,10 +45,10 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname === "/login") {
     if (!identityId) return sessionResponse;
-    const requested = request.nextUrl.searchParams.get("next");
+    const destination = safeAuthRedirect(request.nextUrl.searchParams.get("next"));
     return copySessionState(
       sessionResponse,
-      NextResponse.redirect(new URL(requested?.startsWith("/portal") ? requested : "/en", request.url))
+      NextResponse.redirect(new URL(destination, request.url))
     );
   }
 
