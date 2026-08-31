@@ -1,5 +1,5 @@
 import { describe,expect,it } from "vitest";
-import { parseStudentImportCsv } from "@/lib/students/csv-import";
+import { parseStudentImportCsv } from "./csv-import";
 
 describe("student CSV import parser",()=>{
  it("parses canonical and alias headers with quoted commas",()=>{
