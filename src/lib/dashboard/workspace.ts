@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/tenancy/context";
-import { getDefaultAttendanceDate, getAttendanceWorkspace } from "@/lib/attendance/workspace";
+import { getAttendanceTimezone, getDefaultAttendanceDate, getAttendanceWorkspace } from "@/lib/attendance/workspace";
 import { getQuranHifzWorkspace } from "@/lib/quran/workspace";
 import { getExamWorkspace } from "@/lib/exams/workspace";
 import { getHrEmployees } from "@/lib/hr/workspace";
@@ -73,16 +73,34 @@ function round(value: number, digits = 1): number {
   return Math.round(value * factor) / factor;
 }
 
+function timestampDateInTimezone(value: string, timezone: string): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return map.year && map.month && map.day ? `${map.year}-${map.month}-${map.day}` : null;
+}
+
 async function loadTrends(args: {
   tenantId: number;
   branchId: number;
   localDate: string;
+  timezone: string;
 }): Promise<OperationalDashboard["trends"]> {
   const admin = createAdminClient();
   const dates = dateSeries(args.localDate, 7);
   if (!dates.length) return { attendance: [], admissions: [], quran: [] };
   const startDate = dates[0];
   const endDate = dates[dates.length - 1];
+  const admissionStart = new Date(`${startDate}T00:00:00.000Z`);
+  admissionStart.setUTCDate(admissionStart.getUTCDate() - 1);
+  const admissionEnd = new Date(`${endDate}T00:00:00.000Z`);
+  admissionEnd.setUTCDate(admissionEnd.getUTCDate() + 2);
 
   const [sessionResult, admissionsResult, quranSessionResult] = await Promise.all([
     admin
@@ -97,8 +115,8 @@ async function loadTrends(args: {
       .select("submitted_at")
       .eq("tenant_id", args.tenantId)
       .eq("branch_id", args.branchId)
-      .gte("submitted_at", `${startDate}T00:00:00.000Z`)
-      .lt("submitted_at", `${endDate}T23:59:59.999Z`),
+      .gte("submitted_at", admissionStart.toISOString())
+      .lt("submitted_at", admissionEnd.toISOString()),
     admin
       .from("recitation_sessions")
       .select("id,session_date")
@@ -140,6 +158,7 @@ async function loadTrends(args: {
   const attendanceBuckets = new Map<string, { sum: number; total: number }>();
   const admissionsBuckets = new Map<string, number>();
   const quranBuckets = new Map<string, { attempts: number; scoreSum: number; scored: number }>();
+  const permittedDates = new Set(dates);
 
   for (const row of attendanceRecordsResult.data ?? []) {
     const date = attendanceDateBySession.get(row.attendance_session_id);
@@ -153,7 +172,8 @@ async function loadTrends(args: {
 
   for (const row of admissionsResult.data ?? []) {
     if (!row.submitted_at) continue;
-    const date = new Date(row.submitted_at).toISOString().slice(0, 10);
+    const date = timestampDateInTimezone(row.submitted_at, args.timezone);
+    if (!date || !permittedDates.has(date)) continue;
     admissionsBuckets.set(date, (admissionsBuckets.get(date) ?? 0) + 1);
   }
 
@@ -191,7 +211,7 @@ export async function getOperationalDashboard(locale: Locale): Promise<Operation
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
 
-  const localDate = await getDefaultAttendanceDate();
+  const [localDate, timezone] = await Promise.all([getDefaultAttendanceDate(), getAttendanceTimezone()]);
   const [students, attendance, quran, staff, exam, reports, applicationsResult, trends] = await Promise.all([
     getStudentRegister({ locale, page: 1, pageSize: 1 }),
     getAttendanceWorkspace({ date: localDate, locale, page: 1, pageSize: 1 }),
@@ -204,7 +224,7 @@ export async function getOperationalDashboard(locale: Locale): Promise<Operation
       .select("state")
       .eq("tenant_id", workspace.tenantId)
       .eq("branch_id", workspace.branchId),
-    loadTrends({ tenantId: workspace.tenantId, branchId: workspace.branchId, localDate })
+    loadTrends({ tenantId: workspace.tenantId, branchId: workspace.branchId, localDate, timezone })
   ]);
 
   if (applicationsResult.error) throw new Error(`Unable to load admissions summary: ${applicationsResult.error.message}`);
@@ -214,9 +234,8 @@ export async function getOperationalDashboard(locale: Locale): Promise<Operation
   const closedStates = new Set(["converted", "rejected", "withdrawn", "expired"]);
   const open = applicationStates.filter((state) => !closedStates.has(state)).length;
   const attendanceMarked = attendance.summary.present + attendance.summary.absent + attendance.summary.late + attendance.summary.leave;
-  const attendanceRate = attendance.started && attendanceMarked > 0
-    ? round(((attendance.summary.present + attendance.summary.late) / attendanceMarked) * 100)
-    : null;
+  const currentAttendanceTrend = trends.attendance.find((point) => point.date === localDate);
+  const attendanceRate = attendance.started && attendanceMarked > 0 ? currentAttendanceTrend?.value ?? null : null;
   const marksRemaining = Math.max(exam.summary.marksExpected - exam.summary.marksRecorded, 0);
 
   const alerts: DashboardAlert[] = [];
