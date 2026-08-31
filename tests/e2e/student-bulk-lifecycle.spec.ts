@@ -1,0 +1,6 @@
+import { expect,test } from "@playwright/test";
+
+test("student import rejects anonymous callers",async({request})=>{const response=await request.post("/api/students/lifecycle/import",{data:{sessionId:1,programId:1,groupId:1,joinedOn:"2026-06-01",rows:[{display_name:"Demo Student"}]}});expect(response.status()).toBe(401);});
+test("next academic session setup rejects anonymous callers",async({request})=>{const response=await request.post("/api/students/lifecycle/session",{data:{sourceSessionId:1,key:"2027_28",label:"2027-28",startsOn:"2027-06-01",endsOn:"2028-05-31"}});expect(response.status()).toBe(401);});
+test("student rollover rejects anonymous callers",async({request})=>{const response=await request.post("/api/students/lifecycle/rollover",{data:{studentPersonIds:[1],targetSessionId:2,targetGroupId:2,mode:"promotion"}});expect(response.status()).toBe(401);});
+test("student lifecycle writes reject cross-origin callers before authentication",async({request})=>{const response=await request.post("/api/students/lifecycle/rollover",{headers:{origin:"https://example.invalid"},data:{studentPersonIds:[1],targetSessionId:2,targetGroupId:2,mode:"promotion"}});expect(response.status()).toBe(403);});
