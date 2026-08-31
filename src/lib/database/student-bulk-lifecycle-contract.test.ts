@@ -44,6 +44,13 @@ describe("student bulk lifecycle database contract",()=>{
   expect(sql).toContain("academics.enrollment.manage");
   expect(sql).toContain("academics.structure.manage");
  });
+ it("reconciles pre-existing core functions before installing hardened wrappers",()=>{
+  expect(hardening).toContain("drop function if exists public.get_student_lifecycle_center_core_v1");
+  expect(hardening).toContain("drop function if exists public.prepare_next_academic_session_core_v1");
+  expect(hardening).toContain("alter function public.get_student_lifecycle_center_v1");
+  expect(hardening).toContain("create or replace function public.get_student_lifecycle_center_v1");
+  expect(hardening).toContain("create or replace function public.plan_student_rollover_batch_v1");
+ });
  it("keeps lifecycle functions service-role only",()=>{
   expect(sql).toContain("revoke all on function public.get_student_lifecycle_center_v1");
   expect(sql).toContain("revoke all on function public.import_students_batch_v1");
