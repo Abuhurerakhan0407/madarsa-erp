@@ -1,0 +1,10 @@
+import {createAdminClient} from '@/lib/supabase/admin';
+import {getTenantContext} from '@/lib/tenancy/context';
+type Raw=Record<string,unknown>;
+const obj=(v:unknown):Raw=>v&&typeof v==='object'&&!Array.isArray(v)?v as Raw:{};
+const arr=(v:unknown):Raw[]=>Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)) as Raw[]:[];
+const s=(v:unknown)=>typeof v==='string'?v:null;
+const n=(v:unknown)=>{const x=Number(v);return Number.isFinite(x)?x:null;};
+const b=(v:unknown)=>v===true;
+export type DocumentStudent={personId:number;studentNumber:string;name:string;nameNative:string|null;classGroup:string|null;idCardAvailable:boolean;profileAvailable:boolean;quranProgressAvailable:boolean;reportCardIssued:boolean;reportCardIssuedAt:string|null};
+export async function getDocumentCenter(search:string|null,page=1,pageSize=40){const w=await getTenantContext();if(!w||!w.branchId)throw new Error('Active branch is required.');const admin=createAdminClient();const {data,error}=await admin.rpc('get_operational_document_center_v1',{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_search:search,p_page:page,p_page_size:pageSize});if(error)throw new Error(error.message);const raw=obj(data);return{total:n(raw.total)??0,page:n(raw.page)??1,pageSize:n(raw.page_size)??pageSize,rows:arr(raw.rows).flatMap(r=>{const personId=n(r.person_id),studentNumber=s(r.student_number),name=s(r.name);if(!personId||!studentNumber||!name)return[];return[{personId,studentNumber,name,nameNative:s(r.name_native),classGroup:s(r.class_group),idCardAvailable:b(r.id_card_available),profileAvailable:b(r.profile_available),quranProgressAvailable:b(r.quran_progress_available),reportCardIssued:b(r.report_card_issued),reportCardIssuedAt:s(r.report_card_issued_at)}];}) as DocumentStudent[],recentIssued:arr(raw.recent_issued).map(r=>({issueId:n(r.issue_id)??0,documentType:s(r.document_type)??'',personId:n(r.person_id)??0,studentName:s(r.student_name)??'',templateKey:s(r.template_key)??'',revision:n(r.revision)??1,issuedAt:s(r.issued_at)??''}))};}
