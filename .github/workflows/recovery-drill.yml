@@ -42,6 +42,7 @@ jobs:
       DRILL_REASON: ${{ inputs.reason }}
       SUPABASE_CLI_VERSION: "2.116.0"
       SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
+      PGCONNECT_TIMEOUT: "10"
     steps:
       - uses: actions/checkout@v4
 
@@ -63,7 +64,39 @@ jobs:
 
       - name: Run database backup and isolated restore drill
         shell: bash
-        run: bash scripts/recovery-drill.sh
+        run: |
+          set -euo pipefail
+
+          # Bound each source-database connection attempt so a transient pooler/network problem
+          # fails quickly instead of hanging for several minutes. Keep the secret value masked.
+          SOURCE_DB_URL="$(
+            python3 <<'PY'
+          import os
+          from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+          raw = os.environ["SOURCE_DB_URL"]
+          parts = urlsplit(raw)
+          query = dict(parse_qsl(parts.query, keep_blank_values=True))
+          query["connect_timeout"] = "10"
+          print(urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)))
+          PY
+          )"
+          export SOURCE_DB_URL
+
+          for attempt in 1 2 3; do
+            rm -rf "${RECOVERY_OUTPUT_DIR}"
+            if bash scripts/recovery-drill.sh; then
+              exit 0
+            fi
+
+            if [[ "${attempt}" -eq 3 ]]; then
+              echo "::error::Recovery drill failed after 3 bounded attempts."
+              exit 1
+            fi
+
+            echo "::warning::Recovery drill attempt ${attempt}/3 failed; retrying after a short delay."
+            sleep $((attempt * 10))
+          done
 
       - name: Upload encrypted logical backup
         uses: actions/upload-artifact@v4
