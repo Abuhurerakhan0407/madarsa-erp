@@ -62,13 +62,15 @@ export async function POST(request: Request) {
   const result = data as {
     processing_state?: string;
     duplicate?: boolean;
+    integrity_conflict?: boolean;
   } | null;
 
   return NextResponse.json(
     {
       received: true,
       state: result?.processing_state ?? "received",
-      duplicate: result?.duplicate === true
+      duplicate: result?.duplicate === true,
+      integrityConflict: result?.integrity_conflict === true
     },
     { status: 200, headers: { "cache-control": "no-store" } }
   );
