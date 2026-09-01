@@ -42,7 +42,7 @@ begin
     raise exception 'tenant not found';
   end if;
 
-  select count(*)::bigint,
+  select coalesce(sum(x.scope_count), 0)::bigint,
          coalesce(jsonb_object_agg(x.scope_type, x.scope_count), '{}'::jsonb)
   into v_active_hold_count, v_hold_scopes
   from (
