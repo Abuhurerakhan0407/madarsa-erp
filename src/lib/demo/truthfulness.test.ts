@@ -8,9 +8,9 @@ const demoPage = readFileSync(new URL("../../components/demo-module-page.tsx", i
 const legacyAcademics = readFileSync(new URL("../../app/[locale]/demo/academics/page.tsx", import.meta.url), "utf8");
 
 function moduleById(id: string) {
-  const module = demoModules.find((item) => item.id === id);
-  if (!module) throw new Error(`Missing demo module: ${id}`);
-  return module;
+  const foundModule = demoModules.find((item) => item.id === id);
+  if (!foundModule) throw new Error(`Missing demo module: ${id}`);
+  return foundModule;
 }
 
 describe("client-demo truthfulness", () => {
