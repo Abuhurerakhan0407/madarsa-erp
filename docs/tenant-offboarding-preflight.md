@@ -30,7 +30,7 @@ For one tenant ID it returns:
 - total tenant-scoped rows and populated-table count;
 - an explicit notice that Storage is outside the database inventory.
 
-The table inventory is discovered from PostgreSQL catalogs rather than a hard-coded table list, so new tenant-scoped tables are visible automatically.
+The table inventory is discovered from PostgreSQL catalogs rather than a hard-coded table list, so new tenant-scoped base/partitioned tables are visible automatically.
 
 ## Operator invocation
 
@@ -59,9 +59,15 @@ Treat the output as evidence for review, not as authorization to delete.
 
 ## Current production snapshot — 2026-09-01
 
-During launch-readiness auditing, production contained 228 public tables with a `tenant_id` column. Direct tenant foreign keys intentionally use restrictive deletion behavior rather than broad cascade deletion. The governance schema already includes retention policies, deletion jobs/items and legal holds, but there was no deletion/purge/offboarding executor function.
+An initial broad `information_schema.columns` audit found 228 public relations exposing a `tenant_id` column. The production preflight intentionally narrows this to real base/partitioned tables and currently discovers **226** such tables.
+
+The first live preflight execution completed successfully and reported 94 populated tenant-scoped tables and 1,298 tenant-scoped rows for the current tenant record. It also reported zero active legal holds, zero unresolved deletion jobs and zero currently applicable active retention policies. Those figures are dated operational evidence, not permanent schema assumptions.
+
+Direct tenant foreign keys intentionally use restrictive deletion behavior rather than broad cascade deletion. The governance schema includes retention policies, deletion jobs/items and legal holds; the preflight does not add a deletion/purge executor.
 
 At the same audit point, the private `tenant-documents` Storage bucket contained 0 objects / 0 bytes. That is only a dated snapshot. Storage must be inventoried again when a real pilot/offboarding occurs.
+
+Live permission verification confirmed the preflight function is `SECURITY DEFINER`, uses an empty `search_path`, denies `anon` and `authenticated` execution, and grants execution to `service_role` only.
 
 ## Launch-gate discipline
 
