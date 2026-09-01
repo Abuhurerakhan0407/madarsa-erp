@@ -41,7 +41,7 @@ jobs:
       TARGET_RPO_HOURS: ${{ inputs.target_rpo_hours }}
       DRILL_REASON: ${{ inputs.reason }}
       SUPABASE_CLI_VERSION: "2.116.0"
-      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7f8f8949800d251"
+      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
       PGCONNECT_TIMEOUT: "10"
     steps:
       - uses: actions/checkout@v4
