@@ -44,7 +44,7 @@ describe("Razorpay subscription webhook route", () => {
     process.env.RAZORPAY_WEBHOOK_SECRET = secret;
     mocks.rpc.mockReset();
     mocks.rpc.mockResolvedValue({
-      data: { processing_state: "received", duplicate: false },
+      data: { processing_state: "received", duplicate: false, integrity_conflict: false },
       error: null
     });
   });
@@ -78,7 +78,12 @@ describe("Razorpay subscription webhook route", () => {
     const json = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(json).toEqual({ received: true, state: "received", duplicate: false });
+    expect(json).toEqual({
+      received: true,
+      state: "received",
+      duplicate: false,
+      integrityConflict: false
+    });
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
     expect(mocks.rpc).toHaveBeenCalledWith(
       "record_subscription_provider_event_v1",
@@ -94,6 +99,24 @@ describe("Razorpay subscription webhook route", () => {
     const rpcPayload = mocks.rpc.mock.calls[0]?.[1] as Record<string, unknown>;
     expect(rpcPayload).not.toHaveProperty("payload");
     expect(rpcPayload).not.toHaveProperty("tenant_id");
+  });
+
+  it("acknowledges a recorded conflicting event id as quarantined", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: { processing_state: "quarantined", duplicate: true, integrity_conflict: true },
+      error: null
+    });
+
+    const response = await POST(request(body()));
+    const json = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({
+      received: true,
+      state: "quarantined",
+      duplicate: true,
+      integrityConflict: true
+    });
   });
 
   it("rejects oversized payloads", async () => {
