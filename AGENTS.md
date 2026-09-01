@@ -1,0 +1,2 @@
+## End-to-End Route Matrix Testing Note
+We are restricted from fabricating logged-in identities or credentials per the prompt's instruction. Therefore, the deterministic route/auth/redirect regression coverage has been implemented for unauthenticated states. Tests verifying post-authentication behavior (e.g., reaching real modules from /demo/, AI Assistant UI state, etc.) are currently limited by this constraint since no valid intentional test fixture exists for an authenticated session.
