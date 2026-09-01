@@ -172,10 +172,12 @@ tar -C "${RESTORE_DIR}" -xzf "${WORK_DIR}/restore-input.tar.gz"
 rm -f "${WORK_DIR}/restore-input.tar.gz"
 
 RESTORE_STARTED_EPOCH="$(date +%s)"
+# A fresh Supabase restore image bootstraps its own managed roles. Preserve roles.sql in the
+# encrypted backup, but do not replay provider-managed ALTER ROLE statements into the isolated
+# target. The drill restores and verifies the Madrasa ERP schema and data instead.
 psql \
   --single-transaction \
   --variable ON_ERROR_STOP=1 \
-  --file "${RESTORE_DIR}/roles.sql" \
   --file "${RESTORE_DIR}/schema.sql" \
   --command 'SET session_replication_role = replica' \
   --file "${RESTORE_DIR}/data.sql" \
@@ -219,10 +221,11 @@ jq -n \
     schema_version: 1,
     provider_reference: $provider_reference,
     project_ref: $project_ref,
-    scope: "database_logical_backup_restore",
+    scope: "database_logical_schema_data_restore",
     reason: $reason,
     backup: {
       encrypted: true,
+      roles_dump_preserved: true,
       digest_sha256: $backup_digest,
       source_snapshot_epoch: ($source_snapshot_epoch | tonumber),
       started_epoch: ($dump_started_epoch | tonumber),
@@ -230,6 +233,7 @@ jq -n \
     },
     restore: {
       isolated_target: true,
+      managed_roles_replayed: false,
       started_epoch: ($restore_started_epoch | tonumber),
       completed_epoch: ($restore_completed_epoch | tonumber),
       database_verified: true,
@@ -250,13 +254,13 @@ jq -n \
     launch_gate: {
       backup_restore_drill_passed: false,
       gate_can_be_closed: false,
-      reason: "Database recovery is proven by this workflow; storage/application verification remains separate and must not be fabricated."
+      reason: "Database schema/data recovery is proven by this workflow; provider-managed roles, storage, and application verification remain separate and must not be fabricated."
     }
   }' > "${OUTPUT_DIR}/evidence.json"
 
 # Remove plaintext dump material before this step can hand control back to Actions artifact upload.
 rm -rf "${BACKUP_DIR}" "${RESTORE_DIR}"
 
-echo "Database recovery drill completed: encrypted logical backup restored into an isolated Supabase Postgres target."
+echo "Database recovery drill completed: encrypted logical backup schema/data restored into an isolated Supabase Postgres target."
 echo "Measured RPO: ${MEASURED_RPO_HOURS}h; measured RTO: ${MEASURED_RTO_HOURS}h."
-echo "Commercial backup_restore_drill_passed remains false until storage/application scope is separately verified."
+echo "Commercial backup_restore_drill_passed remains false until provider-managed roles, storage, and application scope are separately verified."
