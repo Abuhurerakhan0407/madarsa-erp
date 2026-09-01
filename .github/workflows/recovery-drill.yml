@@ -1,0 +1,84 @@
+name: Database recovery drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why this recovery drill is being run"
+        required: true
+        type: string
+      target_rpo_hours:
+        description: "Maximum acceptable logical-backup RPO in hours"
+        required: true
+        default: "24"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  database-restore-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      restore-db:
+        image: supabase/postgres:17.6.1.136
+        env:
+          POSTGRES_PASSWORD: restore-drill-local-only
+          POSTGRES_DB: postgres
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      SOURCE_DB_URL: ${{ secrets.MADARSA_ERP_DATABASE_URL }}
+      RECOVERY_PASSPHRASE: ${{ secrets.MADARSA_ERP_RECOVERY_PASSPHRASE }}
+      RESTORE_DB_URL: postgresql://postgres:restore-drill-local-only@127.0.0.1:54329/postgres
+      RECOVERY_OUTPUT_DIR: recovery-drill-output
+      TARGET_RPO_HOURS: ${{ inputs.target_rpo_hours }}
+      DRILL_REASON: ${{ inputs.reason }}
+      SUPABASE_CLI_VERSION: "2.116.0"
+      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install pinned Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.deb" \
+            -o /tmp/supabase.deb
+          echo "${SUPABASE_CLI_DEB_SHA256}  /tmp/supabase.deb" | sha256sum -c -
+          sudo dpkg -i /tmp/supabase.deb
+          supabase --version
+
+      - name: Run database backup and isolated restore drill
+        shell: bash
+        run: bash scripts/recovery-drill.sh
+
+      - name: Upload encrypted logical backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: madarsa-erp-encrypted-logical-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: recovery-drill-output/database-backup.tar.gz.enc
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload recovery evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: madarsa-erp-recovery-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            recovery-drill-output/evidence.json
+            recovery-drill-output/checksums.sha256
+          if-no-files-found: error
+          retention-days: 30
