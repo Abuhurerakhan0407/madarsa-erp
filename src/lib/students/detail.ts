@@ -82,10 +82,10 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   if (enrollment.error) throw new Error(`Unable to load student enrollment: ${enrollment.error.message}`);
   if (!person.data || !profile.data) return null;
 
-  const relationship = await supabase.from("person_relationships").select("source_person_id,relationship_type,can_collect_student").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
+  const admin = createAdminClient();
+  const relationship = await admin.from("person_relationships").select("source_person_id,relationship_type,can_collect_student").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
-  const admin = createAdminClient();
   const [program, group, moduleResult] = await Promise.all([
     enrollment.data?.program_id ? supabase.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     enrollment.data?.group_id ? supabase.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
@@ -99,7 +99,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   if (relationship.data?.source_person_id) {
     const [guardianPerson, guardianContact, guardianProfile] = await Promise.all([
       supabase.from("persons").select("display_name").eq("tenant_id", workspace.tenantId).eq("id", relationship.data.source_person_id).maybeSingle(),
-      supabase.from("person_contacts").select("value").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).eq("type", "phone").order("is_primary", { ascending: false }).limit(1).maybeSingle(),
+      admin.from("person_contacts").select("value").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).eq("type", "phone").order("is_primary", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("guardian_profiles").select("occupation,education").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).maybeSingle()
     ]);
     if (guardianPerson.error) throw new Error(`Unable to load guardian: ${guardianPerson.error.message}`);
