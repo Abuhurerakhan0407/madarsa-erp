@@ -24,12 +24,16 @@ Create these repository Actions secrets before running the workflow:
 
 1. `MADARSA_ERP_DATABASE_URL`
    - Use the **Session pooler** connection string for Supabase project `dysfnytqpbfxpmerkyaz` unless direct IPv6 connectivity is intentionally available.
-   - The workflow rejects a connection string that does not contain the Madarsa ERP project ref.
+   - The script accepts only the exact project identity: either the direct host `db.dysfnytqpbfxpmerkyaz.supabase.co`, or a Supabase pooler host with username `postgres.dysfnytqpbfxpmerkyaz`.
+   - A project ref appearing only in a password, path, or arbitrary query text is not accepted.
+   - Libpq `host`, `hostaddr`, `service`, and `servicefile` query overrides are rejected so the validated endpoint cannot be silently replaced.
    - Never paste this value into issues, PR comments, logs, or chat.
 2. `MADARSA_ERP_RECOVERY_PASSPHRASE`
    - Use a unique random passphrase of at least 24 characters.
    - Keep it independent from the database password.
    - Retain it securely for as long as an encrypted recovery artifact may need to be decrypted.
+
+The restore URL is supplied by the workflow itself and must resolve directly to `localhost`, `127.0.0.1`, or `::1`. Host/service query overrides are rejected. This prevents a URL that merely contains the word `localhost` from being treated as isolated while actually targeting another database.
 
 ## Running the drill
 
@@ -48,7 +52,7 @@ A successful run emits two private workflow artifacts:
 - an AES-256-CBC/PBKDF2 encrypted logical backup, retained for 7 days;
 - a non-secret evidence bundle, retained for 30 days.
 
-Plain SQL dump files are kept only in the temporary runner workspace and removed before artifact upload. The evidence bundle contains digests, timings, row-count verification, schema metrics, and the GitHub Actions run reference. It must not contain the database URL or recovery passphrase.
+Plain SQL dump files are kept only in the temporary runner workspace and removed before artifact upload. Supabase dump stderr is also withheld from workflow logs on failure because connection diagnostics may contain sensitive connection metadata. The evidence bundle contains digests, timings, row-count verification, schema metrics, and the GitHub Actions run reference. It must not contain the database URL or recovery passphrase.
 
 ## Evidence and launch-gate policy
 
