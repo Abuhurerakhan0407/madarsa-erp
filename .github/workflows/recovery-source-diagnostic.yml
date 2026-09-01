@@ -80,14 +80,22 @@ jobs:
           record_failure() {
             local stage="$1"
             local err_file="$2"
-            printf '%s=%s\n' "${stage}" "$(classify_error "${err_file}")" >> "${RESULT_FILE}"
+            local exit_code="$3"
+            local classification
+            if [[ "${exit_code}" -eq 124 ]]; then
+              classification='timeout'
+            else
+              classification="$(classify_error "${err_file}")"
+            fi
+            printf '%s=%s\n' "${stage}" "${classification}" >> "${RESULT_FILE}"
             FAILED=1
           }
 
           if timeout 30s psql "${SOURCE_DB_URL}" -X -v ON_ERROR_STOP=1 -Atc 'select 1' >/dev/null 2>/tmp/source-psql.err; then
             record_ok source_psql
           else
-            record_failure source_psql /tmp/source-psql.err
+            rc=$?
+            record_failure source_psql /tmp/source-psql.err "${rc}"
           fi
           rm -f /tmp/source-psql.err
 
@@ -95,7 +103,8 @@ jobs:
             if timeout 180s supabase db dump --db-url "${SOURCE_DB_URL}" -f /tmp/roles.sql --role-only >/dev/null 2>/tmp/roles.err; then
               record_ok roles_dump
             else
-              record_failure roles_dump /tmp/roles.err
+              rc=$?
+              record_failure roles_dump /tmp/roles.err "${rc}"
             fi
             rm -f /tmp/roles.sql /tmp/roles.err
           else
@@ -106,7 +115,8 @@ jobs:
             if timeout 180s supabase db dump --db-url "${SOURCE_DB_URL}" -f /tmp/schema.sql >/dev/null 2>/tmp/schema.err; then
               record_ok schema_dump
             else
-              record_failure schema_dump /tmp/schema.err
+              rc=$?
+              record_failure schema_dump /tmp/schema.err "${rc}"
             fi
             rm -f /tmp/schema.sql /tmp/schema.err
           else
@@ -117,7 +127,8 @@ jobs:
             if timeout 180s supabase db dump --db-url "${SOURCE_DB_URL}" -f /tmp/data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes" >/dev/null 2>/tmp/data.err; then
               record_ok data_dump
             else
-              record_failure data_dump /tmp/data.err
+              rc=$?
+              record_failure data_dump /tmp/data.err "${rc}"
             fi
             rm -f /tmp/data.sql /tmp/data.err
           else
