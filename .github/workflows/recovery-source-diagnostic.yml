@@ -2,6 +2,11 @@ name: Recovery source diagnostic
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/recovery-source-diagnostic.yml"
 
 permissions:
   contents: read
