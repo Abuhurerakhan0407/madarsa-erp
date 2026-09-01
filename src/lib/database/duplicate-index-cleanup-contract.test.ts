@@ -9,7 +9,7 @@ const migration = readFileSync(
 describe("duplicate index cleanup migration", () => {
   it("drops only the four redundant advisor-reported indexes", () => {
     const redundant = [
-      "marksheets_subject_state_idx",
+      "marksheets_series_subject_idx",
       "recitation_attempts_student_idx",
       "recitation_sessions_branch_idx",
       "revision_obligations_student_idx"
@@ -20,15 +20,15 @@ describe("duplicate index cleanup migration", () => {
     }
   });
 
-  it("preserves the canonical equivalent indexes", () => {
-    const canonical = [
-      "marksheets_series_subject_idx",
+  it("preserves the equivalent indexes selected by PostgreSQL", () => {
+    const retained = [
+      "marksheets_subject_state_idx",
       "recitation_attempts_student_date_idx",
       "recitation_sessions_branch_date_idx",
       "revision_obligations_student_due_idx"
     ];
 
-    for (const index of canonical) {
+    for (const index of retained) {
       expect(migration).not.toContain(`DROP INDEX IF EXISTS public.${index};`);
     }
   });
