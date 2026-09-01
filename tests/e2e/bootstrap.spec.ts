@@ -29,6 +29,11 @@ test("renders accessible sign in and signup modes", async ({ page }) => {
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
   await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
 
+  await expect(page.getByText("Admissions", { exact: true })).toBeVisible();
+  await expect(page.getByText("Qur'an", { exact: true })).toBeVisible();
+  await expect(page.getByText("Fees", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/finance/i)).toHaveCount(0);
+
   await page.getByRole("button", { name: "New institution? Create an account" }).click();
   await expect(
     page.getByRole("heading", { name: "Create your institution account" })

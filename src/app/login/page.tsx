@@ -85,15 +85,15 @@ export default function LoginPage() {
             <p className="auth-presentation-kicker">One connected workspace</p>
             <h2>Run the institution without fragmented registers and spreadsheets.</h2>
             <p>
-              Admissions, student records, academics, attendance, finance, Qur&apos;an learning,
-              campus operations and reporting stay together in one system.
+              Admissions, student records, academics, attendance, Qur&apos;an learning,
+              campus operations, communication and reporting stay together in one system.
             </p>
           </div>
 
           <div className="auth-presentation-points" aria-label="Core areas">
             <span>Admissions</span>
             <span>Attendance</span>
-            <span>Fees</span>
+            <span>Qur&apos;an</span>
             <span>Academics</span>
             <span>Reports</span>
           </div>
