@@ -1,32 +1,50 @@
 # Tomorrow Commercial Launch Control — 2026-09-02
 
-> Status: execution control sheet. It does not self-approve any launch gate.
+> Status: execution control sheet. It distinguishes Paid Founding Pilot launch from full General Availability (GA) and does not self-approve missing GA evidence.
 
-## Current formal gate state
+## Current GA gate state
 
-5/13 required launch gates are complete.
+**9/13 required GA gates are complete.**
 
 Complete:
 - database_migrations_applied
 - production_build_green
 - critical_e2e_green
 - production_deployment_current
+- pricing_approved
+- tax_boundary_approved
+- retention_schedule_approved
+- messaging_packaging_approved
 - support_runbook_ready
 
 Open:
 - security_advisors_clear
-- pricing_approved
-- tax_boundary_approved
-- retention_schedule_approved
 - backup_restore_drill_passed
 - payment_webhooks_verified
-- messaging_packaging_approved
 - pilot_institution_signed_off
 
-## Fastest responsible path to launch
+## Commercial launch decision for 2026-09-02
 
-### 1. Pricing approval — owner action
-Recommended Founding Pilot offer for the first 3 institutions only:
+Madrasa ERP may open a **limited Paid Founding Pilot** for the first three institutions.
+
+This means we may:
+- market and demo the product truthfully;
+- quote the approved founding-pilot pricing;
+- sign the pilot Agreement / Order Form / DPA;
+- issue a manual non-GST invoice/receipt;
+- accept manual payment;
+- schedule onboarding and implementation.
+
+Do **not** call the product GA or fully production-certified yet.
+
+Meaningful real-client production-data activation remains blocked until the recovery drill is completed.
+
+See `docs/paid-founding-pilot-launch-control.md`.
+
+## Approved commercial baseline
+
+### Pricing
+Founding Pilot pricing for the first 3 institutions only:
 - up to 300 students: ₹999/month
 - 301–1,000: ₹1,999/month
 - 1,001–2,500: ₹2,999/month
@@ -34,14 +52,9 @@ Recommended Founding Pilot offer for the first 3 institutions only:
 - annual option: pay 10 months, receive 12 months
 - onboarding/data-import fee waived for first 3 pilot institutions
 - no lifetime/grandfathered public-price promise
-- post-pilot repricing after real support/usage evidence
 
-Minimum approval evidence: owner explicitly approves this ladder or records modifications and date.
-
-### 2. Messaging/package approval — owner action
-Recommended approval: use the day-one scope and explicit limitations in `docs/commercial-offer-draft.md` without expansion.
-
-Important boundaries remain visible:
+### Package boundary
+Approved day-one package retains these explicit limitations:
 - AI Assistant = Preview
 - Fees/Accounting deferred
 - Payroll deferred
@@ -52,81 +65,91 @@ Important boundaries remain visible:
 - Razorpay provider verification outstanding
 - full Urdu/Arabic generated-PDF parity incomplete
 
-Minimum approval evidence: owner explicitly approves package/positioning and date.
-
-### 3. Retention approval — owner/privacy action
-Recommended fast-launch operating choice: Profile A from `docs/retention-offboarding-decision-draft.md` for operational/non-essential data:
+### Retention
+Approved Profile A for operational/non-essential data:
 - offboarding export availability: 30 days
 - operational logs/non-essential event evidence: 90 days
 - encrypted recovery artifacts: 30 days unless incident/legal hold exists
-- stale access/invites revoked promptly
+- institution/legal-rule-specific records are not silently forced into the generic window
 
-Academic, employment, tax, certificate and other required historical records remain institution/legal-rule specific and are not silently forced into the generic window.
+### Seller / tax boundary
+Approved seller profile:
+- Seller/legal name: Abu hurera khan
+- Trade name: Madrasa ERP
+- Entity type: Sole Proprietorship
+- GST status: Not GST registered
+- Business address: rm no 2 mahavir bldg no 2 opp p and t colony vakola Santacruz East Mumbai
+- Invoice email: abuhurerak8@gmail.com
+- Owner confirmed aggregate annual PAN-based business turnover is below ₹20 lakh on 2026-09-01
 
-Minimum approval evidence: approve Profile A or record modified periods, privacy owner, legal-hold authority, deletion authority and export window.
+Current launch rule:
+- do not charge/display GST while unregistered and otherwise legally eligible;
+- do not display a GSTIN;
+- do not label the document a GST tax invoice;
+- review GST status promptly if registration becomes mandatory or the seller registers voluntarily.
 
-### 4. Tax boundary — owner/finance action
-Cannot be completed from engineering evidence alone.
-Required facts:
-- provider/seller legal name
-- entity type
-- business/registered address
-- GST registration status / GSTIN if registered
-- invoice email
-- approved tax display convention
-- place-of-supply/invoicing treatment
-- refund/credit-note owner/process
+## Remaining GA blockers
 
-Until approved, customer material must say only: "Taxes and applicable third-party charges are additional where applicable."
+### 1. Supabase security
+Owner decision: remain on **Supabase Free** temporarily because budget is unavailable.
 
-### 5. Supabase security — paid-plan decision
 Current live advisor has one real WARN: leaked-password protection disabled.
 Engineering hardening is otherwise complete for the audited surface.
 
-Required action: upgrade/operate on a Supabase plan that supports leaked-password protection and enable it, then rerun the advisor and capture zero blocking WARN evidence.
+Action when budget becomes available:
+1. upgrade to a plan supporting leaked-password protection;
+2. enable the feature;
+3. rerun the security advisor;
+4. capture zero-blocking-WARN evidence;
+5. only then set `security_advisors_clear=true`.
 
-### 6. Recovery drill — operations/credential action
+### 2. Recovery drill
 Engineering automation and operator documentation exist.
 Required GitHub Actions secrets:
-- MADARSA_ERP_DATABASE_URL
-- MADARSA_ERP_RECOVERY_PASSPHRASE
+- `MADARSA_ERP_DATABASE_URL`
+- `MADARSA_ERP_RECOVERY_PASSPHRASE`
 
-Then manually dispatch `.github/workflows/recovery-drill.yml`, retain evidence, and separately verify application/Storage recovery scope where applicable. Do not mark the gate complete from a dry run.
+Then manually dispatch `.github/workflows/recovery-drill.yml`, retain encrypted backup/restore evidence and separately verify Storage recovery scope once applicable.
 
-### 7. Razorpay verification — provider/credential action
-Engineering webhook runtime is implemented and hardened.
-Required production evidence:
-- real Razorpay merchant/account configuration
-- production webhook URL configured
-- RAZORPAY_WEBHOOK_SECRET configured in production
-- real signed supported event accepted
-- exact duplicate event behaves idempotently
-- conflicting same-event-ID payload is quarantined
-- invalid signature rejected
-- evidence recorded
+**This is the priority operational blocker before meaningful real-client production data is activated.**
 
-### 8. Pilot institution sign-off — real customer action
-Use:
-- `docs/founding-pilot-agreement-template.md`
-- `docs/founding-pilot-order-form-template.md`
-- `docs/data-processing-addendum-template.md`
-- `docs/founding-pilot-onboarding-runbook.md`
-- `docs/pilot-institution-signoff-pack.md`
+### 3. Razorpay verification
+Not required for Paid Founding Pilot sales if manual invoicing/payment is used.
 
-Required evidence is a real institution + authorized approver + completed workflow acceptance. Never fabricate this gate.
+It remains a GA blocker until real provider evidence exists:
+- merchant/account configured;
+- production webhook URL and secret configured;
+- real signed supported event accepted;
+- exact duplicate behaves idempotently;
+- conflicting same-event-ID payload is quarantined;
+- invalid signature rejected.
+
+### 4. Pilot institution sign-off
+Not required to **start** a pilot; it is evidence produced after a real pilot has been delivered and accepted.
+
+For the first institution:
+1. execute Agreement / Order Form / DPA;
+2. complete recovery drill before meaningful production-data activation;
+3. onboard agreed workflows;
+4. observe for the agreed period;
+5. capture authorized institution acceptance;
+6. only then set `pilot_institution_signed_off=true`.
 
 ## Tomorrow order of operations
 
-1. Owner approves pricing + package + retention choice.
-2. Owner supplies seller/GST facts for tax decision.
-3. Configure/upgrade Supabase security and rerun advisor.
-4. Configure recovery secrets and run real drill.
-5. Configure Razorpay webhook secret/account and run real provider verification.
-6. Fill pilot Order Form for the first real institution.
-7. Run onboarding/acceptance checklist and capture authorized sign-off.
-8. Only then change the corresponding launch-readiness booleans with evidence links/records.
-9. Rerun production health, CI/E2E if code/config changed, and verify production deployment SHA.
+1. Begin Paid Founding Pilot outreach/sales using the approved package and pricing.
+2. For the first willing institution, fill the customer-specific Order Form and DPA.
+3. Use manual non-GST invoicing/payment; do not promise auto-renew or verified Razorpay billing.
+4. Configure the two recovery-workflow secrets and run the real recovery drill before meaningful production-data activation.
+5. Start controlled pilot onboarding after the recovery evidence is retained.
+6. Capture pilot acceptance after the agreed observation period.
+7. Upgrade Supabase security and verify Razorpay when budget/provider access becomes available.
+8. Maintain the GA gate file separately; do not flip any remaining gate without evidence.
 
-## Launch rule
+## Launch language
 
-Do not call the product fully commercially launched until all 13 required gates are complete. It is already suitable for demos and pilot sales conversations, but the remaining gates above require real approvals, credentials/provider evidence or customer acceptance rather than more speculative product development.
+Approved wording:
+
+> **Madrasa ERP is open for a limited Founding Pilot with the first three institutions.**
+
+Do not describe it as generally available until all 13 GA gates pass.
