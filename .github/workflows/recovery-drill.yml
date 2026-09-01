@@ -36,7 +36,7 @@ jobs:
     env:
       SOURCE_DB_URL: ${{ secrets.MADARSA_ERP_DATABASE_URL }}
       RECOVERY_PASSPHRASE: ${{ secrets.MADARSA_ERP_RECOVERY_PASSPHRASE }}
-      RESTORE_DB_URL: postgresql://postgres:restore-drill-local-only@127.0.0.1:54329/postgres
+      RESTORE_DB_URL: postgresql://supabase_admin:restore-drill-local-only@127.0.0.1:54329/postgres
       RECOVERY_OUTPUT_DIR: recovery-drill-output
       TARGET_RPO_HOURS: ${{ inputs.target_rpo_hours }}
       DRILL_REASON: ${{ inputs.reason }}
