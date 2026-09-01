@@ -9,7 +9,7 @@ describe("commercial launch gates", () => {
     const result = evaluateLaunch(readiness.gates);
     expect(result.ready).toBe(false);
     expect(result.blocking).toEqual(expect.arrayContaining([
-      { key: "production_deployment_current", owner: "engineering" },
+      { key: "security_advisors_clear", owner: "engineering" },
       { key: "pricing_approved", owner: "commercial" },
       { key: "backup_restore_drill_passed", owner: "operations" }
     ]));
