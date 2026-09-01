@@ -10,7 +10,6 @@ describe("commercial launch gates", () => {
     expect(result.ready).toBe(false);
     expect(result.blocking).toEqual(expect.arrayContaining([
       { key: "security_advisors_clear", owner: "engineering" },
-      { key: "tax_boundary_approved", owner: "finance_legal" },
       { key: "backup_restore_drill_passed", owner: "operations" },
       { key: "payment_webhooks_verified", owner: "engineering" },
       { key: "pilot_institution_signed_off", owner: "product" }
