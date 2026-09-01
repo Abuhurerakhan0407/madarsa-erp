@@ -6,7 +6,7 @@ const migrationPath = join(
   process.cwd(),
   "supabase",
   "migrations",
-  "20260901152000_tenant_offboarding_preflight.sql"
+  "20260901151503_tenant_offboarding_preflight.sql"
 );
 const sql = readFileSync(migrationPath, "utf8");
 
