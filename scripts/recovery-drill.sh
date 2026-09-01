@@ -21,12 +21,71 @@ fail() {
   exit 1
 }
 
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || fail "Required recovery command '$1' is not installed."
+}
+
+source_database_is_expected() {
+  python3 - "${SOURCE_DB_URL}" "${EXPECTED_PROJECT_REF}" <<'PY'
+import sys
+from urllib.parse import parse_qs, unquote, urlparse
+
+raw_url, project_ref = sys.argv[1], sys.argv[2]
+try:
+    parsed = urlparse(raw_url)
+except ValueError:
+    raise SystemExit(1)
+
+if parsed.scheme.lower() not in {"postgres", "postgresql"}:
+    raise SystemExit(1)
+
+query = {key.lower() for key in parse_qs(parsed.query, keep_blank_values=True)}
+if query.intersection({"host", "hostaddr", "service", "servicefile"}):
+    raise SystemExit(1)
+
+host = (parsed.hostname or "").lower().rstrip(".")
+username = unquote(parsed.username or "")
+direct_host = f"db.{project_ref}.supabase.co"
+is_direct = host == direct_host
+is_pooler = host.endswith(".pooler.supabase.com") and username == f"postgres.{project_ref}"
+
+if not (is_direct or is_pooler):
+    raise SystemExit(1)
+PY
+}
+
+restore_database_is_isolated() {
+  python3 - "${RESTORE_DB_URL}" <<'PY'
+import sys
+from urllib.parse import parse_qs, urlparse
+
+raw_url = sys.argv[1]
+try:
+    parsed = urlparse(raw_url)
+except ValueError:
+    raise SystemExit(1)
+
+if parsed.scheme.lower() not in {"postgres", "postgresql"}:
+    raise SystemExit(1)
+
+query = {key.lower() for key in parse_qs(parsed.query, keep_blank_values=True)}
+if query.intersection({"host", "hostaddr", "service", "servicefile"}):
+    raise SystemExit(1)
+
+host = (parsed.hostname or "").lower().rstrip(".")
+if host not in {"localhost", "127.0.0.1", "::1"}:
+    raise SystemExit(1)
+PY
+}
+
 [[ -n "${SOURCE_DB_URL:-}" ]] || fail "Missing GitHub Actions secret MADARSA_ERP_DATABASE_URL."
 [[ -n "${RECOVERY_PASSPHRASE:-}" ]] || fail "Missing GitHub Actions secret MADARSA_ERP_RECOVERY_PASSPHRASE."
 [[ ${#RECOVERY_PASSPHRASE} -ge 24 ]] || fail "Recovery passphrase must be at least 24 characters."
-[[ "${SOURCE_DB_URL}" == *"${EXPECTED_PROJECT_REF}"* ]] || fail "Database URL does not point to the Madarsa ERP Supabase project."
 [[ -n "${RESTORE_DB_URL:-}" ]] || fail "RESTORE_DB_URL is required."
-[[ "${RESTORE_DB_URL}" == *"127.0.0.1"* || "${RESTORE_DB_URL}" == *"localhost"* ]] || fail "Restore target must be local/isolated."
+
+require_command python3
+source_database_is_expected || fail "Database URL does not point to the approved Madarsa ERP Supabase project endpoint."
+restore_database_is_isolated || fail "Restore target must resolve directly to localhost, 127.0.0.1, or ::1 with no host/service override."
 
 if ! [[ "${TARGET_RPO_HOURS:-24}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
   fail "target_rpo_hours must be a positive number."
@@ -34,6 +93,10 @@ fi
 if ! awk -v target="${TARGET_RPO_HOURS:-24}" 'BEGIN { exit !(target > 0) }'; then
   fail "target_rpo_hours must be greater than zero."
 fi
+
+for recovery_command in supabase psql openssl jq tar sha256sum awk date; do
+  require_command "${recovery_command}"
+done
 
 snapshot_counts() {
   local db_url="$1"
@@ -67,14 +130,22 @@ schema_metrics() {
   "
 }
 
+run_supabase_dump() {
+  local dump_name="$1"
+  shift
+  if ! supabase db dump --db-url "${SOURCE_DB_URL}" "$@" > /dev/null 2> "${WORK_DIR}/${dump_name}.stderr"; then
+    fail "Supabase ${dump_name} dump failed; command output was withheld from logs because it may contain connection metadata."
+  fi
+}
+
 SOURCE_SNAPSHOT_EPOCH="$(psql "${SOURCE_DB_URL}" -X -v ON_ERROR_STOP=1 -Atc "select floor(extract(epoch from clock_timestamp()))::bigint;")"
 SOURCE_COUNTS="$(snapshot_counts "${SOURCE_DB_URL}")"
 SOURCE_SCHEMA_METRICS="$(schema_metrics "${SOURCE_DB_URL}")"
 
 DUMP_STARTED_EPOCH="$(date +%s)"
-supabase db dump --db-url "${SOURCE_DB_URL}" -f "${BACKUP_DIR}/roles.sql" --role-only
-supabase db dump --db-url "${SOURCE_DB_URL}" -f "${BACKUP_DIR}/schema.sql"
-supabase db dump --db-url "${SOURCE_DB_URL}" -f "${BACKUP_DIR}/data.sql" --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+run_supabase_dump roles -f "${BACKUP_DIR}/roles.sql" --role-only
+run_supabase_dump schema -f "${BACKUP_DIR}/schema.sql"
+run_supabase_dump data -f "${BACKUP_DIR}/data.sql" --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
 DUMP_COMPLETED_EPOCH="$(date +%s)"
 
 (
