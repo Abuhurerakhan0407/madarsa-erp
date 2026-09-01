@@ -4,8 +4,8 @@ import {
   readBoundedRawBody,
   sha256Hex,
   verifyRazorpayWebhookSignature
-} from "@/lib/billing/razorpay-webhook";
-import { createAdminClient } from "@/lib/supabase/admin";
+} from "../../../../../lib/billing/razorpay-webhook";
+import { createAdminClient } from "../../../../../lib/supabase/admin";
 
 export const runtime = "nodejs";
 
