@@ -6,7 +6,7 @@ const migrationPath = join(
   process.cwd(),
   "supabase",
   "migrations",
-  "20260901153500_targeted_operational_indexes.sql"
+  "20260901153850_targeted_operational_indexes.sql"
 );
 const sql = readFileSync(migrationPath, "utf8");
 
