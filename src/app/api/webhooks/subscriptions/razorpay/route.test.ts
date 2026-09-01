@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn()
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
+vi.mock("../../../../../lib/supabase/admin", () => ({
   createAdminClient: () => ({ rpc: mocks.rpc })
 }));
 
