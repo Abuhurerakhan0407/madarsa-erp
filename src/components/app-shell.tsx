@@ -23,7 +23,7 @@ const navGroups: NavGroup[] = [
       { key: "academics", labels: { en: "Academics & Timetable", ur: "اکیڈمکس و ٹائم ٹیبل", ar: "الأكاديميات والجدول" }, href: (locale) => `/${locale}/people-academics` },
       { key: "attendance", labels: { en: "Attendance & Biometrics", ur: "حاضری و بایومیٹرکس", ar: "الحضور والبيومتري" }, href: (locale) => `/${locale}/attendance` },
       { key: "quran", labels: { en: "Qur'an & Hifz", ur: "قرآن و حفظ", ar: "القرآن والحفظ" }, href: (locale) => `/${locale}/quran` },
-      { key: "fees", labels: { en: "Fees & Accounting", ur: "فیس و اکاؤنٹنگ", ar: "الرسوم والمحاسبة" }, href: (locale) => `/${locale}/demo/fees` },
+      { key: "fees", labels: { en: "Fees & Accounting · Demo", ur: "فیس و اکاؤنٹنگ · ڈیمو", ar: "الرسوم والمحاسبة · تجريبي" }, href: (locale) => `/${locale}/demo/fees` },
       { key: "exams", labels: { en: "Exams & Results", ur: "امتحانات و نتائج", ar: "الاختبارات والنتائج" }, href: (locale) => `/${locale}/exams` }
     ]
   },
@@ -33,10 +33,10 @@ const navGroups: NavGroup[] = [
     items: [
       { key: "portals", labels: { en: "Parent & Staff Portals", ur: "والدین و عملہ پورٹلز", ar: "بوابات أولياء الأمور والموظفين" }, href: (locale) => `/${locale}/portals` },
       { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/students/lifecycle` },
-      { key: "donations", labels: { en: "Donations & Sponsorships", ur: "عطیات و کفالت", ar: "التبرعات والكفالات" }, href: (locale) => `/${locale}/demo/donations` },
+      { key: "donations", labels: { en: "Donations & Sponsorships · Demo", ur: "عطیات و کفالت · ڈیمو", ar: "التبرعات والكفالات · تجريبي" }, href: (locale) => `/${locale}/demo/donations` },
       { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس", ar: "السكن والإعاشة" }, href: (locale) => `/${locale}/hostel` },
       { key: "transport", labels: { en: "Transport & Routes", ur: "ٹرانسپورٹ و روٹس", ar: "النقل والمسارات" }, href: (locale) => `/${locale}/transport` },
-      { key: "staff", labels: { en: "HR & Payroll", ur: "HR و پے رول", ar: "الموارد البشرية والرواتب" }, href: (locale) => `/${locale}/staff` },
+      { key: "staff", labels: { en: "HR & Staff", ur: "HR و عملہ", ar: "الموارد البشرية والموظفون" }, href: (locale) => `/${locale}/staff` },
       { key: "library", labels: { en: "Library", ur: "لائبریری", ar: "المكتبة" }, href: (locale) => `/${locale}/library` },
       { key: "certificates", labels: { en: "IDs & Documents", ur: "ID و دستاویزات", ar: "الهويات والمستندات" }, href: (locale) => `/${locale}/documents` }
     ]

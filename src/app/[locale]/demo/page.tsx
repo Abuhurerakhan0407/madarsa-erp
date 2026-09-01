@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 import { demoModules, localize } from "@/lib/demo/modules";
+import { getDemoPresentation } from "@/lib/demo/presentation";
 
 type DemoHubPageProps = {
   params: Promise<{ locale: string }>;
@@ -63,9 +64,9 @@ const hubCopy = {
     ar: "مجالاً تشغيلياً"
   },
   body: {
-    en: "Everything your institution team needs—from admissions and academics to finance, campus operations, communication and reporting.",
-    ur: "داخلہ اور اکیڈمکس سے لے کر فنانس، کیمپس آپریشنز، کمیونیکیشن اور رپورٹنگ تک ادارے کی مکمل انتظامیہ۔",
-    ar: "كل ما يحتاجه فريق المؤسسة، من القبول والأكاديميات إلى المالية وعمليات الحرم والتواصل والتقارير."
+    en: "Explore live workspaces alongside clearly labelled scripted demo and Preview areas. Demo data explains intended scope; it does not claim production availability.",
+    ur: "لائیو ورک اسپیسز کے ساتھ واضح طور پر لیبل شدہ اسکرپٹڈ ڈیمو اور پری ویو حصے دیکھیں۔ ڈیمو ڈیٹا مطلوبہ دائرہ دکھاتا ہے، پروڈکشن دستیابی کا دعویٰ نہیں۔",
+    ar: "استكشف مساحات العمل الفعلية بجانب مناطق العرض التجريبي والمعاينة المعلّمة بوضوح. بيانات العرض تشرح النطاق المقصود ولا تدّعي جاهزية الإنتاج."
   },
   quickTitle: {
     en: "Frequently used workspaces",
@@ -139,6 +140,9 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
               const item = moduleMap.get(id);
               if (!item) return null;
 
+              const sourceModule = demoModules.find((module) => module.id === item.id);
+              const presentation = sourceModule ? getDemoPresentation(sourceModule) : null;
+
               return (
                 <Link
                   className="demo-module-card"
@@ -148,8 +152,8 @@ export default async function DemoHubPage({ params }: DemoHubPageProps) {
                 >
                   <span className="demo-module-code">{item.code}</span>
                   <div>
-                    <h3>{localize(item.title, typedLocale)}</h3>
-                    <p>{localize(item.description, typedLocale)}</p>
+                    <h3>{localize(presentation?.title ?? item.title, typedLocale)}</h3>
+                    <p>{localize(presentation?.description ?? item.description, typedLocale)}</p>
                   </div>
                   <span className="demo-card-arrow" aria-hidden="true">→</span>
                 </Link>

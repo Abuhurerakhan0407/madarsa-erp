@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
-import { localize, type DemoModule } from "@/lib/demo/modules";
+import { demoUiCopy, localize, type DemoModule } from "@/lib/demo/modules";
+import { getDemoPresentation } from "@/lib/demo/presentation";
 
 type DemoModulePageProps = {
   module: DemoModule;
@@ -43,6 +44,7 @@ const copy: Record<Locale, {
 
 export function DemoModulePage({ module, locale }: DemoModulePageProps) {
   const labels = copy[locale];
+  const presentation = getDemoPresentation(module);
 
   return (
     <>
@@ -51,17 +53,18 @@ export function DemoModulePage({ module, locale }: DemoModulePageProps) {
           <div className="demo-eyebrow-row">
             <span className="demo-module-code">{module.code}</span>
             <span className="demo-scenario-chip">{labels.overview}</span>
+            <span className="demo-scenario-chip">{localize(demoUiCopy.demoData, locale)}</span>
           </div>
-          <h1>{localize(module.title, locale)}</h1>
-          <p>{localize(module.description, locale)}</p>
+          <h1>{localize(presentation.title, locale)}</h1>
+          <p>{localize(presentation.description, locale)}</p>
         </div>
         <Link className="action-button" href={`/${locale}/demo`} prefetch>
           {labels.allModules}
         </Link>
       </section>
 
-      <section className="demo-metric-grid" aria-label={localize(module.title, locale)} data-page-section>
-        {module.metrics.map((item) => (
+      <section className="demo-metric-grid" aria-label={localize(presentation.title, locale)} data-page-section>
+        {presentation.metrics.map((item) => (
           <article className="demo-metric-card" key={localize(item.label, locale)}>
             <span>{localize(item.label, locale)}</span>
             <strong>{item.value}</strong>
