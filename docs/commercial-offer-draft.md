@@ -6,20 +6,28 @@
 
 A practical Madrasa ERP for institutions that need admissions, student management, academics, attendance, Quran/Hifz, exams/results, documents, portals and daily operations in one system.
 
-## Proposed launch pricing — owner approval required
+## Proposed Founding Pilot pricing — owner approval required
 
-| Plan | Student band | Proposed monthly price |
+Use this ladder only as an introductory commercial offer for the **first 3 approved pilot institutions**, not as permanent public pricing.
+
+| Plan | Student band | Proposed pilot monthly price |
 | --- | ---: | ---: |
 | Small | up to 300 | ₹999/month |
 | Growth | 301–1,000 | ₹1,999/month |
 | Pro | 1,001–2,500 | ₹2,999/month |
 | Enterprise | 2,500+ | ₹3,999/month |
 
-Proposed annual option: pay for 10 months, receive 12 months.
+Proposed pilot annual option: pay for 10 months, receive 12 months.
 
 Proposed first-pilot incentive: waive onboarding/data-import fee for the first 3 approved pilot institutions.
 
+The post-pilot/public tariff should be reviewed after the first real deployments, support load and module adoption are measured. Do not represent the pilot ladder as a lifetime/fixed public price unless separately approved.
+
 Taxes, payment-gateway charges, WhatsApp/provider usage and hardware/vendor costs are additional where applicable until the tax/provider boundaries are formally approved.
+
+## Market sanity check
+
+The pilot ladder is intentionally acquisition-oriented. Current public Madrasa/school ERP offers include higher student-band pricing and modular add-ons, so this draft avoids locking the business into a permanent underpriced tariff before support and implementation costs are measured.
 
 ## Included day-one operational scope
 
@@ -102,13 +110,15 @@ Do not claim:
 ## Owner approval record
 
 Before flipping pricing or messaging gates, record:
-- approved student bands;
-- approved monthly/annual prices;
+- approved pilot student bands;
+- approved pilot monthly/annual prices;
+- pilot duration / whether pricing is grandfathered and for how long;
 - onboarding fee/incentive;
 - refund/cancellation/renewal terms;
 - tax display convention;
 - included/excluded features;
 - provider/hardware pass-through treatment;
+- post-pilot repricing decision process;
 - approver and date.
 
 This draft alone is not approval evidence.
