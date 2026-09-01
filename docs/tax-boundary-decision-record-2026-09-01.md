@@ -1,6 +1,6 @@
 # Madrasa ERP tax boundary decision record — 2026-09-01
 
-Status: **PENDING ONE OWNER CONFIRMATION**
+Status: **APPROVED FOR CURRENT NON-GST LAUNCH BOUNDARY**
 
 This record supersedes the voided seller details in PR #90. Only the seller details below are valid for Madrasa ERP launch work.
 
@@ -13,6 +13,10 @@ This record supersedes the voided seller details in PR #90. Only the seller deta
 - Address: **rm no 2 mahavir bldg no 2 opp p and t colony vakola Santacruz East Mumbai**
 - Invoice email: **abuhurerak8@gmail.com**
 
+## Owner turnover confirmation
+
+On 2026-09-01, the owner explicitly confirmed that aggregate annual PAN-based business turnover is **below ₹20 lakh**.
+
 ## Current GST boundary
 
 Official CBIC GST guidance states that the registration threshold for suppliers of services is ₹20 lakh aggregate turnover in Maharashtra/general-category states, and suppliers of services making inter-State supplies can remain exempt from registration up to that threshold.
@@ -21,9 +25,11 @@ Official references:
 - https://cbic-gst.gov.in/pdf/01042019_GST-Concept-Status.pdf
 - https://cbic-gst.gov.in/pdf/01062019-GST-An-Update.pdf
 
-## Launch invoicing rule if owner confirms aggregate turnover is below ₹20 lakh
+## Approved launch invoicing rule
 
-- Madrasa ERP may operate as a non-GST-registered sole proprietorship while otherwise legally eligible for the exemption.
+While the seller remains legally eligible for the exemption and is not GST registered:
+
+- Madrasa ERP operates as a non-GST-registered sole proprietorship.
 - Do **not** charge or separately display GST.
 - Do **not** display a GSTIN.
 - Customer invoices/receipts must identify the seller and trade name above and state that the seller is **not GST registered**.
@@ -31,13 +37,9 @@ Official references:
 - Third-party/provider/hardware charges remain separately disclosed where applicable.
 - GST status must be reviewed promptly if registration becomes mandatory or the seller registers voluntarily.
 
-## Remaining confirmation before `tax_boundary_approved` may be marked complete
+## Gate decision
 
-Owner must confirm:
-
-> **Aggregate annual PAN-based business turnover is below ₹20 lakh.**
-
-Until that confirmation is recorded, `tax_boundary_approved` remains **false**.
+`tax_boundary_approved` may be marked **true** based on the seller profile, GST status and turnover confirmation above.
 
 ## Scope boundary
 
