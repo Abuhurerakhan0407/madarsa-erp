@@ -20,6 +20,16 @@ Commercial/legal/product gates that remain open:
 
 Do not flip any gate based on this document alone.
 
+## Working decision artifacts
+
+The following files now reduce the remaining owner/provider work to explicit evidence/approval steps:
+
+- `docs/commercial-offer-draft.md` — proposed pricing and day-one package, still unapproved.
+- `docs/tax-gst-decision-worksheet.md` — seller/GST/place-of-supply/refund decision worksheet, still unapproved.
+- `docs/retention-offboarding-decision-draft.md` — purpose-based retention/offboarding proposal, still unapproved.
+- `docs/pilot-institution-signoff-pack.md` — real institution acceptance template; synthetic sign-off is prohibited.
+- GitHub Issue #78 — single commercial approval checkpoint.
+
 ## Pricing approval
 
 Approval must record:
