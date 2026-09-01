@@ -28,11 +28,11 @@ const copy: Record<Locale, {
     overview: "ماڈیول جائزہ",
     process: "عمل",
     capabilities: "صلاحیتیں",
-    recentActivity: "حالیہ سرگرمی"},
-    allModules: "تمام ماڈیوز",
-    openWorkspace: "ورک اسپیس کاوین مصروف"
+    recentActivity: "حالیہ سرگرمی",
+    allModules: "تمام ماڈیولز",
+    openWorkspace: "ورک اسپیس کھولیں"
   },
-  ar : {
+  ar: {
     overview: "نظرة عامة على الوحدة",
     process: "سير العمل",
     capabilities: "القدرات",
