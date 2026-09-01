@@ -72,6 +72,21 @@ No index changes are made to deferred Fees/Accounting, donations/fund accounting
 
 No index is dropped merely because `idx_scan = 0`. Many indexes are new, constraint-backed, protective for future scale, or have not received enough production traffic to prove redundancy. Exact duplicate indexes were already handled separately. A future removal requires constraint checks plus sustained usage evidence.
 
+The advisor immediately reports the four newly created indexes as `unused_index` because they have not yet received post-creation production traffic. That is expected and is **not** evidence for immediate removal.
+
+## Live validation — 2026-09-01
+
+Supabase applied the forward migration as exact version `20260901153850` with name `targeted_operational_indexes`.
+
+Live `pg_indexes` inspection confirmed all four definitions match this audit. A direct PostgreSQL covering-index check confirmed all four targeted foreign-key column prefixes are now covered by valid, ready leading indexes:
+
+- `transport_assignments_tenant_id_stop_id_fkey`;
+- `mess_attendance_tenant_id_meal_service_id_fkey`;
+- `library_copies_tenant_id_title_id_fkey`;
+- `library_copies_tenant_id_branch_id_fkey`.
+
+A fresh Supabase performance-advisor run no longer reports those four targeted `unindexed_foreign_keys` findings. Other informational advisor findings remain intentionally unresolved where current production evidence does not justify speculative indexes or index removals.
+
 ## Validation required before merge
 
 - lint
@@ -79,9 +94,7 @@ No index is dropped merely because `idx_scan = 0`. Many indexes are new, constra
 - Vitest/contracts
 - production build
 - Desktop Chromium + Android Pixel 7 Playwright
-- apply the exact forward migration to production Supabase only after the source contract passes
-- verify the four index definitions live
-- rerun the performance advisor and confirm the targeted FK findings are improved where applicable
+- exact live migration version reconciled to repository history
 - exact-head Vercel preview READY
 - no unresolved review threads
 
