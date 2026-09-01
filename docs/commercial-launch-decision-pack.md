@@ -28,7 +28,12 @@ The following files now reduce the remaining owner/provider work to explicit evi
 - `docs/tax-gst-decision-worksheet.md` — seller/GST/place-of-supply/refund decision worksheet, still unapproved.
 - `docs/retention-offboarding-decision-draft.md` — purpose-based retention/offboarding proposal, still unapproved.
 - `docs/pilot-institution-signoff-pack.md` — real institution acceptance template; synthetic sign-off is prohibited.
+- `docs/founding-pilot-agreement-template.md` — general pilot SaaS terms with product/external-provider boundaries and legal placeholders clearly marked for review.
+- `docs/founding-pilot-order-form-template.md` — customer-specific scope, price, tax, support, retention and acceptance variables; it must not be filled from unapproved repository proposals.
+- `docs/data-processing-addendum-template.md` — institution/provider processing roles, security, subprocessors, retention/offboarding and child-data handling template; still requires privacy/legal approval before signature.
 - GitHub Issue #78 — single commercial approval checkpoint.
+
+The agreement/order-form/DPA templates are launch-preparation artifacts, not evidence that a real customer has signed, that legal review has occurred, or that any launch gate is complete.
 
 ## Pricing approval
 
