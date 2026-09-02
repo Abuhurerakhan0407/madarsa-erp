@@ -134,21 +134,24 @@ grep -Fq "Al-Noor Islamic Academy" "${BODY_FILE}" || fail "Restored application 
 grep -Fq "Central Campus" "${BODY_FILE}" || fail "Restored application response did not contain the expected branch identity."
 
 # Exercise the restored Supabase-compatible API through GET-only reads for every operational
-# module named by the commercial recovery standard. Bodies are discarded so recovery artifacts
-# never capture student or operational records.
+# module named by the commercial recovery standard. Each table carries its actual stable key
+# column: student_profiles is keyed by person_id rather than a generic id column. Bodies are
+# discarded so recovery artifacts never capture student or operational records.
 MODULE_TABLES=(
-  "students:student_profiles"
-  "attendance:attendance_records"
-  "documents:documents"
-  "transport:transport_routes"
-  "hostel:hostels"
-  "library:library_titles"
-  "access:memberships"
+  "students:student_profiles:person_id"
+  "attendance:attendance_records:id"
+  "documents:documents:id"
+  "transport:transport_routes:id"
+  "hostel:hostels:id"
+  "library:library_titles:id"
+  "access:memberships:id"
 )
 MODULE_EVIDENCE='[]'
 for module_table in "${MODULE_TABLES[@]}"; do
   module="${module_table%%:*}"
-  table="${module_table#*:}"
+  table_and_key="${module_table#*:}"
+  table="${table_and_key%%:*}"
+  select_column="${table_and_key#*:}"
   : > "${HEADER_FILE}"
   module_status="$(
     curl --silent --show-error \
@@ -159,9 +162,9 @@ for module_table in "${MODULE_TABLES[@]}"; do
       --header "apikey: ${LOCAL_SERVICE_ROLE_KEY}" \
       --header "Authorization: Bearer ${LOCAL_SERVICE_ROLE_KEY}" \
       --header "Prefer: count=exact" \
-      "${LOCAL_API_URL}/rest/v1/${table}?select=id&limit=1" 2>/dev/null || true
+      "${LOCAL_API_URL}/rest/v1/${table}?select=${select_column}&limit=1" 2>/dev/null || true
   )"
-  [[ "${module_status}" == "200" ]] || fail "Restored Supabase API read failed for ${module}."
+  [[ "${module_status}" == "200" ]] || fail "Restored Supabase API read failed for ${module} (HTTP ${module_status:-000})."
 
   total="$(sed -nE 's/^[Cc]ontent-[Rr]ange:[[:space:]]*[^/]*\/([0-9]+).*/\1/p' "${HEADER_FILE}" | tr -d '\r' | tail -n 1)"
   [[ "${total}" =~ ^[0-9]+$ ]] || fail "Restored Supabase API did not report an exact row count for ${module}."
@@ -171,8 +174,9 @@ for module_table in "${MODULE_TABLES[@]}"; do
     jq -c \
       --arg module "${module}" \
       --arg table "${table}" \
+      --arg key_column "${select_column}" \
       --argjson row_count "${total}" \
-      '. + [{module: $module, table: $table, method: "GET", http_status: 200, row_count: $row_count}]' \
+      '. + [{module: $module, table: $table, key_column: $key_column, method: "GET", http_status: 200, row_count: $row_count}]' \
       <<<"${MODULE_EVIDENCE}"
   )"
 done
@@ -180,7 +184,13 @@ done
 # Exercise the anonymous/RLS boundary without mutating anything. A sensitive table may reject the
 # request outright or return an empty array, but it must never expose a row to the anon key.
 ANON_BOUNDARY_EVIDENCE='[]'
-for table in student_profiles memberships; do
+ANON_TABLES=(
+  "student_profiles:person_id"
+  "memberships:id"
+)
+for table_key in "${ANON_TABLES[@]}"; do
+  table="${table_key%%:*}"
+  select_column="${table_key#*:}"
   : > "${ANON_BODY_FILE}"
   anon_status="$(
     curl --silent --show-error \
@@ -189,7 +199,7 @@ for table in student_profiles memberships; do
       --write-out '%{http_code}' \
       --header "apikey: ${LOCAL_ANON_KEY}" \
       --header "Authorization: Bearer ${LOCAL_ANON_KEY}" \
-      "${LOCAL_API_URL}/rest/v1/${table}?select=id&limit=1" 2>/dev/null || true
+      "${LOCAL_API_URL}/rest/v1/${table}?select=${select_column}&limit=1" 2>/dev/null || true
   )"
 
   if [[ "${anon_status}" == "200" ]]; then
@@ -202,8 +212,9 @@ for table in student_profiles memberships; do
   ANON_BOUNDARY_EVIDENCE="$(
     jq -c \
       --arg table "${table}" \
+      --arg key_column "${select_column}" \
       --argjson http_status "${anon_status}" \
-      '. + [{table: $table, method: "GET", http_status: $http_status, sensitive_row_exposed: false}]' \
+      '. + [{table: $table, key_column: $key_column, method: "GET", http_status: $http_status, sensitive_row_exposed: false}]' \
       <<<"${ANON_BOUNDARY_EVIDENCE}"
   )"
 done
