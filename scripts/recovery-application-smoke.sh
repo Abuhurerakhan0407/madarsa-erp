@@ -32,6 +32,10 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "Required application-recovery command '$1' is not installed."
 }
 
+is_successful_ranged_read_status() {
+  [[ "$1" == "200" || "$1" == "206" ]]
+}
+
 for command_name in supabase pnpm curl jq python3; do
   require_command "${command_name}"
 done
@@ -135,8 +139,10 @@ grep -Fq "Central Campus" "${BODY_FILE}" || fail "Restored application response 
 
 # Exercise the restored Supabase-compatible API through GET-only reads for every operational
 # module named by the commercial recovery standard. Each table carries its actual stable key
-# column: student_profiles is keyed by person_id rather than a generic id column. Bodies are
-# discarded so recovery artifacts never capture student or operational records.
+# column: student_profiles is keyed by person_id rather than a generic id column. Counted,
+# range-limited PostgREST reads may validly return either 200 OK or 206 Partial Content; both are
+# accepted only when the exact Content-Range count is present and non-zero. Bodies are discarded
+# so recovery artifacts never capture student or operational records.
 MODULE_TABLES=(
   "students:student_profiles:person_id"
   "attendance:attendance_records:id"
@@ -164,7 +170,8 @@ for module_table in "${MODULE_TABLES[@]}"; do
       --header "Prefer: count=exact" \
       "${LOCAL_API_URL}/rest/v1/${table}?select=${select_column}&limit=1" 2>/dev/null || true
   )"
-  [[ "${module_status}" == "200" ]] || fail "Restored Supabase API read failed for ${module} (HTTP ${module_status:-000})."
+  is_successful_ranged_read_status "${module_status}" || \
+    fail "Restored Supabase API read failed for ${module} (HTTP ${module_status:-000})."
 
   total="$(sed -nE 's/^[Cc]ontent-[Rr]ange:[[:space:]]*[^/]*\/([0-9]+).*/\1/p' "${HEADER_FILE}" | tr -d '\r' | tail -n 1)"
   [[ "${total}" =~ ^[0-9]+$ ]] || fail "Restored Supabase API did not report an exact row count for ${module}."
@@ -175,8 +182,9 @@ for module_table in "${MODULE_TABLES[@]}"; do
       --arg module "${module}" \
       --arg table "${table}" \
       --arg key_column "${select_column}" \
+      --argjson http_status "${module_status}" \
       --argjson row_count "${total}" \
-      '. + [{module: $module, table: $table, key_column: $key_column, method: "GET", http_status: 200, row_count: $row_count}]' \
+      '. + [{module: $module, table: $table, key_column: $key_column, method: "GET", http_status: $http_status, row_count: $row_count}]' \
       <<<"${MODULE_EVIDENCE}"
   )"
 done
