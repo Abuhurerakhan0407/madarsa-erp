@@ -17,6 +17,7 @@ on:
       - main
     paths:
       - scripts/recovery-drill.sh
+      - scripts/recovery-application-smoke.sh
       - .github/workflows/recovery-drill.yml
 
 permissions:
@@ -96,6 +97,25 @@ jobs:
           mkdir -p "${RECOVERY_OUTPUT_DIR}"
           bash scripts/recovery-drill.sh
 
+      - name: Set up pnpm for restored application verification
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Set up Node.js for restored application verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install tested application dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Verify restored application read path
+        shell: bash
+        env:
+          LOCAL_SUPABASE_WORKDIR: ${{ runner.temp }}/madarsa-recovery-target
+        run: bash scripts/recovery-application-smoke.sh
+
       - name: Stop isolated Supabase restore target
         if: always()
         shell: bash
@@ -111,6 +131,7 @@ jobs:
           path: |
             recovery-drill-output/stage-status.txt
             recovery-drill-output/verification-summary.json
+            recovery-drill-output/application-smoke.json
           if-no-files-found: warn
           retention-days: 3
 
@@ -129,5 +150,6 @@ jobs:
           path: |
             recovery-drill-output/evidence.json
             recovery-drill-output/checksums.sha256
+            recovery-drill-output/application-smoke.json
           if-no-files-found: error
           retention-days: 30
