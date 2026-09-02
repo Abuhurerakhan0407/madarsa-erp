@@ -34,10 +34,14 @@ describe("database recovery drill automation", () => {
     expect(workflow).not.toMatch(/SOURCE_DB_URL:\s*postgresql:\/\//);
   });
 
-  it("pins the recovery tooling and isolated Supabase Postgres target", () => {
+  it("pins the recovery tooling and initialized local Supabase target", () => {
     expect(workflow).toContain('SUPABASE_CLI_VERSION: "2.116.0"');
-    expect(workflow).toContain("82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251");
-    expect(workflow).toContain("supabase/postgres:17.6.1.136");
+    expect(workflow).toContain("82cb424bc13cd029a66cb43bc537315cee9068cc6237b7f8f8949800d251");
+    expect(workflow).toContain('RESTORE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres');
+    expect(workflow).toContain('supabase init --workdir "${TARGET_DIR}"');
+    expect(workflow).toContain('supabase start --workdir "${TARGET_DIR}"');
+    expect(workflow).toContain("auth.audit_log_entries");
+    expect(workflow).not.toContain("supabase/postgres:17.6.1.136");
     expect(script).toContain('EXPECTED_PROJECT_REF="dysfnytqpbfxpmerkyaz"');
     expect(script).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(script).toContain("localhost, 127.0.0.1, or ::1");
