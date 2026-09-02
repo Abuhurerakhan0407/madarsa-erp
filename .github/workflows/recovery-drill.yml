@@ -17,7 +17,9 @@ on:
       - main
     paths:
       - scripts/recovery-drill.sh
+      - scripts/recovery-scope-smoke.sh
       - scripts/recovery-application-smoke.sh
+      - database/contracts/phase2_storage.sql
       - .github/workflows/recovery-drill.yml
 
 permissions:
@@ -97,6 +99,10 @@ jobs:
           mkdir -p "${RECOVERY_OUTPUT_DIR}"
           bash scripts/recovery-drill.sh
 
+      - name: Verify Auth and Storage recovery scope
+        shell: bash
+        run: bash scripts/recovery-scope-smoke.sh
+
       - name: Set up pnpm for restored application verification
         uses: pnpm/action-setup@v4
         with:
@@ -131,6 +137,7 @@ jobs:
           path: |
             recovery-drill-output/stage-status.txt
             recovery-drill-output/verification-summary.json
+            recovery-drill-output/recovery-scope-smoke.json
             recovery-drill-output/application-smoke.json
           if-no-files-found: warn
           retention-days: 3
@@ -150,6 +157,7 @@ jobs:
           path: |
             recovery-drill-output/evidence.json
             recovery-drill-output/checksums.sha256
+            recovery-drill-output/recovery-scope-smoke.json
             recovery-drill-output/application-smoke.json
           if-no-files-found: error
           retention-days: 30
