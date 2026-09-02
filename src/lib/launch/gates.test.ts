@@ -8,12 +8,11 @@ describe("commercial launch gates", () => {
   it("refuses launch while required evidence is missing", () => {
     const result = evaluateLaunch(readiness.gates);
     expect(result.ready).toBe(false);
-    expect(result.blocking).toEqual(expect.arrayContaining([
+    expect(result.blocking).toEqual([
       { key: "security_advisors_clear", owner: "engineering" },
-      { key: "backup_restore_drill_passed", owner: "operations" },
       { key: "payment_webhooks_verified", owner: "engineering" },
       { key: "pilot_institution_signed_off", owner: "product" }
-    ]));
+    ]);
   });
   it("becomes ready only after all required gates pass", () => {
     expect(evaluateLaunch(readiness.gates.map((gate) => ({ ...gate, complete: true })))).toEqual({ ready: true, percent: 100, blocking: [] });
