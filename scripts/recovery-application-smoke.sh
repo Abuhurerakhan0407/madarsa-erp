@@ -37,6 +37,15 @@ done
 [[ -n "${LOCAL_SUPABASE_WORKDIR}" ]] || fail "LOCAL_SUPABASE_WORKDIR is required."
 [[ -f "${EVIDENCE_FILE}" ]] || fail "Database recovery evidence must exist before application verification."
 
+# The application may close the commercial recovery gate only after every non-application
+# recovery scope has already been proven by the same isolated run.
+for prerequisite in database_verified auth_verified managed_role_baseline_verified storage_verified; do
+  jq -e --arg key "${prerequisite}" '.restore[$key] == true' "${EVIDENCE_FILE}" > /dev/null || \
+    fail "Recovery prerequisite '${prerequisite}' is not verified; application smoke cannot close the gate."
+done
+jq -e '.restore.storage_blob_restore_required == false' "${EVIDENCE_FILE}" > /dev/null || \
+  fail "Storage blob restoration is required for this snapshot; application smoke cannot close the gate."
+
 supabase status -o env --workdir "${LOCAL_SUPABASE_WORKDIR}" > "${STATUS_FILE}"
 chmod 600 "${STATUS_FILE}"
 
@@ -91,13 +100,16 @@ export NEXT_PUBLIC_SUPABASE_URL="${LOCAL_API_URL}"
 export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${LOCAL_ANON_KEY}"
 export SUPABASE_SECRET_KEY="${LOCAL_SERVICE_ROLE_KEY}"
 
-pnpm dev -- --hostname 127.0.0.1 --port "${APP_PORT}" > "${APP_LOG}" 2>&1 &
+# Invoke Next directly. Passing a second `--` through the package script caused the previous
+# recovery run to terminate before the HTTP probe could start.
+pnpm exec next dev --hostname 127.0.0.1 --port "${APP_PORT}" > "${APP_LOG}" 2>&1 &
 APP_PID="$!"
 
 APPLICATION_URL="http://127.0.0.1:${APP_PORT}/apply/abu-school?lang=en"
 HTTP_STATUS=""
 for _ in $(seq 1 60); do
   if ! kill -0 "${APP_PID}" >/dev/null 2>&1; then
+    jq -n '{schema_version: 1, application_verified: false, failure: "application_process_exited_before_probe"}' > "${APPLICATION_EVIDENCE_FILE}"
     fail "Restored application process exited before the read-only recovery probe completed."
   fi
 
@@ -138,11 +150,11 @@ jq \
   --argjson application_verification "$(cat "${APPLICATION_EVIDENCE_FILE}")" \
   '.restore.application_verified = true
    | .application_verification = $application_verification
-   | .launch_gate.backup_restore_drill_passed = false
-   | .launch_gate.gate_can_be_closed = false
-   | .launch_gate.reason = "Database recovery and a read-only restored application path are verified; Storage recovery/applicability remains a separate requirement before the commercial restore gate can close."' \
+   | .launch_gate.backup_restore_drill_passed = true
+   | .launch_gate.gate_can_be_closed = true
+   | .launch_gate.reason = "Database restore, Auth identity counts, managed Supabase role baseline, current zero-blob Storage applicability/configuration, and a read-only restored application path all passed in the same isolated recovery run."' \
   "${EVIDENCE_FILE}" > "${TMP_EVIDENCE}"
 mv "${TMP_EVIDENCE}" "${EVIDENCE_FILE}"
 
 echo "Restored application recovery probe passed: GET /apply/abu-school returned the expected tenant and branch context."
-echo "Commercial backup_restore_drill_passed remains false until Storage recovery/applicability is separately verified."
+echo "Commercial backup_restore_drill_passed evidence is true for this verified recovery snapshot."

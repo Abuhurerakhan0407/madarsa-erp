@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 
 const workflow = readFileSync(new URL("../../../.github/workflows/recovery-drill.yml", import.meta.url), "utf8");
 const script = readFileSync(new URL("../../../scripts/recovery-drill.sh", import.meta.url), "utf8");
+const scopeSmokeScript = readFileSync(
+  new URL("../../../scripts/recovery-scope-smoke.sh", import.meta.url),
+  "utf8"
+);
 const applicationSmokeScript = readFileSync(
   new URL("../../../scripts/recovery-application-smoke.sh", import.meta.url),
   "utf8"
@@ -105,6 +109,23 @@ describe("database recovery drill automation", () => {
     expect(script).toContain("command output was withheld from logs");
   });
 
+  it("verifies Auth identities, managed roles, and zero-blob Storage applicability", () => {
+    expect(workflow).toContain("scripts/recovery-scope-smoke.sh");
+    expect(workflow).toContain("Verify Auth and Storage recovery scope");
+    expect(scopeSmokeScript).toContain("auth.users");
+    expect(scopeSmokeScript).toContain("auth.identities");
+    expect(scopeSmokeScript).toContain("supabase_auth_admin");
+    expect(scopeSmokeScript).toContain("supabase_storage_admin");
+    expect(scopeSmokeScript).toContain("storage.objects");
+    expect(scopeSmokeScript).toContain("SOURCE_STORAGE_OBJECT_COUNT");
+    expect(scopeSmokeScript).toContain('SOURCE_STORAGE_OBJECT_COUNT}" != "0"');
+    expect(scopeSmokeScript).toContain("blob backup/restore must be implemented and proven");
+    expect(scopeSmokeScript).toContain("database/contracts/phase2_storage.sql");
+    expect(scopeSmokeScript).toContain(".restore.auth_verified = true");
+    expect(scopeSmokeScript).toContain(".restore.storage_verified = true");
+    expect(scopeSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
+  });
+
   it("runs a read-only application probe against the restored local Supabase stack", () => {
     expect(workflow).toContain("scripts/recovery-application-smoke.sh");
     expect(workflow).toContain("Verify restored application read path");
@@ -112,6 +133,7 @@ describe("database recovery drill automation", () => {
     expect(applicationSmokeScript).toContain("supabase status -o env");
     expect(applicationSmokeScript).toContain("NEXT_PUBLIC_SUPABASE_URL");
     expect(applicationSmokeScript).toContain("SUPABASE_SECRET_KEY");
+    expect(applicationSmokeScript).toContain("pnpm exec next dev --hostname 127.0.0.1");
     expect(applicationSmokeScript).toContain("--request GET");
     expect(applicationSmokeScript).toContain("/apply/abu-school?lang=en");
     expect(applicationSmokeScript).toContain("Al-Noor Islamic Academy");
@@ -121,14 +143,16 @@ describe("database recovery drill automation", () => {
     expect(applicationSmokeScript).not.toMatch(/--request\s+(POST|PUT|PATCH|DELETE)/);
   });
 
-  it("never upgrades incomplete recovery evidence into a commercial restore pass", () => {
+  it("closes the commercial restore gate only after every recovery prerequisite passes", () => {
     expect(script).toContain('backup_restore_drill_passed: false');
     expect(script).toContain('gate_can_be_closed: false');
     expect(script).toContain('storage_verified: false');
     expect(script).toContain('application_verified: false');
-    expect(applicationSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
-    expect(applicationSmokeScript).toContain(".launch_gate.gate_can_be_closed = false");
-    expect(applicationSmokeScript).toContain("Storage recovery/applicability remains a separate requirement");
+    expect(scopeSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
+    expect(applicationSmokeScript).toContain("database_verified auth_verified managed_role_baseline_verified storage_verified");
+    expect(applicationSmokeScript).toContain(".restore.storage_blob_restore_required == false");
+    expect(applicationSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = true");
+    expect(applicationSmokeScript).toContain(".launch_gate.gate_can_be_closed = true");
     expect(docs).toContain("Never create synthetic recovery evidence");
   });
 });
