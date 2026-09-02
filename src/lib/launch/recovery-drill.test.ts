@@ -153,6 +153,11 @@ describe("database recovery drill automation", () => {
     ]) {
       expect(applicationSmokeScript).toContain(table);
     }
+    expect(applicationSmokeScript).toContain('"students:student_profiles:person_id"');
+    expect(applicationSmokeScript).toContain('"student_profiles:person_id"');
+    expect(applicationSmokeScript).toContain("select_column");
+    expect(applicationSmokeScript).toContain("key_column");
+    expect(applicationSmokeScript).not.toContain("student_profiles?select=id");
     expect(applicationSmokeScript).toContain("anonymous_boundaries");
     expect(applicationSmokeScript).toContain("sensitive_row_exposed: false");
     expect(applicationSmokeScript).toContain("outbound_provider_side_effects_emitted: false");
