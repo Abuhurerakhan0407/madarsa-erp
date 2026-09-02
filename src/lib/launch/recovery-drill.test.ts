@@ -109,13 +109,17 @@ describe("database recovery drill automation", () => {
     expect(script).toContain("command output was withheld from logs");
   });
 
-  it("verifies Auth identities, managed roles, and zero-blob Storage applicability", () => {
+  it("verifies Auth identities, managed roles, privileged RPCs, and zero-blob Storage applicability", () => {
     expect(workflow).toContain("scripts/recovery-scope-smoke.sh");
     expect(workflow).toContain("Verify Auth and Storage recovery scope");
     expect(scopeSmokeScript).toContain("auth.users");
     expect(scopeSmokeScript).toContain("auth.identities");
     expect(scopeSmokeScript).toContain("supabase_auth_admin");
     expect(scopeSmokeScript).toContain("supabase_storage_admin");
+    expect(scopeSmokeScript).toContain("bootstrap_tenant");
+    expect(scopeSmokeScript).toContain("has_function_privilege('anon'");
+    expect(scopeSmokeScript).toContain("has_function_privilege('authenticated'");
+    expect(scopeSmokeScript).toContain(".restore.privileged_rpc_boundary_verified = true");
     expect(scopeSmokeScript).toContain("storage.objects");
     expect(scopeSmokeScript).toContain("SOURCE_STORAGE_OBJECT_COUNT");
     expect(scopeSmokeScript).toContain('SOURCE_STORAGE_OBJECT_COUNT}" != "0"');
@@ -126,7 +130,7 @@ describe("database recovery drill automation", () => {
     expect(scopeSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
   });
 
-  it("runs a read-only application probe against the restored local Supabase stack", () => {
+  it("runs GET-only application and operational-module probes against restored Supabase", () => {
     expect(workflow).toContain("scripts/recovery-application-smoke.sh");
     expect(workflow).toContain("Verify restored application read path");
     expect(workflow).toContain("pnpm install --no-frozen-lockfile");
@@ -138,8 +142,24 @@ describe("database recovery drill automation", () => {
     expect(applicationSmokeScript).toContain("/apply/abu-school?lang=en");
     expect(applicationSmokeScript).toContain("Al-Noor Islamic Academy");
     expect(applicationSmokeScript).toContain("Central Campus");
+    for (const table of [
+      "student_profiles",
+      "attendance_records",
+      "documents",
+      "transport_routes",
+      "hostels",
+      "library_titles",
+      "memberships"
+    ]) {
+      expect(applicationSmokeScript).toContain(table);
+    }
+    expect(applicationSmokeScript).toContain("anonymous_boundaries");
+    expect(applicationSmokeScript).toContain("sensitive_row_exposed: false");
+    expect(applicationSmokeScript).toContain("outbound_provider_side_effects_emitted: false");
     expect(applicationSmokeScript).toContain("mutation_performed: false");
     expect(applicationSmokeScript).toContain(".restore.application_verified = true");
+    expect(applicationSmokeScript).toContain(".restore.operational_module_reads_verified = true");
+    expect(applicationSmokeScript).toContain(".restore.anonymous_access_boundary_verified = true");
     expect(applicationSmokeScript).not.toMatch(/--request\s+(POST|PUT|PATCH|DELETE)/);
   });
 
@@ -149,7 +169,9 @@ describe("database recovery drill automation", () => {
     expect(script).toContain('storage_verified: false');
     expect(script).toContain('application_verified: false');
     expect(scopeSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
-    expect(applicationSmokeScript).toContain("database_verified auth_verified managed_role_baseline_verified storage_verified");
+    expect(applicationSmokeScript).toContain(
+      "database_verified auth_verified managed_role_baseline_verified privileged_rpc_boundary_verified storage_verified"
+    );
     expect(applicationSmokeScript).toContain(".restore.storage_blob_restore_required == false");
     expect(applicationSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = true");
     expect(applicationSmokeScript).toContain(".launch_gate.gate_can_be_closed = true");
