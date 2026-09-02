@@ -20,6 +20,7 @@ on:
       - scripts/recovery-scope-smoke.sh
       - scripts/recovery-application-smoke.sh
       - database/contracts/phase2_storage.sql
+      - database/contracts/function_execution_acl.sql
       - .github/workflows/recovery-drill.yml
 
 permissions:

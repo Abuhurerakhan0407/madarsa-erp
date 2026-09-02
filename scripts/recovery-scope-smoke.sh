@@ -6,6 +6,7 @@ OUTPUT_DIR="$(mkdir -p "${OUTPUT_DIR_INPUT}" && cd "${OUTPUT_DIR_INPUT}" && pwd)
 EVIDENCE_FILE="${OUTPUT_DIR}/evidence.json"
 SCOPE_EVIDENCE_FILE="${OUTPUT_DIR}/recovery-scope-smoke.json"
 STORAGE_CONTRACT="database/contracts/phase2_storage.sql"
+FUNCTION_ACL_CONTRACT="database/contracts/function_execution_acl.sql"
 
 fail() {
   echo "::error::$1" >&2
@@ -16,7 +17,7 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "Required recovery-scope command '$1' is not installed."
 }
 
-for command_name in psql jq; do
+for command_name in psql jq sha256sum; do
   require_command "${command_name}"
 done
 
@@ -24,6 +25,7 @@ done
 [[ -n "${RESTORE_DB_URL:-}" ]] || fail "RESTORE_DB_URL is required."
 [[ -f "${EVIDENCE_FILE}" ]] || fail "Database recovery evidence must exist before recovery-scope verification."
 [[ -f "${STORAGE_CONTRACT}" ]] || fail "Storage recovery contract is missing."
+[[ -f "${FUNCTION_ACL_CONTRACT}" ]] || fail "Function execution ACL recovery contract is missing."
 
 query_value() {
   local db_url="$1"
@@ -35,6 +37,10 @@ canonical_json() {
   printf '%s' "$1" | jq -cS .
 }
 
+sha256_text() {
+  printf '%s' "$1" | sha256sum | awk '{print $1}'
+}
+
 AUTH_SQL="select jsonb_build_object(
   'users', (select count(*) from auth.users),
   'identities', (select count(*) from auth.identities)
@@ -44,11 +50,29 @@ ROLE_SQL="select coalesce(jsonb_agg(rolname order by rolname), '[]'::jsonb)::tex
 from pg_roles
 where rolname in ('anon','authenticated','service_role','supabase_auth_admin','supabase_storage_admin');"
 
+FUNCTION_ACL_SQL="select coalesce(
+  jsonb_agg(
+    jsonb_build_object(
+      'schema', n.nspname,
+      'signature', format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)),
+      'service_role_execute', has_function_privilege('service_role', p.oid, 'EXECUTE'),
+      'anon_execute', has_function_privilege('anon', p.oid, 'EXECUTE'),
+      'authenticated_execute', has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+      'public_execute', has_function_privilege('public', p.oid, 'EXECUTE')
+    ) order by n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)
+  ),
+  '[]'::jsonb
+)::text
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname in ('public','private');"
+
 PRIVILEGED_RPC_SQL="select coalesce(jsonb_build_object(
   'rpc', 'bootstrap_tenant',
   'service_role_execute', bool_or(has_function_privilege('service_role', p.oid, 'EXECUTE')),
   'anon_execute', bool_or(has_function_privilege('anon', p.oid, 'EXECUTE')),
-  'authenticated_execute', bool_or(has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+  'authenticated_execute', bool_or(has_function_privilege('authenticated', p.oid, 'EXECUTE')),
+  'public_execute', bool_or(has_function_privilege('public', p.oid, 'EXECUTE'))
 ), '{}'::jsonb)::text
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
@@ -93,13 +117,37 @@ RESTORED_ROLES="$(query_value "${RESTORE_DB_URL}" "${ROLE_SQL}")"
 [[ "$(canonical_json "${RESTORED_ROLES}")" == "$(canonical_json "${EXPECTED_ROLES}")" ]] || \
   fail "Initialized recovery target is missing the required managed Supabase role baseline."
 
-EXPECTED_PRIVILEGED_RPC='{"rpc":"bootstrap_tenant","service_role_execute":true,"anon_execute":false,"authenticated_execute":false}'
+# The logical schema dump intentionally does not reproduce application EXECUTE ACLs. Reconstruct
+# that reviewed security boundary from version control, then prove the complete public/private
+# function matrix is identical to production. This fails closed if production ACLs drift from the
+# reviewed contract or if any function remains broader after restore.
+SOURCE_FUNCTION_ACL="$(query_value "${SOURCE_DB_URL}" "${FUNCTION_ACL_SQL}")"
+SOURCE_FUNCTION_ACL_CANON="$(canonical_json "${SOURCE_FUNCTION_ACL}")"
+
+[[ "$(printf '%s' "${SOURCE_FUNCTION_ACL}" | jq '[.[] | select(.public_execute == true or .anon_execute == true)] | length')" == "0" ]] || \
+  fail "Production function ACL boundary exposes application functions to PUBLIC or anon; recovery gate cannot close."
+[[ "$(printf '%s' "${SOURCE_FUNCTION_ACL}" | jq '[.[] | select(.schema == "public" and (.service_role_execute != true or .authenticated_execute == true))] | length')" == "0" ]] || \
+  fail "Production public RPC boundary no longer matches the approved service-role-only convention."
+
+if ! psql "${RESTORE_DB_URL}" -X -v ON_ERROR_STOP=1 -f "${FUNCTION_ACL_CONTRACT}" > /dev/null 2>&1; then
+  fail "Unable to reconstruct the version-controlled function execution ACL contract in the isolated recovery target."
+fi
+
+RESTORED_FUNCTION_ACL="$(query_value "${RESTORE_DB_URL}" "${FUNCTION_ACL_SQL}")"
+RESTORED_FUNCTION_ACL_CANON="$(canonical_json "${RESTORED_FUNCTION_ACL}")"
+[[ "${SOURCE_FUNCTION_ACL_CANON}" == "${RESTORED_FUNCTION_ACL_CANON}" ]] || \
+  fail "Restored application function execution ACL matrix does not match production."
+
+EXPECTED_PRIVILEGED_RPC='{"rpc":"bootstrap_tenant","service_role_execute":true,"anon_execute":false,"authenticated_execute":false,"public_execute":false}'
 SOURCE_PRIVILEGED_RPC="$(query_value "${SOURCE_DB_URL}" "${PRIVILEGED_RPC_SQL}")"
 RESTORED_PRIVILEGED_RPC="$(query_value "${RESTORE_DB_URL}" "${PRIVILEGED_RPC_SQL}")"
 [[ "$(canonical_json "${SOURCE_PRIVILEGED_RPC}")" == "$(canonical_json "${EXPECTED_PRIVILEGED_RPC}")" ]] || \
   fail "Production privileged RPC execution boundary does not match the approved service-role-only contract."
 [[ "$(canonical_json "${RESTORED_PRIVILEGED_RPC}")" == "$(canonical_json "${EXPECTED_PRIVILEGED_RPC}")" ]] || \
   fail "Restored privileged RPC execution boundary does not match production."
+
+FUNCTION_ACL_COUNT="$(printf '%s' "${SOURCE_FUNCTION_ACL}" | jq 'length')"
+FUNCTION_ACL_DIGEST="$(sha256_text "${SOURCE_FUNCTION_ACL_CANON}")"
 
 SOURCE_STORAGE_OBJECT_COUNT="$(query_value "${SOURCE_DB_URL}" "select count(*) from storage.objects where bucket_id = 'tenant-documents';")"
 [[ "${SOURCE_STORAGE_OBJECT_COUNT}" =~ ^[0-9]+$ ]] || fail "Unable to establish production Storage object count."
@@ -137,19 +185,27 @@ jq -n \
   --argjson restored_auth "${RESTORED_AUTH}" \
   --argjson managed_roles "${RESTORED_ROLES}" \
   --argjson privileged_rpc "${RESTORED_PRIVILEGED_RPC}" \
+  --arg function_acl_count "${FUNCTION_ACL_COUNT}" \
+  --arg function_acl_digest "${FUNCTION_ACL_DIGEST}" \
   --argjson source_bucket "${SOURCE_BUCKET}" \
   --argjson restored_bucket "${RESTORED_BUCKET}" \
   --argjson source_policies "${SOURCE_POLICIES}" \
   --argjson restored_policies "${RESTORED_POLICIES}" \
   --arg source_object_count "${SOURCE_STORAGE_OBJECT_COUNT}" \
   '{
-    schema_version: 2,
+    schema_version: 3,
     auth: {
       source: $source_auth,
       restored: $restored_auth,
       counts_match: true,
       managed_role_baseline: $managed_roles,
       managed_role_baseline_verified: true,
+      function_acl_matrix: {
+        function_count: ($function_acl_count | tonumber),
+        sha256: $function_acl_digest,
+        source_restored_match: true,
+        public_or_anon_execute_count: 0
+      },
       privileged_rpc_boundary: $privileged_rpc,
       privileged_rpc_boundary_verified: true
     },
@@ -172,15 +228,16 @@ jq \
   '.restore.database_verified = true
    | .restore.auth_verified = true
    | .restore.managed_role_baseline_verified = true
+   | .restore.function_acl_matrix_verified = true
    | .restore.privileged_rpc_boundary_verified = true
    | .restore.storage_verified = true
    | .restore.storage_blob_restore_required = false
    | .recovery_scope_verification = $scope_verification
    | .launch_gate.backup_restore_drill_passed = false
    | .launch_gate.gate_can_be_closed = false
-   | .launch_gate.reason = "Database, Auth identity counts, managed-role baseline, privileged RPC boundary, and current zero-blob Storage applicability are verified; restored application verification remains required."' \
+   | .launch_gate.reason = "Database, Auth identity counts, managed-role baseline, complete application function ACL matrix, privileged RPC boundary, and current zero-blob Storage applicability are verified; restored application verification remains required."' \
   "${EVIDENCE_FILE}" > "${TMP_EVIDENCE}"
 mv "${TMP_EVIDENCE}" "${EVIDENCE_FILE}"
 
-echo "Recovery scope verification passed: Auth identities, managed roles, privileged RPC access boundary, and current zero-blob Storage configuration match the approved recovery scope."
+echo "Recovery scope verification passed: Auth identities, managed roles, complete application function ACLs, privileged RPC access boundary, and current zero-blob Storage configuration match production."
 echo "Commercial backup_restore_drill_passed remains false until restored application/module verification also passes."
