@@ -12,6 +12,12 @@ on:
         required: true
         default: "24"
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/recovery-drill.sh
+      - .github/workflows/recovery-drill.yml
 
 permissions:
   contents: read
@@ -19,7 +25,7 @@ permissions:
 jobs:
   database-restore-drill:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     services:
       restore-db:
         image: supabase/postgres:17.6.1.136
@@ -38,8 +44,8 @@ jobs:
       RECOVERY_PASSPHRASE: ${{ secrets.MADARSA_ERP_RECOVERY_PASSPHRASE }}
       RESTORE_DB_URL: postgresql://supabase_admin:restore-drill-local-only@127.0.0.1:54329/postgres
       RECOVERY_OUTPUT_DIR: recovery-drill-output
-      TARGET_RPO_HOURS: ${{ inputs.target_rpo_hours }}
-      DRILL_REASON: ${{ inputs.reason }}
+      TARGET_RPO_HOURS: ${{ github.event.inputs.target_rpo_hours || '24' }}
+      DRILL_REASON: ${{ github.event.inputs.reason || 'Automated recovery verification after recovery workflow change' }}
       SUPABASE_CLI_VERSION: "2.116.0"
       SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
       PGCONNECT_TIMEOUT: "10"
@@ -67,8 +73,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Bound each source-database connection attempt so a transient pooler/network problem
-          # fails quickly instead of hanging for several minutes. Keep the secret value masked.
+          # Add a bounded libpq timeout without exposing or changing the stored secret.
           SOURCE_DB_URL="$(
             python3 <<'PY'
           import os
@@ -83,20 +88,20 @@ jobs:
           )"
           export SOURCE_DB_URL
 
-          for attempt in 1 2 3; do
-            rm -rf "${RECOVERY_OUTPUT_DIR}"
-            if bash scripts/recovery-drill.sh; then
-              exit 0
-            fi
+          rm -rf "${RECOVERY_OUTPUT_DIR}"
+          mkdir -p "${RECOVERY_OUTPUT_DIR}"
+          bash scripts/recovery-drill.sh
 
-            if [[ "${attempt}" -eq 3 ]]; then
-              echo "::error::Recovery drill failed after 3 bounded attempts."
-              exit 1
-            fi
-
-            echo "::warning::Recovery drill attempt ${attempt}/3 failed; retrying after a short delay."
-            sleep $((attempt * 10))
-          done
+      - name: Upload sanitized recovery stage diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: madarsa-erp-recovery-stage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            recovery-drill-output/stage-status.txt
+            recovery-drill-output/verification-summary.json
+          if-no-files-found: warn
+          retention-days: 3
 
       - name: Upload encrypted logical backup
         uses: actions/upload-artifact@v4
