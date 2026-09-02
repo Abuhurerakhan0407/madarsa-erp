@@ -25,24 +25,11 @@ permissions:
 jobs:
   database-restore-drill:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    services:
-      restore-db:
-        image: supabase/postgres:17.6.1.136
-        env:
-          POSTGRES_PASSWORD: restore-drill-local-only
-          POSTGRES_DB: postgres
-        ports:
-          - 54329:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 12
+    timeout-minutes: 45
     env:
       SOURCE_DB_URL: ${{ secrets.MADARSA_ERP_DATABASE_URL }}
       RECOVERY_PASSPHRASE: ${{ secrets.MADARSA_ERP_RECOVERY_PASSPHRASE }}
-      RESTORE_DB_URL: postgresql://supabase_admin:restore-drill-local-only@127.0.0.1:54329/postgres
+      RESTORE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       RECOVERY_OUTPUT_DIR: recovery-drill-output
       TARGET_RPO_HOURS: ${{ github.event.inputs.target_rpo_hours || '24' }}
       DRILL_REASON: ${{ github.event.inputs.reason || 'Automated recovery verification after recovery workflow change' }}
@@ -68,6 +55,23 @@ jobs:
           sudo dpkg -i /tmp/supabase.deb
           supabase --version
 
+      - name: Start isolated initialized Supabase restore target
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
+          rm -rf "${TARGET_DIR}"
+          mkdir -p "${TARGET_DIR}"
+
+          timeout 60s supabase init --workdir "${TARGET_DIR}" >/dev/null
+          timeout 600s supabase start --workdir "${TARGET_DIR}" >/dev/null
+
+          AUTH_RELATION="$(psql "${RESTORE_DB_URL}" -X -v ON_ERROR_STOP=1 -Atc "select coalesce(to_regclass('auth.audit_log_entries')::text, 'missing')")"
+          if [[ "${AUTH_RELATION}" != "auth.audit_log_entries" ]]; then
+            echo "::error::Initialized restore target is missing the required Supabase Auth schema baseline."
+            exit 1
+          fi
+
       - name: Run database backup and isolated restore drill
         shell: bash
         run: |
@@ -91,6 +95,13 @@ jobs:
           rm -rf "${RECOVERY_OUTPUT_DIR}"
           mkdir -p "${RECOVERY_OUTPUT_DIR}"
           bash scripts/recovery-drill.sh
+
+      - name: Stop isolated Supabase restore target
+        if: always()
+        shell: bash
+        run: |
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
+          supabase stop --no-backup --workdir "${TARGET_DIR}" >/dev/null 2>&1 || true
 
       - name: Upload sanitized recovery stage diagnostics
         if: always()
