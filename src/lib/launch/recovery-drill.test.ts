@@ -36,7 +36,7 @@ describe("database recovery drill automation", () => {
 
   it("pins the recovery tooling and initialized local Supabase target", () => {
     expect(workflow).toContain('SUPABASE_CLI_VERSION: "2.116.0"');
-    expect(workflow).toContain("82cb424bc13cd029a66cb43bc537315cee9068cc6237b7f8f8949800d251");
+    expect(workflow).toContain("82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251");
     expect(workflow).toContain('RESTORE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres');
     expect(workflow).toContain('supabase init --workdir "${TARGET_DIR}"');
     expect(workflow).toContain('supabase start --workdir "${TARGET_DIR}"');
