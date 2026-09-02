@@ -41,7 +41,7 @@ done
 
 # The application may close the commercial recovery gate only after every non-application
 # recovery scope has already been proven by the same isolated run.
-for prerequisite in database_verified auth_verified managed_role_baseline_verified storage_verified; do
+for prerequisite in database_verified auth_verified managed_role_baseline_verified privileged_rpc_boundary_verified storage_verified; do
   jq -e --arg key "${prerequisite}" '.restore[$key] == true' "${EVIDENCE_FILE}" > /dev/null || \
     fail "Recovery prerequisite '${prerequisite}' is not verified; application smoke cannot close the gate."
 done
@@ -238,7 +238,7 @@ jq \
    | .application_verification = $application_verification
    | .launch_gate.backup_restore_drill_passed = true
    | .launch_gate.gate_can_be_closed = true
-   | .launch_gate.reason = "Database restore, Auth identity counts, managed Supabase role baseline, current zero-blob Storage applicability/configuration, restored Next.js tenant/branch rendering, GET-only operational module reads, and anonymous sensitive-data boundaries all passed in the same isolated recovery run."' \
+   | .launch_gate.reason = "Database restore, Auth identity counts, managed Supabase role baseline, privileged RPC boundary, current zero-blob Storage applicability/configuration, restored Next.js tenant/branch rendering, GET-only operational module reads, and anonymous sensitive-data boundaries all passed in the same isolated recovery run."' \
   "${EVIDENCE_FILE}" > "${TMP_EVIDENCE}"
 mv "${TMP_EVIDENCE}" "${EVIDENCE_FILE}"
 
