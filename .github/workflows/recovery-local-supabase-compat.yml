@@ -18,11 +18,9 @@ jobs:
     env:
       SOURCE_DB_URL: ${{ secrets.MADARSA_ERP_DATABASE_URL }}
       SUPABASE_CLI_VERSION: "2.116.0"
-      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7f8f8949800d251"
+      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
       PGCONNECT_TIMEOUT: "10"
       RESULT_DIR: recovery-local-supabase-compat
-      TARGET_DIR: ${{ runner.temp }}/madarsa-recovery-target
-      WORK_DIR: ${{ runner.temp }}/madarsa-recovery-work
       TARGET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +45,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
           rm -rf "${RESULT_DIR}" "${TARGET_DIR}" "${WORK_DIR}"
           mkdir -p "${RESULT_DIR}" "${TARGET_DIR}" "${WORK_DIR}"
           : > "${RESULT_DIR}/result.txt"
@@ -56,6 +56,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           set +e
           timeout 60s supabase init --workdir "${TARGET_DIR}" >/dev/null 2>/tmp/local-init.err
@@ -76,6 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           set +e
           timeout 600s supabase start --workdir "${TARGET_DIR}" >/dev/null 2>/tmp/local-start.err
@@ -109,6 +111,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           SOURCE_DB_URL_WITH_TIMEOUT="$(
             python3 <<'PY'
@@ -140,6 +143,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           SOURCE_DB_URL_WITH_TIMEOUT="$(
             python3 <<'PY'
@@ -171,6 +175,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           set +e
           timeout 180s psql --single-transaction --variable ON_ERROR_STOP=1 \
@@ -215,6 +220,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
           RESULT_FILE="${RESULT_DIR}/result.txt"
           set +e
           timeout 240s psql --single-transaction --variable ON_ERROR_STOP=1 \
@@ -291,6 +297,7 @@ jobs:
         if: always()
         shell: bash
         run: |
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
           supabase stop --no-backup --workdir "${TARGET_DIR}" >/dev/null 2>&1 || true
 
       - name: Upload sanitized compatibility result
