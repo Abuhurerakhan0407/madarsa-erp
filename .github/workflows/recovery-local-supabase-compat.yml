@@ -1,0 +1,193 @@
+name: Recovery local Supabase compatibility
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/recovery-local-supabase-target-compat-2026-09-02
+    paths:
+      - .github/workflows/recovery-local-supabase-compat.yml
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      SOURCE_DB_URL: ${{ secrets.MADARSA_ERP_DATABASE_URL }}
+      SUPABASE_CLI_VERSION: "2.116.0"
+      SUPABASE_CLI_DEB_SHA256: "82cb424bc13cd029a66cb43bc537315cee9068cc6237b7d4b7f8f8949800d251"
+      PGCONNECT_TIMEOUT: "10"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install pinned Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.deb" \
+            -o /tmp/supabase.deb
+          echo "${SUPABASE_CLI_DEB_SHA256}  /tmp/supabase.deb" | sha256sum -c -
+          sudo dpkg -i /tmp/supabase.deb
+          supabase --version
+
+      - name: Test restore against initialized local Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RESULT_DIR="recovery-local-supabase-compat"
+          RESULT_FILE="${RESULT_DIR}/result.txt"
+          TARGET_DIR="${RUNNER_TEMP}/madarsa-recovery-target"
+          TARGET_DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          WORK_DIR="${RUNNER_TEMP}/madarsa-recovery-work"
+          mkdir -p "${RESULT_DIR}" "${TARGET_DIR}" "${WORK_DIR}"
+          : > "${RESULT_FILE}"
+
+          SOURCE_DB_URL="$(
+            python3 <<'PY'
+          import os
+          from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+          raw = os.environ['SOURCE_DB_URL']
+          parts = urlsplit(raw)
+          query = dict(parse_qsl(parts.query, keep_blank_values=True))
+          query['connect_timeout'] = '10'
+          print(urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)))
+          PY
+          )"
+          export SOURCE_DB_URL
+
+          classify_restore_error() {
+            local src="$1"
+            local stage="$2"
+            python3 - "${src}" "${RESULT_FILE}" "${stage}" <<'PY'
+          import re
+          import sys
+          src, out, stage = sys.argv[1], sys.argv[2], sys.argv[3]
+          text = open(src, 'r', encoding='utf-8', errors='replace').read()
+          patterns = [
+              ('relation', r'relation\s+"([A-Za-z_][A-Za-z0-9_$]*(?:\.[A-Za-z_][A-Za-z0-9_$]*)?)"\s+does not exist'),
+              ('column', r'column\s+"?([A-Za-z_][A-Za-z0-9_$]*)"?\s+(?:of relation\s+"?([A-Za-z_][A-Za-z0-9_$]*)"?\s+)?does not exist'),
+              ('type', r'type\s+"?([A-Za-z_][A-Za-z0-9_$]*(?:\.[A-Za-z_][A-Za-z0-9_$]*)?)"?\s+does not exist'),
+              ('function', r'function\s+([A-Za-z_][A-Za-z0-9_$]*(?:\.[A-Za-z_][A-Za-z0-9_$]*)?)\s*\([^\n]*\)\s+does not exist'),
+          ]
+          kind, name = 'unknown', 'withheld'
+          for candidate, pattern in patterns:
+              m = re.search(pattern, text, re.IGNORECASE)
+              if m:
+                  kind = candidate
+                  if candidate == 'column' and m.lastindex and m.lastindex >= 2 and m.group(2):
+                      name = f'{m.group(2)}.{m.group(1)}'
+                  else:
+                      name = m.group(1)
+                  break
+          with open(out, 'a', encoding='utf-8') as f:
+              f.write(f'{stage}=failed\n')
+              f.write(f'failure_kind={kind}\n')
+              f.write(f'failure_name={name}\n')
+              f.write('overall=failed\n')
+          PY
+          }
+
+          if ! supabase init --workdir "${TARGET_DIR}" >/dev/null 2>/tmp/local-init.err; then
+            printf 'local_target_init=failed\noverall=failed\n' >> "${RESULT_FILE}"
+            rm -f /tmp/local-init.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'local_target_init=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/local-init.err
+
+          if ! supabase start --workdir "${TARGET_DIR}" >/dev/null 2>/tmp/local-start.err; then
+            printf 'local_target_start=failed\noverall=failed\n' >> "${RESULT_FILE}"
+            rm -f /tmp/local-start.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'local_target_start=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/local-start.err
+
+          auth_relation="$(psql "${TARGET_DB_URL}" -X -Atc "select coalesce(to_regclass('auth.audit_log_entries')::text, 'missing')" 2>/tmp/local-catalog.err || true)"
+          rm -f /tmp/local-catalog.err
+          if [[ "${auth_relation}" != "auth.audit_log_entries" ]]; then
+            printf 'auth_audit_log_entries=missing\noverall=failed\n' >> "${RESULT_FILE}"
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'auth_audit_log_entries=present\n' >> "${RESULT_FILE}"
+
+          if ! supabase db dump --db-url "${SOURCE_DB_URL}" -f "${WORK_DIR}/schema.sql" >/dev/null 2>/tmp/schema-dump.err; then
+            printf 'source_schema_dump=failed\noverall=failed\n' >> "${RESULT_FILE}"
+            rm -f /tmp/schema-dump.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'source_schema_dump=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/schema-dump.err
+
+          if ! supabase db dump --db-url "${SOURCE_DB_URL}" -f "${WORK_DIR}/data.sql" --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes" >/dev/null 2>/tmp/data-dump.err; then
+            printf 'source_data_dump=failed\noverall=failed\n' >> "${RESULT_FILE}"
+            rm -f /tmp/data-dump.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'source_data_dump=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/data-dump.err
+
+          if ! psql --single-transaction --variable ON_ERROR_STOP=1 \
+            --file "${WORK_DIR}/schema.sql" --dbname "${TARGET_DB_URL}" \
+            >/dev/null 2>/tmp/local-schema.err; then
+            classify_restore_error /tmp/local-schema.err local_schema_restore
+            rm -f /tmp/local-schema.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'local_schema_restore=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/local-schema.err
+
+          if ! psql --single-transaction --variable ON_ERROR_STOP=1 \
+            --command 'SET session_replication_role = replica' \
+            --file "${WORK_DIR}/data.sql" --dbname "${TARGET_DB_URL}" \
+            >/dev/null 2>/tmp/local-data.err; then
+            classify_restore_error /tmp/local-data.err local_data_restore
+            rm -f /tmp/local-data.err
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'local_data_restore=ok\n' >> "${RESULT_FILE}"
+          rm -f /tmp/local-data.err
+
+          source_auth_users="$(psql "${SOURCE_DB_URL}" -X -Atc 'select count(*) from auth.users' 2>/tmp/source-count.err)"
+          target_auth_users="$(psql "${TARGET_DB_URL}" -X -Atc 'select count(*) from auth.users' 2>/tmp/target-count.err)"
+          rm -f /tmp/source-count.err /tmp/target-count.err
+          if [[ "${source_auth_users}" != "${target_auth_users}" ]]; then
+            printf 'auth_users_count_match=failed\noverall=failed\n' >> "${RESULT_FILE}"
+            cat "${RESULT_FILE}"
+            exit 1
+          fi
+          printf 'auth_users_count_match=ok\n' >> "${RESULT_FILE}"
+          printf 'overall=ok\n' >> "${RESULT_FILE}"
+          cat "${RESULT_FILE}"
+
+      - name: Stop isolated local Supabase
+        if: always()
+        shell: bash
+        run: |
+          supabase stop --no-backup --workdir "${RUNNER_TEMP}/madarsa-recovery-target" >/dev/null 2>&1 || true
+
+      - name: Upload sanitized compatibility result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-local-supabase-compat-${{ github.run_id }}-${{ github.run_attempt }}
+          path: recovery-local-supabase-compat/result.txt
+          if-no-files-found: error
+          retention-days: 3
