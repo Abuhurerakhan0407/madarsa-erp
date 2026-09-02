@@ -1,10 +1,10 @@
-# Tomorrow Commercial Launch Control — 2026-09-02
+# Commercial Launch Control — 2026-09-02
 
 > Status: execution control sheet. It distinguishes Paid Founding Pilot launch from full General Availability (GA) and does not self-approve missing GA evidence.
 
 ## Current GA gate state
 
-**9/13 required GA gates are complete.**
+**9/13 required GA gates are complete** until the final audited recovery proof is merged to `main`, rerun, and the canonical gate is updated.
 
 Complete:
 - database_migrations_applied
@@ -30,14 +30,15 @@ Madrasa ERP may open a **limited Paid Founding Pilot** for the first three insti
 This means we may:
 - market and demo the product truthfully;
 - quote the approved founding-pilot pricing;
-- sign the pilot Agreement / Order Form / DPA;
-- issue a manual non-GST invoice/receipt;
-- accept manual payment;
+- prepare customer-specific Agreement / Order Form / DPA documents;
+- issue a manual non-GST invoice/receipt and accept manual payment once the real customer contract path has completed its required seller/owner and legal/privacy review;
 - schedule onboarding and implementation.
 
 Do **not** call the product GA or fully production-certified yet.
 
-Meaningful real-client production-data activation remains blocked until the recovery drill is completed.
+The Agreement and DPA templates remain explicitly subject to the seller/owner and legal/privacy review stated in those templates. Commercial approval of price, tax, retention, and packaging does not self-approve every contract clause.
+
+Meaningful real-client production-data activation remains blocked until the canonical recovery gate is closed from final audited recovery evidence.
 
 See `docs/paid-founding-pilot-launch-control.md`.
 
@@ -73,14 +74,7 @@ Approved Profile A for operational/non-essential data:
 - institution/legal-rule-specific records are not silently forced into the generic window
 
 ### Seller / tax boundary
-Approved seller profile:
-- Seller/legal name: Abu hurera khan
-- Trade name: Madrasa ERP
-- Entity type: Sole Proprietorship
-- GST status: Not GST registered
-- Business address: rm no 2 mahavir bldg no 2 opp p and t colony vakola Santacruz East Mumbai
-- Invoice email: abuhurerak8@gmail.com
-- Owner confirmed aggregate annual PAN-based business turnover is below ₹20 lakh on 2026-09-01
+The approved current seller/tax boundary is recorded in `docs/tax-boundary-decision-record-2026-09-01.md`.
 
 Current launch rule:
 - do not charge/display GST while unregistered and otherwise legally eligible;
@@ -91,27 +85,25 @@ Current launch rule:
 ## Remaining GA blockers
 
 ### 1. Supabase security
-Owner decision: remain on **Supabase Free** temporarily because budget is unavailable.
+Owner decision: remain on **Supabase Free** temporarily.
 
-Current live advisor has one real WARN: leaked-password protection disabled.
-Engineering hardening is otherwise complete for the audited surface.
+Current live advisor has one material WARN: leaked-password protection disabled.
 
-Action when budget becomes available:
-1. upgrade to a plan supporting leaked-password protection;
-2. enable the feature;
-3. rerun the security advisor;
-4. capture zero-blocking-WARN evidence;
-5. only then set `security_advisors_clear=true`.
+Action when the owner upgrades:
+1. enable leaked-password protection;
+2. rerun the security advisor;
+3. capture zero-blocking-WARN evidence;
+4. only then set `security_advisors_clear=true`.
 
 ### 2. Recovery drill
-Engineering automation and operator documentation exist.
-Required GitHub Actions secrets:
-- `MADARSA_ERP_DATABASE_URL`
-- `MADARSA_ERP_RECOVERY_PASSPHRASE`
+A base end-to-end recovery run has already passed on `main`. The deep audit then strengthened the standard to require restored operational module/API reads and access-boundary evidence in the same isolated run.
 
-Then manually dispatch `.github/workflows/recovery-drill.yml`, retain encrypted backup/restore evidence and separately verify Storage recovery scope once applicable.
-
-**This is the priority operational blocker before meaningful real-client production data is activated.**
+Before closing the gate:
+1. merge the patched/audited recovery implementation only after full CI and preview verification;
+2. rerun the recovery workflow on the exact new `main` SHA;
+3. inspect the resulting encrypted backup and recovery-evidence artifacts;
+4. update `backup_restore_drill_passed=true` only if the final evidence passes every required scope;
+5. verify the resulting production deployment.
 
 ### 3. Razorpay verification
 Not required for Paid Founding Pilot sales if manual invoicing/payment is used.
@@ -128,23 +120,27 @@ It remains a GA blocker until real provider evidence exists:
 Not required to **start** a pilot; it is evidence produced after a real pilot has been delivered and accepted.
 
 For the first institution:
-1. execute Agreement / Order Form / DPA;
-2. complete recovery drill before meaningful production-data activation;
-3. onboard agreed workflows;
-4. observe for the agreed period;
-5. capture authorized institution acceptance;
-6. only then set `pilot_institution_signed_off=true`.
+1. complete required seller/owner and legal/privacy review of the customer documents;
+2. execute Agreement / Order Form / DPA;
+3. ensure the recovery gate is closed before meaningful production-data activation;
+4. onboard agreed workflows;
+5. observe for the agreed period;
+6. capture authorized institution acceptance;
+7. only then set `pilot_institution_signed_off=true`.
 
-## Tomorrow order of operations
+## Current order of operations
 
-1. Begin Paid Founding Pilot outreach/sales using the approved package and pricing.
-2. For the first willing institution, fill the customer-specific Order Form and DPA.
-3. Use manual non-GST invoicing/payment; do not promise auto-renew or verified Razorpay billing.
-4. Configure the two recovery-workflow secrets and run the real recovery drill before meaningful production-data activation.
-5. Start controlled pilot onboarding after the recovery evidence is retained.
-6. Capture pilot acceptance after the agreed observation period.
-7. Upgrade Supabase security and verify Razorpay when budget/provider access becomes available.
-8. Maintain the GA gate file separately; do not flip any remaining gate without evidence.
+1. Finish the Next.js security patch + audited recovery implementation.
+2. Run full CI, E2E and Vercel preview verification.
+3. Merge only the exact tested head.
+4. Rerun audited recovery on `main` and close only the recovery gate from the final evidence.
+5. Verify production health and reconcile launch documentation/issue state.
+6. Begin/continue Paid Founding Pilot outreach using the approved pricing/package language.
+7. For the first willing institution, prepare customer-specific documents and complete the required review before signature.
+8. Use manual non-GST invoicing/payment; do not promise auto-renew or verified Razorpay billing.
+9. Start controlled pilot onboarding after recovery closure.
+10. Capture pilot acceptance after the agreed observation period.
+11. Upgrade Supabase security and verify Razorpay when the owner provides those dependencies.
 
 ## Launch language
 

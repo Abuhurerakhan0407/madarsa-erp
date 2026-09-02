@@ -1,106 +1,99 @@
 # Commercial launch decision pack
 
-This document keeps non-engineering launch gates decision-ready without self-approving them.
+This document keeps the current commercial launch state aligned with the canonical gate file and preserved approval evidence. It does not self-approve missing live-evidence gates.
 
 ## Current required gates
 
-Engineering/operations gates that remain open:
+The canonical source of truth remains `config/launch-readiness.json`.
 
-- `security_advisors_clear`
-- `backup_restore_drill_passed`
-- `payment_webhooks_verified`
-
-Commercial/legal/product gates that remain open:
+Approved/complete commercial and operational decisions already evidenced:
 
 - `pricing_approved`
 - `tax_boundary_approved`
 - `retention_schedule_approved`
 - `messaging_packaging_approved`
+- `support_runbook_ready`
+
+Separate live-evidence gates that remain open until their own proof exists:
+
+- `security_advisors_clear`
+- `backup_restore_drill_passed`
+- `payment_webhooks_verified`
 - `pilot_institution_signed_off`
 
 Do not flip any gate based on this document alone.
 
-## Working decision artifacts
+## Preserved approval evidence
 
-The following files now reduce the remaining owner/provider work to explicit evidence/approval steps:
-
-- `docs/commercial-offer-draft.md` — proposed pricing and day-one package, still unapproved.
-- `docs/tax-gst-decision-worksheet.md` — seller/GST/place-of-supply/refund decision worksheet, still unapproved.
-- `docs/retention-offboarding-decision-draft.md` — purpose-based retention/offboarding proposal, still unapproved.
+- `docs/commercial-approval-record-2026-09-01.md` — owner approval for Founding Pilot pricing, day-one packaging/messaging, and Retention Profile A.
+- `docs/tax-boundary-decision-record-2026-09-01.md` — approved current non-GST seller/tax boundary.
 - `docs/pilot-institution-signoff-pack.md` — real institution acceptance template; synthetic sign-off is prohibited.
-- `docs/founding-pilot-agreement-template.md` — general pilot SaaS terms with product/external-provider boundaries and legal placeholders clearly marked for review.
-- `docs/founding-pilot-order-form-template.md` — customer-specific scope, price, tax, support, retention and acceptance variables; it must not be filled from unapproved repository proposals.
-- `docs/data-processing-addendum-template.md` — institution/provider processing roles, security, subprocessors, retention/offboarding and child-data handling template; still requires privacy/legal approval before signature.
-- GitHub Issue #78 — single commercial approval checkpoint.
+- `docs/founding-pilot-agreement-template.md` — pilot SaaS terms template with product/external-provider boundaries; still requires the seller/owner and legal review stated in the template before signature.
+- `docs/founding-pilot-order-form-template.md` — customer-specific scope, price, tax, support, retention and acceptance variables.
+- `docs/data-processing-addendum-template.md` — processing-role/security/retention template; still requires the privacy/legal review stated in the template before signature.
 
-The agreement/order-form/DPA templates are launch-preparation artifacts, not evidence that a real customer has signed, that legal review has occurred, or that any launch gate is complete.
+Older proposal/worksheet documents may remain for history, but their `UNAPPROVED` labels do not reopen a decision that has a later explicit approval record. The approval records above control the current approved commercial state.
 
-## Pricing approval
+## Approved pricing boundary
 
-Approval must record:
+Founding Pilot pricing is approved for the first three institutions only:
 
-- billing unit: institution / student / branch / plan;
-- billing period: monthly / quarterly / annual;
-- exact INR prices and GST treatment statement approved separately by finance/legal;
-- included branches/users/students or usage limits;
-- implementation/onboarding fee, if any;
-- renewal rule;
-- cancellation/refund rule;
-- whether WhatsApp, biometric hardware, payment fees, custom development or migration are included or separately charged.
+- up to 300 students: ₹999/month;
+- 301–1,000: ₹1,999/month;
+- 1,001–2,500: ₹2,999/month;
+- 2,500+: ₹3,999/month;
+- annual pilot option: pay 10 months, receive 12 months;
+- first three pilots: onboarding/data-import fee waived;
+- no lifetime/grandfathered public-price promise without separate approval.
 
-No price should be represented as approved until the commercial owner signs off.
+## Approved tax boundary
 
-## Tax boundary approval
+The current approved seller boundary is the non-GST-registered sole-proprietor profile preserved in `docs/tax-boundary-decision-record-2026-09-01.md`.
 
-Finance/legal must decide and record:
+Engineering and sales must not invent GST percentages, display a GSTIN, or describe a non-GST document as a GST tax invoice. The tax position must be reviewed if the seller's registration obligation or registration status changes.
 
-- seller/legal entity used on invoices;
-- GST registration position and applicable tax treatment;
-- place-of-supply/invoice requirements relevant to target clients;
-- whether payment gateway charges/taxes are passed through;
-- refund/credit-note handling;
-- whether any deferred financial modules create accounting claims the product must avoid.
+## Approved retention boundary
 
-Engineering must not invent tax percentages, invoice compliance claims or ledger behavior.
+Retention Profile A is approved for operational/non-essential data:
 
-## Retention schedule approval
+- offboarding export window: 30 days;
+- operational logs: 90 days;
+- recovery evidence/artifacts: 30 days unless an incident/legal hold requires longer;
+- statutory, academic, admissions, attendance, generated-document and institution-governed records remain subject to applicable legal/institution requirements;
+- legal holds override deletion;
+- Storage must be included in offboarding/recovery checks when objects exist;
+- destructive deletion must use the governed deletion workflow.
 
-Privacy/legal must define minimum retention/deletion rules for:
+## Approved messaging and packaging boundary
 
-- student/person records;
-- admissions/enrollment history;
-- attendance and device-event evidence;
-- generated documents/certificates;
-- portal access/invitation records;
-- operational audit logs;
-- WhatsApp consent/queue/provider evidence;
-- subscription webhook/provider-event metadata;
-- support/incidents;
-- recovery evidence/artifacts;
-- uploaded Storage objects when used.
+Commercial copy must preserve these limits:
 
-The policy must also specify deletion/anonymization authority, legal holds, backup retention interaction and tenant offboarding procedure.
-
-## Messaging and packaging approval
-
-Commercial copy must preserve these boundaries:
-
-- AI Assistant: Preview, not a live AI provider integration;
+- AI Assistant: Preview, not a live AI-provider integration;
 - biometrics/NFC: ERP-side bridge is ready; physical device/vendor integration requires selected hardware;
-- WhatsApp: ERP runtime is complete; real outbound provider delivery requires credentials/sender/templates;
+- WhatsApp: ERP runtime exists; real outbound delivery requires provider credentials/sender/templates;
 - Razorpay: governed webhook runtime exists; real provider verification is still required;
-- backups: recovery automation exists; full recovery gate is not passed until real DB + applicable Storage/application verification succeeds;
+- recovery: commercial recovery is complete only when the final verified recovery gate is closed from real evidence;
 - HR core is live; payroll is deferred;
 - Fees/Accounting are intentionally deferred;
 - donation/fund accounting is deferred with Accounting;
 - GPS/live vehicle tracking is not proven;
 - generated Urdu/Arabic PDFs do not have full parity.
 
-Approved packaging should explicitly state what a paying institution receives on day one and what is optional/external.
+## Contract/DPA review boundary
+
+Commercial approval of price, tax, retention, and packaging is not the same as legal approval of every contract clause.
+
+Before a real institution signs:
+
+1. fill only customer-specific factual variables;
+2. preserve all disclosed product/provider limitations;
+3. complete the seller/owner and legal/privacy review explicitly required by the Agreement and DPA templates;
+4. do not remove legal-review warnings merely to make a document appear final;
+5. preserve the executed customer documents outside repository secrets.
 
 ## Pilot institution sign-off
 
-A real pilot sign-off should include:
+A real pilot sign-off must include:
 
 - institution identity and authorized approver;
 - production/approved pilot environment used;
@@ -116,11 +109,11 @@ Never create a fake pilot identity or synthetic approval.
 
 ## Gate update discipline
 
-When a decision is genuinely approved:
+When a remaining gate genuinely passes:
 
-1. preserve the approval evidence outside secrets;
+1. preserve its approval/live evidence without exposing secrets;
 2. update only the corresponding launch gate;
 3. add/adjust tests if repository contracts depend on the gate;
-4. run the full required CI discipline;
+4. run the required CI discipline;
 5. merge only the exact tested head;
 6. verify production catches up before calling the state live.

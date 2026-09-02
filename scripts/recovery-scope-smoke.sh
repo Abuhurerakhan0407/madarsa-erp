@@ -44,6 +44,16 @@ ROLE_SQL="select coalesce(jsonb_agg(rolname order by rolname), '[]'::jsonb)::tex
 from pg_roles
 where rolname in ('anon','authenticated','service_role','supabase_auth_admin','supabase_storage_admin');"
 
+PRIVILEGED_RPC_SQL="select coalesce(jsonb_build_object(
+  'rpc', 'bootstrap_tenant',
+  'service_role_execute', bool_or(has_function_privilege('service_role', p.oid, 'EXECUTE')),
+  'anon_execute', bool_or(has_function_privilege('anon', p.oid, 'EXECUTE')),
+  'authenticated_execute', bool_or(has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+), '{}'::jsonb)::text
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = 'bootstrap_tenant';"
+
 BUCKET_SQL="select coalesce((
   select jsonb_build_object(
     'id', id,
@@ -83,6 +93,14 @@ RESTORED_ROLES="$(query_value "${RESTORE_DB_URL}" "${ROLE_SQL}")"
 [[ "$(canonical_json "${RESTORED_ROLES}")" == "$(canonical_json "${EXPECTED_ROLES}")" ]] || \
   fail "Initialized recovery target is missing the required managed Supabase role baseline."
 
+EXPECTED_PRIVILEGED_RPC='{"rpc":"bootstrap_tenant","service_role_execute":true,"anon_execute":false,"authenticated_execute":false}'
+SOURCE_PRIVILEGED_RPC="$(query_value "${SOURCE_DB_URL}" "${PRIVILEGED_RPC_SQL}")"
+RESTORED_PRIVILEGED_RPC="$(query_value "${RESTORE_DB_URL}" "${PRIVILEGED_RPC_SQL}")"
+[[ "$(canonical_json "${SOURCE_PRIVILEGED_RPC}")" == "$(canonical_json "${EXPECTED_PRIVILEGED_RPC}")" ]] || \
+  fail "Production privileged RPC execution boundary does not match the approved service-role-only contract."
+[[ "$(canonical_json "${RESTORED_PRIVILEGED_RPC}")" == "$(canonical_json "${EXPECTED_PRIVILEGED_RPC}")" ]] || \
+  fail "Restored privileged RPC execution boundary does not match production."
+
 SOURCE_STORAGE_OBJECT_COUNT="$(query_value "${SOURCE_DB_URL}" "select count(*) from storage.objects where bucket_id = 'tenant-documents';")"
 [[ "${SOURCE_STORAGE_OBJECT_COUNT}" =~ ^[0-9]+$ ]] || fail "Unable to establish production Storage object count."
 if [[ "${SOURCE_STORAGE_OBJECT_COUNT}" != "0" ]]; then
@@ -118,19 +136,22 @@ jq -n \
   --argjson source_auth "${SOURCE_AUTH}" \
   --argjson restored_auth "${RESTORED_AUTH}" \
   --argjson managed_roles "${RESTORED_ROLES}" \
+  --argjson privileged_rpc "${RESTORED_PRIVILEGED_RPC}" \
   --argjson source_bucket "${SOURCE_BUCKET}" \
   --argjson restored_bucket "${RESTORED_BUCKET}" \
   --argjson source_policies "${SOURCE_POLICIES}" \
   --argjson restored_policies "${RESTORED_POLICIES}" \
   --arg source_object_count "${SOURCE_STORAGE_OBJECT_COUNT}" \
   '{
-    schema_version: 1,
+    schema_version: 2,
     auth: {
       source: $source_auth,
       restored: $restored_auth,
       counts_match: true,
       managed_role_baseline: $managed_roles,
-      managed_role_baseline_verified: true
+      managed_role_baseline_verified: true,
+      privileged_rpc_boundary: $privileged_rpc,
+      privileged_rpc_boundary_verified: true
     },
     storage: {
       bucket: "tenant-documents",
@@ -151,14 +172,15 @@ jq \
   '.restore.database_verified = true
    | .restore.auth_verified = true
    | .restore.managed_role_baseline_verified = true
+   | .restore.privileged_rpc_boundary_verified = true
    | .restore.storage_verified = true
    | .restore.storage_blob_restore_required = false
    | .recovery_scope_verification = $scope_verification
    | .launch_gate.backup_restore_drill_passed = false
    | .launch_gate.gate_can_be_closed = false
-   | .launch_gate.reason = "Database, Auth identity counts, managed-role baseline, and current zero-blob Storage applicability are verified; restored application verification remains required."' \
+   | .launch_gate.reason = "Database, Auth identity counts, managed-role baseline, privileged RPC boundary, and current zero-blob Storage applicability are verified; restored application verification remains required."' \
   "${EVIDENCE_FILE}" > "${TMP_EVIDENCE}"
 mv "${TMP_EVIDENCE}" "${EVIDENCE_FILE}"
 
-echo "Recovery scope verification passed: Auth identities match, managed roles exist, and current zero-blob Storage configuration is recoverable from the version-controlled contract."
-echo "Commercial backup_restore_drill_passed remains false until the restored application read path also passes."
+echo "Recovery scope verification passed: Auth identities, managed roles, privileged RPC access boundary, and current zero-blob Storage configuration match the approved recovery scope."
+echo "Commercial backup_restore_drill_passed remains false until restored application/module verification also passes."

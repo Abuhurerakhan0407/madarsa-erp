@@ -9,6 +9,8 @@ LOCAL_SUPABASE_WORKDIR="${LOCAL_SUPABASE_WORKDIR:-}"
 APP_PORT="${RECOVERY_APP_PORT:-3100}"
 STATUS_FILE="$(mktemp)"
 BODY_FILE="$(mktemp)"
+HEADER_FILE="$(mktemp)"
+ANON_BODY_FILE="$(mktemp)"
 APP_LOG="$(mktemp)"
 APP_PID=""
 
@@ -17,7 +19,7 @@ cleanup() {
     kill "${APP_PID}" >/dev/null 2>&1 || true
     wait "${APP_PID}" >/dev/null 2>&1 || true
   fi
-  rm -f "${STATUS_FILE}" "${BODY_FILE}" "${APP_LOG}"
+  rm -f "${STATUS_FILE}" "${BODY_FILE}" "${HEADER_FILE}" "${ANON_BODY_FILE}" "${APP_LOG}"
 }
 trap cleanup EXIT
 
@@ -39,7 +41,7 @@ done
 
 # The application may close the commercial recovery gate only after every non-application
 # recovery scope has already been proven by the same isolated run.
-for prerequisite in database_verified auth_verified managed_role_baseline_verified storage_verified; do
+for prerequisite in database_verified auth_verified managed_role_baseline_verified privileged_rpc_boundary_verified storage_verified; do
   jq -e --arg key "${prerequisite}" '.restore[$key] == true' "${EVIDENCE_FILE}" > /dev/null || \
     fail "Recovery prerequisite '${prerequisite}' is not verified; application smoke cannot close the gate."
 done
@@ -100,7 +102,7 @@ export NEXT_PUBLIC_SUPABASE_URL="${LOCAL_API_URL}"
 export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${LOCAL_ANON_KEY}"
 export SUPABASE_SECRET_KEY="${LOCAL_SERVICE_ROLE_KEY}"
 
-# Invoke Next directly. Passing a second `--` through the package script caused the previous
+# Invoke Next directly. Passing a second `--` through the package script caused an earlier
 # recovery run to terminate before the HTTP probe could start.
 pnpm exec next dev --hostname 127.0.0.1 --port "${APP_PORT}" > "${APP_LOG}" 2>&1 &
 APP_PID="$!"
@@ -109,7 +111,7 @@ APPLICATION_URL="http://127.0.0.1:${APP_PORT}/apply/abu-school?lang=en"
 HTTP_STATUS=""
 for _ in $(seq 1 60); do
   if ! kill -0 "${APP_PID}" >/dev/null 2>&1; then
-    jq -n '{schema_version: 1, application_verified: false, failure: "application_process_exited_before_probe"}' > "${APPLICATION_EVIDENCE_FILE}"
+    jq -n '{schema_version: 2, application_verified: false, failure: "application_process_exited_before_probe"}' > "${APPLICATION_EVIDENCE_FILE}"
     fail "Restored application process exited before the read-only recovery probe completed."
   fi
 
@@ -131,17 +133,99 @@ done
 grep -Fq "Al-Noor Islamic Academy" "${BODY_FILE}" || fail "Restored application response did not contain the expected tenant identity."
 grep -Fq "Central Campus" "${BODY_FILE}" || fail "Restored application response did not contain the expected branch identity."
 
+# Exercise the restored Supabase-compatible API through GET-only reads for every operational
+# module named by the commercial recovery standard. Bodies are discarded so recovery artifacts
+# never capture student or operational records.
+MODULE_TABLES=(
+  "students:student_profiles"
+  "attendance:attendance_records"
+  "documents:documents"
+  "transport:transport_routes"
+  "hostel:hostels"
+  "library:library_titles"
+  "access:memberships"
+)
+MODULE_EVIDENCE='[]'
+for module_table in "${MODULE_TABLES[@]}"; do
+  module="${module_table%%:*}"
+  table="${module_table#*:}"
+  : > "${HEADER_FILE}"
+  module_status="$(
+    curl --silent --show-error \
+      --request GET \
+      --output /dev/null \
+      --dump-header "${HEADER_FILE}" \
+      --write-out '%{http_code}' \
+      --header "apikey: ${LOCAL_SERVICE_ROLE_KEY}" \
+      --header "Authorization: Bearer ${LOCAL_SERVICE_ROLE_KEY}" \
+      --header "Prefer: count=exact" \
+      "${LOCAL_API_URL}/rest/v1/${table}?select=id&limit=1" 2>/dev/null || true
+  )"
+  [[ "${module_status}" == "200" ]] || fail "Restored Supabase API read failed for ${module}."
+
+  total="$(sed -nE 's/^[Cc]ontent-[Rr]ange:[[:space:]]*[^/]*\/([0-9]+).*/\1/p' "${HEADER_FILE}" | tr -d '\r' | tail -n 1)"
+  [[ "${total}" =~ ^[0-9]+$ ]] || fail "Restored Supabase API did not report an exact row count for ${module}."
+  (( total > 0 )) || fail "Expected restored fixture/production data is absent for ${module}."
+
+  MODULE_EVIDENCE="$(
+    jq -c \
+      --arg module "${module}" \
+      --arg table "${table}" \
+      --argjson row_count "${total}" \
+      '. + [{module: $module, table: $table, method: "GET", http_status: 200, row_count: $row_count}]' \
+      <<<"${MODULE_EVIDENCE}"
+  )"
+done
+
+# Exercise the anonymous/RLS boundary without mutating anything. A sensitive table may reject the
+# request outright or return an empty array, but it must never expose a row to the anon key.
+ANON_BOUNDARY_EVIDENCE='[]'
+for table in student_profiles memberships; do
+  : > "${ANON_BODY_FILE}"
+  anon_status="$(
+    curl --silent --show-error \
+      --request GET \
+      --output "${ANON_BODY_FILE}" \
+      --write-out '%{http_code}' \
+      --header "apikey: ${LOCAL_ANON_KEY}" \
+      --header "Authorization: Bearer ${LOCAL_ANON_KEY}" \
+      "${LOCAL_API_URL}/rest/v1/${table}?select=id&limit=1" 2>/dev/null || true
+  )"
+
+  if [[ "${anon_status}" == "200" ]]; then
+    jq -e 'type == "array" and length == 0' "${ANON_BODY_FILE}" > /dev/null || \
+      fail "Anonymous recovery probe exposed data from sensitive table ${table}."
+  elif [[ "${anon_status}" != "401" && "${anon_status}" != "403" ]]; then
+    fail "Anonymous recovery boundary returned unexpected HTTP ${anon_status} for ${table}."
+  fi
+
+  ANON_BOUNDARY_EVIDENCE="$(
+    jq -c \
+      --arg table "${table}" \
+      --argjson http_status "${anon_status}" \
+      '. + [{table: $table, method: "GET", http_status: $http_status, sensitive_row_exposed: false}]' \
+      <<<"${ANON_BOUNDARY_EVIDENCE}"
+  )"
+done
+
 jq -n \
   --arg path "/apply/abu-school?lang=en" \
   --arg http_status "${HTTP_STATUS}" \
+  --argjson module_reads "${MODULE_EVIDENCE}" \
+  --argjson anonymous_boundaries "${ANON_BOUNDARY_EVIDENCE}" \
   '{
-    schema_version: 1,
-    method: "GET",
-    path: $path,
-    http_status: ($http_status | tonumber),
-    tenant_identity_verified: true,
-    branch_identity_verified: true,
+    schema_version: 2,
+    application: {
+      method: "GET",
+      path: $path,
+      http_status: ($http_status | tonumber),
+      tenant_identity_verified: true,
+      branch_identity_verified: true
+    },
+    restored_api_module_reads: $module_reads,
+    anonymous_boundaries: $anonymous_boundaries,
     mutation_performed: false,
+    outbound_provider_side_effects_emitted: false,
     application_verified: true
   }' > "${APPLICATION_EVIDENCE_FILE}"
 
@@ -149,12 +233,14 @@ TMP_EVIDENCE="$(mktemp)"
 jq \
   --argjson application_verification "$(cat "${APPLICATION_EVIDENCE_FILE}")" \
   '.restore.application_verified = true
+   | .restore.operational_module_reads_verified = true
+   | .restore.anonymous_access_boundary_verified = true
    | .application_verification = $application_verification
    | .launch_gate.backup_restore_drill_passed = true
    | .launch_gate.gate_can_be_closed = true
-   | .launch_gate.reason = "Database restore, Auth identity counts, managed Supabase role baseline, current zero-blob Storage applicability/configuration, and a read-only restored application path all passed in the same isolated recovery run."' \
+   | .launch_gate.reason = "Database restore, Auth identity counts, managed Supabase role baseline, privileged RPC boundary, current zero-blob Storage applicability/configuration, restored Next.js tenant/branch rendering, GET-only operational module reads, and anonymous sensitive-data boundaries all passed in the same isolated recovery run."' \
   "${EVIDENCE_FILE}" > "${TMP_EVIDENCE}"
 mv "${TMP_EVIDENCE}" "${EVIDENCE_FILE}"
 
-echo "Restored application recovery probe passed: GET /apply/abu-school returned the expected tenant and branch context."
+echo "Restored application recovery probe passed: Next.js, seven operational module API reads, and anonymous sensitive-data boundaries were verified without mutation."
 echo "Commercial backup_restore_drill_passed evidence is true for this verified recovery snapshot."
