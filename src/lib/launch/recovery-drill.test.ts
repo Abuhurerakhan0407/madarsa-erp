@@ -158,6 +158,10 @@ describe("database recovery drill automation", () => {
     expect(applicationSmokeScript).toContain("select_column");
     expect(applicationSmokeScript).toContain("key_column");
     expect(applicationSmokeScript).not.toContain("student_profiles?select=id");
+    expect(applicationSmokeScript).toContain("is_successful_ranged_read_status");
+    expect(applicationSmokeScript).toContain('[[ "$1" == "200" || "$1" == "206" ]]');
+    expect(applicationSmokeScript).toContain('--argjson http_status "${module_status}"');
+    expect(applicationSmokeScript).toContain("Content-Range");
     expect(applicationSmokeScript).toContain("anonymous_boundaries");
     expect(applicationSmokeScript).toContain("sensitive_row_exposed: false");
     expect(applicationSmokeScript).toContain("outbound_provider_side_effects_emitted: false");
