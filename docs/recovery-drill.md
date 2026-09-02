@@ -1,8 +1,8 @@
 # Database recovery drill
 
-This repository contains a manual, fail-closed database recovery drill for Madarsa ERP. It exists because the current Supabase organization is on the Free plan, where managed daily backup retention is not available as the commercial recovery mechanism. Supabase recommends maintaining logical dumps for Free projects.
+This repository contains a fail-closed database recovery drill for Madarsa ERP. It exists because the current Supabase organization is on the Free plan, where managed daily backup retention is not available as the commercial recovery mechanism. Supabase recommends maintaining logical dumps for Free projects.
 
-The workflow follows the current Supabase CLI backup/restore pattern: roles, schema, and data are dumped separately, encrypted, restored into an isolated Supabase Postgres 17 target, and compared with the source snapshot.
+The workflow follows the current Supabase CLI backup/restore pattern: roles, schema, and data are dumped separately, encrypted, restored into an isolated initialized local Supabase target, and compared with the source snapshot.
 
 ## What this proves
 
@@ -11,7 +11,7 @@ A successful run proves all of the following for the database scope:
 - the production database can be read using the approved database connection;
 - a Supabase-aware logical backup can be created;
 - the backup archive can be encrypted and decrypted with the configured recovery passphrase;
-- the logical dump can be restored into an isolated Supabase Postgres target;
+- the logical dump can be restored into an isolated initialized local Supabase target;
 - critical Madarsa ERP table counts match the source snapshot after restore;
 - public table, public/private function, and public RLS-policy counts match after restore;
 - a measured database RPO and RTO can be produced.
@@ -37,20 +37,26 @@ The restore URL is supplied by the workflow itself and must resolve directly to 
 
 ## Running the drill
 
-1. Open GitHub Actions for `Abuhurerakhan0407/madarsa-erp`.
-2. Select **Database recovery drill**.
-3. Choose **Run workflow** on `main`.
-4. Enter the operational reason for the drill.
-5. Keep the default 24-hour logical-backup RPO target unless an approved recovery objective says otherwise.
+The workflow supports two intentional triggers:
 
-The workflow is intentionally `workflow_dispatch` only. It does not read production on every push or pull request.
+1. **Manual operational drill**
+   - Open GitHub Actions for `Abuhurerakhan0407/madarsa-erp`.
+   - Select **Database recovery drill**.
+   - Choose **Run workflow** on `main`.
+   - Enter the operational reason for the drill.
+   - Keep the default 24-hour logical-backup RPO target unless an approved recovery objective says otherwise.
+2. **Guarded recovery-change verification**
+   - A push to `main` runs the drill automatically only when `scripts/recovery-drill.sh` or `.github/workflows/recovery-drill.yml` changed.
+   - Ordinary application pushes do not read the production database through this workflow.
+   - The automatic reason defaults to `Automated recovery verification after recovery workflow change` and the RPO target defaults to 24 hours.
 
 ## Artifacts
 
-A successful run emits two private workflow artifacts:
+A run may emit three private workflow artifacts:
 
-- an AES-256-CBC/PBKDF2 encrypted logical backup, retained for 7 days;
-- a non-secret evidence bundle, retained for 30 days.
+- a sanitized recovery-stage diagnostic bundle (`stage-status.txt` and, when available, `verification-summary.json`), retained for 3 days;
+- an AES-256-CBC/PBKDF2 encrypted logical backup, retained for 7 days after a successful drill;
+- a non-secret recovery evidence bundle (`evidence.json` and `checksums.sha256`), retained for 30 days after a successful drill.
 
 Plain SQL dump files are kept only in the temporary runner workspace and removed before artifact upload. Supabase dump stderr is also withheld from workflow logs on failure because connection diagnostics may contain sensitive connection metadata. The evidence bundle contains digests, timings, row-count verification, schema metrics, and the GitHub Actions run reference. It must not contain the database URL or recovery passphrase.
 
