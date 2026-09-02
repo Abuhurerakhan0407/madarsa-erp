@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 
 const workflow = readFileSync(new URL("../../../.github/workflows/recovery-drill.yml", import.meta.url), "utf8");
 const script = readFileSync(new URL("../../../scripts/recovery-drill.sh", import.meta.url), "utf8");
+const applicationSmokeScript = readFileSync(
+  new URL("../../../scripts/recovery-application-smoke.sh", import.meta.url),
+  "utf8"
+);
 const docs = readFileSync(new URL("../../../docs/recovery-drill.md", import.meta.url), "utf8");
 
 const validPoolerUrl =
@@ -26,7 +30,7 @@ function runValidation(overrides: Record<string, string>) {
 }
 
 describe("database recovery drill automation", () => {
-  it("is manual and reads production only through repository secrets", () => {
+  it("keeps production reads controlled through repository secrets", () => {
     expect(workflow).toContain("workflow_dispatch");
     expect(workflow).toContain("secrets.MADARSA_ERP_DATABASE_URL");
     expect(workflow).toContain("secrets.MADARSA_ERP_RECOVERY_PASSPHRASE");
@@ -101,11 +105,30 @@ describe("database recovery drill automation", () => {
     expect(script).toContain("command output was withheld from logs");
   });
 
-  it("never upgrades database-only evidence into a commercial restore pass", () => {
+  it("runs a read-only application probe against the restored local Supabase stack", () => {
+    expect(workflow).toContain("scripts/recovery-application-smoke.sh");
+    expect(workflow).toContain("Verify restored application read path");
+    expect(workflow).toContain("pnpm install --no-frozen-lockfile");
+    expect(applicationSmokeScript).toContain("supabase status -o env");
+    expect(applicationSmokeScript).toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(applicationSmokeScript).toContain("SUPABASE_SECRET_KEY");
+    expect(applicationSmokeScript).toContain("--request GET");
+    expect(applicationSmokeScript).toContain("/apply/abu-school?lang=en");
+    expect(applicationSmokeScript).toContain("Al-Noor Islamic Academy");
+    expect(applicationSmokeScript).toContain("Central Campus");
+    expect(applicationSmokeScript).toContain("mutation_performed: false");
+    expect(applicationSmokeScript).toContain(".restore.application_verified = true");
+    expect(applicationSmokeScript).not.toMatch(/--request\s+(POST|PUT|PATCH|DELETE)/);
+  });
+
+  it("never upgrades incomplete recovery evidence into a commercial restore pass", () => {
     expect(script).toContain('backup_restore_drill_passed: false');
     expect(script).toContain('gate_can_be_closed: false');
     expect(script).toContain('storage_verified: false');
     expect(script).toContain('application_verified: false');
+    expect(applicationSmokeScript).toContain(".launch_gate.backup_restore_drill_passed = false");
+    expect(applicationSmokeScript).toContain(".launch_gate.gate_can_be_closed = false");
+    expect(applicationSmokeScript).toContain("Storage recovery/applicability remains a separate requirement");
     expect(docs).toContain("Never create synthetic recovery evidence");
   });
 });
