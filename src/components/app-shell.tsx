@@ -5,6 +5,10 @@ import { InterfaceMotion } from "@/components/interface-motion";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { SignOutButton } from "@/components/sign-out-button";
+import {
+  isNavItemEnabled,
+  resolveClientProfile
+} from "@/lib/capabilities/client-profile";
 import type { Locale } from "@/lib/i18n/config";
 import type { TenantContext } from "@/lib/tenancy/context";
 
@@ -69,11 +73,21 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const app = await getTranslations("App");
   const branchLabel = workspace.branchName || "Main Branch";
   const copy = shellCopy[locale];
-  const mobileGroups = navGroups.map((group) => ({
+  const clientProfile = resolveClientProfile(workspace.tenantSlug);
+  const visibleNavGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => isNavItemEnabled(clientProfile, item.key))
+    }))
+    .filter((group) => group.items.length > 0);
+  const mobileGroups = visibleNavGroups.map((group) => ({
     key: group.key,
     label: group.labels[locale],
     items: group.items.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }))
   }));
+  const overview = navGroups[0].items.find((item) => item.key === "overview")!;
+  const admissions = navGroups[0].items.find((item) => item.key === "admissions")!;
+  const students = navGroups[0].items.find((item) => item.key === "students")!;
 
   return (
     <div className="app-shell professional-shell">
@@ -82,7 +96,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">M</span><span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span></div>
         <div className="institution-card professional-institution-card"><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{copy.academicYear}</small></div>
         <nav aria-label={app("openMenu")} className="primary-nav demo-primary-nav">
-          {navGroups.map((group) => <div className="nav-section" key={group.key}><p className="nav-section-label">{group.labels[locale]}</p>{group.items.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</div>)}
+          {visibleNavGroups.map((group) => <div className="nav-section" key={group.key}><p className="nav-section-label">{group.labels[locale]}</p>{group.items.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</div>)}
         </nav>
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
       </aside>
@@ -93,7 +107,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </header>
         <main id="main-content" className="main-content professional-main-content"><InterfaceMotion />{children}</main>
       </div>
-      <MobileNavigation locale={locale} groups={mobileGroups} overviewLabel={navGroups[0].items[0].labels[locale]} admissionsLabel={navGroups[0].items[1].labels[locale]} studentsLabel={navGroups[0].items[2].labels[locale]} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
+      <MobileNavigation locale={locale} groups={mobileGroups} overviewLabel={overview.labels[locale]} admissionsLabel={admissions.labels[locale]} studentsLabel={students.labels[locale]} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
     </div>
   );
 }
