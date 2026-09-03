@@ -63,7 +63,7 @@ begin
         ) phone on true
         left join lateral (
           select l.identity_id,l.status link_status,u.last_sign_in_at,
-                 coalesce((u.raw_user_meta_data->>'portal_account')::boolean,false) erp_managed
+                 coalesce((u.raw_app_meta_data->>'portal_account')::boolean,false) erp_managed
           from public.identity_person_links l
           join auth.users u on u.id=l.identity_id
           where l.tenant_id=he.tenant_id and l.person_id=he.employee_person_id and l.link_type='employee'
@@ -172,7 +172,7 @@ begin
       join public.enrollments e on e.tenant_id=pr.tenant_id and e.student_person_id=pr.target_person_id and e.branch_id=p_branch_id and e.status in('active','paused')
       left join lateral (select pc.value from public.person_contacts pc where pc.tenant_id=gp.tenant_id and pc.person_id=gp.person_id and pc.type='email' order by pc.is_primary desc,pc.is_verified desc,pc.id limit 1) email on true
       left join lateral (
-        select l.identity_id,l.status link_status,u.last_sign_in_at,coalesce((u.raw_user_meta_data->>'portal_account')::boolean,false) erp_managed
+        select l.identity_id,l.status link_status,u.last_sign_in_at,coalesce((u.raw_app_meta_data->>'portal_account')::boolean,false) erp_managed
         from public.identity_person_links l join auth.users u on u.id=l.identity_id
         where l.tenant_id=gp.tenant_id and l.person_id=gp.person_id and l.link_type='guardian'
         order by (l.status='verified') desc,l.updated_at desc,l.id desc limit 1
@@ -202,7 +202,7 @@ begin
       join public.persons p on p.tenant_id=he.tenant_id and p.id=he.employee_person_id and p.status='active'
       left join lateral (select pc.value from public.person_contacts pc where pc.tenant_id=he.tenant_id and pc.person_id=he.employee_person_id and pc.type='email' order by pc.is_primary desc,pc.is_verified desc,pc.id limit 1) email on true
       left join lateral (
-        select l.identity_id,l.status link_status,u.last_sign_in_at,coalesce((u.raw_user_meta_data->>'portal_account')::boolean,false) erp_managed
+        select l.identity_id,l.status link_status,u.last_sign_in_at,coalesce((u.raw_app_meta_data->>'portal_account')::boolean,false) erp_managed
         from public.identity_person_links l join auth.users u on u.id=l.identity_id
         where l.tenant_id=he.tenant_id and l.person_id=he.employee_person_id and l.link_type='employee'
         order by (l.status='verified') desc,l.updated_at desc,l.id desc limit 1
