@@ -13,7 +13,7 @@ export default async function PortalChangePasswordPage() {
   const admin = createAdminClient();
   const current = await admin.auth.admin.getUserById(identity.id);
   if (current.error || !current.data.user) throw new Error("Unable to load portal account.");
-  if (current.data.user.user_metadata?.must_change_password !== true) redirect("/portal");
+  if (current.data.user.app_metadata?.must_change_password !== true) redirect("/portal");
 
   return (
     <section className="professional-card" style={{ maxWidth: 640, margin: "8vh auto 0" }}>
