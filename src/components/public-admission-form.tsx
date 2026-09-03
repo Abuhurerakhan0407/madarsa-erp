@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type {
   PublicAdmissionLocale,
@@ -176,9 +177,12 @@ export function PublicAdmissionForm({
   const text = ui[locale];
   const defaultSession = sessions.find((session) => session.isDefault)?.key ?? sessions[0]?.key ?? "";
   const defaultProgram = programs[0]?.key ?? "";
+  const defaultGroup = groups.find(
+    (group) => group.sessionKey === defaultSession && group.programKey === defaultProgram
+  )?.key ?? "";
   const [sessionKey, setSessionKey] = useState(defaultSession);
   const [programKey, setProgramKey] = useState(defaultProgram);
-  const [groupKey, setGroupKey] = useState("");
+  const [groupKey, setGroupKey] = useState(defaultGroup);
   const [busy, setBusy] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,15 +198,25 @@ export function PublicAdmissionForm({
     [groups, programKey, sessionKey]
   );
 
-  useEffect(() => {
-    if (!matchingGroups.some((group) => group.key === groupKey)) {
-      setGroupKey(matchingGroups[0]?.key ?? "");
-    }
-  }, [groupKey, matchingGroups]);
-
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
+
+  function chooseFirstGroup(nextSessionKey: string, nextProgramKey: string) {
+    setGroupKey(
+      groups.find((group) => group.sessionKey === nextSessionKey && group.programKey === nextProgramKey)?.key ?? ""
+    );
+  }
+
+  function changeSession(nextSessionKey: string) {
+    setSessionKey(nextSessionKey);
+    chooseFirstGroup(nextSessionKey, programKey);
+  }
+
+  function changeProgram(nextProgramKey: string) {
+    setProgramKey(nextProgramKey);
+    chooseFirstGroup(sessionKey, nextProgramKey);
+  }
 
   function selectPhoto(file: File | undefined) {
     if (!file) return;
@@ -316,7 +330,7 @@ export function PublicAdmissionForm({
     setError(null);
     setSessionKey(defaultSession);
     setProgramKey(defaultProgram);
-    setGroupKey("");
+    setGroupKey(defaultGroup);
     clearPhoto();
   }
 
@@ -372,7 +386,7 @@ export function PublicAdmissionForm({
           <div className="public-intake-grid">
             <label>
               <span>{text.session}</span>
-              <select name="sessionKey" value={sessionKey} onChange={(event) => setSessionKey(event.target.value)} required>
+              <select name="sessionKey" value={sessionKey} onChange={(event) => changeSession(event.target.value)} required>
                 {sessions.map((session) => (
                   <option key={session.key} value={session.key}>
                     {label(session.labels, locale)}
@@ -382,7 +396,7 @@ export function PublicAdmissionForm({
             </label>
             <label>
               <span>{text.program}</span>
-              <select name="programKey" value={programKey} onChange={(event) => setProgramKey(event.target.value)} required>
+              <select name="programKey" value={programKey} onChange={(event) => changeProgram(event.target.value)} required>
                 {programs.map((program) => (
                   <option key={program.key} value={program.key}>
                     {label(program.labels, locale)}
@@ -454,9 +468,12 @@ export function PublicAdmissionForm({
                   />
                   {previewUrl ? (
                     <div className="flow-stack">
-                      <img
+                      <Image
                         src={previewUrl}
                         alt={text.photoTitle}
+                        width={180}
+                        height={220}
+                        unoptimized
                         style={{ width: 180, height: 220, objectFit: "cover", borderRadius: 16 }}
                       />
                       <div className="quick-actions">
