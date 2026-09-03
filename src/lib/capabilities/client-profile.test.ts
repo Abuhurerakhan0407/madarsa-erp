@@ -1,26 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  isCapabilityEnabled,
   isNavItemEnabled,
-  resolveClientProfile
+  resolveClientProfileFromConfig
 } from "./client-profile";
-
-const originalGlobalProfile = process.env.MADARSA_CLIENT_PROFILE;
-const originalTenantSlugs = process.env.MADARSA_CLIENT_V2_TENANT_SLUGS;
-
-afterEach(() => {
-  if (originalGlobalProfile === undefined) delete process.env.MADARSA_CLIENT_PROFILE;
-  else process.env.MADARSA_CLIENT_PROFILE = originalGlobalProfile;
-
-  if (originalTenantSlugs === undefined) delete process.env.MADARSA_CLIENT_V2_TENANT_SLUGS;
-  else process.env.MADARSA_CLIENT_V2_TENANT_SLUGS = originalTenantSlugs;
-});
 
 describe("client capability profiles", () => {
   it("preserves full-product behavior by default", () => {
-    delete process.env.MADARSA_CLIENT_PROFILE;
-    delete process.env.MADARSA_CLIENT_V2_TENANT_SLUGS;
-
-    const profile = resolveClientProfile("default-madrasa");
+    const profile = resolveClientProfileFromConfig("default-madrasa", {});
 
     expect(profile.key).toBe("full-product");
     expect(isNavItemEnabled(profile, "fees")).toBe(true);
@@ -28,10 +15,9 @@ describe("client capability profiles", () => {
   });
 
   it("disables only client-hidden modules for configured tenant slugs", () => {
-    delete process.env.MADARSA_CLIENT_PROFILE;
-    process.env.MADARSA_CLIENT_V2_TENANT_SLUGS = "client-madrasa, another-client";
-
-    const profile = resolveClientProfile("CLIENT-MADARSA");
+    const profile = resolveClientProfileFromConfig("CLIENT-MADARSA", {
+      clientV2TenantSlugs: "client-madrasa, another-client"
+    });
 
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(false);
@@ -48,13 +34,22 @@ describe("client capability profiles", () => {
   });
 
   it("supports a deployment-wide client-v2 profile", () => {
-    process.env.MADARSA_CLIENT_PROFILE = "client-v2";
-    delete process.env.MADARSA_CLIENT_V2_TENANT_SLUGS;
-
-    const profile = resolveClientProfile("any-tenant");
+    const profile = resolveClientProfileFromConfig("any-tenant", {
+      profileOverride: "client-v2"
+    });
 
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(false);
     expect(isNavItemEnabled(profile, "students")).toBe(true);
+  });
+
+  it("lets an explicit full-product override win over a tenant slug", () => {
+    const profile = resolveClientProfileFromConfig("client-madrasa", {
+      profileOverride: "full-product",
+      clientV2TenantSlugs: "client-madrasa"
+    });
+
+    expect(profile.key).toBe("full-product");
+    expect(isCapabilityEnabled(profile, "fees_accounting")).toBe(true);
   });
 });
