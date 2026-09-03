@@ -1,16 +1,18 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { WorkspaceState } from "@/components/workspace-ui";
 
-export default async function ForbiddenPage() {
-  const t = await getTranslations("Dashboard");
+type ForbiddenPageProps = { params: Promise<{ locale: string }> };
+
+export default async function ForbiddenPage({ params }: ForbiddenPageProps) {
+  const [{ locale }, t] = await Promise.all([params, getTranslations("Dashboard")]);
 
   return (
-    <section className="state-panel">
-      <p className="state-kicker">403</p>
-      <h1>{t("forbiddenTitle")}</h1>
-      <p>{t("forbiddenBody")}</p>
-      <button className="action-button action-button-primary" type="button">
-        {t("requestAccess")}
-      </button>
-    </section>
+    <WorkspaceState
+      code="403"
+      title={t("forbiddenTitle")}
+      body={t("forbiddenBody")}
+      action={<Link className="action-button action-button-primary" href={`/${locale}`}>{t("requestAccess")}</Link>}
+    />
   );
 }
