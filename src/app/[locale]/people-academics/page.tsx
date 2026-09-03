@@ -1,91 +1,33 @@
-import { InlineState, TableFrame, WorkspacePageHeader } from "@/components/workspace-ui";
-import { getTranslations } from "next-intl/server";
-import { getAcademicFoundationSummary } from "@/lib/academics/live-summary";
+import { AcademicTimetableViews } from "@/components/academic-timetable-views";
+import { AcademicsTimetableManager } from "@/components/academics-timetable-manager";
+import { WorkspacePageHeader } from "@/components/workspace-ui";
+import { getAcademicsWorkspace } from "@/lib/academics/workspace";
+import type { Locale } from "@/lib/i18n/config";
 
-type PeopleAcademicsPageProps = {
-  params: Promise<{ locale: string }>;
-};
+const copy = {
+  en: { eyebrow:"Daily teaching", title:"Academics & Timetable", description:"Plan the teaching day, manage timetable conflicts and exceptions, assign homework, and keep the academic calendar in one operational workspace.", meta:(date:string,timezone:string)=>`${date} · ${timezone}` },
+  ur: { eyebrow:"روزمرہ تدریس", title:"اکیڈمکس و ٹائم ٹیبل", description:"تدریسی دن، ٹائم ٹیبل کے تصادم اور تبدیلیاں، ہوم ورک اور اکیڈمک کیلنڈر ایک ہی عملی ورک اسپیس سے چلائیں۔", meta:(date:string,timezone:string)=>`${date} · ${timezone}` },
+  ar: { eyebrow:"التدريس اليومي", title:"الأكاديميات والجدول", description:"أدر يوم التدريس وتعارضات الجدول والاستثناءات والواجبات والتقويم الأكاديمي من مساحة عمل واحدة.", meta:(date:string,timezone:string)=>`${date} · ${timezone}` }
+} as const;
 
-export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPageProps) {
-  const { locale } = await params;
-  const [t, dashboard, summary] = await Promise.all([
-    getTranslations("PeopleAcademics"),
-    getTranslations("Dashboard"),
-    getAcademicFoundationSummary(locale)
-  ]);
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+function validDate(value: unknown): string | null {
+  if (typeof value !== "string" || !DATE.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0,10) === value ? value : null;
+}
 
-  return (
-    <>
-      <WorkspacePageHeader eyebrow={t("phase")} title={t("title")} description={t("subtitle")} />
+type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ date?: string }> };
 
-      <section className="metric-grid student-metric-grid" aria-label={t("programsTitle")} data-page-section>
-        <article className="metric metric-primary">
-          <span>{t("session")}</span>
-          <strong>{summary.sessions}</strong>
-        </article>
-        <article className="metric">
-          <span>{t("program")}</span>
-          <strong>{summary.programs}</strong>
-        </article>
-        <article className="metric">
-          <span>{t("level")}</span>
-          <strong>{summary.levels}</strong>
-        </article>
-        <article className="metric">
-          <span>{t("group")}</span>
-          <strong>{summary.groups}</strong>
-        </article>
-        <article className="metric">
-          <span>{t("enrollment")}</span>
-          <strong>{summary.activeEnrollments}</strong>
-          <small>{summary.uniqueStudents} {t("students")}</small>
-        </article>
-      </section>
-
-      <section className="panel academic-structure-panel" data-page-section>
-        <header className="panel-header">
-          <div>
-            <p>{t("structureKicker")}</p>
-            <h2>{t("structureTitle")}</h2>
-          </div>
-        </header>
-        <div className="structure-flow" aria-label={t("structureTitle")}>
-          <span>{t("session")}</span>
-          <span aria-hidden="true">→</span>
-          <span>{t("program")}</span>
-          <span aria-hidden="true">→</span>
-          <span>{t("level")}</span>
-          <span aria-hidden="true">→</span>
-          <span>{t("group")}</span>
-          <span aria-hidden="true">→</span>
-          <span>{t("enrollment")}</span>
-        </div>
-
-        {summary.programRows.length > 0 ? (
-          <TableFrame label={t("programsTitle")}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">{t("program")}</th>
-                  <th scope="col">{t("groups")}</th>
-                  <th scope="col">{t("students")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.programRows.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.label}</td>
-                    <td>{row.groups}</td>
-                    <td>{row.students}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TableFrame>
-        ) : (
-          <InlineState title={dashboard("emptyTitle")} body={dashboard("emptyBody")} />
-        )}
-      </section>
-    </>
-  );
+export default async function PeopleAcademicsPage({ params, searchParams }: Props) {
+  const { locale: rawLocale } = await params;
+  const query = await searchParams;
+  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const data = await getAcademicsWorkspace(locale, validDate(query.date));
+  const text = copy[locale];
+  return <>
+    <WorkspacePageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} meta={text.meta(data.selectedDate,data.timezone)} />
+    <AcademicsTimetableManager locale={locale} data={data}/>
+    <AcademicTimetableViews locale={locale} data={data}/>
+  </>;
 }
