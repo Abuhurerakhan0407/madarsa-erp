@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { StudentCreateForm } from "@/components/student-create-form";
+import { WorkspacePageHeader } from "@/components/workspace-ui";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentCreateOptions } from "@/lib/students/register";
 
@@ -14,8 +14,13 @@ export default async function NewStudentPage({ params }: { params: Promise<{ loc
   const text = copy[locale];
   const options = await getStudentCreateOptions(locale);
   return <>
-    <section className="page-heading" data-page-section><div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div><Link className="action-button" href={`/${locale}/students`}>{text.back}</Link></section>
-    <div className="privacy-callout" data-page-section><strong>{text.warning}</strong></div>
+    <WorkspacePageHeader
+      eyebrow={text.kicker}
+      title={text.title}
+      description={text.body}
+      actions={[{ label: text.back, href: `/${locale}/students` }]}
+    />
+    <div className="workspace-context-strip" data-page-section><p>{text.warning}</p></div>
     <StudentCreateForm locale={locale} sessions={options.sessions} programs={options.programs} groups={options.groups} />
   </>;
 }
