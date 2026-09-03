@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InlineState, WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAdmissionsInbox } from "@/lib/admissions/inbox";
 import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
@@ -9,8 +10,8 @@ const labels = {
     kicker: "Admissions operations",
     title: "Admissions inbox",
     subtitle: "Review applications submitted through your institution's published admission form.",
-    publicTitle: "Public application link",
-    publicBody: "Share this link with applicants. It uses the currently published admission form and workflow.",
+    publicTitle: "Published application form",
+    publicBody: "Share the public form with applicants. New submissions arrive in this inbox automatically.",
     openForm: "Open public form",
     applications: "Submitted applications",
     count: "applications",
@@ -25,8 +26,8 @@ const labels = {
     kicker: "داخلہ آپریشنز",
     title: "داخلہ درخواستیں",
     subtitle: "ادارے کے شائع شدہ داخلہ فارم کے ذریعے موصول ہونے والی درخواستیں دیکھیں۔",
-    publicTitle: "عوامی درخواست لنک",
-    publicBody: "یہ لنک درخواست گزاروں کے ساتھ شیئر کریں۔ یہ موجودہ شائع شدہ داخلہ فارم اور ورک فلو استعمال کرتا ہے۔",
+    publicTitle: "شائع شدہ درخواست فارم",
+    publicBody: "عوامی فارم درخواست گزاروں کے ساتھ شیئر کریں۔ نئی درخواستیں خودکار طور پر اس ان باکس میں آئیں گی۔",
     openForm: "عوامی فارم کھولیں",
     applications: "جمع شدہ درخواستیں",
     count: "درخواستیں",
@@ -41,8 +42,8 @@ const labels = {
     kicker: "عمليات القبول",
     title: "صندوق طلبات القبول",
     subtitle: "راجع الطلبات المقدمة من خلال نموذج القبول المنشور للمؤسسة.",
-    publicTitle: "رابط طلب الالتحاق العام",
-    publicBody: "شارك هذا الرابط مع المتقدمين. يستخدم نموذج القبول ومسار العمل المنشورين حاليًا.",
+    publicTitle: "نموذج القبول المنشور",
+    publicBody: "شارك النموذج العام مع المتقدمين. تصل الطلبات الجديدة تلقائيًا إلى صندوق القبول.",
     openForm: "فتح النموذج العام",
     applications: "الطلبات المقدمة",
     count: "طلبات",
@@ -81,62 +82,55 @@ export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
 
   return (
     <>
-      <section className="page-heading" data-page-section>
+      <WorkspacePageHeader
+        eyebrow={text.kicker}
+        title={text.title}
+        description={text.subtitle}
+        meta={`${items.length} ${text.count}`}
+        actions={[
+          { label: text.enquiries, href: `/${locale}/admissions/enquiries` },
+          { label: text.openForm, href: publicHref, kind: "primary" }
+        ]}
+      />
+
+      <section className="workspace-context-strip" data-page-section>
         <div>
-          <p className="state-kicker">{text.kicker}</p>
-          <h1>{text.title}</h1>
-          <p>{text.subtitle}</p>
+          <strong>{text.publicTitle}</strong>
+          <span>{workspace.tenantName}</span>
         </div>
+        <p>{text.publicBody}</p>
       </section>
 
-      <section className="configuration-banner" data-page-section>
-        <div>
-          <span>{text.publicTitle}</span>
-          <h2>{workspace.tenantName}</h2>
-          <p>{text.publicBody}</p>
-        </div>
-        <Link className="action-button action-button-primary" href={publicHref} target="_blank" rel="noreferrer">
-          {text.openForm}
-        </Link>
-        <Link className="action-button" href={`/${locale}/admissions/enquiries`} prefetch>{text.enquiries}</Link>
-      </section>
-
-      <section className="configuration-section" aria-labelledby="admissions-list-title" data-page-section>
-        <header className="section-heading">
-          <div>
-            <p>{text.submitted}</p>
-            <h2 id="admissions-list-title">{text.applications}</h2>
-          </div>
-          <span>{items.length} {text.count}</span>
+      <section className="workspace-task-section" aria-labelledby="admissions-list-title" data-page-section>
+        <header className="workspace-section-heading">
+          <p>{text.submitted}</p>
+          <h2 id="admissions-list-title">{text.applications}</h2>
         </header>
 
         {items.length === 0 ? (
-          <div className="empty-state">
-            <h3>{text.empty}</h3>
-            <p>{text.emptyBody}</p>
-          </div>
+          <InlineState title={text.empty} body={text.emptyBody} />
         ) : (
-          <div className="configuration-module-grid admissions-card-grid">
+          <div className="workspace-record-list">
             {items.map((item) => (
-              <article className="configuration-module admissions-application-card" key={item.id}>
-                <span className="module-state module-state-attention">{admissionStateLabel(locale, item.state)}</span>
-                <h3>{item.applicantName}</h3>
-                <p>{localized(item.programLabels, locale)} · {localized(item.sessionLabels, locale)}</p>
-                <p>{text.reference}: <code>{item.trackingId.slice(0, 8)}</code></p>
-                {item.submittedAt ? (
-                  <small>
-                    {new Intl.DateTimeFormat(dateLocales[locale], {
-                      dateStyle: "medium",
-                      timeStyle: "short"
-                    }).format(new Date(item.submittedAt))}
-                  </small>
-                ) : null}
-                <p>
-                  <Link className="action-button" href={`/${locale}/admissions/${item.id}`} prefetch>
-                    {text.review}
-                  </Link>
-                </p>
-              </article>
+              <Link className="workspace-record-row" href={`/${locale}/admissions/${item.id}`} key={item.id} prefetch>
+                <div className="workspace-record-main">
+                  <span className="module-state module-state-attention">{admissionStateLabel(locale, item.state)}</span>
+                  <strong>{item.applicantName}</strong>
+                  <small>{localized(item.programLabels, locale)} · {localized(item.sessionLabels, locale)}</small>
+                </div>
+                <div className="workspace-record-meta">
+                  <span>{text.reference}: <code>{item.trackingId.slice(0, 8)}</code></span>
+                  {item.submittedAt ? (
+                    <time dateTime={item.submittedAt}>
+                      {new Intl.DateTimeFormat(dateLocales[locale], {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                      }).format(new Date(item.submittedAt))}
+                    </time>
+                  ) : null}
+                </div>
+                <span className="workspace-record-action">{text.review} →</span>
+              </Link>
             ))}
           </div>
         )}
