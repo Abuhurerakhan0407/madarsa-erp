@@ -22,6 +22,13 @@ const copy = {
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+function validDate(value: unknown): string | null {
+  if (typeof value !== "string" || !DATE.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0,10) !== value) return null;
+  return value;
+}
+
 export default async function QuranPage({
   params,
   searchParams
@@ -34,7 +41,7 @@ export default async function QuranPage({
   const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
   const parsedGroup = Number(query.group);
   const groupId = Number.isInteger(parsedGroup) && parsedGroup > 0 ? parsedGroup : null;
-  const date = typeof query.date === "string" && DATE.test(query.date) ? query.date : null;
+  const date = validDate(query.date);
   const data = await getQuranDailyRegister({ groupId, date });
   const text = copy[locale];
 
