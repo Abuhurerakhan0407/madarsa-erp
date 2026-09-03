@@ -26,7 +26,16 @@ type ConversionResponse = {
   result?: {
     studentNumber?: string;
     enrollmentId?: number;
+    guardianEmail?: string;
+    credentialState?: "temporary_password_created" | "existing_account";
+    temporaryPassword?: string;
   };
+};
+
+type CredentialView = {
+  guardianEmail: string;
+  temporaryPassword: string | null;
+  studentNumber: string | null;
 };
 
 const copy = {
@@ -43,7 +52,15 @@ const copy = {
     enrollment: "Enrollment",
     openStudents: "Open Students & Academics",
     unavailable: "Enrollment becomes available only after an admission offer or payment-pending state.",
-    error: "Unable to enroll this applicant."
+    error: "Unable to enroll this applicant.",
+    credentialsTitle: "Guardian portal credentials",
+    credentialsBody: "Copy and send these credentials now. The temporary password will disappear permanently when you close this view.",
+    loginEmail: "Login email",
+    temporaryPassword: "Temporary password",
+    existingAccount: "This guardian already has a portal account. Their existing password was not changed.",
+    copyCredentials: "Copy credentials",
+    copied: "Copied",
+    done: "Done — hide credentials"
   },
   ur: {
     title: "طالب علم کا اندراج",
@@ -58,7 +75,15 @@ const copy = {
     enrollment: "اندراج",
     openStudents: "طلبہ اور تعلیمی ڈھانچہ کھولیں",
     unavailable: "اندراج صرف داخلہ پیشکش یا ادائیگی زیر التوا حالت کے بعد دستیاب ہوتا ہے۔",
-    error: "اس درخواست گزار کو داخل نہیں کیا جا سکا۔"
+    error: "اس درخواست گزار کو داخل نہیں کیا جا سکا۔",
+    credentialsTitle: "سرپرست پورٹل کی اسناد",
+    credentialsBody: "یہ اسناد ابھی کاپی کر کے بھیج دیں۔ اس منظر کو بند کرنے کے بعد عارضی پاس ورڈ دوبارہ نہیں دکھایا جائے گا۔",
+    loginEmail: "لاگ اِن ای میل",
+    temporaryPassword: "عارضی پاس ورڈ",
+    existingAccount: "اس سرپرست کا پورٹل اکاؤنٹ پہلے سے موجود ہے۔ موجودہ پاس ورڈ تبدیل نہیں کیا گیا۔",
+    copyCredentials: "اسناد کاپی کریں",
+    copied: "کاپی ہو گیا",
+    done: "مکمل — اسناد چھپائیں"
   },
   ar: {
     title: "تسجيل الطالب",
@@ -73,7 +98,15 @@ const copy = {
     enrollment: "التسجيل",
     openStudents: "فتح الطلاب والهيكل الأكاديمي",
     unavailable: "يصبح التسجيل متاحًا فقط بعد عرض القبول أو حالة انتظار الدفع.",
-    error: "تعذر تسجيل هذا المتقدم."
+    error: "تعذر تسجيل هذا المتقدم.",
+    credentialsTitle: "بيانات دخول ولي الأمر",
+    credentialsBody: "انسخ بيانات الدخول وأرسلها الآن. ستختفي كلمة المرور المؤقتة نهائيًا عند إغلاق هذا العرض.",
+    loginEmail: "بريد تسجيل الدخول",
+    temporaryPassword: "كلمة المرور المؤقتة",
+    existingAccount: "لدى ولي الأمر حساب بوابة موجود بالفعل. لم يتم تغيير كلمة المرور الحالية.",
+    copyCredentials: "نسخ بيانات الدخول",
+    copied: "تم النسخ",
+    done: "تم — إخفاء بيانات الدخول"
   }
 } as const;
 
@@ -92,11 +125,14 @@ export function AdmissionConversionPanel({
   const [candidateCount, setCandidateCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<CredentialView | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function convert(confirmNewPerson: boolean) {
     setBusy(true);
     setMessage(null);
     setError(null);
+    setCopied(false);
 
     try {
       const response = await fetch("/api/admissions/convert", {
@@ -119,17 +155,75 @@ export function AdmissionConversionPanel({
 
       setDuplicatePending(false);
       setCandidateCount(null);
-      setMessage(
-        payload.result?.studentNumber
-          ? `${text.success} ${text.studentNumber}: ${payload.result.studentNumber}`
-          : text.success
-      );
-      router.refresh();
+      const studentNumber = payload.result?.studentNumber ?? null;
+      const guardianEmail = payload.result?.guardianEmail;
+      if (guardianEmail) {
+        setCredentials({
+          guardianEmail,
+          temporaryPassword: payload.result?.credentialState === "temporary_password_created"
+            ? payload.result.temporaryPassword ?? null
+            : null,
+          studentNumber
+        });
+      } else {
+        setMessage(studentNumber ? `${text.success} ${text.studentNumber}: ${studentNumber}` : text.success);
+        router.refresh();
+      }
     } catch {
       setError(text.error);
     } finally {
       setBusy(false);
     }
+  }
+
+  async function copyCredentials() {
+    if (!credentials?.temporaryPassword) return;
+    const value = `${text.loginEmail}: ${credentials.guardianEmail}\n${text.temporaryPassword}: ${credentials.temporaryPassword}`;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function closeCredentialView() {
+    setCredentials(null);
+    setCopied(false);
+    router.refresh();
+  }
+
+  if (credentials) {
+    return (
+      <section className="configuration-detail-card" aria-labelledby="guardian-credentials-title">
+        <span>{text.success}</span>
+        <h2 id="guardian-credentials-title">{text.credentialsTitle}</h2>
+        {credentials.temporaryPassword ? <p>{text.credentialsBody}</p> : <p>{text.existingAccount}</p>}
+        {credentials.studentNumber ? <p>{text.studentNumber}: <code>{credentials.studentNumber}</code></p> : null}
+        <dl className="detail-list">
+          <div>
+            <dt>{text.loginEmail}</dt>
+            <dd><code>{credentials.guardianEmail}</code></dd>
+          </div>
+          {credentials.temporaryPassword ? (
+            <div>
+              <dt>{text.temporaryPassword}</dt>
+              <dd><code>{credentials.temporaryPassword}</code></dd>
+            </div>
+          ) : null}
+        </dl>
+        <div className="quick-actions">
+          {credentials.temporaryPassword ? (
+            <button className="action-button" type="button" onClick={copyCredentials}>
+              {copied ? text.copied : text.copyCredentials}
+            </button>
+          ) : null}
+          <button className="action-button action-button-primary" type="button" onClick={closeCredentialView}>
+            {text.done}
+          </button>
+        </div>
+      </section>
+    );
   }
 
   if (convertedStudent) {
