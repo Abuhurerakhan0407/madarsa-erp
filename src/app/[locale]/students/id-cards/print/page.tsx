@@ -55,7 +55,7 @@ export default async function BulkIdCardPrintPage({ params, searchParams }: { pa
       {result.students.map((student) => <div className={styles.pair} key={student.personId}>
         <article className={styles.card}>
           <header className={styles.cardHeader}><div className={styles.brandMark}>M</div><div><strong>{workspace.tenantName}</strong><span>{text.institutionCard}</span></div></header>
-          <div className={styles.frontBody}><div className={styles.avatar} aria-hidden="true">{initials(student.name)}</div><div className={styles.identity}><h2>{student.name}</h2>{student.nativeName ? <p dir="auto">{student.nativeName}</p> : null}<dl><div><dt>{text.id}</dt><dd>{student.studentNumber}</dd></div><div><dt>{text.program}</dt><dd>{student.program}</dd></div><div><dt>{text.group}</dt><dd>{student.group}</dd></div></dl></div></div>
+          <div className={styles.frontBody}>{student.photoStoragePath ? <img className={styles.avatar} src={`/api/students/photo/${student.personId}`} alt={student.name}/> : <div className={styles.avatar} aria-hidden="true">{initials(student.name)}</div>}<div className={styles.identity}><h2>{student.name}</h2>{student.nativeName ? <p dir="auto">{student.nativeName}</p> : null}<dl><div><dt>{text.id}</dt><dd>{student.studentNumber}</dd></div><div><dt>{text.program}</dt><dd>{student.program}</dd></div><div><dt>{text.group}</dt><dd>{student.group}</dd></div></dl></div></div>
           <footer className={styles.cardFooter}><span>{branch}</span><strong>{text.validity}</strong></footer>
         </article>
         <article className={`${styles.card} ${styles.backCard}`}>
