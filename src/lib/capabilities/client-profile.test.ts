@@ -7,7 +7,7 @@ import {
 
 describe("client capability profiles", () => {
   it("preserves full-product behavior by default", () => {
-    const profile = resolveClientProfileFromConfig("default-madrasa", {});
+    const profile = resolveClientProfileFromConfig("default-madarsa", {});
 
     expect(profile.key).toBe("full-product");
     expect(isNavItemEnabled(profile, "fees")).toBe(true);
@@ -16,7 +16,7 @@ describe("client capability profiles", () => {
 
   it("disables only client-hidden modules for configured tenant slugs", () => {
     const profile = resolveClientProfileFromConfig("CLIENT-MADARSA", {
-      clientV2TenantSlugs: "client-madrasa, another-client"
+      clientV2TenantSlugs: "client-madarsa, another-client"
     });
 
     expect(profile.key).toBe("client-v2");
@@ -44,9 +44,9 @@ describe("client capability profiles", () => {
   });
 
   it("lets an explicit full-product override win over a tenant slug", () => {
-    const profile = resolveClientProfileFromConfig("client-madrasa", {
+    const profile = resolveClientProfileFromConfig("client-madarsa", {
       profileOverride: "full-product",
-      clientV2TenantSlugs: "client-madrasa"
+      clientV2TenantSlugs: "client-madarsa"
     });
 
     expect(profile.key).toBe("full-product");
