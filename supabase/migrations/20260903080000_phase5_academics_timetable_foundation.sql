@@ -68,6 +68,7 @@ alter table public.academic_schedule_exceptions force row level security;
 revoke all on public.academic_schedule_exceptions from public,anon,authenticated;
 grant select on public.academic_schedule_exceptions to authenticated;
 grant select,insert,update,delete on public.academic_schedule_exceptions to service_role;
+grant usage,select on sequence public.academic_schedule_exceptions_id_seq to service_role;
 
 drop policy if exists academic_schedule_exceptions_scoped_read on public.academic_schedule_exceptions;
 create policy academic_schedule_exceptions_scoped_read
