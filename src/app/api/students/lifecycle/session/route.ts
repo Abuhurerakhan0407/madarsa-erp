@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { disabledCapabilityResponse } from "@/lib/capabilities/server";
 import { prepareNextAcademicSession } from "@/lib/students/lifecycle";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -9,6 +10,7 @@ export async function POST(request:Request){
  if(rejectCrossOrigin(request))return NextResponse.json({error:"Cross-origin request denied."},{status:403});
  const identity=await getVerifiedIdentity();if(!identity)return NextResponse.json({error:"Authentication required."},{status:401});
  const workspace=await getTenantContext();if(!workspace||workspace.identityId!==identity.id||!workspace.branchId)return NextResponse.json({error:"Active institution membership required."},{status:403});
+ const capabilityDenied=disabledCapabilityResponse(workspace,"student_lifecycle_import_promotion_renewal");if(capabilityDenied)return capabilityDenied;
  if(Number(request.headers.get("content-length")??0)>16384)return NextResponse.json({error:"Request is too large."},{status:413});
  if(!(request.headers.get("content-type")??"").toLowerCase().includes("application/json"))return NextResponse.json({error:"JSON request required."},{status:415});
  try{
