@@ -33,7 +33,9 @@ describe("database migration security surface", () => {
         /create\s+or\s+replace\s+function\s+public\.[\s\S]*?security\s+definer/gi,
         migration.sql
       );
-      const searchPathCount = count(/set\s+search_path\s*=/gi, migration.sql);
+      // PostgreSQL accepts both `SET search_path = ...` and `SET search_path TO ...`.
+      // Treat either explicit form as a hardened per-function search_path declaration.
+      const searchPathCount = count(/set\s+search_path\s*(?:=|\bto\b)/gi, migration.sql);
       const browserRevokeCount = count(
         /revoke\s+all\s+on\s+function\b[\s\S]*?\bfrom\s+public\s*,\s*anon\s*,\s*authenticated/gi,
         migration.sql
@@ -47,7 +49,10 @@ describe("database migration security surface", () => {
       );
 
       expect(searchPathCount, `${migration.name}: search_path`).toBeGreaterThanOrEqual(definerCount);
-      expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(definerCount);
+      // Public SECURITY DEFINER entrypoints must revoke browser execution in the defining migration.
+      // Private helper ACLs may be tightened by an append-only follow-up migration and are covered
+      // by phase-specific contracts; they must never be granted directly to service_role here.
+      expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(publicDefinerCount);
       expect(serviceRoleGrantCount, `${migration.name}: public service_role grant`).toBeGreaterThanOrEqual(publicDefinerCount);
       expect(privateServiceRoleGrants, `${migration.name}: private functions stay internal`).toEqual([]);
     }
