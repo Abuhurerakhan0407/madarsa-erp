@@ -16,6 +16,11 @@ export type ClientCapabilityProfile = Readonly<{
   disabledCapabilities: ReadonlySet<ProductCapability>;
 }>;
 
+export type ClientProfileConfig = Readonly<{
+  profileOverride?: string | null;
+  clientV2TenantSlugs?: string | null;
+}>;
+
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
   disabledCapabilities: new Set<ProductCapability>()
@@ -53,25 +58,36 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   branches: "branches_roles_ui"
 };
 
-function configuredClientV2TenantSlugs(): Set<string> {
+function normalizeTenantSlugs(value: string | null | undefined): Set<string> {
   return new Set(
-    (process.env.MADARSA_CLIENT_V2_TENANT_SLUGS ?? "")
+    (value ?? "")
       .split(",")
       .map((slug) => slug.trim().toLowerCase())
       .filter(Boolean)
   );
 }
 
-export function resolveClientProfile(tenantSlug: string): ClientCapabilityProfile {
-  if (process.env.MADARSA_CLIENT_PROFILE === "client-v2") {
-    return clientV2Profile;
-  }
+export function resolveClientProfileFromConfig(
+  tenantSlug: string,
+  config: ClientProfileConfig
+): ClientCapabilityProfile {
+  const override = config.profileOverride?.trim().toLowerCase();
 
-  if (configuredClientV2TenantSlugs().has(tenantSlug.trim().toLowerCase())) {
+  if (override === "client-v2") return clientV2Profile;
+  if (override === "full-product") return fullProductProfile;
+
+  if (normalizeTenantSlugs(config.clientV2TenantSlugs).has(tenantSlug.trim().toLowerCase())) {
     return clientV2Profile;
   }
 
   return fullProductProfile;
+}
+
+export function resolveClientProfile(tenantSlug: string): ClientCapabilityProfile {
+  return resolveClientProfileFromConfig(tenantSlug, {
+    profileOverride: process.env.MADARSA_CLIENT_PROFILE,
+    clientV2TenantSlugs: process.env.MADARSA_CLIENT_V2_TENANT_SLUGS
+  });
 }
 
 export function isCapabilityEnabled(
