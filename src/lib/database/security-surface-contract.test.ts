@@ -24,24 +24,32 @@ describe("database migration security surface", () => {
     }
   });
 
-  it("hardens every SECURITY DEFINER migration with search_path, browser-role revoke, and service-role execution", () => {
+  it("hardens SECURITY DEFINER functions and exposes only public entrypoints to service_role", () => {
     for (const migration of migrations) {
       const definerCount = count(/security\s+definer/gi, migration.sql);
       if (definerCount === 0) continue;
 
+      const publicDefinerCount = count(
+        /create\s+or\s+replace\s+function\s+public\.[\s\S]*?security\s+definer/gi,
+        migration.sql
+      );
       const searchPathCount = count(/set\s+search_path\s*=/gi, migration.sql);
       const browserRevokeCount = count(
         /revoke\s+all\s+on\s+function\b[\s\S]*?\bfrom\s+public\s*,\s*anon\s*,\s*authenticated/gi,
         migration.sql
       );
       const serviceRoleGrantCount = count(
-        /grant\s+execute\s+on\s+function\b[\s\S]*?\bto\s+service_role/gi,
+        /grant\s+execute\s+on\s+function\s+public\.[\s\S]*?\bto\s+service_role/gi,
         migration.sql
+      );
+      const privateServiceRoleGrants = migration.sql.split(";").filter((statement) =>
+        /grant\s+execute\s+on\s+function\s+private\./i.test(statement)
       );
 
       expect(searchPathCount, `${migration.name}: search_path`).toBeGreaterThanOrEqual(definerCount);
       expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(definerCount);
-      expect(serviceRoleGrantCount, `${migration.name}: service_role grant`).toBeGreaterThanOrEqual(definerCount);
+      expect(serviceRoleGrantCount, `${migration.name}: public service_role grant`).toBeGreaterThanOrEqual(publicDefinerCount);
+      expect(privateServiceRoleGrants, `${migration.name}: private functions stay internal`).toEqual([]);
     }
   });
 
