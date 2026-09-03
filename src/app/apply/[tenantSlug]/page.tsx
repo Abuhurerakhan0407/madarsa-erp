@@ -30,7 +30,9 @@ export default async function PublicAdmissionPage({
       formLabels={context.form.labels}
       sessions={context.sessions}
       programs={context.programs}
+      groups={context.groups}
       sections={context.form.sections}
+      requirePhoto={context.tenant.clientProfile === "client-v2"}
     />
   );
 }

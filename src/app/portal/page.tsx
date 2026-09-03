@@ -15,7 +15,8 @@ const num=(value:unknown)=>Number.isFinite(Number(value))?Number(value):0;
 
 export default async function PortalPage({searchParams}:{searchParams:Promise<{tenant?:string}>}){
  const identity=await getVerifiedIdentity();if(!identity)redirect("/login?next=%2Fportal");
- const admin=createAdminClient();const{data:linkRows,error:linkError}=await admin.from("identity_person_links").select("tenant_id,person_id,link_type").eq("identity_id",identity.id).eq("status","verified");if(linkError)throw new Error(`Unable to load portal accounts: ${linkError.message}`);
+ const admin=createAdminClient();const current=await admin.auth.admin.getUserById(identity.id);if(current.error||!current.data.user)throw new Error("Unable to load portal account.");if(current.data.user.user_metadata?.must_change_password===true)redirect("/portal/change-password");
+ const{data:linkRows,error:linkError}=await admin.from("identity_person_links").select("tenant_id,person_id,link_type").eq("identity_id",identity.id).eq("status","verified");if(linkError)throw new Error(`Unable to load portal accounts: ${linkError.message}`);
  const links=linkRows??[];const tenantIds=[...new Set(links.map((row)=>Number(row.tenant_id)).filter((id)=>Number.isInteger(id)&&id>0))];
  if(tenantIds.length===0)return <section className="professional-card" style={{maxWidth:720,margin:"8vh auto 0"}}><p className="state-kicker">Parent & Staff Portal</p><h1>No portal access linked yet</h1><p>Sign in is working, but this account has not been linked to a verified guardian or employee record.</p><Link className="action-button action-button-primary" href="/portal/claim">Activate an access code</Link></section>;
  const params=await searchParams;const requested=Number(params.tenant);if(!Number.isInteger(requested)||!tenantIds.includes(requested)){if(tenantIds.length===1)redirect(`/portal?tenant=${tenantIds[0]}`);}

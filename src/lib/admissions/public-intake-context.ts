@@ -19,6 +19,7 @@ export type PublicAdmissionsContext = {
     id: number;
     name: string;
     slug: string;
+    clientProfile: string;
   };
   branch: {
     id: number;
@@ -26,6 +27,7 @@ export type PublicAdmissionsContext = {
   };
   sessions: Array<IntakeOption & { startsOn: string; endsOn: string; isDefault: boolean }>;
   programs: Array<IntakeOption & { programType: string }>;
+  groups: Array<IntakeOption & { sessionKey: string; programKey: string }>;
   form: {
     versionId: number;
     labels: LocalizedLabels;
@@ -86,7 +88,7 @@ export async function getPublicAdmissionsContext(
   const admin = createAdminClient();
   const { data: tenant, error: tenantError } = await admin
     .from("tenants")
-    .select("id, name, slug, state, primary_branch_id")
+    .select("id, name, slug, state, primary_branch_id, client_profile")
     .eq("slug", tenantSlug)
     .in("state", [...allowedTenantStates])
     .maybeSingle();
@@ -105,7 +107,7 @@ export async function getPublicAdmissionsContext(
   if (branchError) throw new Error(`Unable to resolve admissions branch: ${branchError.message}`);
   if (!branch) return null;
 
-  const [sessionsResult, programsResult, formDefinitionResult, workflowDefinitionResult] =
+  const [sessionsResult, programsResult, groupsResult, formDefinitionResult, workflowDefinitionResult] =
     await Promise.all([
       admin
         .from("academic_sessions")
@@ -120,6 +122,13 @@ export async function getPublicAdmissionsContext(
         .eq("tenant_id", tenant.id)
         .eq("status", "active")
         .or(`branch_id.is.null,branch_id.eq.${branch.id}`)
+        .order("created_at", { ascending: true }),
+      admin
+        .from("academic_groups")
+        .select("id, key, labels, session_id, program_id, status")
+        .eq("tenant_id", tenant.id)
+        .eq("branch_id", branch.id)
+        .eq("status", "active")
         .order("created_at", { ascending: true }),
       admin
         .from("form_definitions")
@@ -141,6 +150,7 @@ export async function getPublicAdmissionsContext(
 
   if (sessionsResult.error) throw new Error(`Unable to load sessions: ${sessionsResult.error.message}`);
   if (programsResult.error) throw new Error(`Unable to load programs: ${programsResult.error.message}`);
+  if (groupsResult.error) throw new Error(`Unable to load groups: ${groupsResult.error.message}`);
   if (formDefinitionResult.error) throw new Error(`Unable to load admission form: ${formDefinitionResult.error.message}`);
   if (workflowDefinitionResult.error) throw new Error(`Unable to load admission workflow: ${workflowDefinitionResult.error.message}`);
   if (
@@ -181,32 +191,48 @@ export async function getPublicAdmissionsContext(
   const sections = parseSections(formVersionResult.data.sections);
   if (!formLabels || !sections) return null;
 
+  const sessionKeyById = new Map<number, string>();
   const sessions = sessionsResult.data.flatMap((row) => {
     const labels = asLabels(row.labels);
-    return labels
-      ? [{
-          key: row.key,
-          labels,
-          startsOn: row.starts_on,
-          endsOn: row.ends_on,
-          isDefault: row.is_default
-        }]
-      : [];
+    if (!labels) return [];
+    sessionKeyById.set(Number(row.id), row.key);
+    return [{
+      key: row.key,
+      labels,
+      startsOn: row.starts_on,
+      endsOn: row.ends_on,
+      isDefault: row.is_default
+    }];
   });
+  const programKeyById = new Map<number, string>();
   const programs = programsResult.data.flatMap((row) => {
     const labels = asLabels(row.labels);
-    return labels
-      ? [{ key: row.key, labels, programType: row.program_type }]
+    if (!labels) return [];
+    programKeyById.set(Number(row.id), row.key);
+    return [{ key: row.key, labels, programType: row.program_type }];
+  });
+  const groups = (groupsResult.data ?? []).flatMap((row) => {
+    const labels = asLabels(row.labels);
+    const sessionKey = sessionKeyById.get(Number(row.session_id));
+    const programKey = programKeyById.get(Number(row.program_id));
+    return labels && sessionKey && programKey
+      ? [{ key: row.key, labels, sessionKey, programKey }]
       : [];
   });
 
   if (!sessions.length || !programs.length) return null;
 
   return {
-    tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
+    tenant: {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      clientProfile: tenant.client_profile ?? "full-product"
+    },
     branch: { id: branch.id, name: branch.name },
     sessions,
     programs,
+    groups,
     form: {
       versionId: formVersionResult.data.id,
       labels: formLabels,
