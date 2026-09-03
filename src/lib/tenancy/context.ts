@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { coerceClientProfileKey, type ClientProfileKey } from "@/lib/capabilities/client-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { selectWorkspaceBranchId } from "./workspace";
@@ -12,6 +13,7 @@ export type TenantContext = {
   tenantName: string;
   tenantSlug: string;
   tenantState: string;
+  clientProfile: ClientProfileKey;
   branchId: number | null;
   branchName: string | null;
   branchCode: string | null;
@@ -44,7 +46,7 @@ async function resolveTenantContext(): Promise<TenantContext | null> {
     await Promise.all([
       supabase
         .from("tenants")
-        .select("id, name, slug, state, primary_branch_id")
+        .select("id, name, slug, state, primary_branch_id, client_profile")
         .eq("id", membership.tenant_id)
         .single(),
       supabase
@@ -107,6 +109,7 @@ async function resolveTenantContext(): Promise<TenantContext | null> {
     tenantName: tenant.name,
     tenantSlug: tenant.slug,
     tenantState: tenant.state,
+    clientProfile: coerceClientProfileKey(tenant.client_profile),
     branchId: branch?.id ?? null,
     branchName: branch?.name ?? null,
     branchCode: branch?.code ?? null
