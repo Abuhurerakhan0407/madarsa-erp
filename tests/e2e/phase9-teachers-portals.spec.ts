@@ -4,7 +4,8 @@ const json={"content-type":"application/json"};
 const mutations=[
  ["/api/teachers/update",{employmentId:1,displayName:"Teacher",nameNative:"",email:"teacher@example.com",phone:"+911234567890",designation:"Teacher",joinedOn:"2026-01-01"}],
  ["/api/portals/credentials",{personId:1,kind:"guardian",action:"provision"}],
- ["/api/portals/access-state",{personId:1,linkType:"guardian",enabled:false}]
+ ["/api/portals/access-state",{personId:1,linkType:"guardian",enabled:false}],
+ ["/api/portal/password/change",{password:"SecurePortalPassword!2026"}]
 ] as const;
 
 for(const [path,body] of mutations){
