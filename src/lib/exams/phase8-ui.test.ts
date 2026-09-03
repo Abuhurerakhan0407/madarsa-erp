@@ -30,8 +30,9 @@ describe("Phase 8 Exams & Results V2 UI boundaries",()=>{
   it("carries selected exam id through report card page and PDF",()=>{
     const page=read("src/app/[locale]/exams/report-card/[personId]/page.tsx");
     const pdf=read("src/app/api/exams/report-card/[personId]/pdf/route.ts");
-    expect(page).toContain("examSeriesId");
-    expect(page).toContain("getExamReportCard(personId,examSeriesId)");
+    expect(page).toContain("const selectedExam=");
+    expect(page).toContain("getExamReportCard(personId,selectedExam)");
+    expect(page).toContain("view=reports&exam=${selectedExam}");
     expect(pdf).toContain('searchParams.get("exam")');
     expect(pdf).toContain("getExamReportCard(personId,examId)");
   });
