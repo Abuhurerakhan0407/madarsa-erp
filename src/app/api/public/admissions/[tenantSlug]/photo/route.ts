@@ -8,9 +8,11 @@ type RouteContext = {
   params: Promise<{ tenantSlug: string }>;
 };
 
+type AdmissionPhotoType = "image/jpeg" | "image/png" | "image/webp";
+
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const PHOTO_TTL_MS = 30 * 60 * 1000;
-const allowedTypes = new Map([
+const allowedTypes = new Map<AdmissionPhotoType, string>([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
   ["image/webp", "webp"]
@@ -18,6 +20,23 @@ const allowedTypes = new Map([
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function has(bytes: Uint8Array, offset: number, values: readonly number[]): boolean {
+  return values.every((value, index) => bytes[offset + index] === value);
+}
+
+function detectPhotoType(bytes: Uint8Array): AdmissionPhotoType | null {
+  if (bytes.length >= 3 && has(bytes, 0, [255, 216, 255])) return "image/jpeg";
+  if (bytes.length >= 8 && has(bytes, 0, [137, 80, 78, 71, 13, 10, 26, 10])) return "image/png";
+  if (
+    bytes.length >= 12
+    && has(bytes, 0, [82, 73, 70, 70])
+    && has(bytes, 8, [87, 69, 66, 80])
+  ) {
+    return "image/webp";
+  }
+  return null;
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
@@ -57,23 +76,27 @@ export async function POST(request: Request, { params }: RouteContext) {
   if (!(photo instanceof File)) {
     return NextResponse.json({ error: "Student photo is required." }, { status: 400 });
   }
-
-  const extension = allowedTypes.get(photo.type);
-  if (!extension) {
-    return NextResponse.json({ error: "Use a JPEG, PNG, or WebP student photo." }, { status: 415 });
-  }
   if (photo.size < 1 || photo.size > MAX_PHOTO_BYTES) {
     return NextResponse.json({ error: "Student photo must be 5 MB or smaller." }, { status: 413 });
+  }
+
+  const bytes = new Uint8Array(await photo.arrayBuffer());
+  const detectedType = detectPhotoType(bytes);
+  if (!detectedType || photo.type !== detectedType) {
+    return NextResponse.json({ error: "Use a genuine JPEG, PNG, or WebP student photo." }, { status: 415 });
+  }
+  const extension = allowedTypes.get(detectedType);
+  if (!extension) {
+    return NextResponse.json({ error: "Unsupported student photo type." }, { status: 415 });
   }
 
   const token = randomBytes(32).toString("base64url");
   const tokenDigest = sha256(token);
   const storagePath = `${intake.tenant.id}/admissions/intake/${randomBytes(18).toString("hex")}.${extension}`;
   const admin = createAdminClient();
-  const bytes = new Uint8Array(await photo.arrayBuffer());
   const bucket = admin.storage.from("tenant-documents");
   const upload = await bucket.upload(storagePath, bytes, {
-    contentType: photo.type,
+    contentType: detectedType,
     cacheControl: "0",
     upsert: false
   });
@@ -87,7 +110,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     tenant_id: intake.tenant.id,
     token_digest: tokenDigest,
     storage_path: storagePath,
-    content_type: photo.type,
+    content_type: detectedType,
     size_bytes: photo.size,
     expires_at: expiresAt
   });
