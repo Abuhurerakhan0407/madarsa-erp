@@ -56,6 +56,30 @@ export async function POST(request: Request) {
 
   const value = validation.value;
   const admin = createAdminClient();
+
+  if (value.action !== "absent" && value.action !== "no_lesson") {
+    const { data: laterTargets, error: laterTargetError } = await admin
+      .from("quran_student_targets")
+      .select("id")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("branch_id", workspace.branchId)
+      .eq("student_person_id", value.personId)
+      .eq("work_category", value.workCategory)
+      .eq("status", "active")
+      .gt("assigned_on", value.sessionDate)
+      .limit(1);
+
+    if (laterTargetError) {
+      return NextResponse.json({ error: "Unable to verify the student's Qur'an target timeline." }, { status: 500 });
+    }
+    if (laterTargets && laterTargets.length > 0) {
+      return NextResponse.json(
+        { error: "A later active Qur'an target already exists. Review that later target before entering this older lesson." },
+        { status: 409 }
+      );
+    }
+  }
+
   const { data, error } = await admin.rpc("record_quran_hifz_daily_quick_v1", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
