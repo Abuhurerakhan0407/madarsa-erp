@@ -7,7 +7,8 @@ export type ProductCapability =
   | "library"
   | "whatsapp_automation"
   | "ai_assistant"
-  | "branches_roles_ui";
+  | "branches_roles_ui"
+  | "internal_demo_suite";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -38,7 +39,8 @@ const clientV2Profile: ClientCapabilityProfile = {
     "library",
     "whatsapp_automation",
     "ai_assistant",
-    "branches_roles_ui"
+    "branches_roles_ui",
+    "internal_demo_suite"
   ])
 };
 
