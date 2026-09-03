@@ -58,25 +58,28 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   branches: "branches_roles_ui"
 };
 
-function normalizeTenantSlugs(value: string | null | undefined): Set<string> {
-  return new Set(
-    (value ?? "")
-      .split(",")
-      .map((slug) => slug.trim().toLowerCase())
-      .filter(Boolean)
-  );
+function normalizeTenantSlug(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function configuredTenantSlugs(value: string | null | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map(normalizeTenantSlug)
+    .filter((slug) => slug.length > 0);
 }
 
 export function resolveClientProfileFromConfig(
   tenantSlug: string,
   config: ClientProfileConfig
 ): ClientCapabilityProfile {
-  const override = config.profileOverride?.trim().toLowerCase();
+  const override = config.profileOverride ? normalizeTenantSlug(config.profileOverride) : "";
 
   if (override === "client-v2") return clientV2Profile;
   if (override === "full-product") return fullProductProfile;
 
-  if (normalizeTenantSlugs(config.clientV2TenantSlugs).has(tenantSlug.trim().toLowerCase())) {
+  const normalizedTenantSlug = normalizeTenantSlug(tenantSlug);
+  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) {
     return clientV2Profile;
   }
 
