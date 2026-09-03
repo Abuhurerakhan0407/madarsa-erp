@@ -53,11 +53,20 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Please correct the application.", details: validation.errors }, { status: 400 });
   }
 
+  const input = body.value && typeof body.value === "object" && !Array.isArray(body.value)
+    ? body.value as Record<string, unknown>
+    : {};
+  const photoToken = typeof input.photoToken === "string" ? input.photoToken.trim() : "";
+  const requiresPhoto = intake.tenant.clientProfile === "client-v2";
+  if (requiresPhoto && !/^[A-Za-z0-9_-]{40,80}$/.test(photoToken)) {
+    return NextResponse.json({ error: "A valid student photo is required." }, { status: 400 });
+  }
+
   const trackingToken = randomBytes(32).toString("base64url");
   const trackingSecretHash = sha256(trackingToken);
   const sourceHash = sha256(`${tenantSlug}|${requestSource(request)}`);
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("submit_public_admission", {
+  const rpcArgs: Record<string, unknown> = {
     p_tenant_slug: tenantSlug,
     p_session_key: validation.value.sessionKey,
     p_program_key: validation.value.programKey,
@@ -66,9 +75,19 @@ export async function POST(request: Request, { params }: RouteContext) {
     p_consent: validation.value.consent,
     p_tracking_secret_hash: trackingSecretHash,
     p_source_hash: sourceHash
-  });
+  };
+  if (requiresPhoto) rpcArgs.p_photo_token_digest = sha256(photoToken);
+
+  const { data, error } = await admin.rpc(
+    requiresPhoto ? "submit_public_admission_v2" : "submit_public_admission",
+    rpcArgs
+  );
 
   if (error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("student photo")) {
+      return NextResponse.json({ error: "Student photo expired or is no longer valid. Please select it again." }, { status: 409 });
+    }
     return NextResponse.json({ error: "Unable to submit the application." }, { status: 500 });
   }
 
