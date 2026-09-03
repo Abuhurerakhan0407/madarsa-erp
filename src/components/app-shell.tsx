@@ -77,7 +77,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         </header>
         <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion />{children}</main>
       </div>
-      <MobileNavigation locale={locale} groups={mobileGroups} quickItems={quickItems} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
+      <MobileNavigation groups={mobileGroups} quickItems={quickItems} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
     </div>
   );
 }
