@@ -5,7 +5,7 @@ export type ExamWorkflowAction="calculate"|"approve"|"publish";
 export type ExamMarkInput={examSubjectId:number;studentPersonId:number;entryStatus:ExamEntryStatus;rawMarks:number|null;comment:string|null};
 export type ExamModerationInput={markEntryId:number;rawMarks:number;reason:string};
 export type ExamWorkflowInput={examSeriesId:number;action:ExamWorkflowAction};
-export type ExamSetupInput={groupId:number;key:string;title:string;startsOn:string;endsOn:string;evaluatorPersonId:number;subjectIds:number[]};
+export type ExamSetupInput={groupId:number;key:string;title:string;examType:string;startsOn:string;endsOn:string;evaluatorPersonId:number;subjectIds:number[];maximumMarks:number;passMarks:number;gradingScaleVersionId:number|null;rankingEnabled:boolean};
 
 type Validation<T>={value?:T;errors:string[]};
 
@@ -49,10 +49,16 @@ export function validateExamSetupInput(input:unknown):Validation<ExamSetupInput>
   const evaluatorPersonId=positiveInteger(raw.evaluatorPersonId);if(!evaluatorPersonId)errors.push("Valid evaluator is required.");
   const key=typeof raw.key==="string"?raw.key.trim().toLowerCase():"";if(!/^[a-z0-9][a-z0-9_]{2,63}$/.test(key))errors.push("Exam key must use lowercase letters, numbers, and underscores.");
   const title=typeof raw.title==="string"?raw.title.trim():"";if(title.length<3||title.length>120)errors.push("Exam title must be between 3 and 120 characters.");
+  const examType=typeof raw.examType==="string"&&raw.examType.trim()?raw.examType.trim().toLowerCase():"assessment";if(!/^[a-z][a-z0-9_]{1,63}$/.test(examType))errors.push("Exam type is invalid.");
   const startsOn=isoDate(raw.startsOn);const endsOn=isoDate(raw.endsOn);if(!startsOn||!endsOn)errors.push("Valid exam dates are required.");else if(endsOn<startsOn)errors.push("Exam end date cannot be before start date.");
   const subjectIds=Array.isArray(raw.subjectIds)?Array.from(new Set(raw.subjectIds.map(positiveInteger).filter((id):id is number=>id!==null))):[];
   if(subjectIds.length<1||subjectIds.length>12)errors.push("Select between 1 and 12 subjects.");
   if(Array.isArray(raw.subjectIds)&&subjectIds.length!==raw.subjectIds.length)errors.push("Selected subjects must be unique valid IDs.");
+  const maximumMarks=optionalNumber(raw.maximumMarks)??100;const passMarks=optionalNumber(raw.passMarks)??40;
+  if(maximumMarks<=0||maximumMarks>10000)errors.push("Maximum marks must be greater than zero.");
+  if(passMarks<0||passMarks>maximumMarks)errors.push("Pass marks must be between zero and maximum marks.");
+  const gradingScaleVersionId=raw.gradingScaleVersionId===null||raw.gradingScaleVersionId===undefined||raw.gradingScaleVersionId===""?null:positiveInteger(raw.gradingScaleVersionId);if(raw.gradingScaleVersionId!==null&&raw.gradingScaleVersionId!==undefined&&raw.gradingScaleVersionId!==""&&!gradingScaleVersionId)errors.push("Valid grading scheme is required.");
+  const rankingEnabled=raw.rankingEnabled===true;
   if(errors.length||!groupId||!evaluatorPersonId||!startsOn||!endsOn)return{errors};
-  return{errors,value:{groupId,key,title,startsOn,endsOn,evaluatorPersonId,subjectIds}};
+  return{errors,value:{groupId,key,title,examType,startsOn,endsOn,evaluatorPersonId,subjectIds,maximumMarks,passMarks,gradingScaleVersionId,rankingEnabled}};
 }
