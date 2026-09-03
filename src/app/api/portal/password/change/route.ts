@@ -45,14 +45,15 @@ export async function POST(request: Request) {
   if (current.error || !current.data.user) {
     return NextResponse.json({ error: "Unable to load portal account." }, { status: 500 });
   }
-  if (current.data.user.user_metadata?.must_change_password !== true) {
-    return NextResponse.json({ error: "A mandatory password change is not pending." }, { status: 409 });
+  if (current.data.user.app_metadata?.portal_account !== true || current.data.user.app_metadata?.must_change_password !== true) {
+    return NextResponse.json({ error: "A mandatory ERP portal password change is not pending." }, { status: 409 });
   }
 
   const updated = await admin.auth.admin.updateUserById(identity.id, {
     password,
-    user_metadata: {
-      ...current.data.user.user_metadata,
+    app_metadata: {
+      ...current.data.user.app_metadata,
+      portal_account: true,
       must_change_password: false,
       password_changed_at: new Date().toISOString()
     }
