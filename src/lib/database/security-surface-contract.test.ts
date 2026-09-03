@@ -49,7 +49,10 @@ describe("database migration security surface", () => {
       );
 
       expect(searchPathCount, `${migration.name}: search_path`).toBeGreaterThanOrEqual(definerCount);
-      expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(definerCount);
+      // Public SECURITY DEFINER entrypoints must revoke browser execution in the defining migration.
+      // Private helper ACLs may be tightened by an append-only follow-up migration and are covered
+      // by phase-specific contracts; they must never be granted directly to service_role here.
+      expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(publicDefinerCount);
       expect(serviceRoleGrantCount, `${migration.name}: public service_role grant`).toBeGreaterThanOrEqual(publicDefinerCount);
       expect(privateServiceRoleGrants, `${migration.name}: private functions stay internal`).toEqual([]);
     }
