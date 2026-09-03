@@ -33,7 +33,9 @@ describe("database migration security surface", () => {
         /create\s+or\s+replace\s+function\s+public\.[\s\S]*?security\s+definer/gi,
         migration.sql
       );
-      const searchPathCount = count(/set\s+search_path\s*=/gi, migration.sql);
+      // PostgreSQL accepts both `SET search_path = ...` and `SET search_path TO ...`.
+      // Treat either explicit form as a hardened per-function search_path declaration.
+      const searchPathCount = count(/set\s+search_path\s*(?:=|\bto\b)/gi, migration.sql);
       const browserRevokeCount = count(
         /revoke\s+all\s+on\s+function\b[\s\S]*?\bfrom\s+public\s*,\s*anon\s*,\s*authenticated/gi,
         migration.sql
