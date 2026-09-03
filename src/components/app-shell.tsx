@@ -27,7 +27,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const app = await getTranslations("App");
   const branchLabel = workspace.branchName || "Main Branch";
   const copy = shellCopy[locale];
-  const clientProfile = resolveClientProfile(workspace.tenantSlug);
+  const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
   const visibleNavGroups = getVisibleNavigation(clientProfile);
   const mobileGroups = visibleNavGroups.map((group) => ({
     key: group.key,
