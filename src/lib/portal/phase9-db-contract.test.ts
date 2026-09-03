@@ -8,13 +8,17 @@ const parent=read("supabase/migrations/20260903180000_phase9_parent_portal_overv
 const schedule=read("supabase/migrations/20260903180500_phase9_parent_schedule_resolution.sql");
 const audit=read("supabase/migrations/20260903181000_phase9_portal_home_and_credential_audit.sql");
 const contact=read("supabase/migrations/20260903181500_phase9_teacher_contact_hardening.sql");
+const metadata=read("supabase/migrations/20260903184500_phase9_portal_app_metadata_hardening.sql");
 
 describe("Phase 9 Teachers + Parent/Teacher Access database contracts",()=>{
  it("keeps all Phase 9 entrypoints server-only",()=>{
-  for(const sql of [access,teacher,parent,schedule,audit,contact]){expect(sql).toContain("revoke all on function");expect(sql).toMatch(/from public,anon,authenticated/i);expect(sql).toMatch(/grant execute on function[\s\S]*to service_role/i);}
+  for(const sql of [access,teacher,parent,schedule,audit,contact,metadata]){expect(sql).toContain("revoke all on function");expect(sql).toMatch(/from public,anon,authenticated/i);expect(sql).toMatch(/grant execute on function[\s\S]*to service_role/i);}
  });
  it("preserves tenant-scoped access disable instead of globally banning Auth users",()=>{
   expect(access).toContain("set_portal_identity_access_v1");expect(access).toContain("identity_person_links");expect(access).toContain("status=case when p_enabled then 'verified' else 'revoked' end");expect(access).not.toContain("banned_until");
+ });
+ it("trusts only admin-controlled Auth app metadata for ERP-managed account state",()=>{
+  expect(access).toContain("raw_app_meta_data");expect(access).not.toContain("raw_user_meta_data");expect(metadata).toContain("raw_app_meta_data");expect(metadata).not.toContain("raw_user_meta_data");
  });
  it("resolves parent schedule using Phase 5 closures and exception semantics",()=>{
   expect(schedule).toContain("academic_schedule_exceptions");expect(schedule).toContain("x.action='reschedule'");expect(schedule).toContain("x.action='substitute'");expect(schedule).toContain("event_type in('holiday','closure')");expect(schedule).toContain("affects_attendance");expect(schedule).toContain("x.id is null or x.action='substitute'");
