@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type {
   PublicAdmissionLocale,
   PublicAdmissionSection
@@ -13,6 +13,11 @@ type IntakeOption = {
   labels: LocalizedLabels;
 };
 
+type GroupOption = IntakeOption & {
+  sessionKey: string;
+  programKey: string;
+};
+
 type PublicAdmissionFormProps = {
   tenantName: string;
   branchName: string;
@@ -21,13 +26,24 @@ type PublicAdmissionFormProps = {
   formLabels: LocalizedLabels;
   sessions: Array<IntakeOption & { startsOn: string; endsOn: string; isDefault: boolean }>;
   programs: Array<IntakeOption & { programType: string }>;
+  groups: GroupOption[];
   sections: PublicAdmissionSection[];
+  requirePhoto: boolean;
 };
 
 type SubmitResult = {
   trackingId: string;
   trackingToken: string;
 };
+
+type PhotoUploadResult = {
+  photoToken?: string;
+  expiresAt?: string;
+  error?: string;
+};
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const allowedPhotoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const ui = {
   en: {
@@ -46,7 +62,19 @@ const ui = {
     trackApplication: "Track this application",
     newApplication: "Submit another application",
     error: "We could not submit the application. Check the highlighted information and try again.",
-    language: "Language"
+    language: "Language",
+    photoTitle: "Student photo",
+    photoHelp: "A clear front-facing photo is required and will become the student's private canonical profile photo.",
+    takePhoto: "Take Photo",
+    uploadPhoto: "Upload Photo",
+    retake: "Retake",
+    replace: "Replace",
+    remove: "Remove",
+    photoRequired: "Select or take a student photo before submitting.",
+    photoInvalid: "Use a JPEG, PNG, or WebP photo up to 5 MB.",
+    photoUploading: "Uploading student photo…",
+    groupUnavailable: "No class/group is available for this session and program.",
+    select: "Select"
   },
   ur: {
     admissions: "داخلہ",
@@ -64,7 +92,19 @@ const ui = {
     trackApplication: "اس درخواست کی پیش رفت دیکھیں",
     newApplication: "ایک اور درخواست جمع کریں",
     error: "درخواست جمع نہیں ہو سکی۔ معلومات چیک کریں اور دوبارہ کوشش کریں۔",
-    language: "زبان"
+    language: "زبان",
+    photoTitle: "طالب علم کی تصویر",
+    photoHelp: "واضح سامنے سے لی گئی تصویر ضروری ہے اور یہی طالب علم کی محفوظ مرکزی پروفائل تصویر ہوگی۔",
+    takePhoto: "تصویر لیں",
+    uploadPhoto: "تصویر اپ لوڈ کریں",
+    retake: "دوبارہ لیں",
+    replace: "تبدیل کریں",
+    remove: "ہٹائیں",
+    photoRequired: "درخواست جمع کرنے سے پہلے طالب علم کی تصویر لیں یا منتخب کریں۔",
+    photoInvalid: "JPEG، PNG یا WebP تصویر استعمال کریں، زیادہ سے زیادہ 5 MB۔",
+    photoUploading: "طالب علم کی تصویر اپ لوڈ ہو رہی ہے…",
+    groupUnavailable: "اس تعلیمی سال اور پروگرام کے لیے کوئی کلاس / گروپ دستیاب نہیں۔",
+    select: "منتخب کریں"
   },
   ar: {
     admissions: "القبول",
@@ -82,8 +122,32 @@ const ui = {
     trackApplication: "تتبع هذا الطلب",
     newApplication: "إرسال طلب آخر",
     error: "تعذر إرسال الطلب. تحقق من المعلومات وحاول مرة أخرى.",
-    language: "اللغة"
+    language: "اللغة",
+    photoTitle: "صورة الطالب",
+    photoHelp: "يلزم التقاط صورة واضحة من الأمام وستصبح الصورة الخاصة الأساسية لملف الطالب.",
+    takePhoto: "التقاط صورة",
+    uploadPhoto: "رفع صورة",
+    retake: "إعادة الالتقاط",
+    replace: "استبدال",
+    remove: "إزالة",
+    photoRequired: "التقط أو اختر صورة للطالب قبل إرسال الطلب.",
+    photoInvalid: "استخدم صورة JPEG أو PNG أو WebP بحجم لا يتجاوز 5 MB.",
+    photoUploading: "جارٍ رفع صورة الطالب…",
+    groupUnavailable: "لا توجد مجموعة / فصل متاح لهذا العام والبرنامج.",
+    select: "اختر"
   }
+} as const;
+
+const genderOptions = {
+  en: [["male", "Male"], ["female", "Female"], ["other", "Other"], ["undisclosed", "Prefer not to say"]],
+  ur: [["male", "مرد"], ["female", "خاتون"], ["other", "دیگر"], ["undisclosed", "بتانا نہیں چاہتے"]],
+  ar: [["male", "ذكر"], ["female", "أنثى"], ["other", "آخر"], ["undisclosed", "أفضل عدم الإفصاح"]]
+} as const;
+
+const relationshipOptions = {
+  en: [["father", "Father"], ["mother", "Mother"], ["guardian", "Guardian"], ["other", "Other"]],
+  ur: [["father", "والد"], ["mother", "والدہ"], ["guardian", "سرپرست"], ["other", "دیگر"]],
+  ar: [["father", "الأب"], ["mother", "الأم"], ["guardian", "ولي الأمر"], ["other", "أخرى"]]
 } as const;
 
 function label(labels: LocalizedLabels, locale: PublicAdmissionLocale): string {
@@ -105,12 +169,87 @@ export function PublicAdmissionForm({
   formLabels,
   sessions,
   programs,
-  sections
+  groups,
+  sections,
+  requirePhoto
 }: PublicAdmissionFormProps) {
   const text = ui[locale];
+  const defaultSession = sessions.find((session) => session.isDefault)?.key ?? sessions[0]?.key ?? "";
+  const defaultProgram = programs[0]?.key ?? "";
+  const [sessionKey, setSessionKey] = useState(defaultSession);
+  const [programKey, setProgramKey] = useState(defaultProgram);
+  const [groupKey, setGroupKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoToken, setPhotoToken] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  const matchingGroups = useMemo(
+    () => groups.filter((group) => group.sessionKey === sessionKey && group.programKey === programKey),
+    [groups, programKey, sessionKey]
+  );
+
+  useEffect(() => {
+    if (!matchingGroups.some((group) => group.key === groupKey)) {
+      setGroupKey(matchingGroups[0]?.key ?? "");
+    }
+  }, [groupKey, matchingGroups]);
+
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  function selectPhoto(file: File | undefined) {
+    if (!file) return;
+    if (!allowedPhotoTypes.has(file.type) || file.size < 1 || file.size > MAX_PHOTO_BYTES) {
+      setError(text.photoInvalid);
+      return;
+    }
+    setError(null);
+    setPhotoToken(null);
+    setPhotoFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function clearPhoto() {
+    setPhotoFile(null);
+    setPhotoToken(null);
+    setPreviewUrl(null);
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
+  }
+
+  async function stagePhoto(): Promise<string | null> {
+    if (photoToken) return photoToken;
+    if (!photoFile) return null;
+
+    setPhotoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.set("photo", photoFile);
+      const response = await fetch(`/api/public/admissions/${encodeURIComponent(tenantSlug)}/photo`, {
+        method: "POST",
+        body: formData
+      });
+      const payload = (await response.json().catch(() => ({}))) as PhotoUploadResult;
+      if (!response.ok || !payload.photoToken) {
+        setError(payload.error || text.error);
+        return null;
+      }
+      setPhotoToken(payload.photoToken);
+      return payload.photoToken;
+    } catch {
+      setError(text.error);
+      return null;
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,15 +265,26 @@ export function PublicAdmissionForm({
     );
 
     try {
+      let stagedPhotoToken = photoToken;
+      if (requirePhoto) {
+        if (!photoFile && !photoToken) {
+          setError(text.photoRequired);
+          return;
+        }
+        stagedPhotoToken = await stagePhoto();
+        if (!stagedPhotoToken) return;
+      }
+
       const response = await fetch(`/api/public/admissions/${encodeURIComponent(tenantSlug)}/submit`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          sessionKey: String(data.get("sessionKey") ?? ""),
-          programKey: String(data.get("programKey") ?? ""),
+          sessionKey,
+          programKey,
           preferredLocale: locale,
           consent: data.get("consent") === "on",
-          answers
+          answers,
+          photoToken: stagedPhotoToken
         })
       });
 
@@ -146,17 +296,28 @@ export function PublicAdmissionForm({
       };
 
       if (!response.ok || !payload.trackingId || !payload.trackingToken) {
+        if (response.status === 409) setPhotoToken(null);
         setError(payload.details?.[0] || payload.error || text.error);
         return;
       }
 
       setResult({ trackingId: payload.trackingId, trackingToken: payload.trackingToken });
       form.reset();
+      clearPhoto();
     } catch {
       setError(text.error);
     } finally {
       setBusy(false);
     }
+  }
+
+  function resetForAnotherApplication() {
+    setResult(null);
+    setError(null);
+    setSessionKey(defaultSession);
+    setProgramKey(defaultProgram);
+    setGroupKey("");
+    clearPhoto();
   }
 
   if (result) {
@@ -182,7 +343,7 @@ export function PublicAdmissionForm({
               {text.trackApplication}
             </a>
           </p>
-          <button className="public-submit secondary" type="button" onClick={() => setResult(null)}>
+          <button className="public-submit secondary" type="button" onClick={resetForAnotherApplication}>
             {text.newApplication}
           </button>
         </section>
@@ -211,7 +372,7 @@ export function PublicAdmissionForm({
           <div className="public-intake-grid">
             <label>
               <span>{text.session}</span>
-              <select name="sessionKey" defaultValue={sessions.find((session) => session.isDefault)?.key ?? sessions[0]?.key} required>
+              <select name="sessionKey" value={sessionKey} onChange={(event) => setSessionKey(event.target.value)} required>
                 {sessions.map((session) => (
                   <option key={session.key} value={session.key}>
                     {label(session.labels, locale)}
@@ -221,7 +382,7 @@ export function PublicAdmissionForm({
             </label>
             <label>
               <span>{text.program}</span>
-              <select name="programKey" defaultValue={programs[0]?.key} required>
+              <select name="programKey" value={programKey} onChange={(event) => setProgramKey(event.target.value)} required>
                 {programs.map((program) => (
                   <option key={program.key} value={program.key}>
                     {label(program.labels, locale)}
@@ -232,29 +393,88 @@ export function PublicAdmissionForm({
           </div>
 
           {sections.map((section) => (
-            <fieldset key={section.key} className="public-intake-section">
-              <legend>{label(section.labels, locale)}</legend>
-              <div className="public-intake-grid">
-                {section.fields.map((field) => (
-                  <label key={field.key} className={field.type === "long_text" ? "full-width" : undefined}>
-                    <span>
-                      {label(field.labels, locale)}
-                      {field.required ? <small> · {text.required}</small> : null}
-                    </span>
-                    {field.type === "long_text" ? (
-                      <textarea name={field.key} required={field.required} maxLength={2000} rows={4} />
-                    ) : (
-                      <input
-                        name={field.key}
-                        type={inputType(field.type)}
-                        required={field.required}
-                        maxLength={field.type === "email" ? 320 : field.type === "phone" ? 40 : undefined}
+            <Fragment key={section.key}>
+              <fieldset className="public-intake-section">
+                <legend>{label(section.labels, locale)}</legend>
+                <div className="public-intake-grid">
+                  {section.fields.map((field) => (
+                    <label key={field.key} className={field.type === "long_text" ? "full-width" : undefined}>
+                      <span>
+                        {label(field.labels, locale)}
+                        {field.required ? <small> · {text.required}</small> : null}
+                      </span>
+                      {field.key === "gender" ? (
+                        <select name={field.key} required={field.required} defaultValue="">
+                          <option value="" disabled>{text.select}</option>
+                          {genderOptions[locale].map(([value, optionLabel]) => <option key={value} value={value}>{optionLabel}</option>)}
+                        </select>
+                      ) : field.key === "guardian_relationship" ? (
+                        <select name={field.key} required={field.required} defaultValue="">
+                          <option value="" disabled>{text.select}</option>
+                          {relationshipOptions[locale].map(([value, optionLabel]) => <option key={value} value={value}>{optionLabel}</option>)}
+                        </select>
+                      ) : field.key === "group_key" ? (
+                        <select name={field.key} required={field.required} value={groupKey} onChange={(event) => setGroupKey(event.target.value)}>
+                          {matchingGroups.length === 0 ? <option value="">{text.groupUnavailable}</option> : null}
+                          {matchingGroups.map((group) => <option key={group.key} value={group.key}>{label(group.labels, locale)}</option>)}
+                        </select>
+                      ) : field.type === "long_text" ? (
+                        <textarea name={field.key} required={field.required} maxLength={2000} rows={4} />
+                      ) : (
+                        <input
+                          name={field.key}
+                          type={inputType(field.type)}
+                          required={field.required}
+                          maxLength={field.type === "email" ? 320 : field.type === "phone" ? 40 : undefined}
+                        />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {section.key === "student" && requirePhoto ? (
+                <fieldset className="public-intake-section">
+                  <legend>{text.photoTitle} · {text.required}</legend>
+                  <p>{text.photoHelp}</p>
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="user"
+                    hidden
+                    onChange={(event) => selectPhoto(event.target.files?.[0])}
+                  />
+                  <input
+                    ref={uploadInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    onChange={(event) => selectPhoto(event.target.files?.[0])}
+                  />
+                  {previewUrl ? (
+                    <div className="flow-stack">
+                      <img
+                        src={previewUrl}
+                        alt={text.photoTitle}
+                        style={{ width: 180, height: 220, objectFit: "cover", borderRadius: 16 }}
                       />
-                    )}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+                      <div className="quick-actions">
+                        <button className="action-button" type="button" onClick={() => cameraInputRef.current?.click()}>{text.retake}</button>
+                        <button className="action-button" type="button" onClick={() => uploadInputRef.current?.click()}>{text.replace}</button>
+                        <button className="action-button" type="button" onClick={clearPhoto}>{text.remove}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="quick-actions">
+                      <button className="action-button action-button-primary" type="button" onClick={() => cameraInputRef.current?.click()}>{text.takePhoto}</button>
+                      <button className="action-button" type="button" onClick={() => uploadInputRef.current?.click()}>{text.uploadPhoto}</button>
+                    </div>
+                  )}
+                  {photoUploading ? <p role="status">{text.photoUploading}</p> : null}
+                </fieldset>
+              ) : null}
+            </Fragment>
           ))}
 
           <label className="public-consent">
@@ -264,7 +484,7 @@ export function PublicAdmissionForm({
 
           {error ? <p className="public-intake-error" role="alert">{error}</p> : null}
 
-          <button className="public-submit" type="submit" disabled={busy}>
+          <button className="public-submit" type="submit" disabled={busy || photoUploading || matchingGroups.length === 0}>
             {busy ? text.submitting : text.submit}
           </button>
         </form>
