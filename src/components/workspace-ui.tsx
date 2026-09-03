@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 export type WorkspaceAction = {
   label: string;
   href?: string;
+  native?: boolean;
   onClick?: () => void;
   kind?: "primary" | "secondary";
 };
@@ -30,6 +31,7 @@ export function WorkspacePageHeader({ eyebrow, title, description, meta, actions
           <div className="workspace-actions" aria-label="Page actions">
             {actions.map((action) => {
               const className = action.kind === "primary" ? "action-button action-button-primary" : "action-button";
+              if (action.href && action.native) return <a className={className} href={action.href} key={action.label}>{action.label}</a>;
               if (action.href) return <Link className={className} href={action.href} key={action.label}>{action.label}</Link>;
               return <button className={className} key={action.label} onClick={action.onClick} type="button">{action.label}</button>;
             })}
