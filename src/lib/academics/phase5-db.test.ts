@@ -23,7 +23,9 @@ describe("Phase 5 Academics & Timetable database contracts",()=>{
     expect(foundation).toContain("parent_visible boolean");
     expect(foundation).toContain("student_visible boolean");
     expect(foundation).toContain("priority text");
-    expect(foundation).toContain("affects_attendance");
+    expect(readModel).toContain("affects_attendance");
+    expect(mutations).toContain("v_affects_attendance");
+    expect(mutations).toContain("affects_attendance,metadata");
   });
 
   it("builds the selected-day schedule from base entries plus exceptions and closures",()=>{
@@ -38,9 +40,12 @@ describe("Phase 5 Academics & Timetable database contracts",()=>{
     expect(mutations).toContain("academics.timetable.manage");
     expect(mutations).toContain("academics.homework.manage");
     expect(mutations).toContain("academics.structure.manage");
-    expect(mutations).toContain("timetable group conflict detected");
-    expect(mutations).toContain("timetable teacher conflict detected");
-    expect(mutations).toContain("timetable room conflict detected");
+    expect(mutations).toContain("when e.group_id=v_group_id then 'group'");
+    expect(mutations).toContain("e.teacher_person_id=v_teacher_id then 'teacher'");
+    expect(mutations).toContain("lower(e.room_key)=lower(v_room) then 'room'");
+    expect(mutations).toContain("raise exception 'timetable % conflict detected',v_conflict");
+    expect(mutations).toContain("timetable teacher conflict detected for substitute");
+    expect(mutations).toContain("raise exception 'timetable % conflict detected for reschedule',v_conflict");
     expect(mutations).not.toContain("security definer");
   });
 
