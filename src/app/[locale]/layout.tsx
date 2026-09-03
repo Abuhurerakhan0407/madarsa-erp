@@ -17,6 +17,7 @@ import "../documents.css";
 import "../dashboard.css";
 import "../client-v2.css";
 import "../client-v2-polish.css";
+import "../quran-v2.css";
 
 export const metadata: Metadata = {
   title: {
