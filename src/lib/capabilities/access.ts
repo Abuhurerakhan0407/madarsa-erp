@@ -33,9 +33,14 @@ export function canAccessCapability(
 export function canTenantAccessCapability(
   tenantSlug: string,
   capability: ProductCapability | undefined,
-  permissionAllowed = true
+  permissionAllowed = true,
+  tenantProfile?: string | null
 ): boolean {
-  return canAccessCapability(resolveClientProfile(tenantSlug), capability, permissionAllowed);
+  return canAccessCapability(
+    resolveClientProfile(tenantSlug, tenantProfile),
+    capability,
+    permissionAllowed
+  );
 }
 
 function capabilityForPath(
