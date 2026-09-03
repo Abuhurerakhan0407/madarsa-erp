@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { ProgramsSyllabusWorkspace } from "@/lib/programs-syllabus/runtime";
 import { progressMethods, programTemplateKeys, programTypes, subjectTypes, unitStructures } from "@/lib/programs-syllabus/model";
@@ -50,11 +50,11 @@ export function ProgramsSyllabusManager({ locale, data }: Props) {
   const selectedProgressAssignment = programAssignments.find((assignment) => assignment.id === progressAssignmentId) ?? programAssignments[0] ?? null;
   const progressItem = data.items.find((item) => item.id === selectedProgressAssignment?.curriculumItemId) ?? null;
   const progressUnits = data.units.filter((unit) => unit.curriculumItemId === progressItem?.id);
-  const progressStudents = useMemo(() => {
-    if (!selectedProgressAssignment) return [];
-    if (selectedProgressAssignment.studentPersonId) return programStudents.filter((student) => student.personId === selectedProgressAssignment.studentPersonId);
-    return programStudents.filter((student) => student.groupId === selectedProgressAssignment.groupId && student.sessionId === selectedProgressAssignment.sessionId);
-  }, [programStudents, selectedProgressAssignment]);
+  const progressStudents = !selectedProgressAssignment
+    ? []
+    : selectedProgressAssignment.studentPersonId
+      ? programStudents.filter((student) => student.personId === selectedProgressAssignment.studentPersonId)
+      : programStudents.filter((student) => student.groupId === selectedProgressAssignment.groupId && student.sessionId === selectedProgressAssignment.sessionId);
 
   async function mutate(payload: Record<string, unknown>) {
     setBusy(true);
