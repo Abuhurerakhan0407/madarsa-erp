@@ -21,19 +21,18 @@ export async function POST(request: Request) {
   const value = validation.value;
   if (value.source !== "manual" || value.sourceRef) return NextResponse.json({ error: "Device attendance must use the dedicated device ingestion channel." }, { status: 400 });
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("mark_student_attendance", {
+  const { data, error } = await admin.rpc("mark_student_attendance_emergency_v1", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
     p_attendance_session_id: value.attendanceSessionId,
     p_person_id: value.personId,
     p_status_key: value.statusKey,
-    p_source: "manual",
-    p_source_ref: null,
     p_note: value.note ?? null
   });
   if (error) {
     const message = error.message.toLowerCase();
+    if (message.includes("not authorized")) return NextResponse.json({ error: "Emergency Manual Attendance is not active for this student or has expired." }, { status: 403 });
     if (message.includes("permission denied")) return NextResponse.json({ error: "Attendance marking permission required." }, { status: 403 });
     if (message.includes("not available") || message.includes("not part of")) return NextResponse.json({ error: "Student or attendance session is not available in this branch." }, { status: 404 });
     if (message.includes("already marked")) return NextResponse.json({ error: "Attendance is already marked. Submit a correction instead.", correctionRequired: true }, { status: 409 });
