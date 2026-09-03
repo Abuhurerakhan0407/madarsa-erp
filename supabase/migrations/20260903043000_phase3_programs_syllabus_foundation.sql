@@ -57,6 +57,7 @@ create table if not exists public.curriculum_teaching_assignments (
   ends_on date null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint curriculum_teaching_assignments_tenant_id_id_key unique (tenant_id, id),
   constraint curriculum_teaching_assignments_tenant_session_fkey
     foreign key (tenant_id, session_id) references public.academic_sessions(tenant_id, id) on delete restrict,
   constraint curriculum_teaching_assignments_tenant_program_fkey
