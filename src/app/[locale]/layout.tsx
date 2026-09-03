@@ -15,6 +15,8 @@ import "../hr.css";
 import "../reports.css";
 import "../documents.css";
 import "../dashboard.css";
+import "../client-v2.css";
+import "../client-v2-polish.css";
 
 export const metadata: Metadata = {
   title: {

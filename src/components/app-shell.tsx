@@ -5,63 +5,17 @@ import { InterfaceMotion } from "@/components/interface-motion";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { SignOutButton } from "@/components/sign-out-button";
-import {
-  isNavItemEnabled,
-  resolveClientProfile
-} from "@/lib/capabilities/client-profile";
+import { resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { Locale } from "@/lib/i18n/config";
+import { findNavItem, getVisibleNavigation } from "@/lib/navigation/app-navigation";
 import type { TenantContext } from "@/lib/tenancy/context";
 
 type AppShellProps = { children: ReactNode; locale: Locale; workspace: TenantContext };
-type NavItem = { key: string; labels: Record<Locale, string>; href: (locale: Locale) => string };
-type NavGroup = { key: string; labels: Record<Locale, string>; items: NavItem[] };
 
-const navGroups: NavGroup[] = [
-  {
-    key: "academic",
-    labels: { en: "Academic operations", ur: "تعلیمی آپریشنز", ar: "العمليات الأكاديمية" },
-    items: [
-      { key: "overview", labels: { en: "Overview", ur: "جائزہ", ar: "نظرة عامة" }, href: (locale) => `/${locale}` },
-      { key: "admissions", labels: { en: "Admissions", ur: "داخلہ", ar: "القبول" }, href: (locale) => `/${locale}/admissions` },
-      { key: "students", labels: { en: "Students", ur: "طلبہ", ar: "الطلاب" }, href: (locale) => `/${locale}/students` },
-      { key: "academics", labels: { en: "Academics & Timetable", ur: "اکیڈمکس و ٹائم ٹیبل", ar: "الأكاديميات والجدول" }, href: (locale) => `/${locale}/people-academics` },
-      { key: "attendance", labels: { en: "Attendance & Biometrics", ur: "حاضری و بایومیٹرکس", ar: "الحضور والبيومتري" }, href: (locale) => `/${locale}/attendance` },
-      { key: "quran", labels: { en: "Qur'an & Hifz", ur: "قرآن و حفظ", ar: "القرآن والحفظ" }, href: (locale) => `/${locale}/quran` },
-      { key: "fees", labels: { en: "Fees & Accounting · Demo", ur: "فیس و اکاؤنٹنگ · ڈیمو", ar: "الرسوم والمحاسبة · تجريبي" }, href: (locale) => `/${locale}/demo/fees` },
-      { key: "exams", labels: { en: "Exams & Results", ur: "امتحانات و نتائج", ar: "الاختبارات والنتائج" }, href: (locale) => `/${locale}/exams` }
-    ]
-  },
-  {
-    key: "campus",
-    labels: { en: "Campus operations", ur: "کیمپس آپریشنز", ar: "عمليات الحرم" },
-    items: [
-      { key: "portals", labels: { en: "Parent & Staff Portals", ur: "والدین و عملہ پورٹلز", ar: "بوابات أولياء الأمور والموظفين" }, href: (locale) => `/${locale}/portals` },
-      { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/students/lifecycle` },
-      { key: "donations", labels: { en: "Donations & Sponsorships · Demo", ur: "عطیات و کفالت · ڈیمو", ar: "التبرعات والكفالات · تجريبي" }, href: (locale) => `/${locale}/demo/donations` },
-      { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس", ar: "السكن والإعاشة" }, href: (locale) => `/${locale}/hostel` },
-      { key: "transport", labels: { en: "Transport & Routes", ur: "ٹرانسپورٹ و روٹس", ar: "النقل والمسارات" }, href: (locale) => `/${locale}/transport` },
-      { key: "staff", labels: { en: "HR & Staff", ur: "HR و عملہ", ar: "الموارد البشرية والموظفون" }, href: (locale) => `/${locale}/staff` },
-      { key: "library", labels: { en: "Library", ur: "لائبریری", ar: "المكتبة" }, href: (locale) => `/${locale}/library` },
-      { key: "certificates", labels: { en: "IDs & Documents", ur: "ID و دستاویزات", ar: "الهويات والمستندات" }, href: (locale) => `/${locale}/documents` }
-    ]
-  },
-  {
-    key: "administration",
-    labels: { en: "Administration & intelligence", ur: "انتظامیہ و انٹیلیجنس", ar: "الإدارة والذكاء" },
-    items: [
-      { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و اینالیٹکس", ar: "التقارير والتحليلات" }, href: (locale) => `/${locale}/reports` },
-      { key: "whatsapp", labels: { en: "WhatsApp Automation", ur: "واٹس ایپ آٹومیشن", ar: "أتمتة واتساب" }, href: (locale) => `/${locale}/communications/whatsapp` },
-      { key: "ai", labels: { en: "AI Assistant · Preview", ur: "AI معاون · پری ویو", ar: "مساعد الذكاء الاصطناعي · معاينة" }, href: (locale) => `/${locale}/demo/ai` },
-      { key: "branches", labels: { en: "Branches & Roles", ur: "برانچز و رولز", ar: "الفروع والأدوار" }, href: (locale) => `/${locale}/access` },
-      { key: "configuration", labels: { en: "Configuration", ur: "کنفیگریشن", ar: "التهيئة" }, href: (locale) => `/${locale}/settings/configuration` }
-    ]
-  }
-];
-
-const shellCopy: Record<Locale, { productLine: string; academicYear: string; navigation: string; menu: string; close: string }> = {
-  en: { productLine: "School administration", academicYear: "Academic year 2026–27", navigation: "Workspace navigation", menu: "Menu", close: "Close menu" },
-  ur: { productLine: "ادارہ انتظامیہ", academicYear: "تعلیمی سال 2026–27", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں" },
-  ar: { productLine: "إدارة المؤسسة", academicYear: "العام الدراسي 2026–27", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة" }
+const shellCopy: Record<Locale, { productLine: string; academicYear: string; navigation: string; menu: string; close: string; workspace: string }> = {
+  en: { productLine: "Institution operations", academicYear: "Academic year 2026–27", navigation: "Workspace navigation", menu: "Menu", close: "Close menu", workspace: "Workspace" },
+  ur: { productLine: "ادارہ آپریشنز", academicYear: "تعلیمی سال 2026–27", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس" },
+  ar: { productLine: "عمليات المؤسسة", academicYear: "العام الدراسي 2026–27", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة", workspace: "مساحة العمل" }
 };
 
 function initials(name: string): string {
@@ -73,41 +27,57 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const app = await getTranslations("App");
   const branchLabel = workspace.branchName || "Main Branch";
   const copy = shellCopy[locale];
-  const clientProfile = resolveClientProfile(workspace.tenantSlug);
-  const visibleNavGroups = navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => isNavItemEnabled(clientProfile, item.key))
-    }))
-    .filter((group) => group.items.length > 0);
+  const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
+  const visibleNavGroups = getVisibleNavigation(clientProfile);
   const mobileGroups = visibleNavGroups.map((group) => ({
     key: group.key,
     label: group.labels[locale],
     items: group.items.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }))
   }));
-  const overview = navGroups[0].items.find((item) => item.key === "overview")!;
-  const admissions = navGroups[0].items.find((item) => item.key === "admissions")!;
-  const students = navGroups[0].items.find((item) => item.key === "students")!;
+  const quickKeys = ["overview", "students", "attendance"] as const;
+  const quickItems = quickKeys.map((key) => {
+    const item = findNavItem(key);
+    if (!item) throw new Error(`Missing navigation item: ${key}`);
+    return { key: item.key, label: item.labels[locale], href: item.href(locale) };
+  });
 
   return (
-    <div className="app-shell professional-shell">
+    <div className="app-shell professional-shell client-v2-shell">
       <a className="skip-link" href="#main-content">{app("skipToContent")}</a>
-      <aside className="sidebar professional-sidebar" aria-label={copy.navigation}>
-        <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">M</span><span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span></div>
-        <div className="institution-card professional-institution-card"><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{copy.academicYear}</small></div>
-        <nav aria-label={app("openMenu")} className="primary-nav demo-primary-nav">
-          {visibleNavGroups.map((group) => <div className="nav-section" key={group.key}><p className="nav-section-label">{group.labels[locale]}</p>{group.items.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</div>)}
+      <aside className="sidebar professional-sidebar client-v2-sidebar" aria-label={copy.navigation}>
+        <div className="brand-lockup professional-brand-lockup">
+          <span className="brand-mark" aria-hidden="true">M</span>
+          <span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span>
+        </div>
+        <div className="institution-card professional-institution-card client-v2-institution">
+          <span className="client-v2-institution-label">{copy.workspace}</span>
+          <strong>{workspace.tenantName}</strong>
+          <span>{branchLabel}</span>
+          <small>{copy.academicYear}</small>
+        </div>
+        <nav aria-label={app("openMenu")} className="primary-nav demo-primary-nav client-v2-primary-nav">
+          {visibleNavGroups.map((group) => (
+            <div className="nav-section" key={group.key}>
+              <p className="nav-section-label">{group.labels[locale]}</p>
+              {group.items.map((item) => (
+                <AppNavLink href={item.href(locale)} key={item.key} className="nav-link">
+                  <span className="nav-indicator" aria-hidden="true" />
+                  <span>{item.labels[locale]}</span>
+                </AppNavLink>
+              ))}
+            </div>
+          ))}
         </nav>
         <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
       </aside>
       <div className="workspace">
-        <header className="topbar professional-topbar">
+        <header className="topbar professional-topbar client-v2-topbar">
           <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.academicYear}</p></div>
           <div className="topbar-actions"><LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} /></div>
         </header>
-        <main id="main-content" className="main-content professional-main-content"><InterfaceMotion />{children}</main>
+        <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion />{children}</main>
       </div>
-      <MobileNavigation locale={locale} groups={mobileGroups} overviewLabel={overview.labels[locale]} admissionsLabel={admissions.labels[locale]} studentsLabel={students.labels[locale]} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
+      <MobileNavigation groups={mobileGroups} quickItems={quickItems} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
     </div>
   );
 }

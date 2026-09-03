@@ -1,3 +1,4 @@
+import { InlineState, TableFrame, WorkspacePageHeader } from "@/components/workspace-ui";
 import { getTranslations } from "next-intl/server";
 import { getAcademicFoundationSummary } from "@/lib/academics/live-summary";
 
@@ -15,13 +16,7 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
 
   return (
     <>
-      <section className="page-heading" data-page-section>
-        <div>
-          <p className="state-kicker">{t("phase")}</p>
-          <h1>{t("title")}</h1>
-          <p>{t("subtitle")}</p>
-        </div>
-      </section>
+      <WorkspacePageHeader eyebrow={t("phase")} title={t("title")} description={t("subtitle")} />
 
       <section className="metric-grid student-metric-grid" aria-label={t("programsTitle")} data-page-section>
         <article className="metric metric-primary">
@@ -67,7 +62,7 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
         </div>
 
         {summary.programRows.length > 0 ? (
-          <div className="responsive-table" role="region" aria-label={t("programsTitle")} tabIndex={0}>
+          <TableFrame label={t("programsTitle")}>
             <table>
               <thead>
                 <tr>
@@ -86,12 +81,9 @@ export default async function PeopleAcademicsPage({ params }: PeopleAcademicsPag
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableFrame>
         ) : (
-          <div className="privacy-callout">
-            <strong>{dashboard("emptyTitle")}</strong>
-            <p>{dashboard("emptyBody")}</p>
-          </div>
+          <InlineState title={dashboard("emptyTitle")} body={dashboard("emptyBody")} />
         )}
       </section>
     </>

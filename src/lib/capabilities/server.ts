@@ -9,7 +9,9 @@ export async function requireTenantCapability(
 ): Promise<TenantContext> {
   const workspace = await getTenantContext();
   if (!workspace) redirect("/onboarding");
-  if (!canTenantAccessCapability(workspace.tenantSlug, capability)) notFound();
+  if (!canTenantAccessCapability(workspace.tenantSlug, capability, true, workspace.clientProfile)) {
+    notFound();
+  }
   return workspace;
 }
 
@@ -17,7 +19,9 @@ export function disabledCapabilityResponse(
   workspace: TenantContext,
   capability: ProductCapability
 ): NextResponse | null {
-  if (canTenantAccessCapability(workspace.tenantSlug, capability)) return null;
+  if (canTenantAccessCapability(workspace.tenantSlug, capability, true, workspace.clientProfile)) {
+    return null;
+  }
   return NextResponse.json(
     { error: "Resource not available for this institution." },
     { status: 404, headers: { "cache-control": "no-store" } }

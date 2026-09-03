@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccessCapability,
+  canTenantAccessCapability,
   capabilityForApiPath,
   capabilityForAppPath
 } from "./access";
@@ -43,6 +44,11 @@ describe("Client V2 capability access", () => {
     for (const [, capability] of hiddenAppRoutes) {
       expect(canAccessCapability(CLIENT_PROFILES["client-v2"], capability)).toBe(false);
     }
+  });
+
+  it("uses the persisted tenant profile in tenant-level checks", () => {
+    expect(canTenantAccessCapability("abu-school", "fees_accounting", true, "client-v2")).toBe(false);
+    expect(canTenantAccessCapability("new-tenant", "fees_accounting", true, "full-product")).toBe(true);
   });
 
   it("never lets capability enablement bypass RBAC permission denial", () => {

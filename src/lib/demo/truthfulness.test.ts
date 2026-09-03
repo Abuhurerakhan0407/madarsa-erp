@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { findNavItem } from "../navigation/app-navigation";
 import { demoModules } from "./modules";
 import { getDemoPresentation } from "./presentation";
 
-const appShell = readFileSync(new URL("../../components/app-shell.tsx", import.meta.url), "utf8");
 const demoPage = readFileSync(new URL("../../components/demo-module-page.tsx", import.meta.url), "utf8");
 const legacyAcademics = readFileSync(new URL("../../app/[locale]/demo/academics/page.tsx", import.meta.url), "utf8");
 
@@ -23,12 +23,15 @@ describe("client-demo truthfulness", () => {
       expect(presentation.description.en).toContain("not production-enabled yet");
     }
 
-    expect(appShell).toContain('en: "Fees & Accounting · Demo"');
-    expect(appShell).toContain('en: "Donations & Sponsorships · Demo"');
+    expect(findNavItem("fees")?.labels.en).toBe("Fees & Accounting · Demo");
+    expect(findNavItem("donations")?.labels.en).toBe("Donations & Sponsorships · Demo");
   });
 
-  it("keeps payroll separate from the live HR navigation claim", () => {
-    expect(appShell).toContain('en: "HR & Staff"');
+  it("keeps payroll separate from the live Teachers navigation claim", () => {
+    const staffNav = findNavItem("staff");
+    expect(staffNav?.labels.en).toBe("Teachers");
+    expect(staffNav?.labels.en).not.toMatch(/payroll/i);
+
     const staff = getDemoPresentation(moduleById("staff"));
     expect(staff.title.en).toContain("Payroll demo");
     expect(staff.description.en).toContain("payroll shown only as scripted demo data");

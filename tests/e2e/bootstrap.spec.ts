@@ -13,6 +13,9 @@ test("protects localized institution routes", async ({ page }) => {
 
   await page.goto("/ar/settings/configuration");
   await expect(page).toHaveURL(/\/login\?next=%2Far%2Fsettings%2Fconfiguration$/);
+
+  await page.goto("/en/programs");
+  await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fprograms$/);
 });
 
 test("protects onboarding until an identity is authenticated", async ({ page }) => {

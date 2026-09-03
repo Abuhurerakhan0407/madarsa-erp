@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import type { Locale } from "@/lib/i18n/config";
 import styles from "./mobile-navigation.module.css";
 
 type MobileNavItem = { key: string; label: string; href: string };
 type MobileNavGroup = { key: string; label: string; items: MobileNavItem[] };
 type MobileNavigationProps = {
-  locale: Locale;
   groups: MobileNavGroup[];
-  overviewLabel: string;
-  admissionsLabel: string;
-  studentsLabel: string;
+  quickItems: MobileNavItem[];
   menuLabel: string;
   closeLabel: string;
   navigationLabel: string;
@@ -27,11 +23,8 @@ function isCurrentPath(pathname: string, href: string): boolean {
 }
 
 export function MobileNavigation({
-  locale,
   groups,
-  overviewLabel,
-  admissionsLabel,
-  studentsLabel,
+  quickItems,
   menuLabel,
   closeLabel,
   navigationLabel,
@@ -43,6 +36,7 @@ export function MobileNavigation({
   const drawerId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +47,19 @@ export function MobileNavigation({
       if (event.key === "Escape") {
         setOpen(false);
         triggerRef.current?.focus();
+        return;
+      }
+      if (event.key !== "Tab" || !drawerRef.current) return;
+      const focusable = Array.from(drawerRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -62,12 +69,6 @@ export function MobileNavigation({
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
-
-  const quickItems: MobileNavItem[] = [
-    { key: "overview", label: overviewLabel, href: `/${locale}` },
-    { key: "admissions", label: admissionsLabel, href: `/${locale}/admissions` },
-    { key: "students", label: studentsLabel, href: `/${locale}/students` }
-  ];
 
   const closeDrawer = (restoreFocus = true) => {
     setOpen(false);
@@ -97,7 +98,7 @@ export function MobileNavigation({
 
       <div className={styles.drawerLayer} data-open={open ? "true" : "false"} aria-hidden={!open}>
         <button className={styles.backdrop} type="button" tabIndex={open ? 0 : -1} aria-label={closeLabel} onClick={() => closeDrawer()} />
-        <aside id={drawerId} className={styles.drawer} aria-label={navigationLabel}>
+        <aside ref={drawerRef} id={drawerId} className={styles.drawer} aria-label={navigationLabel} aria-modal={open ? "true" : undefined} role="dialog">
           <header className={styles.drawerHeader}>
             <div><strong>{institutionName}</strong><span>{branchLabel}</span></div>
             <button ref={closeRef} className={styles.closeButton} type="button" tabIndex={open ? 0 : -1} onClick={() => closeDrawer()} aria-label={closeLabel}>×</button>

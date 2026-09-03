@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { Locale } from "@/lib/i18n/config";
 import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -48,7 +49,7 @@ type DashboardCopy = {
 const copy: Record<Locale, DashboardCopy> = {
   en: {
     year: "Academic year 2026–27",
-    subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, staff and reporting.",
+    subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, teachers and reporting.",
     live: "Live operations",
     metricsTitle: "Institution overview",
     metricsBody: "These figures come from the same governed records used inside each operational workspace.",
@@ -57,7 +58,7 @@ const copy: Record<Locale, DashboardCopy> = {
     attendanceNotStarted: "Not started",
     admissions: "Open admissions",
     quran: "Qur'an / Hifz students",
-    staff: "Active staff",
+    staff: "Active teachers",
     exams: "Current exam marks",
     total: "total",
     active: "active",
@@ -80,14 +81,14 @@ const copy: Record<Locale, DashboardCopy> = {
     quranTrend: "Qur'an attempts",
     attempts: "attempts",
     quick: "Operational workspaces",
-    quickBody: "Open the live workspaces used for the client walkthrough.",
+    quickBody: "Open the workspaces used for day-to-day institution operations.",
     allModules: "View complete suite",
-    routes: { admissions: "Admissions", students: "Students", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "HR & Staff", reports: "Reports", documents: "IDs & Documents" },
-    alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Staff leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
+    routes: { admissions: "Admissions", students: "Students", programs: "Programs & Syllabus", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "Teachers", reports: "Reports & Analytics", documents: "IDs & Documents", configuration: "Institution Configuration" },
+    alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Teacher leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
   ur: {
     year: "تعلیمی سال 2026–27",
-    subtitle: "طلبہ، داخلہ، حاضری، قرآن، امتحانات، عملہ اور رپورٹس کے حقیقی برانچ آپریشنز۔",
+    subtitle: "طلبہ، داخلہ، حاضری، قرآن، امتحانات، اساتذہ اور رپورٹس کے حقیقی برانچ آپریشنز۔",
     live: "لائیو آپریشنز",
     metricsTitle: "ادارہ جائزہ",
     metricsBody: "یہ اعداد وہی اصل ریکارڈز استعمال کرتے ہیں جو ہر آپریشنل ورک اسپیس میں ہیں۔",
@@ -96,7 +97,7 @@ const copy: Record<Locale, DashboardCopy> = {
     attendanceNotStarted: "شروع نہیں ہوئی",
     admissions: "کھلے داخلے",
     quran: "قرآن / حفظ طلبہ",
-    staff: "فعال عملہ",
+    staff: "فعال اساتذہ",
     exams: "موجودہ امتحانی نمبر",
     total: "کل",
     active: "فعال",
@@ -119,14 +120,14 @@ const copy: Record<Locale, DashboardCopy> = {
     quranTrend: "قرآن کوششیں",
     attempts: "کوششیں",
     quick: "آپریشنل ورک اسپیسز",
-    quickBody: "کلائنٹ واک تھرو کے لیے حقیقی ورک اسپیسز کھولیں۔",
+    quickBody: "ادارے کے روزمرہ کام کے لیے متعلقہ ورک اسپیسز کھولیں۔",
     allModules: "مکمل سسٹم دیکھیں",
-    routes: { admissions: "داخلہ", students: "طلبہ", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "HR و عملہ", reports: "رپورٹس", documents: "ID و دستاویزات" },
-    alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "عملے کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
+    routes: { admissions: "داخلہ", students: "طلبہ", programs: "پروگرامز و نصاب", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "اساتذہ", reports: "رپورٹس و اینالیٹکس", documents: "ID و دستاویزات", configuration: "ادارہ کنفیگریشن" },
+    alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "اساتذہ کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
   },
   ar: {
     year: "العام الدراسي 2026–27",
-    subtitle: "عمليات الفرع الحية للطلاب والقبول والحضور والقرآن والاختبارات والموظفين والتقارير.",
+    subtitle: "عمليات الفرع الحية للطلاب والقبول والحضور والقرآن والاختبارات والمعلمين والتقارير.",
     live: "عمليات حية",
     metricsTitle: "نظرة عامة على المؤسسة",
     metricsBody: "تأتي هذه الأرقام من نفس السجلات المحكومة المستخدمة داخل مساحات العمل التشغيلية.",
@@ -135,7 +136,7 @@ const copy: Record<Locale, DashboardCopy> = {
     attendanceNotStarted: "لم يبدأ",
     admissions: "طلبات القبول المفتوحة",
     quran: "طلاب القرآن / الحفظ",
-    staff: "الموظفون النشطون",
+    staff: "المعلمون النشطون",
     exams: "درجات الاختبار الحالي",
     total: "الإجمالي",
     active: "نشط",
@@ -158,10 +159,10 @@ const copy: Record<Locale, DashboardCopy> = {
     quranTrend: "محاولات القرآن",
     attempts: "محاولات",
     quick: "مساحات العمل التشغيلية",
-    quickBody: "افتح مساحات العمل الحية المستخدمة في عرض العميل.",
+    quickBody: "افتح مساحات العمل المستخدمة في عمليات المؤسسة اليومية.",
     allModules: "عرض النظام الكامل",
-    routes: { admissions: "القبول", students: "الطلاب", attendance: "الحضور", quran: "القرآن والحفظ", exams: "الاختبارات والنتائج", staff: "الموارد والموظفون", reports: "التقارير", documents: "الهويات والمستندات" },
-    alertLabels: { attendance_not_started: "لم يبدأ حضور الطلاب اليوم", attendance_unmarked: "هناك طلاب لم يسجل حضورهم بعد", admissions_open: "طلبات قبول تحتاج إلى إجراء", quran_revision_due: "طلاب لديهم مراجعة قرآن مستحقة", staff_leave_pending: "طلبات إجازة الموظفين بانتظار القرار", exam_marks_remaining: "درجات اختبار ما زالت بحاجة إلى إدخال" }
+    routes: { admissions: "القبول", students: "الطلاب", programs: "البرامج والمنهج", attendance: "الحضور", quran: "القرآن والحفظ", exams: "الاختبارات والنتائج", staff: "المعلمون", reports: "التقارير والتحليلات", documents: "الهويات والمستندات", configuration: "تهيئة المؤسسة" },
+    alertLabels: { attendance_not_started: "لم يبدأ حضور الطلاب اليوم", attendance_unmarked: "هناك طلاب لم يسجل حضورهم بعد", admissions_open: "طلبات قبول تحتاج إلى إجراء", quran_revision_due: "طلاب لديهم مراجعة قرآن مستحقة", staff_leave_pending: "طلبات إجازة المعلمين بانتظار القرار", exam_marks_remaining: "درجات اختبار ما زالت بحاجة إلى إدخال" }
   }
 };
 
@@ -196,16 +197,20 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const workspace = await getTenantContext();
   if (!workspace) return null;
   const dashboard = await getOperationalDashboard(locale);
+  const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
+  const showFullSuite = isCapabilityEnabled(clientProfile, "internal_demo_suite");
   const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
   const operationalRoutes = [
     ["admissions", `/${locale}/admissions`],
     ["students", `/${locale}/students`],
+    ["programs", `/${locale}/programs`],
     ["attendance", `/${locale}/attendance`],
     ["quran", `/${locale}/quran`],
     ["exams", `/${locale}/exams`],
     ["staff", `/${locale}/staff`],
     ["reports", `/${locale}/reports`],
-    ["documents", `/${locale}/documents`]
+    ["documents", `/${locale}/documents`],
+    ["configuration", `/${locale}/settings/configuration`]
   ] as const;
 
   return (
@@ -229,7 +234,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
       <section className="dashboard-grid" data-page-section>
         <article className="dashboard-panel dashboard-alert-panel"><header><div><h2>{text.alerts}</h2><p>{text.alertsBody}</p></div><span>{dashboard.alerts.length}</span></header>{dashboard.alerts.length ? <div className="dashboard-alert-list">{dashboard.alerts.map((alert) => <Link className={`dashboard-alert dashboard-alert-${alert.severity}`} href={alert.href} key={alert.key}><div><strong>{text.alertLabels[alert.key] ?? alert.key}</strong><small>{alert.count}</small></div><span aria-hidden="true">→</span></Link>)}</div> : <p className="dashboard-empty">{text.noAlerts}</p>}</article>
-        <article className="dashboard-panel dashboard-route-panel"><header><div><h2>{text.quick}</h2><p>{text.quickBody}</p></div></header><div className="dashboard-route-grid">{operationalRoutes.map(([key, href]) => <Link href={href} key={key}><span>{text.routes[key]}</span><b aria-hidden="true">↗</b></Link>)}</div><Link className="dashboard-suite-link" href={`/${locale}/demo`}>{text.allModules} →</Link></article>
+        <article className="dashboard-panel dashboard-route-panel"><header><div><h2>{text.quick}</h2><p>{text.quickBody}</p></div></header><div className="dashboard-route-grid">{operationalRoutes.map(([key, href]) => <Link href={href} key={key}><span>{text.routes[key]}</span><b aria-hidden="true">↗</b></Link>)}</div>{showFullSuite ? <Link className="dashboard-suite-link" href={`/${locale}/demo`}>{text.allModules} →</Link> : null}</article>
       </section>
 
       <section className="dashboard-section" data-page-section>

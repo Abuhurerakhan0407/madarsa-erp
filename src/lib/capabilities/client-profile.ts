@@ -7,7 +7,8 @@ export type ProductCapability =
   | "library"
   | "whatsapp_automation"
   | "ai_assistant"
-  | "branches_roles_ui";
+  | "branches_roles_ui"
+  | "internal_demo_suite";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -18,6 +19,7 @@ export type ClientCapabilityProfile = Readonly<{
 
 export type ClientProfileConfig = Readonly<{
   profileOverride?: string | null;
+  tenantProfile?: string | null;
   clientV2TenantSlugs?: string | null;
 }>;
 
@@ -37,7 +39,8 @@ const clientV2Profile: ClientCapabilityProfile = {
     "library",
     "whatsapp_automation",
     "ai_assistant",
-    "branches_roles_ui"
+    "branches_roles_ui",
+    "internal_demo_suite"
   ])
 };
 
@@ -58,27 +61,35 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   branches: "branches_roles_ui"
 };
 
-function normalizeTenantSlug(value: string): string {
+function normalizeProfileValue(value: string): string {
   return value.trim().toLowerCase();
 }
 
 function configuredTenantSlugs(value: string | null | undefined): string[] {
   return (value ?? "")
     .split(",")
-    .map(normalizeTenantSlug)
+    .map(normalizeProfileValue)
     .filter((slug) => slug.length > 0);
+}
+
+export function coerceClientProfileKey(value: string | null | undefined): ClientProfileKey {
+  return normalizeProfileValue(value ?? "") === "client-v2" ? "client-v2" : "full-product";
 }
 
 export function resolveClientProfileFromConfig(
   tenantSlug: string,
   config: ClientProfileConfig
 ): ClientCapabilityProfile {
-  const override = config.profileOverride ? normalizeTenantSlug(config.profileOverride) : "";
+  const override = normalizeProfileValue(config.profileOverride ?? "");
 
   if (override === "client-v2") return clientV2Profile;
   if (override === "full-product") return fullProductProfile;
 
-  const normalizedTenantSlug = normalizeTenantSlug(tenantSlug);
+  const tenantProfile = normalizeProfileValue(config.tenantProfile ?? "");
+  if (tenantProfile === "client-v2") return clientV2Profile;
+  if (tenantProfile === "full-product") return fullProductProfile;
+
+  const normalizedTenantSlug = normalizeProfileValue(tenantSlug);
   if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) {
     return clientV2Profile;
   }
@@ -86,9 +97,13 @@ export function resolveClientProfileFromConfig(
   return fullProductProfile;
 }
 
-export function resolveClientProfile(tenantSlug: string): ClientCapabilityProfile {
+export function resolveClientProfile(
+  tenantSlug: string,
+  tenantProfile?: string | null
+): ClientCapabilityProfile {
   return resolveClientProfileFromConfig(tenantSlug, {
     profileOverride: process.env.MADARSA_CLIENT_PROFILE,
+    tenantProfile,
     clientV2TenantSlugs: process.env.MADARSA_CLIENT_V2_TENANT_SLUGS
   });
 }

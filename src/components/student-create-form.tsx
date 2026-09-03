@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { FieldGroup } from "@/components/workspace-ui";
 import type { Locale } from "@/lib/i18n/config";
 
 type Option = { id: number; label: string };
@@ -24,9 +25,9 @@ type CreateBody = {
 };
 
 const copy = {
-  en: { student: "Student details", academic: "Academic placement", guardian: "Guardian", wellbeing: "Health & safeguarding", name: "Student name", native: "Name in Urdu / Arabic", dob: "Date of birth", gender: "Gender", language: "Preferred language", session: "Academic session", program: "Program", group: "Class / group", joined: "Joining date", guardianName: "Guardian name", relationship: "Relationship", phone: "Guardian phone", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Create student", saving: "Creating…", duplicate: "A possible matching person already exists. Review the details before creating a separate student record.", confirm: "Create as separate student", error: "Unable to create the student.", none: "Not assigned" },
-  ur: { student: "طالب علم کی تفصیلات", academic: "تعلیمی تعیناتی", guardian: "سرپرست", wellbeing: "صحت اور حفاظت", name: "طالب علم کا نام", native: "اردو / عربی نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت کی تاریخ", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "سرپرست کا فون", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "طالب علم بنائیں", saving: "بنایا جا رہا ہے…", duplicate: "ممکنہ طور پر ملتا جلتا فرد پہلے سے موجود ہے۔ الگ ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", confirm: "الگ طالب علم بنائیں", error: "طالب علم نہیں بنایا جا سکا۔", none: "متعین نہیں" },
-  ar: { student: "بيانات الطالب", academic: "التسجيل الأكاديمي", guardian: "ولي الأمر", wellbeing: "الصحة والحماية", name: "اسم الطالب", native: "الاسم بالأردية / العربية", dob: "تاريخ الميلاد", gender: "الجنس", language: "اللغة المفضلة", session: "العام الدراسي", program: "البرنامج", group: "الفصل / المجموعة", joined: "تاريخ الالتحاق", guardianName: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "هاتف ولي الأمر", medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", save: "إنشاء الطالب", saving: "جارٍ الإنشاء…", duplicate: "يوجد شخص محتمل مطابق. راجع البيانات قبل إنشاء سجل طالب منفصل.", confirm: "إنشاء طالب منفصل", error: "تعذر إنشاء الطالب.", none: "غير معين" }
+  en: { student: "Student details", academic: "Academic placement", guardian: "Guardian", wellbeing: "Health & safeguarding", name: "Student name", native: "Name in Urdu / Arabic", dob: "Date of birth", gender: "Gender", language: "Preferred language", session: "Academic session", program: "Program", group: "Class / group", joined: "Joining date", guardianName: "Guardian name", relationship: "Relationship", phone: "Guardian phone", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Create student", saving: "Creating…", duplicate: "A possible matching person already exists. Review the details before creating a separate student record.", confirm: "Create as separate student", error: "Unable to create the student.", none: "Not assigned", male: "Male", female: "Female", other: "Other", undisclosed: "Undisclosed", father: "Father", mother: "Mother", guardianRole: "Guardian" },
+  ur: { student: "طالب علم کی تفصیلات", academic: "تعلیمی تعیناتی", guardian: "سرپرست", wellbeing: "صحت اور حفاظت", name: "طالب علم کا نام", native: "اردو / عربی نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت کی تاریخ", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "سرپرست کا فون", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "طالب علم بنائیں", saving: "بنایا جا رہا ہے…", duplicate: "ممکنہ طور پر ملتا جلتا فرد پہلے سے موجود ہے۔ الگ ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", confirm: "الگ طالب علم بنائیں", error: "طالب علم نہیں بنایا جا سکا۔", none: "متعین نہیں", male: "مرد", female: "خاتون", other: "دیگر", undisclosed: "درج نہیں", father: "والد", mother: "والدہ", guardianRole: "سرپرست" },
+  ar: { student: "بيانات الطالب", academic: "التسجيل الأكاديمي", guardian: "ولي الأمر", wellbeing: "الصحة والحماية", name: "اسم الطالب", native: "الاسم بالأردية / العربية", dob: "تاريخ الميلاد", gender: "الجنس", language: "اللغة المفضلة", session: "العام الدراسي", program: "البرنامج", group: "الفصل / المجموعة", joined: "تاريخ الالتحاق", guardianName: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "هاتف ولي الأمر", medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", save: "إنشاء الطالب", saving: "جارٍ الإنشاء…", duplicate: "يوجد شخص محتمل مطابق. راجع البيانات قبل إنشاء سجل طالب منفصل.", confirm: "إنشاء طالب منفصل", error: "تعذر إنشاء الطالب.", none: "غير معين", male: "ذكر", female: "أنثى", other: "أخرى", undisclosed: "غير مذكور", father: "الأب", mother: "الأم", guardianRole: "ولي أمر" }
 } as const;
 
 function value(form: FormData, name: string) { const v = String(form.get(name) || "").trim(); return v || undefined; }
@@ -49,7 +50,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       if (response.status === 409 && payload.duplicateReviewRequired) { setDuplicateBody(body); setError(payload.error || text.duplicate); return; }
       if (!response.ok || !payload.result?.personId) { setError(payload.error || text.error); return; }
       setDuplicateBody(null);
-      router.push(`/${locale}/students/${payload.result.personId}`);
+      router.push(`/${locale}/students/${payload.result.personId}?created=1`);
       router.refresh();
     } catch { setError(text.error); } finally { setBusy(false); }
   }
@@ -69,32 +70,32 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     await create(body);
   }
 
-  return <form className="configuration-form" aria-busy={busy} onSubmit={submit}>
+  return <form className="configuration-form client-v2-form" aria-busy={busy} onSubmit={submit}>
     <section className="panel"><header className="panel-header"><h2>{text.student}</h2></header><div className="configuration-form-grid">
-      <label className="field-label">{text.name}<input className="text-field" name="displayName" required minLength={2} maxLength={160} autoComplete="off" /></label>
-      <label className="field-label">{text.native}<input className="text-field" name="nameNative" maxLength={160} dir="auto" /></label>
-      <label className="field-label">{text.dob}<input className="text-field" name="dateOfBirth" type="date" /></label>
-      <label className="field-label">{text.gender}<select className="text-field" name="gender" defaultValue=""><option value="">—</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="undisclosed">Undisclosed</option></select></label>
-      <label className="field-label">{text.language}<select className="text-field" name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></label>
+      <FieldGroup label={text.name}><input name="displayName" required minLength={2} maxLength={160} autoComplete="off" /></FieldGroup>
+      <FieldGroup label={text.native}><input name="nameNative" maxLength={160} dir="auto" /></FieldGroup>
+      <FieldGroup label={text.dob}><input name="dateOfBirth" type="date" /></FieldGroup>
+      <FieldGroup label={text.gender}><select name="gender" defaultValue=""><option value="">—</option><option value="male">{text.male}</option><option value="female">{text.female}</option><option value="other">{text.other}</option><option value="undisclosed">{text.undisclosed}</option></select></FieldGroup>
+      <FieldGroup label={text.language}><select name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></FieldGroup>
     </div></section>
 
     <section className="panel"><header className="panel-header"><h2>{text.academic}</h2></header><div className="configuration-form-grid">
-      <label className="field-label">{text.session}<select className="text-field" name="sessionId" required value={sessionId || ""} onChange={(e) => setSessionId(Number(e.target.value))}><option value="" disabled>—</option>{sessions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-      <label className="field-label">{text.program}<select className="text-field" name="programId" required value={programId || ""} onChange={(e) => setProgramId(Number(e.target.value))}><option value="" disabled>—</option>{programs.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-      <label className="field-label">{text.group}<select className="text-field" name="groupId" defaultValue=""><option value="">{text.none}</option>{visibleGroups.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-      <label className="field-label">{text.joined}<input className="text-field" name="joinedOn" type="date" /></label>
+      <FieldGroup label={text.session}><select name="sessionId" required value={sessionId || ""} onChange={(event) => setSessionId(Number(event.target.value))}><option value="" disabled>—</option>{sessions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></FieldGroup>
+      <FieldGroup label={text.program}><select name="programId" required value={programId || ""} onChange={(event) => setProgramId(Number(event.target.value))}><option value="" disabled>—</option>{programs.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></FieldGroup>
+      <FieldGroup label={text.group}><select name="groupId" defaultValue=""><option value="">{text.none}</option>{visibleGroups.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></FieldGroup>
+      <FieldGroup label={text.joined}><input name="joinedOn" type="date" /></FieldGroup>
     </div></section>
 
     <section className="panel"><header className="panel-header"><h2>{text.guardian}</h2></header><div className="configuration-form-grid">
-      <label className="field-label">{text.guardianName}<input className="text-field" name="guardianName" maxLength={160} /></label>
-      <label className="field-label">{text.relationship}<select className="text-field" name="relationship" defaultValue="father"><option value="father">Father</option><option value="mother">Mother</option><option value="guardian">Guardian</option></select></label>
-      <label className="field-label">{text.phone}<input className="text-field" name="guardianPhone" inputMode="tel" maxLength={80} /></label>
+      <FieldGroup label={text.guardianName}><input name="guardianName" maxLength={160} /></FieldGroup>
+      <FieldGroup label={text.relationship}><select name="relationship" defaultValue="father"><option value="father">{text.father}</option><option value="mother">{text.mother}</option><option value="guardian">{text.guardianRole}</option></select></FieldGroup>
+      <FieldGroup label={text.phone}><input name="guardianPhone" inputMode="tel" maxLength={80} /></FieldGroup>
     </div></section>
 
     <section className="panel"><header className="panel-header"><h2>{text.wellbeing}</h2></header><div className="configuration-form-grid">
-      <label className="field-label">{text.medical}<textarea className="text-field" name="medicalSummary" rows={3} maxLength={1000} /></label>
-      <label className="field-label">{text.accessibility}<textarea className="text-field" name="accessibilityNeeds" rows={3} maxLength={1000} /></label>
-      <label className="field-label">{text.pickup}<textarea className="text-field" name="pickupRestrictions" rows={3} maxLength={1000} /></label>
+      <FieldGroup label={text.medical}><textarea name="medicalSummary" rows={3} maxLength={1000} /></FieldGroup>
+      <FieldGroup label={text.accessibility}><textarea name="accessibilityNeeds" rows={3} maxLength={1000} /></FieldGroup>
+      <FieldGroup label={text.pickup}><textarea name="pickupRestrictions" rows={3} maxLength={1000} /></FieldGroup>
     </div></section>
 
     <div className="quick-actions"><button className="action-button action-button-primary" type="submit" disabled={busy || !sessions.length || !programs.length}>{busy ? text.saving : text.save}</button>{duplicateBody ? <button className="action-button" type="button" disabled={busy} onClick={() => create({ ...duplicateBody, confirmNewPerson: true })}>{text.confirm}</button> : null}</div>
