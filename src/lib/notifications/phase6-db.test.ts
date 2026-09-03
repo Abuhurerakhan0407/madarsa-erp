@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 function migration(name:string){return readFileSync(resolve(process.cwd(),"supabase/migrations",name),"utf8").toLowerCase();}
 const foundation=migration("20260903100000_client_v2_phase6_notifications.sql");
 const corrections=migration("20260903100100_client_v2_phase6_trigger_corrections.sql");
+const hardening=migration("20260903102500_phase6_private_function_acl_hardening.sql");
 
 describe("Phase 6 notification database contracts",()=>{
   it("adds explicit notice priorities and secure push subscription storage",()=>{
@@ -72,5 +73,21 @@ describe("Phase 6 notification database contracts",()=>{
       expect(foundation).toContain(`revoke all on function public.${rpc} from public,anon,authenticated`);
       expect(foundation).toContain(`grant execute on function public.${rpc} to service_role`);
     }
+  });
+
+  it("revokes browser execution from every Phase 6 private definer helper",()=>{
+    for(const rpc of [
+      "emit_client_v2_in_app_v1(bigint,text,text,text,jsonb,uuid[])",
+      "client_v2_guardian_identities_for_students_v1(bigint,bigint[])",
+      "client_v2_homework_notification_trigger_v1()",
+      "client_v2_calendar_notification_trigger_v1()",
+      "client_v2_schedule_exception_notification_trigger_v1()",
+      "client_v2_result_publication_notification_trigger_v1()",
+      "client_v2_portal_notice_notification_trigger_v1()",
+      "client_v2_attendance_notification_trigger_v1()"
+    ]){
+      expect(hardening).toContain(`revoke all on function private.${rpc} from public, anon, authenticated`);
+    }
+    expect(hardening).not.toContain("grant execute on function private.");
   });
 });
