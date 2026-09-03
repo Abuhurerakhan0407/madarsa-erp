@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import type { Locale } from "@/lib/i18n/config";
 import styles from "./mobile-navigation.module.css";
 
 type MobileNavItem = { key: string; label: string; href: string };
 type MobileNavGroup = { key: string; label: string; items: MobileNavItem[] };
 type MobileNavigationProps = {
-  locale: Locale;
   groups: MobileNavGroup[];
   quickItems: MobileNavItem[];
   menuLabel: string;
@@ -71,10 +69,6 @@ export function MobileNavigation({
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   const closeDrawer = (restoreFocus = true) => {
     setOpen(false);
