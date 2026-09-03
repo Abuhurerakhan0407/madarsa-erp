@@ -10,6 +10,7 @@ const foundation = migration("20260903070500_phase4_quran_register_foundation.sq
 const readModel = migration("20260903071000_phase4_quran_daily_register_read.sql");
 const quickRuntime = migration("20260903071500_phase4_quran_daily_quick_runtime.sql");
 const asOfDate = migration("20260903072000_phase4_quran_register_as_of_date.sql");
+const backdateGuard = migration("20260903072500_phase4_quran_backdate_revision_guard.sql");
 
 describe("Phase 4 Qur'an & Hifz database contracts", () => {
   it("keeps target and roster status tables tenant scoped and RLS protected", () => {
@@ -31,10 +32,12 @@ describe("Phase 4 Qur'an & Hifz database contracts", () => {
     expect(readModel).not.toContain("security definer");
     expect(quickRuntime).not.toContain("security definer");
     expect(asOfDate).not.toContain("security definer");
+    expect(backdateGuard).not.toContain("security definer");
   });
 
   it("reuses the proven idempotent recitation engine for real lesson outcomes", () => {
     expect(quickRuntime).toContain("public.record_quran_hifz_attempt_idempotent");
+    expect(backdateGuard).toContain("public.record_quran_hifz_attempt_idempotent");
     expect(quickRuntime).toContain("'pass'");
     expect(quickRuntime).toContain("'repeat'");
     expect(quickRuntime).toContain("'needs_support'");
@@ -69,5 +72,15 @@ describe("Phase 4 Qur'an & Hifz database contracts", () => {
   it("prevents revision due dates from preceding the lesson date in the database runtime", () => {
     expect(quickRuntime).toContain("p_revision_due_on<p_session_date");
     expect(quickRuntime).toContain("revision due date cannot be before the lesson date");
+  });
+
+  it("preserves future revision obligations when a lesson is entered for an earlier date", () => {
+    expect(backdateGuard).toContain("v_future_revisions");
+    expect(backdateGuard).toContain("o.due_on>p_session_date or o.created_at::date>p_session_date");
+    expect(backdateGuard).toContain("completed_by_attempt_id=v_attempt_id");
+    expect(backdateGuard).toContain("future_revisions_preserved");
+    expect(backdateGuard).toContain("rs.session_date<=p_session_date");
+    expect(backdateGuard).toContain("revoke all on function public.record_quran_hifz_daily_quick_v1");
+    expect(backdateGuard).toContain("to service_role");
   });
 });
