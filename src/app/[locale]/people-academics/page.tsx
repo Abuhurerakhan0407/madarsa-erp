@@ -1,3 +1,4 @@
+import { AcademicTimetableViews } from "@/components/academic-timetable-views";
 import { AcademicsTimetableManager } from "@/components/academics-timetable-manager";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAcademicsWorkspace } from "@/lib/academics/workspace";
@@ -27,5 +28,6 @@ export default async function PeopleAcademicsPage({ params, searchParams }: Prop
   return <>
     <WorkspacePageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} meta={text.meta(data.selectedDate,data.timezone)} />
     <AcademicsTimetableManager locale={locale} data={data}/>
+    <AcademicTimetableViews locale={locale} data={data}/>
   </>;
 }
