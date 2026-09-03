@@ -1,0 +1,57 @@
+.workspace-inline-state {
+  display: grid;
+  gap: 0.28rem;
+  min-height: 7rem;
+  align-content: center;
+  padding: 1rem 0.25rem;
+  border-block: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.workspace-inline-state strong {
+  color: var(--foreground);
+  font-size: 0.88rem;
+  font-weight: 740;
+}
+
+.workspace-inline-state span {
+  max-width: 62ch;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.client-v2-main .panel {
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.client-v2-main .metric {
+  min-height: 6.6rem;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.client-v2-main .metric strong {
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+}
+
+.client-v2-main .pagination-row {
+  min-height: 3.4rem;
+  align-items: center;
+}
+
+@media (max-width: 620px) {
+  .client-v2-main .action-button,
+  .client-v2-main button,
+  .client-v2-main input,
+  .client-v2-main select,
+  .client-v2-main textarea {
+    min-height: 2.75rem;
+  }
+
+  .client-v2-main .metric-grid {
+    gap: 0.55rem;
+  }
+
+  .client-v2-main .metric {
+    min-height: 5.8rem;
+  }
+}
