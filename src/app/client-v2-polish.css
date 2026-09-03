@@ -20,6 +20,100 @@
   line-height: 1.5;
 }
 
+.workspace-context-strip {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  padding: 0.9rem 0.25rem;
+  border-block: 1px solid var(--border);
+}
+
+.workspace-context-strip > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.workspace-context-strip strong {
+  font-size: 0.78rem;
+}
+
+.workspace-context-strip span,
+.workspace-context-strip p {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.workspace-context-strip p {
+  max-width: 64ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.workspace-record-list {
+  border-block: 1px solid var(--border);
+}
+
+.workspace-record-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr) auto;
+  gap: 1rem;
+  align-items: center;
+  min-height: 5.75rem;
+  padding: 0.8rem 0.25rem;
+  border-block-end: 1px solid var(--border);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: padding-inline 140ms ease, background 140ms ease;
+}
+
+.workspace-record-row:last-child {
+  border-block-end: 0;
+}
+
+.workspace-record-row:hover {
+  padding-inline: 0.65rem;
+  background: color-mix(in srgb, var(--surface-muted) 75%, transparent);
+}
+
+.workspace-record-main,
+.workspace-record-meta {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.workspace-record-main strong {
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-record-main small,
+.workspace-record-meta,
+.workspace-record-action {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.workspace-record-meta time,
+.workspace-record-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-record-action {
+  color: var(--accent-strong);
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+[dir="rtl"] .workspace-record-action {
+  unicode-bidi: plaintext;
+}
+
 .client-v2-main .panel {
   box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
 }
@@ -38,7 +132,43 @@
   align-items: center;
 }
 
+@media (max-width: 760px) {
+  .workspace-record-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .workspace-record-meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 @media (max-width: 620px) {
+  .workspace-context-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-record-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+    padding-block: 0.95rem;
+  }
+
+  .workspace-record-meta,
+  .workspace-record-action {
+    grid-column: 1;
+  }
+
+  .workspace-record-meta {
+    grid-row: auto;
+  }
+
+  .workspace-record-action {
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+  }
+
   .client-v2-main .action-button,
   .client-v2-main button,
   .client-v2-main input,
@@ -53,5 +183,11 @@
 
   .client-v2-main .metric {
     min-height: 5.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-record-row {
+    transition: none;
   }
 }
