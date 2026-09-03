@@ -41,6 +41,6 @@ export async function publishPortalNotice(input:{audienceType:"tenant"|"parents"
 
 export async function claimPortalAccess(code:string){const identity=await getVerifiedIdentity();if(!identity)throw new Error("Authentication required.");const admin=createAdminClient();const{data,error}=await admin.rpc("claim_portal_access_code_v1",{p_identity_id:identity.id,p_token_digest:digest(code)});if(error)throw new Error(error.message);return object(data);}
 
-export async function getPortalHome(tenantId:number){const identity=await getVerifiedIdentity();if(!identity)throw new Error("Authentication required.");const admin=createAdminClient();const{data,error}=await admin.rpc("get_portal_home_v2",{p_identity_id:identity.id,p_tenant_id:tenantId});if(error)throw new Error(error.message);return object(data);}
+export async function getPortalHome(tenantId:number){const identity=await getVerifiedIdentity();if(!identity)throw new Error("Authentication required.");const admin=createAdminClient();const{data,error}=await admin.rpc("get_portal_home_v3",{p_identity_id:identity.id,p_tenant_id:tenantId});if(error)throw new Error(error.message);return object(data);}
 
 export async function markPortalNoticeRead(tenantId:number,noticeId:number){const identity=await getVerifiedIdentity();if(!identity)throw new Error("Authentication required.");const admin=createAdminClient();const{data,error}=await admin.rpc("mark_portal_notice_read_v1",{p_identity_id:identity.id,p_tenant_id:tenantId,p_notice_id:noticeId});if(error)throw new Error(error.message);return object(data);}
