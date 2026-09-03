@@ -15,9 +15,10 @@ type WorkspacePageHeaderProps = {
   description?: string;
   meta?: ReactNode;
   actions?: WorkspaceAction[];
+  actionSlot?: ReactNode;
 };
 
-export function WorkspacePageHeader({ eyebrow, title, description, meta, actions = [] }: WorkspacePageHeaderProps) {
+export function WorkspacePageHeader({ eyebrow, title, description, meta, actions = [], actionSlot }: WorkspacePageHeaderProps) {
   return (
     <header className="workspace-page-header" data-page-section>
       <div className="workspace-page-copy">
@@ -27,7 +28,7 @@ export function WorkspacePageHeader({ eyebrow, title, description, meta, actions
       </div>
       <div className="workspace-page-side">
         {meta ? <div className="workspace-page-meta">{meta}</div> : null}
-        {actions.length ? (
+        {actions.length || actionSlot ? (
           <div className="workspace-actions" aria-label="Page actions">
             {actions.map((action) => {
               const className = action.kind === "primary" ? "action-button action-button-primary" : "action-button";
@@ -35,6 +36,7 @@ export function WorkspacePageHeader({ eyebrow, title, description, meta, actions
               if (action.href) return <Link className={className} href={action.href} key={action.label}>{action.label}</Link>;
               return <button className={className} key={action.label} onClick={action.onClick} type="button">{action.label}</button>;
             })}
+            {actionSlot}
           </div>
         ) : null}
       </div>
