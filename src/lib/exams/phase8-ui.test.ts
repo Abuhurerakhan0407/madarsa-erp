@@ -38,9 +38,10 @@ describe("Phase 8 Exams & Results V2 UI boundaries",()=>{
   });
   it("shows analysis from the server result dataset",()=>{
     const hub=read("src/components/exams-results-v2-hub.tsx");
-    expect(hub).toContain("data.analysis?.available");
-    expect(hub).toContain("gradeDistribution");
-    expect(hub).toContain("data.analysis.subjects");
-    expect(hub).toContain("data.analysis.students");
+    expect(hub).toContain("const analysis=data.analysis");
+    expect(hub).toContain("analysis?.available");
+    expect(hub).toContain("analysis.gradeDistribution");
+    expect(hub).toContain("analysis.subjects");
+    expect(hub).toContain("analysis.students");
   });
 });
