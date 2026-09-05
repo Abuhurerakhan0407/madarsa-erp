@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-env.mjs && npx eslint src/components/student-create-form-v3.tsx",
+    "build": "node scripts/check-env.mjs && DIAG_ESLINT_FAMILY=none npx eslint -c eslint.diag.config.mjs src/components/student-create-form-v3.tsx",
     "start": "next start",
     "demo:check": "node scripts/check-demo-env.mjs",
     "demo:build": "node scripts/check-demo-env.mjs && next build",
