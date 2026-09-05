@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -74,10 +74,8 @@ export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Cross-origin mutation blocked." }, { status: 403 });
   if (!isJsonRequest(request)) return NextResponse.json({ error: "JSON request required." }, { status: 415 });
 
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 8192) {
-    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
-  }
+  const body = await readBoundedJson(request, 8_192);
+  if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.status });
 
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -86,13 +84,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
-  const parsed = parseInput(body);
+  const parsed = parseInput(body.value);
   if (!parsed.value) return NextResponse.json({ error: parsed.error ?? "Check the admission details." }, { status: 400 });
 
   const admin = createAdminClient();
