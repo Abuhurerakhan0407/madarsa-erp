@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-env.mjs && npm run lint && npm run typecheck && npm test && npm install --prefix /tmp/pw-serverless --no-save --package-lock=false @sparticuz/chromium@140.0.0 && node -e \"const serverless = require('/tmp/pw-serverless/node_modules/@sparticuz/chromium'); const { chromium } = require('@playwright/test'); (async () => { const executablePath = await serverless.executablePath(); const browser = await chromium.launch({ executablePath, args: serverless.args, headless: true }); const page = await browser.newPage(); await page.setContent('<h1>serverless-browser-ok</h1>'); if ((await page.textContent('h1')) !== 'serverless-browser-ok') throw new Error('Serverless Chromium smoke assertion failed'); await browser.close(); })().catch((error) => { console.error(error); process.exit(1); });\" && next build",
+    "build": "node scripts/check-env.mjs && npm run lint && npm run typecheck && npm test && npm install --prefix /tmp/pw-serverless --no-save --package-lock=false @sparticuz/chromium@140.0.0 && node scripts/run-serverless-playwright.mjs && next build",
     "start": "next start",
     "demo:check": "node scripts/check-demo-env.mjs",
     "demo:build": "node scripts/check-demo-env.mjs && next build",
