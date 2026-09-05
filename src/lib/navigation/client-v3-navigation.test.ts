@@ -1,5 +1,5 @@
 import {describe,expect,it} from "vitest";
-import {classifyNavigationAudience} from "./audience";
+import {classifyNavigationAudience} from "./audience-classifier";
 import {getClientV3Navigation} from "./client-v3-navigation";
 
 describe("Client V3 navigation",()=>{
