@@ -6,6 +6,7 @@ import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 type AdmissionPhotoType = "image/jpeg" | "image/png" | "image/webp";
+type ApplicationRecord = { id: number; branch_id: number; state: string };
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const MAX_MULTIPART_BYTES = MAX_PHOTO_BYTES + 512 * 1024;
@@ -85,15 +86,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Multipart photo upload required." }, { status: 415 });
   }
 
-  const multipart = await readBoundedMultipart(request, contentType);
-  if (!multipart.ok) return NextResponse.json({ error: multipart.error }, { status: multipart.status });
-
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
+
+  const multipart = await readBoundedMultipart(request, contentType);
+  if (!multipart.ok) return NextResponse.json({ error: multipart.error }, { status: multipart.status });
 
   const applicationId = Number(multipart.value.get("applicationId"));
   const photo = multipart.value.get("photo");
@@ -105,6 +106,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Student photo must be 5 MB or smaller." }, { status: 413 });
   }
 
+  const admin = createAdminClient();
+  const { data: application, error: applicationError } = await admin
+    .from("applications")
+    .select("id,branch_id,state")
+    .eq("tenant_id", workspace.tenantId)
+    .eq("id", applicationId)
+    .maybeSingle();
+  if (applicationError) {
+    return NextResponse.json({ error: "Unable to load this application." }, { status: 500 });
+  }
+  if (!application) {
+    return NextResponse.json({ error: "Admission application not found." }, { status: 404 });
+  }
+
+  const app = application as ApplicationRecord;
+  const { data: allowed, error: permissionError } = await admin.rpc("operator_has_permission_v1", {
+    p_identity_id: identity.id,
+    p_tenant_id: workspace.tenantId,
+    p_branch_id: app.branch_id,
+    p_permission_code: "admissions.application.review"
+  });
+  if (permissionError) {
+    return NextResponse.json({ error: "Unable to verify admission permission." }, { status: 500 });
+  }
+  if (allowed !== true) {
+    return NextResponse.json({ error: "Admission review permission required." }, { status: 403 });
+  }
+
   const bytes = new Uint8Array(await photo.arrayBuffer());
   const detectedType = detectPhotoType(bytes);
   if (!detectedType || photo.type !== detectedType) {
@@ -113,7 +142,6 @@ export async function POST(request: Request) {
   const extension = allowedTypes.get(detectedType);
   if (!extension) return NextResponse.json({ error: "Unsupported student photo type." }, { status: 415 });
 
-  const admin = createAdminClient();
   const storagePath = `${workspace.tenantId}/admissions/intake/${randomBytes(18).toString("hex")}.${extension}`;
   const bucket = admin.storage.from("tenant-documents");
   const upload = await bucket.upload(storagePath, bytes, { contentType: detectedType, cacheControl: "0", upsert: false });
