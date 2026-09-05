@@ -6,6 +6,22 @@ test("Client V3 walk-in admission stays protected behind sign in", async ({ page
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
+test("public admission renders the complete Urdu intake in RTL without horizontal overflow", async ({ page }) => {
+  await page.goto("/apply/abu-school?lang=ur");
+  const shell = page.locator("main.public-intake-shell");
+  await expect(shell).toHaveAttribute("dir", "rtl");
+  await expect(shell).toHaveAttribute("lang", "ur");
+  await expect(page.getByText("طالب علم کا مکمل نام", { exact: true })).toBeVisible();
+  await expect(page.getByText("سرپرست کا فون", { exact: true })).toBeVisible();
+  await expect(page.getByText("کلاس / گروپ", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "درخواست جمع کریں" })).toBeVisible();
+  const viewport = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth
+  }));
+  expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.innerWidth + 1);
+});
+
 test("walk-in admission API rejects anonymous callers", async ({ request }) => {
   const response = await request.post("/api/admissions/walk-in", {
     headers: { "content-type": "application/json" },
