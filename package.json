@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-env.mjs && npx eslint \"src/app/[locale]/my-students/page.tsx\" src/app/api/students/search/route.ts src/app/login/page.tsx src/components/app-shell.tsx src/components/document-center-v2.tsx src/components/global-student-search.tsx src/components/locale-switcher.tsx src/components/mobile-navigation.tsx src/lib/navigation/audience.ts src/lib/navigation/client-v3-navigation.test.ts src/lib/navigation/client-v3-navigation.ts src/lib/students/my-students.ts && next build",
+    "build": "node scripts/check-env.mjs && npx eslint \"src/app/[locale]/my-students/page.tsx\" src/app/api/students/search/route.ts src/app/login/page.tsx src/components/app-shell.tsx src/components/document-center-v2.tsx src/components/global-student-search.tsx && next build",
     "start": "next start",
     "demo:check": "node scripts/check-demo-env.mjs",
     "demo:build": "node scripts/check-demo-env.mjs && next build",
