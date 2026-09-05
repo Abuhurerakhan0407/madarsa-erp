@@ -128,7 +128,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ result: { applicationId, state, idempotent: true } }, { status: 200 });
       }
       if (state === "submitted") await progress("start_review");
-      if (state === "verification") await progress("complete_review", reason);
+      if (state === "verification") await progress("complete_review");
       if (state === "decision") await progress("reject", reason);
       if (state !== "rejected") {
         return NextResponse.json({ error: "This application can no longer be rejected from its current state." }, { status: 409 });
