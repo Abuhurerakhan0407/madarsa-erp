@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {describe,expect,it} from 'vitest';
-import {clientDocumentTypes,documentAvailable} from './workspace';
+import {clientDocumentTypes,documentAvailable} from './contract';
 const migration=readFileSync('supabase/migrations/20260903203000_phase10_documents_reports.sql','utf8');
 describe('Phase 10 documents and reports contract',()=>{
  it('keeps all five required document types',()=>{expect(clientDocumentTypes).toEqual(['student_id_card','student_profile','status_certificate','exam_report_card','quran_progress_report']);});
