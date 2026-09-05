@@ -3,6 +3,7 @@ import { AdmissionSimpleActions } from "@/components/admission-simple-actions";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
 import { admissionDecisionOutcomeLabel, admissionReviewOutcomeLabel, admissionReviewTypeLabel, admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
+import { getStudentCreateOptions } from "@/lib/students/register";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
@@ -91,7 +92,10 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
   const workspace = await getTenantContext();
   if (!workspace || !Number.isSafeInteger(applicationId) || applicationId <= 0) notFound();
 
-  const detail = await getAdmissionDetail(workspace, applicationId);
+  const [detail, createOptions] = await Promise.all([
+    getAdmissionDetail(workspace, applicationId),
+    getStudentCreateOptions(locale)
+  ]);
   if (!detail) notFound();
 
   const text = copy[locale];
@@ -133,9 +137,15 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
 
         <AdmissionSimpleActions
           applicationId={detail.id}
+          applicantData={detail.applicantData}
           convertedStudent={detail.convertedStudent}
           duplicateReviewStatus={detail.duplicateReviewStatus}
+          groups={createOptions.groups}
+          hasUsablePhoto={detail.hasUsablePhoto}
           locale={locale}
+          missingConversionFields={detail.missingConversionFields}
+          programId={detail.programId}
+          sessionId={detail.sessionId}
           state={detail.state}
         />
       </section>
