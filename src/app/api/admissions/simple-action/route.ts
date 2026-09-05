@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -54,6 +54,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "JSON request required." }, { status: 415 });
   }
 
+  const body = await readBoundedJson(request, 8_192);
+  if (!body.ok) {
+    return NextResponse.json({ error: body.error }, { status: body.status });
+  }
+
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
@@ -62,17 +67,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
+  if (!body.value || typeof body.value !== "object" || Array.isArray(body.value)) {
     return NextResponse.json({ error: "Invalid admission action." }, { status: 400 });
   }
 
-  const input = body as Record<string, unknown>;
+  const input = body.value as Record<string, unknown>;
   const applicationId = positiveId(input.applicationId);
   const action = actionValue(input.action);
   const reason = reasonValue(input.reason);
