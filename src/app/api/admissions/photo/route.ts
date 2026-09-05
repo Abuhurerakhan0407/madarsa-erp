@@ -8,6 +8,7 @@ import { getTenantContext } from "@/lib/tenancy/context";
 type AdmissionPhotoType = "image/jpeg" | "image/png" | "image/webp";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_MULTIPART_BYTES = MAX_PHOTO_BYTES + 512 * 1024;
 const PHOTO_TTL_MS = 2 * 60 * 60 * 1000;
 const allowedTypes = new Map<AdmissionPhotoType, string>([
   ["image/jpeg", "jpg"],
@@ -30,16 +31,62 @@ function detectPhotoType(bytes: Uint8Array): AdmissionPhotoType | null {
   return null;
 }
 
+async function readBoundedMultipart(
+  request: Request,
+  contentType: string
+): Promise<{ ok: true; value: FormData } | { ok: false; status: 400 | 413; error: string }> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_MULTIPART_BYTES) {
+    return { ok: false, status: 413, error: "Student photo must be 5 MB or smaller." };
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return { ok: false, status: 400, error: "Unable to read student photo." };
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      total += chunk.value.byteLength;
+      if (total > MAX_MULTIPART_BYTES) {
+        void reader.cancel().catch(() => {});
+        return { ok: false, status: 413, error: "Student photo must be 5 MB or smaller." };
+      }
+      chunks.push(chunk.value);
+    }
+  } catch {
+    return { ok: false, status: 400, error: "Unable to read student photo." };
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const value = await new Response(buffer, { headers: { "content-type": contentType } }).formData();
+    return { ok: true, value };
+  } catch {
+    return { ok: false, status: 400, error: "Unable to read student photo." };
+  }
+}
+
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Cross-origin upload blocked." }, { status: 403 });
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
   if (!contentType.startsWith("multipart/form-data")) {
     return NextResponse.json({ error: "Multipart photo upload required." }, { status: 415 });
   }
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_PHOTO_BYTES + 512 * 1024) {
-    return NextResponse.json({ error: "Student photo must be 5 MB or smaller." }, { status: 413 });
-  }
+
+  const multipart = await readBoundedMultipart(request, contentType);
+  if (!multipart.ok) return NextResponse.json({ error: multipart.error }, { status: multipart.status });
 
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -48,15 +95,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
 
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Unable to read student photo." }, { status: 400 });
-  }
-
-  const applicationId = Number(formData.get("applicationId"));
-  const photo = formData.get("photo");
+  const applicationId = Number(multipart.value.get("applicationId"));
+  const photo = multipart.value.get("photo");
   if (!Number.isSafeInteger(applicationId) || applicationId <= 0) {
     return NextResponse.json({ error: "Admission application is invalid." }, { status: 400 });
   }
