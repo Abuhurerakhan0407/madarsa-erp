@@ -3,10 +3,8 @@ import {useMemo,useState} from 'react';
 import Link from 'next/link';
 import type {Locale} from '@/lib/i18n/config';
 import {documentsCopy} from '@/lib/documents/copy';
-type ClientDocumentType='student_id_card'|'student_profile'|'status_certificate'|'exam_report_card'|'quran_progress_report';
-type DocumentStudent={personId:number;studentNumber:string;admissionNumber:string|null;name:string;nameNative:string|null;sessionId:number|null;programId:number|null;groupId:number|null;academicYear:string|null;program:string|null;classGroup:string|null;photoAvailable:boolean;idCardAvailable:boolean;profileAvailable:boolean;quranProgressAvailable:boolean;reportCardIssued:boolean;reportCardIssuedAt:string|null};
+import {documentAvailable,type ClientDocumentType,type DocumentStudent} from '@/lib/documents/contract';
 type Filters={sessionId:number|null;programId:number|null;groupId:number|null;studentPersonId:number|null;search:string|null};
-const documentAvailable=(student:DocumentStudent,type:ClientDocumentType):boolean=>{if(type==='student_id_card')return student.idCardAvailable;if(type==='student_profile')return student.profileAvailable;if(type==='quran_progress_report')return student.quranProgressAvailable;if(type==='exam_report_card')return student.reportCardIssued;return true;};
 const previewPath=(locale:Locale,type:ClientDocumentType,personId:number)=>type==='student_id_card'?`/${locale}/students/${personId}/id-card`:type==='student_profile'?`/${locale}/students/${personId}`:type==='status_certificate'?`/${locale}/documents/student-status/${personId}`:type==='exam_report_card'?`/${locale}/exams/report-card/${personId}`:`/${locale}/quran/${personId}`;
 export function DocumentCenterV2({locale,type,rows,total,selectionLimit,filters}:{locale:Locale;type:ClientDocumentType;rows:DocumentStudent[];total:number;selectionLimit:number;filters:Filters}){
  const t=documentsCopy[locale];const [selected,setSelected]=useState<number[]>([]);const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);const available=useMemo(()=>rows.filter(row=>documentAvailable(row,type)),[rows,type]);
