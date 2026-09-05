@@ -45,3 +45,51 @@ test("simple admission actions reject cross-origin mutations first", async ({ re
   });
   expect(response.status()).toBe(403);
 });
+
+test("legacy completion details reject anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/admissions/complete-details", {
+    headers: { "content-type": "application/json" },
+    data: {
+      applicationId: 1,
+      nativeName: "احمد خان",
+      gender: "male",
+      guardianName: "Yusuf Khan",
+      guardianRelationship: "father",
+      guardianPhone: "+919876543210",
+      guardianEmail: "guardian@example.com",
+      groupKey: "dars_year_1_a",
+      joiningDate: "2026-09-05"
+    }
+  });
+  expect(response.status()).toBe(401);
+});
+
+test("legacy completion details reject cross-origin mutations first", async ({ request }) => {
+  const response = await request.post("/api/admissions/complete-details", {
+    headers: { "content-type": "application/json", origin: "https://attacker.example" },
+    data: { applicationId: 1 }
+  });
+  expect(response.status()).toBe(403);
+});
+
+test("staff admission photo attachment rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/admissions/photo", {
+    multipart: {
+      applicationId: "1",
+      photo: {
+        name: "student.png",
+        mimeType: "image/png",
+        buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0])
+      }
+    }
+  });
+  expect(response.status()).toBe(401);
+});
+
+test("staff admission photo attachment rejects cross-origin uploads first", async ({ request }) => {
+  const response = await request.post("/api/admissions/photo", {
+    headers: { origin: "https://attacker.example" },
+    multipart: { applicationId: "1" }
+  });
+  expect(response.status()).toBe(403);
+});
