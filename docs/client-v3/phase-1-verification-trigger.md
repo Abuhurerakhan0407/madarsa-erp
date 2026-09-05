@@ -1,8 +1,8 @@
 # Client V3 Phase 1 verification trigger
 
-Status: RETRIGGERED AFTER VERCEL VERIFIED-COMMIT POLICY DISABLED.
+Status: RETRIGGERED AFTER STALE VERCEL PROJECT DISCONNECTED.
 
-This docs-only commit intentionally retriggers GitHub Actions and the Vercel preview after the Vercel Git integration was reconnected and the project-level Require Verified Commits policy was explicitly disabled on 2026-09-05.
+This docs-only commit intentionally retriggers GitHub Actions and the Vercel preview after the stale `abuhurerak8-3381/madarsa-erp` Vercel project was disconnected from `Abuhurerakhan0407/madarsa-erp`. The intended Vercel project remains under `iamabuhurerakhan-1107's projects`, and project-level Require Verified Commits is disabled.
 
 Phase 1 is not complete until the exact resulting head passes lint, typecheck, tests, production build, and Playwright E2E, with the preview/build path also verified. No Phase 2 work is authorized by this file.
 
