@@ -138,7 +138,7 @@ export default async function AdmissionsPage({ params, searchParams }: Admission
           <section className="workspace-context-strip" data-page-section>
             <div><strong>{text.onlineTab}</strong><span>{items.length} {text.count}</span></div>
             <div className="quick-actions">
-              <a className="action-button" href={publicHref}>{text.publicForm}</a>
+              <Link className="action-button" href={publicHref}>{text.publicForm}</Link>
               <Link className="action-button" href={`/${locale}/admissions/enquiries`}>{text.enquiries}</Link>
             </div>
           </section>
