@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-env.mjs && npm run lint && npm run typecheck && npm test -- src/lib/documents/phase10-contract.test.ts && next build",
+    "build": "node scripts/check-env.mjs && npm run lint && npm run typecheck && npm test -- src/lib/reports/model.test.ts && next build",
     "start": "next start",
     "demo:check": "node scripts/check-demo-env.mjs",
     "demo:build": "node scripts/check-demo-env.mjs && next build",
