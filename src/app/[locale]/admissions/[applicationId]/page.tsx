@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { AdmissionActionPanel } from "@/components/admission-action-panel";
-import { AdmissionConversionPanel } from "@/components/admission-conversion-panel";
+import { AdmissionSimpleActions } from "@/components/admission-simple-actions";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
 import { admissionDecisionOutcomeLabel, admissionReviewOutcomeLabel, admissionReviewTypeLabel, admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
@@ -8,16 +7,15 @@ import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
   en: {
-    kicker: "Admissions · Application",
-    title: "Application review",
-    back: "Back to admissions",
-    reference: "Tracking reference",
-    revision: "Application revision",
+    kicker: "Admissions",
+    title: "Application",
+    back: "Back to Admissions",
+    reference: "Reference",
     submitted: "Submitted",
-    applicant: "Applicant information",
+    applicant: "Applicant details",
     program: "Program",
-    session: "Academic session",
-    history: "Review and decision history",
+    session: "Academic year",
+    history: "View history",
     noHistory: "No staff review has been recorded yet.",
     review: "Review",
     decision: "Decision",
@@ -25,16 +23,15 @@ const copy = {
     notes: "Notes"
   },
   ur: {
-    kicker: "داخلہ · درخواست",
-    title: "درخواست کا جائزہ",
-    back: "داخلہ درخواستوں پر واپس جائیں",
-    reference: "ٹریکنگ حوالہ",
-    revision: "درخواست کا ورژن",
+    kicker: "داخلہ",
+    title: "درخواست",
+    back: "داخلہ پر واپس",
+    reference: "حوالہ",
     submitted: "جمع شدہ",
-    applicant: "درخواست گزار کی معلومات",
+    applicant: "درخواست گزار کی تفصیلات",
     program: "پروگرام",
     session: "تعلیمی سال",
-    history: "جائزہ اور فیصلے کی تاریخ",
+    history: "تاریخ دیکھیں",
     noHistory: "ابھی کوئی عملہ جائزہ درج نہیں ہوا۔",
     review: "جائزہ",
     decision: "فیصلہ",
@@ -42,16 +39,15 @@ const copy = {
     notes: "نوٹ"
   },
   ar: {
-    kicker: "القبول · الطلب",
-    title: "مراجعة الطلب",
-    back: "العودة إلى طلبات القبول",
-    reference: "مرجع التتبع",
-    revision: "نسخة الطلب",
+    kicker: "القبول",
+    title: "الطلب",
+    back: "العودة إلى القبول",
+    reference: "المرجع",
     submitted: "مُقدّم",
     applicant: "بيانات المتقدم",
     program: "البرنامج",
     session: "العام الدراسي",
-    history: "سجل المراجعات والقرارات",
+    history: "عرض السجل",
     noHistory: "لم يتم تسجيل مراجعة من الموظفين بعد.",
     review: "مراجعة",
     decision: "قرار",
@@ -62,10 +58,15 @@ const copy = {
 
 const fieldLabels: Record<string, Record<Locale, string>> = {
   applicant_name: { en: "Applicant name", ur: "درخواست گزار کا نام", ar: "اسم المتقدم" },
+  native_name: { en: "Native name", ur: "اردو / عربی نام", ar: "الاسم المحلي" },
   date_of_birth: { en: "Date of birth", ur: "تاریخ پیدائش", ar: "تاريخ الميلاد" },
+  gender: { en: "Gender", ur: "جنس", ar: "الجنس" },
   guardian_name: { en: "Guardian name", ur: "سرپرست کا نام", ar: "اسم ولي الأمر" },
+  guardian_relationship: { en: "Relationship", ur: "رشتہ", ar: "صلة القرابة" },
   guardian_phone: { en: "Guardian phone", ur: "سرپرست کا فون", ar: "هاتف ولي الأمر" },
   guardian_email: { en: "Guardian email", ur: "سرپرست کا ای میل", ar: "بريد ولي الأمر" },
+  group_key: { en: "Class / group", ur: "کلاس / گروپ", ar: "الفصل / المجموعة" },
+  joining_date: { en: "Joining date", ur: "تاریخ شمولیت", ar: "تاريخ الالتحاق" },
   address: { en: "Address", ur: "پتہ", ar: "العنوان" }
 };
 
@@ -104,7 +105,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
           <h1>{text.title}</h1>
           <p>{admissionStateLabel(locale, detail.state)} · {text.reference}: <code>{detail.trackingId.slice(0, 8)}</code></p>
         </div>
-        <a className="action-button" href={`/${locale}/admissions`}>{text.back}</a>
+        <a className="action-button" href={`/${locale}/admissions?view=online`}>{text.back}</a>
       </section>
 
       <section className="configuration-detail-grid">
@@ -122,19 +123,15 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
         </article>
 
         <article className="configuration-detail-card">
-          <span>{text.revision}</span>
-          <h2>#{detail.revision}</h2>
-          <p>{text.program}: {localized(detail.programLabels, locale)}</p>
+          <span>{admissionStateLabel(locale, detail.state)}</span>
+          <h2>{localized(detail.programLabels, locale)}</h2>
           <p>{text.session}: {localized(detail.sessionLabels, locale)}</p>
-          <p>
-            {text.submitted}: {detail.submittedAt
-              ? new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeStyle: "short" }).format(new Date(detail.submittedAt))
-              : "—"}
-          </p>
+          <p>{text.submitted}: {detail.submittedAt
+            ? new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeStyle: "short" }).format(new Date(detail.submittedAt))
+            : "—"}</p>
         </article>
 
-        <AdmissionActionPanel applicationId={detail.id} locale={locale} state={detail.state} />
-        <AdmissionConversionPanel
+        <AdmissionSimpleActions
           applicationId={detail.id}
           convertedStudent={detail.convertedStudent}
           duplicateReviewStatus={detail.duplicateReviewStatus}
@@ -143,14 +140,8 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
         />
       </section>
 
-      <section className="configuration-section" aria-labelledby="admission-history-title">
-        <header className="section-heading">
-          <div>
-            <p>{historyCount}</p>
-            <h2 id="admission-history-title">{text.history}</h2>
-          </div>
-        </header>
-
+      <details className="configuration-section" data-page-section>
+        <summary>{text.history} ({historyCount})</summary>
         {historyCount === 0 ? (
           <div className="empty-state"><p>{text.noHistory}</p></div>
         ) : (
@@ -173,7 +164,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
             ))}
           </div>
         )}
-      </section>
+      </details>
     </>
   );
 }
