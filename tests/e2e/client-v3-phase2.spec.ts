@@ -46,6 +46,14 @@ test("walk-in admission API rejects cross-origin mutations before authentication
   expect(response.status()).toBe(403);
 });
 
+test("walk-in admission API rejects oversized JSON before authentication", async ({ request }) => {
+  const response = await request.post("/api/admissions/walk-in", {
+    headers: { "content-type": "application/json" },
+    data: { padding: "x".repeat(20_000) }
+  });
+  expect(response.status()).toBe(413);
+});
+
 test("simple admission actions reject anonymous callers", async ({ request }) => {
   const response = await request.post("/api/admissions/simple-action", {
     headers: { "content-type": "application/json" },
@@ -60,6 +68,14 @@ test("simple admission actions reject cross-origin mutations first", async ({ re
     data: { applicationId: 1, action: "reject", reason: "Not eligible" }
   });
   expect(response.status()).toBe(403);
+});
+
+test("simple admission actions reject oversized JSON before authentication", async ({ request }) => {
+  const response = await request.post("/api/admissions/simple-action", {
+    headers: { "content-type": "application/json" },
+    data: { padding: "x".repeat(10_000) }
+  });
+  expect(response.status()).toBe(413);
 });
 
 test("legacy completion details reject anonymous callers", async ({ request }) => {
@@ -86,6 +102,14 @@ test("legacy completion details reject cross-origin mutations first", async ({ r
     data: { applicationId: 1 }
   });
   expect(response.status()).toBe(403);
+});
+
+test("legacy completion details reject oversized JSON before authentication", async ({ request }) => {
+  const response = await request.post("/api/admissions/complete-details", {
+    headers: { "content-type": "application/json" },
+    data: { padding: "x".repeat(10_000) }
+  });
+  expect(response.status()).toBe(413);
 });
 
 test("staff admission photo attachment rejects anonymous callers", async ({ request }) => {
