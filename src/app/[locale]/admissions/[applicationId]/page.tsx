@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdmissionSimpleActions } from "@/components/admission-simple-actions";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
@@ -109,7 +110,7 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
           <h1>{text.title}</h1>
           <p>{admissionStateLabel(locale, detail.state)} · {text.reference}: <code>{detail.trackingId.slice(0, 8)}</code></p>
         </div>
-        <a className="action-button" href={`/${locale}/admissions?view=online`}>{text.back}</a>
+        <Link className="action-button" href={`/${locale}/admissions?view=online`}>{text.back}</Link>
       </section>
 
       <section className="configuration-detail-grid">
