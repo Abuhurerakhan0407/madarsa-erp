@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
@@ -88,7 +89,13 @@ const copy = {
   }
 } as const;
 
-function today() { return new Date().toISOString().slice(0, 10); }
+function browserToday() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export function AdmissionSimpleActions({
   applicationId, state, locale, duplicateReviewStatus, convertedStudent, applicantData, groups, sessionId, programId, hasUsablePhoto, missingConversionFields
@@ -97,7 +104,7 @@ export function AdmissionSimpleActions({
   const router = useRouter();
   const availableGroups = useMemo(() => groups.filter((group) => group.sessionId === sessionId && group.programId === programId), [groups, programId, sessionId]);
   const needsCompletion = missingConversionFields.length > 0;
-  const [completionOpen, setCompletionOpen] = useState(needsCompletion);
+  const [completionOpen, setCompletionOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<"accept" | "request_information" | "reject" | "duplicate" | "complete" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +122,7 @@ export function AdmissionSimpleActions({
   const [guardianPhone, setGuardianPhone] = useState(applicantData.guardian_phone ?? "");
   const [guardianEmail, setGuardianEmail] = useState(applicantData.guardian_email ?? "");
   const [groupKey, setGroupKey] = useState(applicantData.group_key ?? "");
-  const [joiningDate, setJoiningDate] = useState(applicantData.joining_date ?? today());
+  const [joiningDate, setJoiningDate] = useState(applicantData.joining_date ?? "");
 
   const canAccept = ["submitted", "verification", "decision", "offered", "payment_pending"].includes(state) && !convertedStudent;
   const canRequest = ["submitted", "verification"].includes(state) && !convertedStudent;
@@ -154,7 +161,13 @@ export function AdmissionSimpleActions({
   }
 
   async function acceptAndAdmit(confirmNewPerson = false) {
-    if (!confirmNewPerson && needsCompletion && completionOpen) return;
+    if (!confirmNewPerson && needsCompletion) {
+      if (!joiningDate) setJoiningDate(browserToday());
+      setCompletionOpen(true);
+      setError(null);
+      setMessage(null);
+      return;
+    }
     setBusy(confirmNewPerson ? "duplicate" : "accept"); setError(null); setMessage(null); setCopied(false);
     try {
       if (!confirmNewPerson) await simpleAction("accept");
@@ -212,7 +225,7 @@ export function AdmissionSimpleActions({
       <span className="module-state module-state-complete">✓</span><h2 id="admission-success-title">{text.admitted}</h2>
       <p>{text.studentNumber}: <code>{success.studentNumber}</code></p>
       {success.guardianEmail ? <div><h3>{text.credentialsTitle}</h3><p>{success.existingAccount ? text.existingAccount : text.credentialsBody}</p><dl className="detail-list"><div><dt>{text.loginEmail}</dt><dd><code>{success.guardianEmail}</code></dd></div>{success.temporaryPassword ? <div><dt>{text.temporaryPassword}</dt><dd><code>{success.temporaryPassword}</code></dd></div> : null}</dl></div> : null}
-      <div className="quick-actions"><a className="action-button action-button-primary" href={`/${locale}/students/${success.personId}`}>{text.openProfile}</a>{success.temporaryPassword ? <button className="action-button" type="button" onClick={copyCredentials}>{copied ? text.copied : text.copy}</button> : null}<button className="action-button" type="button" onClick={() => { setSuccess(null); router.refresh(); }}>{text.done}</button></div>
+      <div className="quick-actions"><Link className="action-button action-button-primary" href={`/${locale}/students/${success.personId}`}>{text.openProfile}</Link>{success.temporaryPassword ? <button className="action-button" type="button" onClick={copyCredentials}>{copied ? text.copied : text.copy}</button> : null}<button className="action-button" type="button" onClick={() => { setSuccess(null); router.refresh(); }}>{text.done}</button></div>
     </section>
   );
 
