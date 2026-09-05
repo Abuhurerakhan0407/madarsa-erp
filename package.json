@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-env.mjs && npx eslint src/lib/navigation/client-v3-navigation.test.ts src/lib/navigation/client-v3-navigation.ts src/lib/students/my-students.ts && next build",
+    "build": "node scripts/check-env.mjs && npm run lint && next build",
     "start": "next start",
     "demo:check": "node scripts/check-demo-env.mjs",
     "demo:build": "node scripts/check-demo-env.mjs && next build",
