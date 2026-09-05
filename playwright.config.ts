@@ -1,5 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
+let serverlessChromiumArgs: string[] = [];
+if (process.env.PLAYWRIGHT_CHROMIUM_ARGS) {
+  try {
+    const parsed = JSON.parse(process.env.PLAYWRIGHT_CHROMIUM_ARGS);
+    if (Array.isArray(parsed) && parsed.every((value) => typeof value === "string")) {
+      serverlessChromiumArgs = parsed;
+    }
+  } catch {
+    serverlessChromiumArgs = [];
+  }
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -8,7 +21,15 @@ export default defineConfig({
   reporter: process.env.CI ? "line" : "html",
   use: {
     baseURL: "http://localhost:3000",
-    trace: "on-first-retry"
+    trace: "on-first-retry",
+    ...(executablePath
+      ? {
+          launchOptions: {
+            executablePath,
+            args: serverlessChromiumArgs
+          }
+        }
+      : {})
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

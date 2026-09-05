@@ -25,22 +25,31 @@ test("protects onboarding until an identity is authenticated", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("renders accessible sign in and signup modes", async ({ page }) => {
-  await page.goto("/login");
+test("renders accessible trilingual sign in and signup modes", async ({ page }) => {
+  await page.goto("/login?next=%2Fen%2Fstudents");
 
   await expect(page.getByLabel("Email address")).toHaveAttribute("type", "email");
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
   await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "ltr");
+  await expect(page.getByRole("navigation", { name: "Language" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "English" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("button", { name: "اردو" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "العربية" })).toBeVisible();
 
-  await expect(page.getByText("Admissions", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("Qur'an", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("Fees", { exact: true })).toHaveCount(0);
-  await expect(page.getByText(/finance/i)).toHaveCount(0);
+  await page.getByRole("button", { name: "اردو" }).click();
+  await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fstudents$/);
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
 
+  await page.getByRole("button", { name: "العربية" }).click();
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "مرحبًا بعودتك" })).toBeVisible();
+
+  await page.getByRole("button", { name: "English" }).click();
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "ltr");
   await page.getByRole("button", { name: "New institution? Create an account" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Create your institution account" })
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create your institution account" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
 });
 

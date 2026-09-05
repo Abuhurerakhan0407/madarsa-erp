@@ -3,8 +3,7 @@ import {useMemo,useState} from 'react';
 import Link from 'next/link';
 import type {Locale} from '@/lib/i18n/config';
 import {documentsCopy} from '@/lib/documents/copy';
-import type {ClientDocumentType,DocumentStudent} from '@/lib/documents/workspace';
-import {documentAvailable} from '@/lib/documents/workspace';
+import {documentAvailable,type ClientDocumentType,type DocumentStudent} from '@/lib/documents/contract';
 type Filters={sessionId:number|null;programId:number|null;groupId:number|null;studentPersonId:number|null;search:string|null};
 const previewPath=(locale:Locale,type:ClientDocumentType,personId:number)=>type==='student_id_card'?`/${locale}/students/${personId}/id-card`:type==='student_profile'?`/${locale}/students/${personId}`:type==='status_certificate'?`/${locale}/documents/student-status/${personId}`:type==='exam_report_card'?`/${locale}/exams/report-card/${personId}`:`/${locale}/quran/${personId}`;
 export function DocumentCenterV2({locale,type,rows,total,selectionLimit,filters}:{locale:Locale;type:ClientDocumentType;rows:DocumentStudent[];total:number;selectionLimit:number;filters:Filters}){
