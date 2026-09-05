@@ -1,4 +1,3 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { TenantContext } from "@/lib/tenancy/context";
 
@@ -37,27 +36,12 @@ export type AdmissionDetail = {
   convertedAt: string | null;
   duplicateReviewStatus: string;
   applicantData: Record<string, string>;
-  programId: number;
-  sessionId: number;
   programLabels: Labels | null;
   sessionLabels: Labels | null;
-  hasUsablePhoto: boolean;
-  missingConversionFields: string[];
   reviews: AdmissionReview[];
   decisions: AdmissionDecisionRecord[];
   convertedStudent: ConvertedStudent;
 };
-
-const requiredConversionFields = [
-  "native_name",
-  "gender",
-  "guardian_name",
-  "guardian_relationship",
-  "guardian_phone",
-  "guardian_email",
-  "group_key",
-  "joining_date"
-] as const;
 
 function stringAnswers(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -85,8 +69,7 @@ export async function getAdmissionDetail(
   if (applicationError) throw new Error(`Unable to load admission application: ${applicationError.message}`);
   if (!application) return null;
 
-  const admin = createAdminClient();
-  const [programResult, sessionResult, reviewsResult, decisionsResult, photoResult] = await Promise.all([
+  const [programResult, sessionResult, reviewsResult, decisionsResult] = await Promise.all([
     supabase
       .from("programs")
       .select("labels")
@@ -110,32 +93,13 @@ export async function getAdmissionDetail(
       .select("id, outcome, reason, application_revision, decided_at")
       .eq("tenant_id", workspace.tenantId)
       .eq("application_id", application.id)
-      .order("decided_at", { ascending: false }),
-    admin
-      .from("public_admission_photo_uploads")
-      .select("id")
-      .eq("tenant_id", workspace.tenantId)
-      .eq("application_id", application.id)
-      .is("consumed_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .limit(1)
-      .maybeSingle()
+      .order("decided_at", { ascending: false })
   ]);
 
   if (programResult.error) throw new Error(`Unable to load admission program: ${programResult.error.message}`);
   if (sessionResult.error) throw new Error(`Unable to load admission session: ${sessionResult.error.message}`);
   if (reviewsResult.error) throw new Error(`Unable to load admission reviews: ${reviewsResult.error.message}`);
   if (decisionsResult.error) throw new Error(`Unable to load admission decisions: ${decisionsResult.error.message}`);
-  if (photoResult.error) throw new Error(`Unable to load admission photo status: ${photoResult.error.message}`);
-
-  const applicantData = stringAnswers(application.applicant_data);
-  const hasUsablePhoto = Boolean(photoResult.data?.id);
-  const missingConversionFields = application.state === "enrolled"
-    ? []
-    : [
-        ...requiredConversionFields.filter((key) => !applicantData[key]?.trim()),
-        ...(hasUsablePhoto ? [] : ["student_photo"])
-      ];
 
   let convertedStudent: ConvertedStudent = null;
   if (application.state === "enrolled" && application.applicant_person_id) {
@@ -176,13 +140,9 @@ export async function getAdmissionDetail(
     submittedAt: application.submitted_at,
     convertedAt: application.converted_at,
     duplicateReviewStatus: application.duplicate_review_status,
-    applicantData,
-    programId: application.program_id,
-    sessionId: application.session_id,
+    applicantData: stringAnswers(application.applicant_data),
     programLabels: (programResult.data?.labels as Labels | null | undefined) ?? null,
     sessionLabels: (sessionResult.data?.labels as Labels | null | undefined) ?? null,
-    hasUsablePhoto,
-    missingConversionFields,
     reviews: (reviewsResult.data ?? []).map((row) => ({
       id: row.id,
       reviewType: row.review_type,
