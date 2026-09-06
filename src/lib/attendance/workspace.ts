@@ -4,6 +4,7 @@ import type { Locale } from "@/lib/i18n/config";
 
 export type AttendanceWorkspaceStatus = { key: string; category: string; presenceRatio: number; triggersAlert: boolean };
 export type AttendanceCapabilities = { canMark: boolean; canCorrect: boolean; canApprove: boolean; canViewStaff: boolean };
+export type AttendanceWorkspaceGroup = { id: number; label: string; students: number };
 export type EmergencyAttendanceAuthorization={id:number;attendanceDate:string;subjectType:"student"|"staff";scopeType:"branch"|"group"|"student"|"teacher";groupId:number|null;studentPersonId:number|null;employmentId:number|null;reason:string;startsAt:string;expiresAt:string;state:string;active:boolean;scopeLabel:string};
 export type AttendanceTrendPoint={date:string;recorded:number;attendancePercent:number};
 
@@ -17,6 +18,7 @@ export type AttendanceWorkspaceRow = {
 
 export type AttendanceWorkspace = {
   date: string; timezone: string; started: boolean; sessionId: number | null; rosterId: number | null; state: string; statuses: AttendanceWorkspaceStatus[];
+  groups: AttendanceWorkspaceGroup[]; selectedGroupId: number | null;
   capabilities: AttendanceCapabilities;
   summary: { total: number; present: number; absent: number; late: number; leave: number; unmarked: number; biometric: number; nfc: number; pendingCorrections: number };
   insights:{dailyPercent:number;weeklyPercent:number;monthlyPercent:number;trend:AttendanceTrendPoint[]};
@@ -31,6 +33,7 @@ function arrayValue(value:unknown):Raw[]{return Array.isArray(value)?value.filte
 function stringValue(value: unknown): string | null { return typeof value === "string" ? value : null; }
 function numberValue(value: unknown): number | null { if (value === null || value === undefined || value === "") return null; const parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
 function boolValue(value:unknown):boolean{return value===true;}
+function localized(labels:unknown,locale:Locale,fallback:string):string { if(!labels||typeof labels!=="object"||Array.isArray(labels))return fallback;const map=labels as Record<string,unknown>;const value=map[locale]??map.en;return typeof value==="string"&&value.trim()?value:fallback; }
 
 function mapRows(value: unknown): AttendanceWorkspaceRow[] {
   if (!Array.isArray(value)) return [];
@@ -55,19 +58,32 @@ async function getCapabilities(tenantId: number, membershipId: number): Promise<
 export async function getAttendanceTimezone(): Promise<string> { const workspace = await getTenantContext(); if (!workspace) return "UTC"; const admin = createAdminClient(); const { data } = await admin.from("institution_profiles").select("timezone").eq("tenant_id", workspace.tenantId).maybeSingle(); return typeof data?.timezone === "string" && data.timezone.trim() ? data.timezone : "UTC"; }
 export async function getDefaultAttendanceDate(): Promise<string> { return dateInTimezone(await getAttendanceTimezone()); }
 
-export async function getAttendanceWorkspace(args: { date: string; search?: string; page?: number; pageSize?: number; locale: Locale }): Promise<AttendanceWorkspace> {
+export async function getAttendanceWorkspace(args: { date: string; groupId?: number | null; search?: string; page?: number; pageSize?: number; locale: Locale }): Promise<AttendanceWorkspace> {
   const workspace = await getTenantContext(); if (!workspace || !workspace.branchId) throw new Error("Active branch is required."); const admin = createAdminClient();
-  const [timezone, capabilities, rpc,emergencyRpc,insightsRpc] = await Promise.all([
+  const [timezone, capabilities, rpc,emergencyRpc,insightsRpc,sessionQuery] = await Promise.all([
     getAttendanceTimezone(), getCapabilities(workspace.tenantId, workspace.membershipId),
-    admin.rpc("get_student_attendance_workspace", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_attendance_date: args.date, p_search: args.search?.trim() || null, p_page: args.page ?? 1, p_page_size: args.pageSize ?? 50 }),
+    admin.rpc("get_student_attendance_workspace_v3", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_attendance_date: args.date, p_group_id: args.groupId ?? null, p_search: args.search?.trim() || null, p_page: args.page ?? 1, p_page_size: args.pageSize ?? 50 }),
     admin.rpc("get_emergency_manual_attendance_v1",{p_identity_id:workspace.identityId,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_attendance_date:args.date,p_subject_type:"student"}),
-    admin.rpc("get_attendance_v2_insights_v1",{p_identity_id:workspace.identityId,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_attendance_date:args.date})
+    admin.rpc("get_attendance_v2_insights_v1",{p_identity_id:workspace.identityId,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_attendance_date:args.date}),
+    admin.from("academic_sessions").select("id").eq("tenant_id",workspace.tenantId).lte("starts_on",args.date).gte("ends_on",args.date).order("starts_on",{ascending:false}).limit(1).maybeSingle()
   ]);
-  if (rpc.error) throw new Error(`Unable to load attendance: ${rpc.error.message}`);if(emergencyRpc.error)throw new Error(`Unable to load emergency attendance state: ${emergencyRpc.error.message}`);if(insightsRpc.error)throw new Error(`Unable to load attendance insights: ${insightsRpc.error.message}`);
+  if (rpc.error) throw new Error(`Unable to load attendance: ${rpc.error.message}`);if(emergencyRpc.error)throw new Error(`Unable to load emergency attendance state: ${emergencyRpc.error.message}`);if(insightsRpc.error)throw new Error(`Unable to load attendance insights: ${insightsRpc.error.message}`);if(sessionQuery.error)throw new Error(`Unable to resolve attendance academic session: ${sessionQuery.error.message}`);
+
+  let groups:AttendanceWorkspaceGroup[]=[];
+  if(sessionQuery.data?.id){
+    const [groupResult,enrollmentResult]=await Promise.all([
+      admin.from("academic_groups").select("id,key,labels").eq("tenant_id",workspace.tenantId).eq("branch_id",workspace.branchId).eq("session_id",sessionQuery.data.id).eq("status","active").order("id"),
+      admin.from("enrollments").select("group_id").eq("tenant_id",workspace.tenantId).eq("branch_id",workspace.branchId).eq("session_id",sessionQuery.data.id).eq("status","active")
+    ]);
+    if(groupResult.error)throw new Error(`Unable to load attendance groups: ${groupResult.error.message}`);if(enrollmentResult.error)throw new Error(`Unable to count attendance groups: ${enrollmentResult.error.message}`);
+    const counts=new Map<number,number>();for(const row of enrollmentResult.data??[]){const id=numberValue(row.group_id);if(id)counts.set(id,(counts.get(id)??0)+1);}
+    groups=(groupResult.data??[]).flatMap((row)=>{const id=numberValue(row.id);if(!id)return[];const students=counts.get(id)??0;if(!students)return[];return[{id,label:localized(row.labels,args.locale,String(row.key??`Group ${id}`)),students}];});
+  }
+
   const raw = rpc.data && typeof rpc.data === "object" && !Array.isArray(rpc.data) ? rpc.data as RawWorkspace : {}; const summary = raw.summary && typeof raw.summary === "object" && !Array.isArray(raw.summary) ? raw.summary as Record<string, unknown> : {};
   const emergencyRaw=objectValue(emergencyRpc.data),authorizations=mapEmergency(emergencyRaw.authorizations),active=authorizations.filter((a)=>a.active);const insightRaw=objectValue(insightsRpc.data);const scans=new Map<number,Raw>(arrayValue(insightRaw.scans).flatMap((r)=>{const personId=numberValue(r.person_id);return personId?[[personId,r] as [number,Raw]]:[]}));
   const rows=mapRows(raw.rows).map((row)=>{const scan=scans.get(row.personId);const authorized=active.some((a)=>a.scopeType==="branch"||(a.scopeType==="group"&&a.groupId===row.groupId)||(a.scopeType==="student"&&a.studentPersonId===row.personId));return{...row,firstScan:stringValue(scan?.first_scan),lastScan:stringValue(scan?.last_scan),deviceLabel:stringValue(scan?.device_label),modality:stringValue(scan?.modality),emergencyManualAuthorized:authorized};});
-  return { date: stringValue(raw.attendance_date) ?? args.date, timezone, started: raw.started === true, sessionId: numberValue(raw.session_id), rosterId: numberValue(raw.roster_id), state: stringValue(raw.state) ?? "not_started", statuses: mapStatuses(raw.statuses), capabilities,
+  return { date: stringValue(raw.attendance_date) ?? args.date, timezone, started: raw.started === true, sessionId: numberValue(raw.session_id), rosterId: numberValue(raw.roster_id), state: stringValue(raw.state) ?? "not_started", statuses: mapStatuses(raw.statuses),groups,selectedGroupId:args.groupId??null,capabilities,
     summary: { total: Number(summary.total ?? 0), present: Number(summary.present ?? 0), absent: Number(summary.absent ?? 0), late: Number(summary.late ?? 0), leave: Number(summary.leave ?? 0), unmarked: Number(summary.unmarked ?? 0), biometric: Number(summary.biometric ?? 0), nfc: Number(summary.nfc ?? 0), pendingCorrections: Number(summary.pending_corrections ?? 0) },
     insights:{dailyPercent:numberValue(insightRaw.daily_percent)??0,weeklyPercent:numberValue(insightRaw.weekly_percent)??0,monthlyPercent:numberValue(insightRaw.monthly_percent)??0,trend:mapTrend(insightRaw.trend)},emergency:{canManage:boolValue(emergencyRaw.can_manage),authorizations},
     total: Number(raw.total ?? 0), page: Number(raw.page ?? args.page ?? 1), pageSize: Number(raw.page_size ?? args.pageSize ?? 50), rows };
