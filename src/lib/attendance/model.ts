@@ -57,6 +57,13 @@ export type AttendanceCorrectionInput = {
   reason: string;
 };
 
+export type AttendanceGroupException = { personId: number; statusKey: string };
+export type AttendanceGroupSubmissionInput = {
+  attendanceSessionId: number;
+  groupId: number;
+  exceptions: AttendanceGroupException[];
+};
+
 type Validation<T> = { value?: T; errors: string[] };
 
 function positiveInteger(value: unknown): number | undefined {
@@ -108,4 +115,31 @@ export function validateAttendanceCorrectionInput(input: unknown): Validation<At
   if (!reason || reason.length < 8) errors.push("Correction reason must be at least 8 characters.");
   if (errors.length || !attendanceRecordId || !statusKey || !reason) return { errors };
   return { value: { attendanceRecordId, statusKey, reason }, errors: [] };
+}
+
+export function validateAttendanceGroupSubmission(input: unknown): Validation<AttendanceGroupSubmissionInput> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { errors: ["Request body must be an object."] };
+  const body = input as Record<string, unknown>;
+  const errors: string[] = [];
+  const attendanceSessionId = positiveInteger(body.attendanceSessionId);
+  const groupId = positiveInteger(body.groupId);
+  const rawExceptions = Array.isArray(body.exceptions) ? body.exceptions : body.exceptions === undefined ? [] : null;
+  if (!attendanceSessionId) errors.push("Attendance session is invalid.");
+  if (!groupId) errors.push("Attendance group is invalid.");
+  if (!rawExceptions) errors.push("Attendance exceptions must be an array.");
+  if (rawExceptions && rawExceptions.length > 200) errors.push("Too many attendance exceptions.");
+  const exceptions: AttendanceGroupException[] = [];
+  const seen = new Set<number>();
+  for (const item of rawExceptions ?? []) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) { errors.push("Attendance exception is invalid."); continue; }
+    const row = item as Record<string, unknown>;
+    const personId = positiveInteger(row.personId);
+    const statusKey = text(row.statusKey, 64);
+    if (!personId || !statusKey) { errors.push("Attendance exception is invalid."); continue; }
+    if (seen.has(personId)) { errors.push("Duplicate attendance exception."); continue; }
+    seen.add(personId);
+    exceptions.push({ personId, statusKey });
+  }
+  if (errors.length || !attendanceSessionId || !groupId) return { errors };
+  return { value: { attendanceSessionId, groupId, exceptions }, errors: [] };
 }
