@@ -143,10 +143,10 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
   const [busy,setBusy] = useState(false); const [error,setError] = useState<string|null>(null); const [saved,setSaved] = useState(false);
   const currentTarget = targetPayload(targetDraft) ?? targetViewPayload(baseTarget);
   const parentSummary = `${row.memorizedJuz}/30 · ${x.quality}: ${row.qualityScore ?? "—"} · ${t.revision}: ${row.revisionDue}`;
+  const isExpanded = expanded || forceExpanded;
 
   useEffect(()=>{
     if (!forceExpanded) return;
-    setExpanded(true);
     const timer=window.setTimeout(()=>document.getElementById(`quran-student-${row.personId}`)?.scrollIntoView({behavior:"smooth",block:"center"}),50);
     return ()=>window.clearTimeout(timer);
   },[forceExpanded,row.personId]);
@@ -203,9 +203,9 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
         <button type="button" disabled={busy} onClick={()=>submit("absent")}>{x.absent}</button>
         <button type="button" disabled={busy} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
       </div> : null}
-      <button className="quiet-link quran-details-toggle" type="button" onClick={()=>setExpanded((value)=>!value)}>{expanded?x.hideDetails:x.details}</button>
+      <button className="quiet-link quran-details-toggle" type="button" onClick={()=>setExpanded((value)=>!value)}>{isExpanded?x.hideDetails:x.details}</button>
     </div>
-    {expanded ? <div className="quran-daily-detail">
+    {isExpanded ? <div className="quran-daily-detail">
       <div className="quran-detail-heading"><div><strong>{x.target}</strong><span>{x.targetHelp}</span></div>{row.repeatTarget?<button type="button" className="action-button" onClick={()=>setTargetDraft(draftFromTarget(row.repeatTarget))}>{x.useLast}: {row.repeatTarget.label}</button>:null}</div>
       <TargetFields draft={targetDraft} setDraft={setTargetDraft} locale={locale} includeWork />
       <div className="quran-score-fields">
