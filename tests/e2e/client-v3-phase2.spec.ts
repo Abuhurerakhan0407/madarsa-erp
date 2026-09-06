@@ -11,9 +11,9 @@ test("public admission renders the complete Urdu intake in RTL without horizonta
   const shell = page.locator("main.public-intake-shell");
   await expect(shell).toHaveAttribute("dir", "rtl");
   await expect(shell).toHaveAttribute("lang", "ur");
-  await expect(page.getByText("طالب علم کا مکمل نام", { exact: true })).toBeVisible();
-  await expect(page.getByText("سرپرست کا فون", { exact: true })).toBeVisible();
-  await expect(page.getByText("کلاس / گروپ", { exact: true })).toBeVisible();
+  await expect(page.getByLabel(/طالب علم کا مکمل نام/)).toBeVisible();
+  await expect(page.getByLabel(/سرپرست کا فون/)).toBeVisible();
+  await expect(page.getByLabel(/کلاس \/ گروپ/)).toBeVisible();
   await expect(page.getByRole("button", { name: "درخواست جمع کریں" })).toBeVisible();
   const viewport = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
