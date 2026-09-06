@@ -131,7 +131,7 @@ export async function getStudentRegister(options: {
 export type StudentCreateOptions = {
   sessions: Array<{ id: number; label: string }>;
   programs: Array<{ id: number; label: string }>;
-  groups: Array<{ id: number; label: string; sessionId: number; programId: number }>;
+  groups: Array<{ id: number; key: string; label: string; sessionId: number; programId: number }>;
 };
 
 export async function getStudentCreateOptions(locale: string): Promise<StudentCreateOptions> {
@@ -156,6 +156,7 @@ export async function getStudentCreateOptions(locale: string): Promise<StudentCr
       .map((row) => ({ id: row.id, label: localizedLabel(row.labels, locale, row.key) })),
     groups: (groups.data ?? []).map((row) => ({
       id: row.id,
+      key: row.key,
       label: localizedLabel(row.labels, locale, row.key),
       sessionId: row.session_id,
       programId: row.program_id
