@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { QuranDailyAction, QuranDailyTarget } from "@/lib/quran/daily-register-model";
 import type { QuranDailyRegister as Register, QuranDailyRow, QuranDailyTargetView } from "@/lib/quran/daily-register";
@@ -31,7 +31,7 @@ const extraCopy = {
     saved: "Saved", target: "Target", teacherNote: "Teacher note", revisionDate: "Revision due", optional: "Optional",
     setNext: "Set next target", parentSummary: "Parent summary", progressWall: "30-Juz progress",
     scoreHint: "0–100", targetHelp: "The previous target is reused by default for fast entry.", noGroup: "Choose a group and date to load the class roster.",
-    history: "History", student: "Student", revisionQueue: "Revision queue"
+    history: "History", student: "Student", revisionQueue: "Revision queue", result: "Result", saveNext: "Save & Next Student", saveOnly: "Save only"
   },
   ur: {
     group: "حلقہ / گروپ", date: "سبق کی تاریخ", chooseGroup: "حلقہ یا گروپ منتخب کریں", roster: "روزانہ رجسٹر",
@@ -42,7 +42,7 @@ const extraCopy = {
     saved: "محفوظ", target: "ہدف", teacherNote: "استاد کا نوٹ", revisionDate: "نظر ثانی کی تاریخ", optional: "اختیاری",
     setNext: "اگلا ہدف مقرر کریں", parentSummary: "والدین کے لیے خلاصہ", progressWall: "30 پارہ پیش رفت",
     scoreHint: "0–100", targetHelp: "تیز اندراج کے لیے پچھلا ہدف خودکار طور پر دوبارہ استعمال ہوتا ہے۔", noGroup: "کلاس رجسٹر کے لیے گروپ اور تاریخ منتخب کریں۔",
-    history: "تاریخ", student: "طالب علم", revisionQueue: "نظر ثانی قطار"
+    history: "تاریخ", student: "طالب علم", revisionQueue: "نظر ثانی قطار", result: "نتیجہ", saveNext: "محفوظ کریں اور اگلا طالب علم", saveOnly: "صرف محفوظ کریں"
   },
   ar: {
     group: "الحلقة / المجموعة", date: "تاريخ الدرس", chooseGroup: "اختر حلقة أو مجموعة", roster: "السجل اليومي",
@@ -53,7 +53,7 @@ const extraCopy = {
     saved: "تم الحفظ", target: "الهدف", teacherNote: "ملاحظة المعلم", revisionDate: "موعد المراجعة", optional: "اختياري",
     setNext: "تحديد الهدف التالي", parentSummary: "ملخص لولي الأمر", progressWall: "تقدم 30 جزءاً",
     scoreHint: "0–100", targetHelp: "يعاد استخدام الهدف السابق تلقائياً لتسريع الإدخال.", noGroup: "اختر المجموعة والتاريخ لعرض سجل الفصل.",
-    history: "السجل", student: "الطالب", revisionQueue: "قائمة المراجعة"
+    history: "السجل", student: "الطالب", revisionQueue: "قائمة المراجعة", result: "النتيجة", saveNext: "حفظ والطالب التالي", saveOnly: "حفظ فقط"
   }
 } as const;
 
@@ -129,7 +129,7 @@ function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft:
   </div>;
 }
 
-function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: { locale: Locale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean }) {
+function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, forceExpanded, hasNext, onSavedAndNext }: { locale: Locale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean; forceExpanded: boolean; hasNext: boolean; onSavedAndNext: () => void }) {
   const t = quranCopy[locale]; const x = extraCopy[locale]; const router = useRouter();
   const baseTarget = row.nextTarget ?? row.repeatTarget;
   const [expanded,setExpanded] = useState(!baseTarget);
@@ -139,11 +139,19 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
   const [quality,setQuality] = useState(row.qualityScore === null ? "" : String(row.qualityScore));
   const [tajweed,setTajweed] = useState(""); const [fluency,setFluency] = useState(""); const [mistakes,setMistakes] = useState(String(row.mistakeCount || 0));
   const [teacherNote,setTeacherNote] = useState(""); const [revisionDate,setRevisionDate] = useState(row.revisionDueOn ?? "");
+  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>("pass");
   const [busy,setBusy] = useState(false); const [error,setError] = useState<string|null>(null); const [saved,setSaved] = useState(false);
   const currentTarget = targetPayload(targetDraft) ?? targetViewPayload(baseTarget);
   const parentSummary = `${row.memorizedJuz}/30 · ${x.quality}: ${row.qualityScore ?? "—"} · ${t.revision}: ${row.revisionDue}`;
 
-  async function submit(action: QuranDailyAction, detailed = false) {
+  useEffect(()=>{
+    if (!forceExpanded) return;
+    setExpanded(true);
+    const timer=window.setTimeout(()=>document.getElementById(`quran-student-${row.personId}`)?.scrollIntoView({behavior:"smooth",block:"center"}),50);
+    return ()=>window.clearTimeout(timer);
+  },[forceExpanded,row.personId]);
+
+  async function submit(action: QuranDailyAction, detailed = false, advance = false) {
     if (action !== "absent" && action !== "no_lesson" && !currentTarget) { setExpanded(true); setError(x.noTarget); return; }
     setBusy(true); setError(null); setSaved(false);
     const requestKey = globalThis.crypto?.randomUUID?.() ?? `quran-${row.personId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -169,11 +177,13 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
       const response = await fetch("/api/quran/daily", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body) });
       const payload = await response.json().catch(()=>({})) as { error?: string };
       if (!response.ok) { setError(payload.error ?? x.saveError); return; }
-      setSaved(true); router.refresh();
+      setSaved(true);
+      if (advance) onSavedAndNext();
+      router.refresh();
     } catch { setError(x.saveError); } finally { setBusy(false); }
   }
 
-  return <article className="quran-daily-row">
+  return <article className="quran-daily-row" id={`quran-student-${row.personId}`}>
     <div className="quran-daily-student">
       <strong>{row.name}</strong>{row.nameNative ? <span dir="auto">{row.nameNative}</span> : null}<small>{row.studentNumber}</small>
       <div className="quran-daily-links"><Link href={`/${locale}/quran/${row.personId}`} className="quiet-link">{x.history}</Link><Link href={`/${locale}/students/${row.personId}`} className="quiet-link">{x.student}</Link></div>
@@ -204,13 +214,14 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
         <label className="field-label">{t.fluency}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={fluency} onChange={(event)=>setFluency(event.target.value)}/></label>
         <label className="field-label">{x.mistakes}<input className="text-field" type="number" min="0" max="99" value={mistakes} onChange={(event)=>setMistakes(event.target.value)}/></label>
         <label className="field-label">{x.revisionDate} · {x.optional}<input className="text-field" type="date" min={sessionDate} value={revisionDate} onChange={(event)=>setRevisionDate(event.target.value)}/></label>
+        <label className="field-label">{x.result}<select className="text-field" value={detailedAction} onChange={(event)=>setDetailedAction(event.target.value as QuranDailyAction)}><option value="pass">{x.pass}</option><option value="repeat">{x.repeat}</option><option value="needs_support">{x.needsSupport}</option><option value="absent">{x.absent}</option><option value="no_lesson">{x.noLesson}</option></select></label>
       </div>
       <label className="field-label">{x.teacherNote} · {x.optional}<textarea className="text-field" rows={2} maxLength={1000} value={teacherNote} onChange={(event)=>setTeacherNote(event.target.value)}/></label>
       <label className="quran-next-toggle"><input type="checkbox" checked={useNextTarget} onChange={(event)=>setUseNextTarget(event.target.checked)}/><span>{x.setNext}</span></label>
       {useNextTarget ? <TargetFields draft={nextTargetDraft} setDraft={setNextTargetDraft} locale={locale} includeWork /> : null}
       <div className="quran-progress-summary"><div><span>{x.progressWall}</span><div className="quran-juz-wall" aria-label={`${row.memorizedJuz} of 30 Juz passed`}>{Array.from({length:30},(_,index)=><i key={index} data-complete={index<row.memorizedJuz?"true":"false"}>{index+1}</i>)}</div></div><div><span>{x.parentSummary}</span><strong>{parentSummary}</strong></div></div>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}{saved ? <p className="form-message form-success" role="status">{x.saved}</p> : null}
-      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} onClick={()=>submit("pass",true)}>{x.pass}</button><button className="action-button" type="button" disabled={busy} onClick={()=>submit("repeat",true)}>{x.repeat}</button><button className="action-button" type="button" disabled={busy} onClick={()=>submit("needs_support",true)}>{x.needsSupport}</button></div> : null}
+      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,hasNext)}>{hasNext?x.saveNext:x.saveOnly}</button>{hasNext?<button className="action-button" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,false)}>{x.saveOnly}</button>:null}</div> : null}
     </div> : null}
   </article>;
 }
@@ -225,10 +236,13 @@ export function QuranDailyRegister({ locale, data }: Props) {
   const router = useRouter(); const t = quranCopy[locale]; const x = extraCopy[locale];
   const selectedGroup = useMemo(()=>data.groups.find((group)=>group.id===data.selectedGroupId)??null,[data.groups,data.selectedGroupId]);
   const minimumDate = minimumRegisterDate(data.localDate);
+  const [focusPersonId,setFocusPersonId]=useState<number|null>(null);
   function navigate(groupId: number | null, date: string) {
+    setFocusPersonId(null);
     const query = new URLSearchParams(); if(groupId) query.set("group",String(groupId)); if(date) query.set("date",date);
     router.push(`/${locale}/quran?${query.toString()}`);
   }
+  function advanceFrom(index:number){const next=data.rows[index+1];if(next)setFocusPersonId(next.personId);}
   return <div className="quran-daily-register">
     <section className="quran-daily-toolbar" data-page-section>
       <label className="field-label">{x.group}<select className="text-field" value={data.selectedGroupId??""} onChange={(event)=>navigate(event.target.value?Number(event.target.value):null,data.selectedDate)}><option value="">{x.chooseGroup}</option>{data.groups.map((group)=><option key={group.id} value={group.id}>{group.label} · {group.students}</option>)}</select></label>
@@ -242,7 +256,7 @@ export function QuranDailyRegister({ locale, data }: Props) {
       <section className="quran-daily-roster" data-page-section>
         <header><div><p className="state-kicker">{x.roster}</p><h2>{selectedGroup.label}</h2></div><time dateTime={data.selectedDate}>{data.selectedDate}</time></header>
         <div className="quran-daily-head" aria-hidden="true"><span>{x.student}</span><span>{t.sabaq}</span><span>{t.sabqi}</span><span>{t.manzil}</span><span>{x.quality}</span><span>{x.mistakes}</span><span>{x.nextTarget}</span><span>{x.actions}</span></div>
-        {data.rows.length ? data.rows.map((row)=><QuranDailyStudentRow key={row.personId} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
+        {data.rows.length ? data.rows.map((row,index)=><QuranDailyStudentRow key={row.personId} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord} forceExpanded={focusPersonId===row.personId} hasNext={index<data.rows.length-1} onSavedAndNext={()=>advanceFrom(index)}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
       </section>
     </> : <section className="workspace-inline-state" data-page-section><strong>{x.noGroup}</strong><span>{x.targetHelp}</span></section>}
   </div>;
