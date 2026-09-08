@@ -110,12 +110,12 @@ function statusLabel(status: string | null, text: ExtraCopy) {
   return null;
 }
 
-function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: Locale; includeWork?: boolean }) {
+function TargetFields({ draft, setDraft, locale, includeWork = false, idPrefix }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: Locale; includeWork?: boolean; idPrefix?: string }) {
   const t = quranCopy[locale];
   return <div className="quran-daily-target-fields">
     {includeWork ? <label className="field-label">{t.latest}<select className="text-field" value={draft.workCategory} onChange={(event)=>setDraft({...draft,workCategory:event.target.value})}>{["sabaq","sabqi","manzil","nazra","qaida","tajweed"].map((key)=><option value={key} key={key}>{quranWorkLabel(key,t)}</option>)}</select></label> : null}
     <label className="field-label">{t.target}<select className="text-field" value={draft.mode} onChange={(event)=>setDraft({...draft,mode:event.target.value as TargetDraft["mode"]})}><option value="juz">{t.juz}</option><option value="ayah">{t.ayah}</option><option value="page">{t.page}</option></select></label>
-    {draft.mode === "juz" ? <label className="field-label">{t.juz}<input className="text-field" type="number" min="1" max="30" value={draft.juz} onChange={(event)=>setDraft({...draft,juz:event.target.value})}/></label> : null}
+    {draft.mode === "juz" ? <label className="field-label">{t.juz}<input id={idPrefix ? `${idPrefix}-juz` : undefined} className="text-field" type="number" min="1" max="30" required aria-required="true" value={draft.juz} onChange={(event)=>setDraft({...draft,juz:event.target.value})}/></label> : null}
     {draft.mode === "ayah" ? <>
       <label className="field-label">{t.from} · {t.surah}<input className="text-field" type="number" min="1" max="114" value={draft.startSurah} onChange={(event)=>setDraft({...draft,startSurah:event.target.value})}/></label>
       <label className="field-label">{t.from} · {t.ayahNo}<input className="text-field" type="number" min="1" value={draft.startAyah} onChange={(event)=>setDraft({...draft,startAyah:event.target.value})}/></label>
@@ -152,7 +152,17 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
   },[forceExpanded,row.personId]);
 
   async function submit(action: QuranDailyAction, detailed = false, advance = false) {
-    if (action !== "absent" && action !== "no_lesson" && !currentTarget) { setExpanded(true); setError(x.noTarget); return; }
+    if (action !== "absent" && action !== "no_lesson" && !currentTarget) {
+      setExpanded(true);
+      setError(`${x.noTarget} — ${quranCopy[locale].juz} / ${quranCopy[locale].ayah} / ${quranCopy[locale].page} required`);
+      // focus the target Juz input for quick correction
+      window.requestAnimationFrame(()=>{
+        const el = document.querySelector(`#quran-target-${row.personId}-juz`) as HTMLInputElement | null;
+        el?.focus();
+        el?.scrollIntoView({behavior:"smooth", block:"center"});
+      });
+      return;
+    }
     setBusy(true); setError(null); setSaved(false);
     const requestKey = globalThis.crypto?.randomUUID?.() ?? `quran-${row.personId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const body: Record<string, unknown> = {
@@ -169,7 +179,15 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
       if (revisionDate) body.revisionDueOn = revisionDate;
       if (useNextTarget) {
         const nextTarget = targetPayload(nextTargetDraft,true);
-        if (!nextTarget) { setError(x.noTarget); setBusy(false); return; }
+        if (!nextTarget) {
+          setError(`${x.noTarget} — next target Juz/Ayah/Page required`);
+          window.requestAnimationFrame(()=>{
+            const el = document.querySelector(`#quran-next-target-${row.personId}-juz`) as HTMLInputElement | null;
+            el?.focus();
+          });
+          setBusy(false);
+          return;
+        }
         body.nextTarget = nextTarget;
       }
     }
@@ -207,7 +225,7 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
     </div>
     {isExpanded ? <div className="quran-daily-detail">
       <div className="quran-detail-heading"><div><strong>{x.target}</strong><span>{x.targetHelp}</span></div>{row.repeatTarget?<button type="button" className="action-button" onClick={()=>setTargetDraft(draftFromTarget(row.repeatTarget))}>{x.useLast}: {row.repeatTarget.label}</button>:null}</div>
-      <TargetFields draft={targetDraft} setDraft={setTargetDraft} locale={locale} includeWork />
+      <TargetFields draft={targetDraft} setDraft={setTargetDraft} locale={locale} includeWork idPrefix={`quran-target-${row.personId}`} />
       <div className="quran-score-fields">
         <label className="field-label">{x.quality}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={quality} onChange={(event)=>setQuality(event.target.value)}/></label>
         <label className="field-label">{t.tajweedScore}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={tajweed} onChange={(event)=>setTajweed(event.target.value)}/></label>
@@ -218,7 +236,7 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
       </div>
       <label className="field-label">{x.teacherNote} · {x.optional}<textarea className="text-field" rows={2} maxLength={1000} value={teacherNote} onChange={(event)=>setTeacherNote(event.target.value)}/></label>
       <label className="quran-next-toggle"><input type="checkbox" checked={useNextTarget} onChange={(event)=>setUseNextTarget(event.target.checked)}/><span>{x.setNext}</span></label>
-      {useNextTarget ? <TargetFields draft={nextTargetDraft} setDraft={setNextTargetDraft} locale={locale} includeWork /> : null}
+      {useNextTarget ? <TargetFields draft={nextTargetDraft} setDraft={setNextTargetDraft} locale={locale} includeWork idPrefix={`quran-next-target-${row.personId}`} /> : null}
       <div className="quran-progress-summary"><div><span>{x.progressWall}</span><div className="quran-juz-wall" aria-label={`${row.memorizedJuz} of 30 Juz passed`}>{Array.from({length:30},(_,index)=><i key={index} data-complete={index<row.memorizedJuz?"true":"false"}>{index+1}</i>)}</div></div><div><span>{x.parentSummary}</span><strong>{parentSummary}</strong></div></div>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}{saved ? <p className="form-message form-success" role="status">{x.saved}</p> : null}
       {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,hasNext)}>{hasNext?x.saveNext:x.saveOnly}</button>{hasNext?<button className="action-button" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,false)}>{x.saveOnly}</button>:null}</div> : null}
