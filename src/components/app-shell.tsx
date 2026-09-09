@@ -29,17 +29,17 @@ export async function AppShell({children,locale,workspace}:AppShellProps){
   <aside className="sidebar professional-sidebar client-v2-sidebar" aria-label={copy.navigation}>
    <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">M</span><span className="brand-copy"><strong>{app("productName")}</strong><small>{copy.productLine}</small></span></div>
    <div className="institution-card professional-institution-card client-v2-institution"><span className="client-v2-institution-label">{copy.workspace}</span><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{copy.year}</small></div>
-   <nav aria-label={copy.navigation} className="primary-nav demo-primary-nav client-v2-primary-nav">
-    <div className="nav-section">{nav.primary.map(i=><AppNavLink href={i.href(locale)} key={i.key} className="nav-link"><span className="nav-indicator" aria-hidden="true"/><span>{i.labels[locale]}</span></AppNavLink>)}</div>
-    {nav.more.length?<details className="nav-section" open><summary className="nav-section-label" style={{cursor:"pointer"}}>{copy.more}</summary>{nav.more.map(i=><AppNavLink href={i.href(locale)} key={i.key} className="nav-link"><span className="nav-indicator" aria-hidden="true"/><span>{i.labels[locale]}</span></AppNavLink>)}</details>:null}
-   </nav>
-   <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")}/>
+    <nav aria-label={copy.navigation} className="primary-nav demo-primary-nav client-v2-primary-nav">
+     <div className="nav-section">{nav.primary.map(i=><AppNavLink href={i.href(locale)} key={i.key} className="nav-link"><span className="nav-indicator" aria-hidden="true"/><span>{i.labels[locale]}</span></AppNavLink>)}</div>
+     {nav.more.length?<details className="nav-section" open><summary className="nav-section-label" style={{cursor:"pointer"}}>{copy.more}</summary>{nav.more.map(i=><AppNavLink href={i.href(locale)} key={i.key} className="nav-link"><span className="nav-indicator" aria-hidden="true"/><span>{i.labels[locale]}</span></AppNavLink>)}</details>:null}
+    </nav>
+    <LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — sidebar`}/>
   </aside>
   <div className="workspace">
    <header className="topbar professional-topbar client-v2-topbar" style={{gap:".75rem",flexWrap:"wrap"}}>
     <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.year}</p></div>
-    {audience==="office"?<GlobalStudentSearch locale={locale}/>:null}
-    <div className="topbar-actions">{audience==="office"?<Link className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</Link>:null}<LocaleSwitcher currentLocale={locale} label={app("changeLanguage")}/><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName}/></div>
+     {audience==="office"?<GlobalStudentSearch locale={locale}/>:null}
+     <div className="topbar-actions">{audience==="office"?<Link className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</Link>:null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`}/><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName}/></div>
    </header>
    <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion/>{children}</main>
   </div>

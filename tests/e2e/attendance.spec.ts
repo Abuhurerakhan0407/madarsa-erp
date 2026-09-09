@@ -22,6 +22,16 @@ test("attendance mark requires JSON before authentication", async ({ request }) 
   expect(response.status()).toBe(415);
 });
 
+test("group attendance submit rejects anonymous callers", async ({ request }) => {
+  const response = await request.post("/api/attendance/submit-group", { headers: json, data: { attendanceSessionId: 1, groupId: 2, exceptions: [] } });
+  expect(response.status()).toBe(401);
+});
+
+test("group attendance submit blocks cross-origin mutations before auth", async ({ request }) => {
+  const response = await request.post("/api/attendance/submit-group", { headers: { ...json, origin: "https://attacker.example" }, data: { attendanceSessionId: 1, groupId: 2, exceptions: [] } });
+  expect(response.status()).toBe(403);
+});
+
 test("attendance correction rejects anonymous callers", async ({ request }) => {
   const response = await request.post("/api/attendance/correct", { headers: json, data: { attendanceRecordId: 1, statusKey: "present", reason: "Incorrect staff entry" } });
   expect(response.status()).toBe(401);
