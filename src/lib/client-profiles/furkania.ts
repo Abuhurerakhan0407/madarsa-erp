@@ -17,6 +17,11 @@ export const furkaniaProfile = {
     family: "deeniyat" as const,
     track: "primary_1_to_5" as const,
     courses: [1, 2, 3, 4, 5] as const,
+    // Madrasa-e-Furkania will use new Hinglish Deeniyat books.
+    bookMedium: "hinglish" as const,
+    exactBookVersion: null,
+    // Confirmed placement rule: children aged 4–5 begin at Course 1.
+    age4To5EntryCourse: 1,
     // Official Deeniyat subject families used as the initial ERP taxonomy.
     // Course-specific chapters/components remain editable in Programs & Syllabus.
     subjectGroups: [
@@ -26,13 +31,12 @@ export const furkaniaProfile = {
       "islamic_upbringing",
       "language",
     ] as const,
-    nurseryOrQaidaPlacementForYoungStudents: null,
-    exactBookVersionOrMedium: null,
     mixedGenderGroups: null,
   },
 
   scheduling: {
     shifts: ["morning", "midday", "evening"] as const,
+    // Placeholder until the client provides exact start/end times.
     exactShiftTimes: null,
     studentDistributionByShift: null,
     fixedShiftPerStudent: null,
@@ -77,6 +81,8 @@ export const furkaniaProfile = {
   },
 
   access: {
+    // Placeholder until the Furkania owner/admin account is supplied.
+    ownerAdminEmail: null,
     roles: null,
     uiLanguages: null,
   },
@@ -95,12 +101,12 @@ export const furkaniaProfile = {
   },
 
   pendingClientDetails: [
+    "owner_admin_identity",
     "exact_shift_times",
     "student_distribution_by_shift",
     "shift_switch_or_makeup_policy",
     "operating_days",
-    "young_student_nursery_or_qaida_placement",
-    "deeniyat_book_version_or_medium",
+    "exact_deeniyat_book_version",
     "boys_girls_grouping",
     "teacher_count_and_assignment_rules",
     "attendance_method_and_alerts",
