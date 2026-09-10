@@ -1,0 +1,95 @@
+export const furkaniaProfile = {
+  key: "madrasa_e_furkania",
+  displayName: "Madrasa-e-Furkania",
+  status: "demo_pending_client_details",
+  languages: ["en", "ur"] as const,
+  calendar: {
+    operatingDays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const,
+    weeklyHoliday: "sunday" as const,
+  },
+  curriculum: {
+    primaryTrack: "deeniyat" as const,
+    courses: [1, 2, 3, 4, 5] as const,
+    initialAdmissionCourse: 1,
+    contentScript: "latin_transliteration_hinglish" as const,
+    mixedGenderGroups: true,
+  },
+  scheduling: {
+    mode: "fixed_per_student_with_override" as const,
+    shifts: ["morning", "midday", "evening"] as const,
+    exactShiftTimes: null,
+    teachersCoverAllShifts: true,
+    expectedTeacherCount: { min: 3, max: 4 },
+    exactTeacherCount: null,
+  },
+  attendance: {
+    studentMethod: "biometric_only" as const,
+    staffMethod: "biometric_only" as const,
+    deviceEvents: ["check_in", "check_out"] as const,
+    parentArrivalDepartureAlerts: true,
+    storeRawBiometricMaterial: false,
+  },
+  notifications: {
+    whatsappEnabled: false,
+    inAppEnabled: true,
+    pushEnabled: true,
+    showImportantItemsInParentOverview: true,
+    keepNotificationHistory: true,
+    events: [
+      "student_arrival",
+      "student_departure",
+      "absence",
+      "fee_due",
+      "payment_received",
+      "exam_result",
+      "announcement",
+      "holiday",
+      "homework",
+    ] as const,
+  },
+  homework: {
+    enabled: true,
+    defaultUsage: "optional" as const,
+  },
+  exams: {
+    cadence: "yearly" as const,
+    assessmentTrack: "deeniyat_only" as const,
+    promotionMode: "automatic_from_exam_result" as const,
+    manualOverrideRoles: ["super_admin", "teacher"] as const,
+  },
+  quran: {
+    enabled: true,
+    defaultForStudents: false,
+    enrollmentMode: "explicit_student_opt_in" as const,
+    managers: ["super_admin", "teacher"] as const,
+  },
+  roles: ["super_admin", "teacher", "parent"] as const,
+  studentRegistration: {
+    enabled: true,
+  },
+  fees: {
+    paymentModes: null,
+    courseWiseRules: null,
+    status: "pending_client_details" as const,
+  },
+  mobile: {
+    framework: "capacitor" as const,
+    platforms: ["android", "ios"] as const,
+    nativePushRequired: true,
+    storePublishing: "later" as const,
+  },
+  branding: {
+    officialName: null,
+    logo: null,
+    address: null,
+    contact: null,
+  },
+  pendingClientDetails: [
+    "exact_shift_times_and_student_distribution",
+    "exact_teacher_count",
+    "fee_structure_and_payment_modes",
+    "official_branding_address_and_contact",
+  ] as const,
+} as const;
+
+export type FurkaniaProfile = typeof furkaniaProfile;
