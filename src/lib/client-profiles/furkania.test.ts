@@ -17,6 +17,10 @@ describe("Madrasa-e-Furkania client profile", () => {
     expect(furkaniaProfile.curriculum.bookMedium).toBe("hinglish");
     expect(furkaniaProfile.curriculum.age4To5EntryCourse).toBe(1);
     expect(furkaniaProfile.curriculum.exactBookVersion).toBeNull();
+
+    const readiness = getFurkaniaReadiness();
+    expect(readiness.confirmed.bookMedium).toBe("hinglish");
+    expect(readiness.confirmed.age4To5EntryCourse).toBe(1);
   });
 
   it("uses the five Deeniyat subject families", () => {
