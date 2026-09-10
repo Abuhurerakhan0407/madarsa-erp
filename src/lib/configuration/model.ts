@@ -113,7 +113,13 @@ export type ConfigurationModuleState = {
 };
 
 export type ConfigurationPreset = {
-  key: "maktab" | "hifz_academy" | "dars_e_nizami" | "islamic_school" | "urdu_medium_school";
+  key:
+    | "deeniyat_primary"
+    | "maktab"
+    | "hifz_academy"
+    | "dars_e_nizami"
+    | "islamic_school"
+    | "urdu_medium_school";
   name: LocalizedLabels;
   terminology: readonly TerminologyEntry[];
   enabledDomains: readonly string[];
