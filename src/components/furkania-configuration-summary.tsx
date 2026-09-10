@@ -13,6 +13,8 @@ const copy = {
     students: "Students",
     curriculum: "Curriculum",
     courses: "Courses",
+    medium: "Book medium",
+    entry: "Age 4–5 entry",
     shifts: "Daily shifts",
     subjects: "Deeniyat subject groups",
     pending: "Still needs client confirmation",
@@ -27,6 +29,8 @@ const copy = {
     students: "طلبہ",
     curriculum: "نصاب",
     courses: "کورسز",
+    medium: "کتاب کی زبان",
+    entry: "عمر 4–5 کا آغاز",
     shifts: "روزانہ اوقات",
     subjects: "دینیات کے بنیادی مضامین",
     pending: "کلائنٹ کی تصدیق ابھی باقی",
@@ -41,6 +45,8 @@ const copy = {
     students: "الطلاب",
     curriculum: "المنهج",
     courses: "المستويات",
+    medium: "لغة الكتاب",
+    entry: "بداية عمر 4–5",
     shifts: "الفترات اليومية",
     subjects: "مجموعات مواد الدينيات",
     pending: "ما زال يحتاج تأكيد العميل",
@@ -91,6 +97,8 @@ export function FurkaniaConfigurationSummary({ locale }: Props) {
           <span>{text.curriculum}</span>
           <h3>Deeniyat Primary</h3>
           <p>{text.courses}: {profile.curriculum.courses.join(", ")}</p>
+          <p>{text.medium}: Hinglish</p>
+          <p>{text.entry}: Course {profile.curriculum.age4To5EntryCourse}</p>
         </article>
         <article className="configuration-detail-card">
           <span>{text.shifts}</span>
