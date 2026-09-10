@@ -14,6 +14,11 @@ describe("Madrasa-e-Furkania Deeniyat bootstrap", () => {
     expect(furkaniaDeeniyatProgram.templateKey).toBe("blank_custom");
   });
 
+  it("locks the confirmed Hinglish book medium and young-student entry rule", () => {
+    expect(furkaniaDeeniyatProgram.bookMedium).toBe("hinglish");
+    expect(furkaniaDeeniyatProgram.entryRules.age4To5Course).toBe(1);
+  });
+
   it("defines Course 1 through Course 5", () => {
     expect(furkaniaDeeniyatLevels.map((level) => level.key)).toEqual([
       "course_1",
