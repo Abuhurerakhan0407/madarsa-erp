@@ -7,6 +7,8 @@ export type FurkaniaReadiness = {
     ageRange: { min: number; max: number };
     curriculum: string;
     courses: readonly number[];
+    bookMedium: string;
+    age4To5EntryCourse: number;
     shifts: readonly string[];
   };
   pending: readonly string[];
@@ -24,6 +26,8 @@ export function getFurkaniaReadiness(): FurkaniaReadiness {
       ageRange: profile.students.approximateAgeRange,
       curriculum: profile.curriculum.family,
       courses: profile.curriculum.courses,
+      bookMedium: profile.curriculum.bookMedium,
+      age4To5EntryCourse: profile.curriculum.age4To5EntryCourse,
       shifts: profile.scheduling.shifts,
     },
     pending: profile.pendingClientDetails,
