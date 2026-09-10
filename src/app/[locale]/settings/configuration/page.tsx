@@ -8,8 +8,11 @@ import { presetActionLabels } from "@/lib/configuration/preset-action-labels";
 import { configurationPresets } from "@/lib/configuration/presets";
 import { configurationModuleKeys, getConfigurationReadiness } from "@/lib/configuration/readiness";
 import type { ConfigurationLocale } from "@/lib/configuration/model";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 type ConfigurationPageProps = { params: Promise<{ locale: string }> };
+
+const FURKANIA_TENANT_SLUG = "madrasa-e-furkania";
 
 const deeniyatPresetDescription: Record<ConfigurationLocale, string> = {
   en: "Deeniyat Primary Courses 1–5 with daily attendance, Qur’aan, Hadeeth, Aqaa’id & Masaa’il, Islamic upbringing and language learning.",
@@ -18,11 +21,12 @@ const deeniyatPresetDescription: Record<ConfigurationLocale, string> = {
 };
 
 export default async function ConfigurationPage({ params }: ConfigurationPageProps) {
-  const [{ locale }, t, dashboard, readiness] = await Promise.all([
+  const [{ locale }, t, dashboard, readiness, workspace] = await Promise.all([
     params,
     getTranslations("Configuration"),
     getTranslations("Dashboard"),
-    getConfigurationReadiness()
+    getConfigurationReadiness(),
+    getTenantContext()
   ]);
   const selectedLocale = locale as ConfigurationLocale;
   const presets = configurationPresets.map((preset) => ({
@@ -75,7 +79,9 @@ export default async function ConfigurationPage({ params }: ConfigurationPagePro
         </div>
       </section>
 
-      <FurkaniaConfigurationSummary locale={selectedLocale} />
+      {workspace?.tenantSlug === FURKANIA_TENANT_SLUG ? (
+        <FurkaniaConfigurationSummary locale={selectedLocale} />
+      ) : null}
 
       <section className="configuration-banner" aria-labelledby="next-step-title" data-page-section>
         <div>
