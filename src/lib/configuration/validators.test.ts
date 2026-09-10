@@ -53,7 +53,8 @@ describe("configuration validation", () => {
   });
 
   it("accepts every locked institution preset", () => {
-    expect(configurationPresets).toHaveLength(5);
+    expect(configurationPresets).toHaveLength(6);
+    expect(configurationPresets.map((preset) => preset.key)).toContain("deeniyat_primary");
     for (const preset of configurationPresets) {
       expect(validateTerminology(preset.terminology)).toEqual({ valid: true, errors: [] });
     }
@@ -62,9 +63,12 @@ describe("configuration validation", () => {
   it("keeps contrasting presets independent", () => {
     const hifz = getConfigurationPreset("hifz_academy");
     const school = getConfigurationPreset("islamic_school");
+    const deeniyat = getConfigurationPreset("deeniyat_primary");
 
     expect(hifz.enabledDomains).toContain("hifz");
     expect(school.enabledDomains).toContain("academics");
+    expect(deeniyat.enabledDomains).toContain("academics");
+    expect(deeniyat.enabledDomains).toContain("nazra");
     expect(hifz.terminology).not.toEqual(school.terminology);
   });
 
