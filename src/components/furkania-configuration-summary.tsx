@@ -1,3 +1,4 @@
+import { FurkaniaBootstrapButton } from "@/components/furkania-bootstrap-button";
 import { furkaniaProfile } from "@/lib/client-profiles/furkania";
 import { getFurkaniaReadiness } from "@/lib/client-profiles/furkania-readiness";
 import type { ConfigurationLocale } from "@/lib/configuration/model";
@@ -15,7 +16,9 @@ const copy = {
     shifts: "Daily shifts",
     subjects: "Deeniyat subject groups",
     pending: "Still needs client confirmation",
-    timetable: "Exact shift times are required before timetable activation."
+    timetable: "Exact shift times are required before timetable activation.",
+    bootstrap: "Safe setup",
+    bootstrapBody: "Creates the Deeniyat Primary program, Courses 1–5 and the five subject groups. It does not create shift times or detailed book lessons."
   },
   ur: {
     kicker: "مدرسہ فرکانیہ",
@@ -27,7 +30,9 @@ const copy = {
     shifts: "روزانہ اوقات",
     subjects: "دینیات کے بنیادی مضامین",
     pending: "کلائنٹ کی تصدیق ابھی باقی",
-    timetable: "ٹائم ٹیبل فعال کرنے سے پہلے ہر شفٹ کا صحیح وقت درکار ہے۔"
+    timetable: "ٹائم ٹیبل فعال کرنے سے پہلے ہر شفٹ کا صحیح وقت درکار ہے۔",
+    bootstrap: "محفوظ سیٹ اپ",
+    bootstrapBody: "دینیات پرائمری، کورس 1–5 اور پانچ بنیادی مضامین بناتا ہے۔ شفٹ کے اوقات یا کتاب کے تفصیلی اسباق خود سے نہیں بنائے جاتے۔"
   },
   ar: {
     kicker: "مدرسة الفرقانية",
@@ -39,7 +44,9 @@ const copy = {
     shifts: "الفترات اليومية",
     subjects: "مجموعات مواد الدينيات",
     pending: "ما زال يحتاج تأكيد العميل",
-    timetable: "يلزم تحديد أوقات الفترات بدقة قبل تفعيل الجدول."
+    timetable: "يلزم تحديد أوقات الفترات بدقة قبل تفعيل الجدول.",
+    bootstrap: "إعداد آمن",
+    bootstrapBody: "ينشئ برنامج الدينيات الابتدائي والمستويات 1–5 ومجموعات المواد الخمس، دون افتراض أوقات الفترات أو تفاصيل الكتب."
   }
 } as const;
 
@@ -95,6 +102,14 @@ export function FurkaniaConfigurationSummary({ locale }: Props) {
       <div className="number-preview">
         <small>{text.subjects}</small>
         <strong>{display.subjects[locale].join(" · ")}</strong>
+      </div>
+
+      <div className="configuration-banner">
+        <div>
+          <span>{text.bootstrap}</span>
+          <p>{text.bootstrapBody}</p>
+        </div>
+        <FurkaniaBootstrapButton locale={locale} />
       </div>
     </section>
   );
