@@ -13,6 +13,8 @@ import { getTenantContext } from "@/lib/tenancy/context";
 
 type RpcObject = Record<string, unknown>;
 
+const FURKANIA_TENANT_SLUG = "madrasa-e-furkania";
+
 function asRpcObject(value: unknown): RpcObject | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as RpcObject;
@@ -45,6 +47,9 @@ export async function POST(request: Request) {
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
+  }
+  if (workspace.tenantSlug !== FURKANIA_TENANT_SLUG) {
+    return NextResponse.json({ error: "This setup is not available in the active tenant." }, { status: 404 });
   }
   if (!workspace.branchId) {
     return NextResponse.json({ error: "Active primary branch required." }, { status: 409 });
