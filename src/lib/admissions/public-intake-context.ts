@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { publicAdmissionsE2EFixture } from "./public-intake-e2e-fixture";
 import type {
   PublicAdmissionField,
   PublicAdmissionSection
@@ -84,6 +85,16 @@ export async function getPublicAdmissionsContext(
   tenantSlug: string
 ): Promise<PublicAdmissionsContext | null> {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tenantSlug)) return null;
+
+  // Playwright's UI fixture is deliberately explicit and slug-scoped. It keeps
+  // browser regression tests deterministic without weakening production's
+  // database-backed public admission flow or accepting invalid credentials.
+  if (
+    process.env.ILMGAAH_E2E_FIXTURES === "1" &&
+    tenantSlug === publicAdmissionsE2EFixture.tenant.slug
+  ) {
+    return publicAdmissionsE2EFixture;
+  }
 
   const admin = createAdminClient();
   const { data: tenant, error: tenantError } = await admin
