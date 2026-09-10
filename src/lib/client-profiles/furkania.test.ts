@@ -13,6 +13,12 @@ describe("Madrasa-e-Furkania client profile", () => {
     expect(furkaniaProfile.scheduling.shifts).toEqual(["morning", "midday", "evening"]);
   });
 
+  it("locks the confirmed Hinglish and Course 1 entry rules", () => {
+    expect(furkaniaProfile.curriculum.bookMedium).toBe("hinglish");
+    expect(furkaniaProfile.curriculum.age4To5EntryCourse).toBe(1);
+    expect(furkaniaProfile.curriculum.exactBookVersion).toBeNull();
+  });
+
   it("uses the five Deeniyat subject families", () => {
     expect(furkaniaProfile.curriculum.subjectGroups).toEqual([
       "quraan",
@@ -24,6 +30,7 @@ describe("Madrasa-e-Furkania client profile", () => {
   });
 
   it("does not invent unconfirmed timetable or operational rules", () => {
+    expect(furkaniaProfile.access.ownerAdminEmail).toBeNull();
     expect(furkaniaProfile.scheduling.exactShiftTimes).toBeNull();
     expect(furkaniaProfile.scheduling.operatingDays).toBeNull();
     expect(furkaniaProfile.staff.exactTeacherCount).toBeNull();
