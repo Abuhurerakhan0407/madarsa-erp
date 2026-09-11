@@ -41,6 +41,6 @@ export async function createUnicodeDocumentPdf(options: {
       footerText: options.footerText,
       fontEntries
     },
-    options.layout
+    { tagged: "pdfa2u", ...options.layout }
   );
 }
