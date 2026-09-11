@@ -1,6 +1,6 @@
 import type { NavigationAudience } from "./client-v3-navigation";
 
-const OFFICE_PREFIXES=["settings.","admissions.","people.employee.","hr.employee.","report.","document.","documents."];
+const OFFICE_PREFIXES=["settings.","admissions.","people.employee.","hr.employee.","finance.","report.","document.","documents."];
 const TEACHING_PREFIXES=["attendance.student.","learning.","assessment.marks."];
 
 export function classifyNavigationAudience(roleKeys:string[],permissions:string[]):NavigationAudience{
