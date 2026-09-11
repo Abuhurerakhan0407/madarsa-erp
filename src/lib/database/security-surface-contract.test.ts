@@ -28,6 +28,19 @@ function escapeRegex(value:string):string {
   return value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
 }
 
+function publicSecurityDefinerNames(sql:string):string[]{
+  const starts=[...sql.matchAll(/create\s+or\s+replace\s+function\s+public\.([a-z0-9_]+)\s*\(/gi)];
+  const names:string[]=[];
+  for(let index=0;index<starts.length;index+=1){
+    const start=starts[index];
+    const from=start.index??0;
+    const to=index+1<starts.length?(starts[index+1].index??sql.length):sql.length;
+    const block=sql.slice(from,to);
+    if(/security\s+definer/i.test(block))names.push(start[1].toLowerCase());
+  }
+  return names;
+}
+
 describe("database migration security surface", () => {
   it("never grants public RPC execution directly to browser roles", () => {
     for (const migration of migrations) {
@@ -66,9 +79,7 @@ describe("database migration security surface", () => {
       if (definerCount === 0) continue;
       const searchPathCount = count(/set\s+search_path\s*(?:=|\bto\b)/gi, migration.sql);
       expect(searchPathCount, `${migration.name}: search_path`).toBeGreaterThanOrEqual(definerCount);
-
-      const publicDefiners=[...migration.sql.matchAll(/create\s+or\s+replace\s+function\s+public\.([a-z0-9_]+)\([^]*?security\s+definer/gi)].map(match=>match[1]);
-      for(const functionName of publicDefiners){
+      for(const functionName of publicSecurityDefinerNames(migration.sql)){
         const escaped=escapeRegex(functionName);
         expect(allSql, `${functionName}: browser revoke`).toMatch(new RegExp(`revoke\\s+all\\s+on\\s+function\\s+public\\.${escaped}\\([^;]+\\)\\s+from\\s+public\\s*,\\s*anon\\s*,\\s*authenticated`,"i"));
         expect(allSql, `${functionName}: service role grant`).toMatch(new RegExp(`grant\\s+execute\\s+on\\s+function\\s+public\\.${escaped}\\([^;]+\\)\\s+to\\s+service_role`,"i"));
