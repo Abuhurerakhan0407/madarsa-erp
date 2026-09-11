@@ -15,6 +15,7 @@ const officePrimary:ClientV3NavItem[]=[
 ];
 const officeMore:ClientV3NavItem[]=[
  item("teachers","Teachers","اساتذہ","المعلمون",l=>`/${l}/staff`),
+ item("fees","Fees & Payments","فیس و ادائیگی","الرسوم والمدفوعات",l=>`/${l}/fees`),
  item("exams","Exams","امتحانات","الاختبارات",l=>`/${l}/exams`),
  item("documents","IDs & Documents","ID و دستاویزات","الهويات والمستندات",l=>`/${l}/documents`),
  item("reports","Reports","رپورٹس","التقارير",l=>`/${l}/reports`),
