@@ -29,14 +29,14 @@ function escapeRegex(value:string):string {
 }
 
 function publicSecurityDefinerNames(sql:string):string[]{
-  const starts=[...sql.matchAll(/create\s+or\s+replace\s+function\s+public\.([a-z0-9_]+)\s*\(/gi)];
+  const starts=[...sql.matchAll(/create\s+or\s+replace\s+function\s+([a-z0-9_]+)\.([a-z0-9_]+)\s*\(/gi)];
   const names:string[]=[];
   for(let index=0;index<starts.length;index+=1){
     const start=starts[index];
     const from=start.index??0;
     const to=index+1<starts.length?(starts[index+1].index??sql.length):sql.length;
     const block=sql.slice(from,to);
-    if(/security\s+definer/i.test(block))names.push(start[1].toLowerCase());
+    if(start[1].toLowerCase()==="public"&&/security\s+definer/i.test(block))names.push(start[2].toLowerCase());
   }
   return names;
 }
