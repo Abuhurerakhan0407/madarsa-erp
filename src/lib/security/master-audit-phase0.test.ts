@@ -47,7 +47,8 @@ describe("master audit Phase 0 security invariants",()=>{
     expect(migration).toContain("v_required_permission := 'attendance.student.mark'");
     expect(migration).toContain("v_required_permission := 'hr.employee.manage'");
     expect(migration).toContain("if not public.operator_has_permission_v1");
-    expect(migration).toMatch(/permission denied'% or sqlerrm ilike '%active membership required%' then\s+raise;/i);
+    expect(migration).toContain("if sqlerrm ilike '%permission denied%' or sqlerrm ilike '%active membership required%' then");
+    expect(migration).toMatch(/active membership required%' then\s+raise;/i);
   });
 
   it("uses the centralized active-role permission resolver for legacy mutations",()=>{
