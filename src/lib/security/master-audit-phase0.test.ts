@@ -4,6 +4,7 @@ import {describe,expect,it} from "vitest";
 
 const read=(path:string)=>readFileSync(resolve(process.cwd(),path),"utf8");
 const migration=read("supabase/migrations/20260912011500_master_audit_phase0_security_hardening.sql");
+const classScope=read("supabase/migrations/20260912012500_master_audit_class_scope_hardening.sql");
 const credentials=read("src/app/api/portals/credentials/route.ts");
 
 describe("master audit Phase 0 security invariants",()=>{
@@ -22,6 +23,17 @@ describe("master audit Phase 0 security invariants",()=>{
     expect(migration).not.toMatch(/has_permission\([^\n]+NULL::bigint/i);
     expect(migration).toContain("private.has_permission(p_tenant_id, 'students.profile.read', e.branch_id)");
     expect(migration).toContain("private.has_permission(p_tenant_id, 'assessment.marks.read', e.branch_id)");
+  });
+
+  it("restricts teacher-level sensitive reads to assigned students/classes",()=>{
+    expect(classScope).toContain("identity_assigned_teacher_for_student_v1");
+    expect(classScope).toContain("g.primary_teacher_person_id = ipl.person_id");
+    expect(classScope).toContain("te.teacher_person_id = ipl.person_id");
+    expect(classScope).toContain("te.group_id = e.group_id");
+    expect(classScope).toContain("students.profile.update");
+    expect(classScope).toContain("attendance.student.approve");
+    expect(classScope).toContain("assessment.marks.moderate");
+    expect(classScope).toContain("ms.evaluator_person_id");
   });
 
   it("requires portal access-state targets to be eligible in the actor branch",()=>{
