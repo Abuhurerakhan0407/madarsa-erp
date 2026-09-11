@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "One or more selected students are no longer eligible for this ID-card batch." }, { status: 409 });
     }
     const academicYear = result.sessions.find((session) => session.id === sessionId)?.label || "Current academic year";
-    const pdf = createStudentIdCardSheetPdf(result.students, {
+    const pdf = await createStudentIdCardSheetPdf(result.students, {
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || "Main Branch",
       academicYear
