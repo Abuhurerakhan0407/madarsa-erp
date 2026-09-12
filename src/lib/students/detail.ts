@@ -1,4 +1,4 @@
-import { getNavigationAudience } from "@/lib/navigation/audience";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -76,12 +76,14 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
 
+  const canReadStudent = await operatorHasPermissions(workspace, ["students.profile.read"]);
+  if (!canReadStudent) return null;
+  const canReadInstitutionStudents = await operatorHasPermissions(workspace, ["people.person.read"]);
   const supabase = await createClient();
-  const audience = await getNavigationAudience(workspace);
   const admin = createAdminClient();
   let enrollmentScope: EnrollmentScope | null = null;
 
-  if (audience === "teacher") {
+  if (!canReadInstitutionStudents) {
     const teacherLink = await admin
       .from("identity_person_links")
       .select("person_id")

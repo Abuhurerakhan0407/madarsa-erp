@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation";
-import { getNavigationAudience } from "@/lib/navigation/audience";
+import { operatorHasPermissions, type PermissionMatchMode } from "@/lib/access/operator-permission";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 function safeLocale(value: string): "en" | "ur" | "ar" {
   return value === "ur" || value === "ar" ? value : "en";
 }
 
-export async function requireOfficeSurface(locale: string) {
+export async function requireOfficeSurface(
+  locale: string,
+  permissions: readonly string[] = ["people.person.read"],
+  mode: PermissionMatchMode = "all"
+) {
   const workspace = await getTenantContext();
-  if (!workspace) redirect("/onboarding");
-  const audience = await getNavigationAudience(workspace);
-  if (audience !== "office") redirect(`/${safeLocale(locale)}/forbidden`);
+  if (!workspace || !workspace.branchId) redirect("/onboarding");
+  if (!(await operatorHasPermissions(workspace, permissions, mode))) {
+    redirect(`/${safeLocale(locale)}/forbidden`);
+  }
   return workspace;
 }

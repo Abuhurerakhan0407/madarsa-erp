@@ -4,6 +4,6 @@ import { requireOfficeSurface } from "@/lib/navigation/office-surface";
 
 export default async function AccessCapabilityLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireOfficeSurface(locale);
+  await requireOfficeSurface(locale, ["settings.roles.manage"]);
   return <CapabilityBoundary capability="branches_roles_ui">{children}</CapabilityBoundary>;
 }

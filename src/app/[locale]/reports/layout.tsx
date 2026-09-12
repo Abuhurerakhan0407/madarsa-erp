@@ -3,6 +3,6 @@ import { requireOfficeSurface } from "@/lib/navigation/office-surface";
 
 export default async function ReportsLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireOfficeSurface(locale);
+  await requireOfficeSurface(locale, ["report.run.execute"]);
   return children;
 }
