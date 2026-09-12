@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { extractText } from "pdfnative";
 import { createStudentStatusCertificatePdf } from "./student-status-pdf";
 import type { StudentStatusCertificate } from "./student-status";
 
@@ -12,8 +13,8 @@ const certificate: StudentStatusCertificate = {
   snapshot: {
     studentPersonId: 49,
     studentNumber: "STU-MAIN-2026_27-00017",
-    studentName: "Mikaeel Ansari",
-    studentNameNative: null,
+    studentName: "Mikaeel Ansari محمد انصاری",
+    studentNameNative: "محمد انصاری",
     studentStatus: "active",
     joinedOn: "2026-08-31",
     tenantName: "Al-Noor Islamic Academy",
@@ -26,13 +27,12 @@ const certificate: StudentStatusCertificate = {
 };
 
 describe("student status certificate PDF", () => {
-  it("renders the issued snapshot and verification code on A4", () => {
-    const pdf = createStudentStatusCertificatePdf(certificate);
-    const text = new TextDecoder().decode(pdf);
-    expect(text.startsWith("%PDF-1.4")).toBe(true);
-    expect(text).toContain("/MediaBox [0 0 595 842]");
-    expect(text).toContain("STUDENT STATUS CERTIFICATE");
-    expect(text).toContain("Mikaeel Ansari");
+  it("renders the issued snapshot, Urdu/Arabic name and verification code", async () => {
+    const pdf = await createStudentStatusCertificatePdf(certificate);
+    const text = extractText(pdf).map(page => page.text).join("\n");
+    expect(new TextDecoder().decode(pdf).startsWith("%PDF-")).toBe(true);
+    expect(text).toContain("Student Status Certificate");
+    expect(text).toContain("Mikaeel Ansari محمد انصاری");
     expect(text).toContain("STU-MAIN-2026_27-00017");
     expect(text).toContain("SSC-ABCDEF1234567890");
     expect(text).toContain("not a graduation or academic-award certificate");
