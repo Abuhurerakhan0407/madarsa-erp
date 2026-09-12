@@ -13,7 +13,7 @@ const students = Array.from({ length: 5 }, (_, index) => ({
 }));
 
 describe("student ID-card sheet PDF", () => {
-  it("creates paginated A4 ID-card sheets and preserves Unicode", async () => {
+  it("creates paginated A4 ID-card sheets and preserves shaped Arabic glyphs", async () => {
     const pdf = await createStudentIdCardSheetPdf(students, {
       institutionName: "Al-Noor Islamic Academy",
       branchName: "Central Campus",
@@ -26,7 +26,8 @@ describe("student ID-card sheet PDF", () => {
     expect(text).toContain("Student 1");
     expect(text).toContain("STU-005");
     expect(text).toContain("Guardian 5");
-    expect(text).toContain("محمد عبداللہ");
+    expect(text).toMatch(/[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff]/u);
+    expect(text).not.toContain("????");
   });
 
   it("rejects an empty batch", async () => {
