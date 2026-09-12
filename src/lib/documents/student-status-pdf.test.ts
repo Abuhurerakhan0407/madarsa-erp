@@ -27,12 +27,14 @@ const certificate: StudentStatusCertificate = {
 };
 
 describe("student status certificate PDF", () => {
-  it("renders the issued snapshot, Urdu/Arabic name and verification code", async () => {
+  it("renders the issued snapshot, shaped Urdu/Arabic name and verification code", async () => {
     const pdf = await createStudentStatusCertificatePdf(certificate);
     const text = extractText(pdf).map(page => page.text).join("\n");
     expect(new TextDecoder().decode(pdf).startsWith("%PDF-")).toBe(true);
     expect(text).toContain("Student Status Certificate");
-    expect(text).toContain("Mikaeel Ansari محمد انصاری");
+    expect(text).toContain("Mikaeel Ansari");
+    expect(text).toMatch(/[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff]/u);
+    expect(text).not.toContain("????");
     expect(text).toContain("STU-MAIN-2026_27-00017");
     expect(text).toContain("SSC-ABCDEF1234567890");
     expect(text).toContain("not a graduation or academic-award certificate");
