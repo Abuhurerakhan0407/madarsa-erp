@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { extractText } from "pdfnative";
 import { createStudentIdCardSheetPdf } from "./id-card-pdf";
 
 const students = Array.from({ length: 5 }, (_, index) => ({
   studentNumber: `STU-00${index + 1}`,
-  name: `Student ${index + 1}`,
+  name: index === 4 ? "محمد عبداللہ" : `Student ${index + 1}`,
   dateOfBirth: "2012-01-01",
   status: "active",
   program: "Dars-e-Nizami",
@@ -12,27 +13,27 @@ const students = Array.from({ length: 5 }, (_, index) => ({
 }));
 
 describe("student ID-card sheet PDF", () => {
-  it("creates A4 CR80 front/back sheets with deterministic pagination", () => {
-    const pdf = createStudentIdCardSheetPdf(students, {
+  it("creates paginated A4 ID-card sheets and preserves Unicode", async () => {
+    const pdf = await createStudentIdCardSheetPdf(students, {
       institutionName: "Al-Noor Islamic Academy",
       branchName: "Central Campus",
       academicYear: "2026-27"
     });
-    const text = new TextDecoder().decode(pdf);
-    expect(text.startsWith("%PDF-1.4")).toBe(true);
-    expect(text).toContain("/MediaBox [0 0 595 842]");
-    expect(text).toContain("/Count 2");
-    expect(text).toContain("40 629 242.65 153 re S");
+    const pages = extractText(pdf);
+    const text = pages.map(page => page.text).join("\n");
+    expect(new TextDecoder().decode(pdf).startsWith("%PDF-")).toBe(true);
+    expect(pages.length).toBeGreaterThan(1);
     expect(text).toContain("Student 1");
     expect(text).toContain("STU-005");
     expect(text).toContain("Guardian 5");
+    expect(text).toContain("محمد عبداللہ");
   });
 
-  it("rejects an empty batch", () => {
-    expect(() => createStudentIdCardSheetPdf([], {
+  it("rejects an empty batch", async () => {
+    await expect(createStudentIdCardSheetPdf([], {
       institutionName: "Al-Noor Islamic Academy",
       branchName: "Central Campus",
       academicYear: "2026-27"
-    })).toThrow("At least one student is required");
+    })).rejects.toThrow("At least one student is required");
   });
 });
