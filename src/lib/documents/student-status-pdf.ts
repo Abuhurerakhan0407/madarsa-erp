@@ -6,7 +6,7 @@ const value = (input: string | null | undefined) => input?.trim() || "—";
 
 export async function createStudentStatusCertificatePdf(certificate: StudentStatusCertificate): Promise<Uint8Array> {
   const { snapshot } = certificate;
-  const rows: PdfRow[] = [
+  const fields: Array<[string, string | null | undefined]> = [
     ["Student ID", snapshot.studentNumber],
     ["Program", snapshot.program],
     ["Class / group", snapshot.classGroup],
@@ -15,7 +15,12 @@ export async function createStudentStatusCertificatePdf(certificate: StudentStat
     ["Student status", snapshot.studentStatus.toUpperCase()],
     ["Issued on", snapshot.issuedOn],
     ["Verification code", certificate.verificationCode]
-  ].map(([label, fieldValue]) => ({ cells: [label, value(fieldValue)], type: "neutral", pointed: false }));
+  ];
+  const rows: PdfRow[] = fields.map(([label, fieldValue]) => ({
+    cells: [label, value(fieldValue)],
+    type: "neutral",
+    pointed: false
+  }));
 
   const blocks: DocumentBlock[] = [
     { type: "heading", text: snapshot.tenantName, level: 1 },
