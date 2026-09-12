@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  resolve(process.cwd(), "supabase/migrations/20260906140000_phase4_institution_profile_update.sql"),
+  resolve(process.cwd(), "supabase/migrations/20260912150036_phase4_institution_profile_update.sql"),
   "utf8"
 ).toLowerCase();
 const route = readFileSync(
