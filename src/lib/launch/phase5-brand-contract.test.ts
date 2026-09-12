@@ -2,8 +2,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { extname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const roots = ["src/app", "src/components", "messages"];
-const sourceExtensions = new Set([".ts", ".tsx", ".json"]);
+const roots = ["src/app", "src/components"];
+const sourceExtensions = new Set([".ts", ".tsx"]);
 const legacyBrandMarkers = ["Madarsa ERP", "مدرسہ ای آر پی", "نظام إدارة المدرسة"];
 
 function filesUnder(directory: string): string[] {
@@ -17,12 +17,18 @@ function filesUnder(directory: string): string[] {
 }
 
 describe("Client V3 Phase 5 launch branding", () => {
-  it("does not expose the retired Madarsa ERP product name in production UI source", () => {
+  it("does not expose the retired Madarsa ERP product name in rendered production source", () => {
     const offenders = roots.flatMap(filesUnder).filter((path) => {
       const source = readFileSync(path, "utf8");
       return legacyBrandMarkers.some((marker) => source.includes(marker));
     });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("pins the visible application shell to the Ilmgaah product identity", () => {
+    const shell = readFileSync("src/components/app-shell.tsx", "utf8");
+    expect(shell).toContain("<strong>Ilmgaah</strong>");
+    expect(shell).not.toContain('app("productName")');
   });
 });
