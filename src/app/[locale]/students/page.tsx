@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FieldGroup, FilterBar, InlineState, TableFrame, WorkspacePageHeader } from "@/components/workspace-ui";
 import type { Locale } from "@/lib/i18n/config";
+import { requireOfficeSurface } from "@/lib/navigation/office-surface";
 import { getStudentRegister } from "@/lib/students/register";
 
 const copy = {
@@ -26,6 +27,7 @@ function pageHref(locale: Locale, page: number, q?: string, status?: string) {
 
 export default async function StudentsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
   const locale = (await params).locale as Locale;
+  await requireOfficeSurface(locale);
   const query = await searchParams;
   const text = copy[locale];
   const isFiltered = Boolean(query.q?.trim() || (query.status && query.status !== "all"));
