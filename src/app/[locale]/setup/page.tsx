@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SetupWizard } from "@/components/setup/setup-wizard";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getGuidedSetupSnapshot } from "@/lib/configuration/setup-readiness";
 import type { ConfigurationLocale } from "@/lib/configuration/model";
+import { getNavigationAudience } from "@/lib/navigation/audience";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 type SetupPageProps = { params: Promise<{ locale: string }> };
 
@@ -30,6 +33,11 @@ const headerCopy: Record<ConfigurationLocale, { eyebrow: string; title: string; 
 export default async function SetupPage({ params }: SetupPageProps) {
   const { locale: rawLocale } = await params;
   const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as ConfigurationLocale;
+  const workspace = await getTenantContext();
+  if (!workspace) redirect("/onboarding");
+  const audience = await getNavigationAudience(workspace);
+  if (audience !== "office") redirect(`/${locale}/forbidden`);
+
   const snapshot = await getGuidedSetupSnapshot(locale);
   const text = headerCopy[locale];
 
