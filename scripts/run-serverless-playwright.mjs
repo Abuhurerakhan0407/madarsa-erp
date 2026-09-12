@@ -1,9 +1,6 @@
-import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
+import serverlessChromium from "@sparticuz/chromium";
 
-const require = createRequire(import.meta.url);
-const chromiumRoot = process.env.SERVERLESS_CHROMIUM_ROOT || "/tmp/pw-serverless/node_modules";
-const serverlessChromium = require(`${chromiumRoot}/@sparticuz/chromium`);
 const executablePath = await serverlessChromium.executablePath();
 const chromiumArgs = serverlessChromium.args.filter((arg) => arg !== "--single-process");
 const command = process.platform === "win32" ? "npm.cmd" : "npm";
