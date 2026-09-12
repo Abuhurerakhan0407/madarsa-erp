@@ -37,6 +37,6 @@ describe("student status certificate PDF", () => {
     expect(text).not.toContain("????");
     expect(text).toContain("STU-MAIN-2026_27-00017");
     expect(text).toContain("SSC-ABCDEF1234567890");
-    expect(text).toContain("not a graduation or academic-award certificate");
+    expect(text.replace(/\s+/g," ")).toContain("not a graduation or academic-award certificate");
   });
 });
