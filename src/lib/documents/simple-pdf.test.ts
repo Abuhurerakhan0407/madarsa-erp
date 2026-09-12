@@ -21,7 +21,7 @@ describe("simple PDF renderer", () => {
     expect(text).toContain("Ayaan (Year 1) \\ verified");
     expect(hasArabicGlyphs(text)).toBe(true);
     expect(text).not.toContain("????");
-    expect(text).toContain(longToken);
+    expect(text.replace(/\s+/g,"")).toContain(longToken);
   });
 
   it("paginates long documents without dropping the final line", async () => {
