@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const dashboard = readFileSync(resolve(process.cwd(), "src/app/[locale]/page.tsx"), "utf8").toLowerCase();
 const teacher = readFileSync(resolve(process.cwd(), "src/components/teacher-home.tsx"), "utf8").toLowerCase();
+const setup = readFileSync(resolve(process.cwd(), "src/app/[locale]/setup/page.tsx"), "utf8").toLowerCase();
+const portal = readFileSync(resolve(process.cwd(), "src/app/portal/page.tsx"), "utf8").toLowerCase();
 
 describe("Client V3 Phase 4 role surfaces", () => {
   it("resolves the authoritative navigation audience before rendering office data", () => {
@@ -26,5 +28,20 @@ describe("Client V3 Phase 4 role surfaces", () => {
     expect(dashboard).toContain("getguidedsetupsnapshot(locale)");
     expect(dashboard).toContain("!setup.steps.start");
     expect(dashboard).toContain("/${locale}/setup");
+  });
+
+  it("keeps guided setup server-gated to the office audience", () => {
+    expect(setup).toContain("gettenantcontext()");
+    expect(setup).toContain("getnavigationaudience(workspace)");
+    expect(setup).toContain('audience !== "office"');
+    expect(setup).toContain("/${locale}/forbidden");
+    expect(setup).not.toContain("raw_user_meta_data");
+  });
+
+  it("keeps the portal separate from office configuration and admissions routes", () => {
+    expect(portal).toContain("identity_person_links");
+    expect(portal).toContain('link_type)==="guardian"');
+    expect(portal).not.toContain("/settings/configuration");
+    expect(portal).not.toContain("/admissions");
   });
 });
