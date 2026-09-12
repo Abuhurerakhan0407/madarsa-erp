@@ -5,7 +5,7 @@ import {getTeachersWorkspace} from "@/lib/teachers/workspace";
 import {TeachersWorkspaceView} from "@/components/teachers-workspace";
 import {InlineState,WorkspacePageHeader} from "@/components/workspace-ui";
 
-export const metadata:Metadata={title:"Teachers | Madarsa ERP"};
+export const metadata:Metadata={title:"Teachers | Ilmgaah"};
 
 const copy={
  en:{eyebrow:"Teachers",title:"Teacher workspace",body:"Manage the teaching staff who deliver classes and daily learning work.",empty:"No teachers yet",emptyBody:"Add the first teacher so classes, attendance and teaching assignments can be connected to a real staff record.",add:"Add first teacher",filtered:"No teachers match these filters",clear:"Clear filters"},
