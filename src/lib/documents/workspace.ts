@@ -19,6 +19,12 @@ function option(r:Raw):DocumentFilterOption|null{
  const id=n(r.id),key=s(r.key);if(!id||!key)return null;
  return{id,key,labels:obj(r.labels),sessionId:n(r.session_id),programId:n(r.program_id)};
 }
+function documentRows(value:unknown):ContractDocumentStudent[]{
+ return arr(value).flatMap(r=>{
+  const personId=n(r.person_id),studentNumber=s(r.student_number),name=s(r.name);if(!personId||!studentNumber||!name)return[];
+  return[{personId,studentNumber,admissionNumber:s(r.admission_number),name,nameNative:s(r.name_native),sessionId:n(r.session_id),programId:n(r.program_id),groupId:n(r.group_id),academicYear:s(r.academic_year),program:s(r.program),classGroup:s(r.class_group),photoAvailable:b(r.photo_available),idCardAvailable:b(r.id_card_available),profileAvailable:b(r.profile_available),quranProgressAvailable:b(r.quran_progress_available),reportCardIssued:b(r.report_card_issued),reportCardIssuedAt:s(r.report_card_issued_at)}];
+ }) as ContractDocumentStudent[];
+}
 
 export async function getDocumentCenter(args:DocumentCenterArgs={}){
  const w=await getTenantContext();if(!w||!w.branchId)throw new Error('Active branch is required.');
@@ -33,10 +39,7 @@ export async function getDocumentCenter(args:DocumentCenterArgs={}){
  const raw=obj(data),filters=obj(raw.filters);
  return{
   total:n(raw.total)??0,page:n(raw.page)??1,pageSize:n(raw.page_size)??pageSize,selectionLimit:n(raw.selection_limit)??250,
-  rows:arr(raw.rows).flatMap(r=>{
-   const personId=n(r.person_id),studentNumber=s(r.student_number),name=s(r.name);if(!personId||!studentNumber||!name)return[];
-   return[{personId,studentNumber,admissionNumber:s(r.admission_number),name,nameNative:s(r.name_native),sessionId:n(r.session_id),programId:n(r.program_id),groupId:n(r.group_id),academicYear:s(r.academic_year),program:s(r.program),classGroup:s(r.class_group),photoAvailable:b(r.photo_available),idCardAvailable:b(r.id_card_available),profileAvailable:b(r.profile_available),quranProgressAvailable:b(r.quran_progress_available),reportCardIssued:b(r.report_card_issued),reportCardIssuedAt:s(r.report_card_issued_at)}];
-  }) as ContractDocumentStudent[],
+  rows:documentRows(raw.rows),
   filters:{
    sessions:arr(filters.sessions).map(option).filter((x):x is DocumentFilterOption=>Boolean(x)),
    programs:arr(filters.programs).map(option).filter((x):x is DocumentFilterOption=>Boolean(x)),
@@ -55,11 +58,22 @@ export async function getAllDocumentStudents(args:Omit<DocumentCenterArgs,'page'
  return rows;
 }
 
+async function getSelectedDocumentStudents(args:Omit<DocumentCenterArgs,'page'|'pageSize'>,personIds:number[]):Promise<ContractDocumentStudent[]>{
+ const w=await getTenantContext();if(!w||!w.branchId)throw new Error('Active branch is required.');
+ const admin=createAdminClient();
+ const {data,error}=await admin.rpc('get_operational_document_students_by_ids_v1',{
+  p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_student_person_ids:personIds,
+  p_session_id:args.sessionId??null,p_program_id:args.programId??null,p_group_id:args.groupId??null,p_search:args.search??null
+ });
+ if(error)throw new Error(error.message);
+ return documentRows(obj(data).rows);
+}
+
 export async function resolveDocumentStudents(args:Omit<DocumentCenterArgs,'page'|'pageSize'>,personIds?:number[]|null):Promise<ContractDocumentStudent[]>{
  const unique=personIds?.length?[...new Set(personIds.filter(id=>Number.isInteger(id)&&id>0))]:null;
  if(unique&&unique.length>250)throw new Error('Select no more than 250 students at one time.');
- const rows=await getAllDocumentStudents(args);if(!unique)return rows;
- const wanted=new Set(unique);const selected=rows.filter(row=>wanted.has(row.personId));
- if(selected.length!==wanted.size)throw new Error('One or more selected students are outside the active filters or branch.');
+ if(!unique)return getAllDocumentStudents(args);
+ const selected=await getSelectedDocumentStudents(args,unique);
+ if(selected.length!==unique.length)throw new Error('One or more selected students are outside the active filters or branch.');
  return selected;
 }
