@@ -22,7 +22,7 @@ describe("Phase 9 Teachers + Portals UI contracts",()=>{
  it("renders parent overview in the handoff priority order",()=>{
   const view=read("src/components/portal-parent-priority-overview.tsx");const priorities=["1-urgent-notices","2-today-schedule","3-attendance","4-homework","5-teaching-progress","6-results","7-events"];let previous=-1;for(const key of priorities){const position=view.indexOf(key);expect(position).toBeGreaterThan(previous);previous=position;}
  });
- it("keeps parent teacher photo access guardian-scoped instead of granting HR read",()=>{
-  const route=read("src/app/api/portal/teachers/photo/[personId]/route.ts");expect(route).toContain("getPortalHome(tenantId)");expect(route).toContain("home.overview");expect(route).not.toContain("hr.employee.read");expect(route).toContain("createSignedUrl(path,60)");
+ it("keeps parent teacher photo access guardian-scoped and CSP-compatible without granting HR read",()=>{
+  const route=read("src/app/api/portal/teachers/photo/[personId]/route.ts");expect(route).toContain("getPortalHome(tenantId)");expect(route).toContain("home.overview");expect(route).not.toContain("hr.employee.read");expect(route).toContain('.download(path)');expect(route).toContain('protectedPhotoResponse');expect(route).not.toContain('createSignedUrl');expect(route).not.toContain('NextResponse.redirect');
  });
 });
