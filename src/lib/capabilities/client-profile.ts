@@ -72,6 +72,14 @@ function configuredTenantSlugs(value: string | null | undefined): string[] {
     .filter((slug) => slug.length > 0);
 }
 
+function applyTenantPendingRestrictions(tenantSlug:string,profile:ClientCapabilityProfile):ClientCapabilityProfile{
+  // Furkania has not approved WhatsApp scope/provider/events/consent practice yet.
+  // Fail closed even when the broader product profile is enabled; activation is a
+  // deliberate client-configuration change, not an implicit consequence of credentials.
+  if(normalizeProfileValue(tenantSlug)!=="madrasa-e-furkania")return profile;
+  return {key:profile.key,disabledCapabilities:new Set<ProductCapability>([...profile.disabledCapabilities,"whatsapp_automation"])};
+}
+
 export function coerceClientProfileKey(value: string | null | undefined): ClientProfileKey {
   return normalizeProfileValue(value ?? "") === "client-v2" ? "client-v2" : "full-product";
 }
@@ -81,20 +89,23 @@ export function resolveClientProfileFromConfig(
   config: ClientProfileConfig
 ): ClientCapabilityProfile {
   const override = normalizeProfileValue(config.profileOverride ?? "");
+  let profile:ClientCapabilityProfile;
 
-  if (override === "client-v2") return clientV2Profile;
-  if (override === "full-product") return fullProductProfile;
-
-  const tenantProfile = normalizeProfileValue(config.tenantProfile ?? "");
-  if (tenantProfile === "client-v2") return clientV2Profile;
-  if (tenantProfile === "full-product") return fullProductProfile;
-
-  const normalizedTenantSlug = normalizeProfileValue(tenantSlug);
-  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) {
-    return clientV2Profile;
+  if (override === "client-v2") profile=clientV2Profile;
+  else if (override === "full-product") profile=fullProductProfile;
+  else {
+    const tenantProfile = normalizeProfileValue(config.tenantProfile ?? "");
+    if (tenantProfile === "client-v2") profile=clientV2Profile;
+    else if (tenantProfile === "full-product") profile=fullProductProfile;
+    else {
+      const normalizedTenantSlug = normalizeProfileValue(tenantSlug);
+      profile=configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)
+        ? clientV2Profile
+        : fullProductProfile;
+    }
   }
 
-  return fullProductProfile;
+  return applyTenantPendingRestrictions(tenantSlug,profile);
 }
 
 export function resolveClientProfile(
