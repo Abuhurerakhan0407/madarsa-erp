@@ -83,8 +83,8 @@ export function TableFrame({ children, label }: { children: ReactNode; label?: s
   return <div className="workspace-table-frame" role="region" aria-label={label} tabIndex={0}>{children}</div>;
 }
 
-export function InlineState({ title, body }: { title: string; body?: string }) {
-  return <div className="workspace-inline-state" role="status"><strong>{title}</strong>{body ? <span>{body}</span> : null}</div>;
+export function InlineState({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
+  return <div className="workspace-inline-state" role="status"><strong>{title}</strong>{body ? <span>{body}</span> : null}{action ? <div className="workspace-state-action">{action}</div> : null}</div>;
 }
 
 type WorkspaceStateProps = {

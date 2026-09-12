@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { TeacherHome } from "@/components/teacher-home";
 import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
+import { getGuidedSetupSnapshot } from "@/lib/configuration/setup-readiness";
 import type { Locale } from "@/lib/i18n/config";
+import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
 
@@ -42,6 +45,9 @@ type DashboardCopy = {
   quick: string;
   quickBody: string;
   allModules: string;
+  setupTitle: string;
+  setupBody: string;
+  setupAction: string;
   routes: Record<string, string>;
   alertLabels: Record<string, string>;
 };
@@ -83,6 +89,9 @@ const copy: Record<Locale, DashboardCopy> = {
     quick: "Operational workspaces",
     quickBody: "Open the workspaces used for day-to-day institution operations.",
     allModules: "View complete suite",
+    setupTitle: "Finish institution setup",
+    setupBody: "Complete the academic year, first program and class before adding the first student or opening daily attendance.",
+    setupAction: "Continue guided setup",
     routes: { admissions: "Admissions", students: "Students", programs: "Programs & Syllabus", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "Teachers", reports: "Reports & Analytics", documents: "IDs & Documents", configuration: "Institution Configuration" },
     alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Teacher leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
@@ -122,6 +131,9 @@ const copy: Record<Locale, DashboardCopy> = {
     quick: "آپریشنل ورک اسپیسز",
     quickBody: "ادارے کے روزمرہ کام کے لیے متعلقہ ورک اسپیسز کھولیں۔",
     allModules: "مکمل سسٹم دیکھیں",
+    setupTitle: "ادارے کا سیٹ اپ مکمل کریں",
+    setupBody: "پہلا طالب علم شامل کرنے یا روزانہ حاضری شروع کرنے سے پہلے تعلیمی سال، پروگرام اور کلاس مکمل کریں۔",
+    setupAction: "مرحلہ وار سیٹ اپ جاری رکھیں",
     routes: { admissions: "داخلہ", students: "طلبہ", programs: "پروگرامز و نصاب", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "اساتذہ", reports: "رپورٹس و اینالیٹکس", documents: "ID و دستاویزات", configuration: "ادارہ کنفیگریشن" },
     alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "اساتذہ کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
   },
@@ -161,6 +173,9 @@ const copy: Record<Locale, DashboardCopy> = {
     quick: "مساحات العمل التشغيلية",
     quickBody: "افتح مساحات العمل المستخدمة في عمليات المؤسسة اليومية.",
     allModules: "عرض النظام الكامل",
+    setupTitle: "أكمل إعداد المؤسسة",
+    setupBody: "أكمل العام الدراسي والبرنامج والفصل الأول قبل إضافة أول طالب أو بدء الحضور اليومي.",
+    setupAction: "متابعة الإعداد الموجّه",
     routes: { admissions: "القبول", students: "الطلاب", programs: "البرامج والمنهج", attendance: "الحضور", quran: "القرآن والحفظ", exams: "الاختبارات والنتائج", staff: "المعلمون", reports: "التقارير والتحليلات", documents: "الهويات والمستندات", configuration: "تهيئة المؤسسة" },
     alertLabels: { attendance_not_started: "لم يبدأ حضور الطلاب اليوم", attendance_unmarked: "هناك طلاب لم يسجل حضورهم بعد", admissions_open: "طلبات قبول تحتاج إلى إجراء", quran_revision_due: "طلاب لديهم مراجعة قرآن مستحقة", staff_leave_pending: "طلبات إجازة المعلمين بانتظار القرار", exam_marks_remaining: "درجات اختبار ما زالت بحاجة إلى إدخال" }
   }
@@ -196,7 +211,16 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const text = copy[locale];
   const workspace = await getTenantContext();
   if (!workspace) return null;
-  const dashboard = await getOperationalDashboard(locale);
+
+  const audience = await getNavigationAudience(workspace);
+  if (audience === "teacher") {
+    return <TeacherHome locale={locale} tenantName={workspace.tenantName} />;
+  }
+
+  const [dashboard, setup] = await Promise.all([
+    getOperationalDashboard(locale),
+    getGuidedSetupSnapshot(locale)
+  ]);
   const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
   const showFullSuite = isCapabilityEnabled(clientProfile, "internal_demo_suite");
   const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
@@ -219,6 +243,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
         <time dateTime={dashboard.localDate}>{dateLabel}</time>
       </section>
+
+      {!setup.steps.start ? <section className="configuration-banner" data-page-section><div><span>{setup.readinessPercent}%</span><h2>{text.setupTitle}</h2><p>{text.setupBody}</p></div><Link className="action-button action-button-primary" href={`/${locale}/setup`}>{text.setupAction}</Link></section> : null}
 
       <section className="dashboard-section" data-page-section>
         <header className="dashboard-section-heading"><div><h2>{text.metricsTitle}</h2><p>{text.metricsBody}</p></div></header>
