@@ -1,4 +1,4 @@
-name: Furkania lockfile artifact
+name: Furkania lockfile commit
 
 on:
   push:
@@ -6,14 +6,17 @@ on:
       - client/madrasa-e-furkania
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lockfile:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: client/madrasa-e-furkania
       - uses: pnpm/action-setup@v4
         with:
           version: 11.26.0
@@ -21,6 +24,18 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
+      - name: Commit lockfile when changed
+        shell: bash
+        run: |
+          git add pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "pnpm-lock.yaml unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: commit pnpm lockfile"
+          git push origin HEAD:client/madrasa-e-furkania
       - uses: actions/upload-artifact@v4
         with:
           name: furkania-pnpm-lock
