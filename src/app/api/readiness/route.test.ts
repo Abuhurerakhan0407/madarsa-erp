@@ -41,6 +41,24 @@ describe("GET /api/readiness", () => {
       supabaseRest: "ok"
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://example.supabase.co/auth/v1/health",
+      expect.objectContaining({
+        method: "GET",
+        headers: { apikey: "test-publishable-key" },
+        cache: "no-store"
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://example.supabase.co/rest/v1/tenants",
+      expect.objectContaining({
+        method: "OPTIONS",
+        headers: { apikey: "test-publishable-key" },
+        cache: "no-store"
+      })
+    );
   });
 
   it("fails readiness when a dependency probe fails", async () => {
