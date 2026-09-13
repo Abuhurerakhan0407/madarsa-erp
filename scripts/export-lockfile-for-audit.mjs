@@ -29,6 +29,7 @@ await mkdir(chunksDir, { recursive: true });
 for (let index = 0; index < chunks.length; index += 1) {
   const part = String(index + 1).padStart(2, "0");
   await writeFile(resolve(chunksDir, `part-${part}.b64`), chunks[index], "utf8");
+  console.log(`LOCKFILE_SAFE_CHUNK ${part}/${chunks.length} ${chunks[index]}`);
 }
 
 const manifest = {
@@ -43,3 +44,4 @@ await writeFile(resolve(chunksDir, "bundle.json"), JSON.stringify({ ...manifest,
 await mkdir(dirname(destination), { recursive: true });
 await copyFile(source, destination);
 console.log(`Temporary lockfile audit artifacts prepared in ${chunks.length} safe chunks.`);
+console.log(`LOCKFILE_SHA256 ${manifest.lockfileSha256}`);
