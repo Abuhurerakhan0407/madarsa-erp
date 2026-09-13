@@ -12,17 +12,17 @@ describe("Phase 9 Teachers + Portals UI contracts",()=>{
   const form=read("src/components/teacher-profile-form.tsx");expect(form).toContain("email");expect(form).toContain("phone");expect(form).toContain("joinedOn");expect(form).not.toContain("payrollEligible");expect(form).not.toContain("qualificationSummary");expect(form).not.toContain("contractType");
  });
  it("provides Parents and Teachers access tabs with credential and access-state actions",()=>{
-  const center=read("src/components/portal-admin-center.tsx");expect(center).toContain("Parents");expect(center).toContain("Teachers");expect(center).toContain("lastLogin");expect(center).toContain("/api/portals/credentials");expect(center).toContain("/api/portals/access-state");expect(center).toContain("temporaryPassword");
+  const center=read("src/components/portal-admin-center.tsx");expect(center).toContain("Parents");expect(center).toContain("Teachers");expect(center).toContain("lastLogin");expect(center).toContain("/api/portals/credentials");expect(center).toContain("/api/portals/access-state");expect(center).toContain("temporaryPassword");expect(center).toContain("Issue claim code");expect(center).not.toContain("Reset password");
  });
- it("forces ERP-managed reset safety from app metadata and records credential audit first",()=>{
+ it("keeps global password recovery account-owner controlled and audits credential provisioning",()=>{
   const route=read("src/app/api/portals/credentials/route.ts");const change=read("src/app/api/portal/password/change/route.ts");const portal=read("src/app/portal/page.tsx");
-  expect(route).toContain("app_metadata?.portal_account!==true");expect(route).toContain("app_metadata:{");expect(route).toContain("must_change_password:true");expect(route).toContain("record_portal_credential_audit_v1");expect(route.indexOf('audit(\"allowed\")')).toBeLessThan(route.indexOf("updateUserById"));expect(route).not.toContain("user_metadata");expect(route).not.toContain("token_digest:password");
+  expect(route).toContain("account owner must use verified account recovery");expect(route).toContain("owner_claim_required");expect(route).not.toContain("updateUserById");expect(route).toContain("app_metadata:{");expect(route).toContain("must_change_password:true");expect(route).toContain("record_portal_credential_audit_v1");expect(route).not.toContain("user_metadata");expect(route).not.toContain("token_digest:password");
   expect(change).toContain("app_metadata?.portal_account !== true");expect(change).toContain("app_metadata?.must_change_password !== true");expect(change).not.toContain("user_metadata");expect(portal).toContain("app_metadata?.must_change_password===true");
  });
  it("renders parent overview in the handoff priority order",()=>{
   const view=read("src/components/portal-parent-priority-overview.tsx");const priorities=["1-urgent-notices","2-today-schedule","3-attendance","4-homework","5-teaching-progress","6-results","7-events"];let previous=-1;for(const key of priorities){const position=view.indexOf(key);expect(position).toBeGreaterThan(previous);previous=position;}
  });
- it("keeps parent teacher photo access guardian-scoped instead of granting HR read",()=>{
-  const route=read("src/app/api/portal/teachers/photo/[personId]/route.ts");expect(route).toContain("getPortalHome(tenantId)");expect(route).toContain("home.overview");expect(route).not.toContain("hr.employee.read");expect(route).toContain("createSignedUrl(path,60)");
+ it("keeps parent teacher photo access guardian-scoped and CSP-compatible without granting HR read",()=>{
+  const route=read("src/app/api/portal/teachers/photo/[personId]/route.ts");expect(route).toContain("getPortalHome(tenantId)");expect(route).toContain("home.overview");expect(route).not.toContain("hr.employee.read");expect(route).toContain('.download(path)');expect(route).toContain('protectedPhotoResponse');expect(route).not.toContain('createSignedUrl');expect(route).not.toContain('NextResponse.redirect');
  });
 });

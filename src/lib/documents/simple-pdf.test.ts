@@ -1,28 +1,36 @@
 import { describe, expect, it } from "vitest";
+import { extractText } from "pdfnative";
 import { createSimplePdf } from "./simple-pdf";
 
+const extracted = (bytes: Uint8Array) => extractText(bytes).map(page => page.text).join("\n");
+const hasArabicGlyphs = (text: string) => /[\u0600-\u06ff\ufb50-\ufdff\ufe70-\ufeff]/u.test(text);
+
 describe("simple PDF renderer", () => {
-  it("creates a valid PDF envelope with escaped text", () => {
-    const bytes = createSimplePdf({
+  it("preserves Latin, shaped Urdu/Arabic glyphs and long unbroken text", async () => {
+    const longToken = "STUDENT-" + "A".repeat(120) + "-END";
+    const bytes = await createSimplePdf({
       title: "Report Card",
-      lines: [{ text: "Student: Ayaan (Year 1) \\ verified", bold: true }]
+      lines: [
+        { text: "Student: Ayaan (Year 1) \\ verified", bold: true },
+        { text: "طالب علم: محمد عبداللہ" },
+        { text: longToken }
+      ]
     });
-    const text = new TextDecoder().decode(bytes);
-    expect(text.startsWith("%PDF-1.4")).toBe(true);
-    expect(text).toContain("/Type /Catalog");
-    expect(text).toContain("xref");
-    expect(text).toContain("trailer");
-    expect(text).toContain("%%EOF");
-    expect(text).toContain("Ayaan \\(Year 1\\) \\\\ verified");
+    const text = extracted(bytes);
+    expect(new TextDecoder().decode(bytes).startsWith("%PDF-")).toBe(true);
+    expect(text).toContain("Ayaan (Year 1) \\ verified");
+    expect(hasArabicGlyphs(text)).toBe(true);
+    expect(text).not.toContain("????");
+    expect(text.replace(/\s+/g,"")).toContain(longToken);
   });
 
-  it("paginates long documents", () => {
-    const bytes = createSimplePdf({
+  it("paginates long documents without dropping the final line", async () => {
+    const bytes = await createSimplePdf({
       title: "Long report",
       lines: Array.from({ length: 90 }, (_, index) => ({ text: `Line ${index + 1}: governed report content` }))
     });
-    const text = new TextDecoder().decode(bytes);
-    const match = text.match(/\/Type \/Pages \/Kids \[[^\]]+\] \/Count (\d+)/);
-    expect(Number(match?.[1] ?? 0)).toBeGreaterThan(1);
+    const pages = extractText(bytes);
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.map(page => page.text).join("\n")).toContain("Line 90: governed report content");
   });
 });

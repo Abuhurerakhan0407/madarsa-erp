@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ pers
   const examValue=Number(new URL(request.url).searchParams.get("exam"));const examId=Number.isInteger(examValue)&&examValue>0?examValue:null;
   try{
     const card=await getExamReportCard(personId,examId);if(!card||!card.issue?.verificationCode)return NextResponse.json({error:"Published report card is not available."},{status:404});
-    const pdf=createReportCardPdf(card,{institutionName:workspace.tenantName,branchName:workspace.branchName||"Main Branch"});const body=pdf.buffer.slice(pdf.byteOffset,pdf.byteOffset+pdf.byteLength) as ArrayBuffer;const filename=`report-card-${safeFilename(card.student.studentNumber)}-${card.exam.id}.pdf`;
+    const pdf=await createReportCardPdf(card,{institutionName:workspace.tenantName,branchName:workspace.branchName||"Main Branch"});const body=pdf.buffer.slice(pdf.byteOffset,pdf.byteOffset+pdf.byteLength) as ArrayBuffer;const filename=`report-card-${safeFilename(card.student.studentNumber)}-${card.exam.id}.pdf`;
     return new Response(body,{status:200,headers:{"content-type":"application/pdf","content-disposition":`attachment; filename="${filename}"`,"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
   }catch{return NextResponse.json({error:"Unable to generate report card PDF."},{status:500});}
 }

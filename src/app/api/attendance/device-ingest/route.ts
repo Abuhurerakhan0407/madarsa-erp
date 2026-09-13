@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { receiveAttendanceDeviceEvent } from "@/lib/attendance/device-bridge";
+import { processAttendanceDeviceEventAutomatically, receiveAttendanceDeviceEvent } from "@/lib/attendance/device-bridge";
 
 const forbiddenMetadataKeys = new Set(["template", "biometric_template", "fingerprint", "fingerprint_image", "face_image", "image", "raw_image", "raw_template"]);
 
@@ -19,8 +19,14 @@ export async function POST(request: Request) {
     for (const key of Object.keys(sourceMetadata)) if (forbiddenMetadataKeys.has(key.toLowerCase())) return NextResponse.json({ error: "Raw biometric material must not be sent to ERP." }, { status: 400 });
     const metadata: Record<string, string | number | boolean | null> = {};
     for (const [key, value] of Object.entries(sourceMetadata).slice(0, 20)) if (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null) metadata[key.slice(0, 64)] = typeof value === "string" ? value.slice(0, 256) : value;
-    const result = await receiveAttendanceDeviceEvent({ externalDeviceKey, ingestToken, externalEventId, externalSubjectKey, modality, eventType, occurredAt, metadata });
-    return NextResponse.json(result, { status: 202, headers: { "cache-control": "no-store" } });
+    const received = await receiveAttendanceDeviceEvent({ externalDeviceKey, ingestToken, externalEventId, externalSubjectKey, modality, eventType, occurredAt, metadata });
+    const eventId = Number(received.event_id);
+    let processing: Record<string, unknown> | null = null;
+    if (Number.isSafeInteger(eventId) && eventId > 0 && received.matched === true) {
+      try { processing = await processAttendanceDeviceEventAutomatically(eventId); }
+      catch (caught) { processing = { processing: "retryable", error: caught instanceof Error ? caught.message : "Automatic processing failed." }; }
+    }
+    return NextResponse.json({ ...received, processing }, { status: 202, headers: { "cache-control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to receive device event.";
     return NextResponse.json({ error: message === "device authentication failed" ? "Device authentication failed." : message }, { status: message === "device authentication failed" ? 401 : 400 });

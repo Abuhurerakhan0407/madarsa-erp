@@ -8,24 +8,76 @@ import {getTenantContext} from "@/lib/tenancy/context";
 
 function temporaryPassword(){return `${randomBytes(18).toString("base64url")}!aA7`;}
 async function compensate(admin:ReturnType<typeof createAdminClient>,id:string){try{await admin.auth.admin.deleteUser(id);}catch{/* best effort */}}
+
 export async function POST(request:Request){
  if(!isSameOriginRequest(request))return NextResponse.json({error:"Cross-origin mutation blocked."},{status:403});
  if(!isJsonRequest(request))return NextResponse.json({error:"JSON request required."},{status:415});
  const parsed=await readBoundedJson(request,4096);if(!parsed.ok)return NextResponse.json({error:parsed.error},{status:parsed.status});
- const identity=await getVerifiedIdentity();if(!identity)return NextResponse.json({error:"Authentication required."},{status:401});const w=await getTenantContext();if(!w||w.identityId!==identity.id||!w.branchId)return NextResponse.json({error:"Active branch membership required."},{status:403});
+ const identity=await getVerifiedIdentity();if(!identity)return NextResponse.json({error:"Authentication required."},{status:401});
+ const w=await getTenantContext();if(!w||w.identityId!==identity.id||!w.branchId)return NextResponse.json({error:"Active branch membership required."},{status:403});
  const actorIdentityId=identity.id,tenantId=w.tenantId,branchId=w.branchId;
- const body=(parsed.value&&typeof parsed.value==="object"&&!Array.isArray(parsed.value)?parsed.value:{}) as Record<string,unknown>;const personId=Number(body.personId),kind=body.kind,action=body.action;if(!Number.isSafeInteger(personId)||personId<=0||(kind!=="guardian"&&kind!=="employee")||(action!=="provision"&&action!=="reset"))return NextResponse.json({error:"Portal credential request is invalid."},{status:400});
- const admin=createAdminClient();const{data:allowed,error:permissionError}=await admin.rpc("operator_has_permission_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_permission_code:"portal.credentials.create"});if(permissionError)return NextResponse.json({error:"Unable to verify portal credential permission."},{status:500});if(allowed!==true)return NextResponse.json({error:"Portal credential permission required."},{status:403});
- const center=await getPortalOperatorCenter();const list=kind==="guardian"?center.parents:center.teachers;const target=list.find(row=>row.personId===personId);if(!target)return NextResponse.json({error:"Portal person is not eligible in this branch."},{status:404});if(!target.email)return NextResponse.json({error:"Add a valid email before creating portal credentials."},{status:422});
- const auditAction=action==="reset"?"reset":"create";async function audit(outcome:"allowed"|"succeeded"|"failed"){const result=await admin.rpc("record_portal_credential_audit_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_person_id:personId,p_link_type:kind,p_credential_action:auditAction,p_outcome:outcome});if(result.error)throw new Error(`Credential audit failed: ${result.error.message}`);}try{await audit("allowed");}catch{return NextResponse.json({error:"Unable to record credential security audit."},{status:503});}
- const linkType=kind;const{data:links,error:linkError}=await admin.from("identity_person_links").select("identity_id,status,updated_at").eq("tenant_id",tenantId).eq("person_id",personId).eq("link_type",linkType).order("updated_at",{ascending:false}).limit(1);if(linkError){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to resolve portal identity."},{status:500});}const linked=links?.[0];
- if(action==="reset"){
-   if(!linked?.identity_id){await audit("failed").catch(()=>{});return NextResponse.json({error:"Create this portal account before resetting its password."},{status:409});}const user=await admin.auth.admin.getUserById(String(linked.identity_id));if(user.error||!user.data.user){await audit("failed").catch(()=>{});return NextResponse.json({error:"Portal account not found."},{status:404});}if(user.data.user.app_metadata?.portal_account!==true){await audit("failed").catch(()=>{});return NextResponse.json({error:"This login is not an ERP-managed portal account, so its password will not be overwritten."},{status:409});}const password=temporaryPassword();const updated=await admin.auth.admin.updateUserById(user.data.user.id,{password,app_metadata:{...user.data.user.app_metadata,portal_account:true,must_change_password:true,password_reset_from:"portal_access_center"}});if(updated.error){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to reset portal password."},{status:503});}const auditWarning=await audit("succeeded").then(()=>undefined).catch(()=>"The password reset succeeded, but the final success-audit follow-up could not be recorded; the pre-action security audit remains recorded.");return NextResponse.json({credentialState:"temporary_password_reset",email:target.email,temporaryPassword:password,auditWarning},{status:200,headers:{"cache-control":"no-store"}});
+ const body=(parsed.value&&typeof parsed.value==="object"&&!Array.isArray(parsed.value)?parsed.value:{}) as Record<string,unknown>;
+ const personId=Number(body.personId),kind=body.kind,action=body.action;
+ if(!Number.isSafeInteger(personId)||personId<=0||(kind!=="guardian"&&kind!=="employee")||(action!=="provision"&&action!=="reset"))return NextResponse.json({error:"Portal credential request is invalid."},{status:400});
+
+ const admin=createAdminClient();
+ const{data:allowed,error:permissionError}=await admin.rpc("operator_has_permission_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_permission_code:"portal.credentials.create"});
+ if(permissionError)return NextResponse.json({error:"Unable to verify portal credential permission."},{status:500});
+ if(allowed!==true)return NextResponse.json({error:"Portal credential permission required."},{status:403});
+
+ const center=await getPortalOperatorCenter();
+ const list=kind==="guardian"?center.parents:center.teachers;
+ const target=list.find(row=>row.personId===personId);
+ if(!target)return NextResponse.json({error:"Portal person is not eligible in this branch."},{status:404});
+ if(!target.email)return NextResponse.json({error:"Add a valid email before creating portal credentials."},{status:422});
+
+ const auditAction=action==="reset"?"reset":"create";
+ async function audit(outcome:"allowed"|"succeeded"|"failed"){
+  const result=await admin.rpc("record_portal_credential_audit_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_person_id:personId,p_link_type:kind,p_credential_action:auditAction,p_outcome:outcome});
+  if(result.error)throw new Error(`Credential audit failed: ${result.error.message}`);
  }
- if(linked?.identity_id){if(linked.status==="verified"){await audit("succeeded").catch(()=>{});return NextResponse.json({credentialState:"existing_account",email:target.email},{status:200,headers:{"cache-control":"no-store"}});}await audit("failed").catch(()=>{});return NextResponse.json({error:"This portal account is disabled. Enable access instead of creating another account."},{status:409});}
- const existing=await admin.rpc("find_auth_identity_by_email_v1",{p_email:target.email});if(existing.error){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to resolve portal login identity."},{status:500});}let portalIdentityId=typeof existing.data==="string"?existing.data:"";let password:string|null=null;let created=false;
- if(!portalIdentityId){password=temporaryPassword();const made=await admin.auth.admin.createUser({email:target.email,password,email_confirm:true,app_metadata:{portal_account:true,must_change_password:true,provisioned_from:"portal_access_center"}});if(made.error||!made.data.user?.id){const retry=await admin.rpc("find_auth_identity_by_email_v1",{p_email:target.email});if(retry.error||typeof retry.data!=="string"){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to create portal account."},{status:503});}portalIdentityId=retry.data;password=null;}else{portalIdentityId=made.data.user.id;created=true;}}
- const linkedResult=await admin.rpc("link_portal_identity_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_person_id:personId,p_link_type:linkType,p_portal_identity_id:portalIdentityId});if(linkedResult.error){if(created)await compensate(admin,portalIdentityId);await audit("failed").catch(()=>{});return NextResponse.json({error:linkedResult.error.message.includes("another person")?linkedResult.error.message:"Unable to link portal account."},{status:409});}
+
+ if(action==="reset"){
+  await audit("failed").catch(()=>{});
+  return NextResponse.json({error:"Institution operators cannot reset a shared portal login. The account owner must use verified account recovery."},{status:409,headers:{"cache-control":"no-store"}});
+ }
+
+ try{await audit("allowed");}catch{return NextResponse.json({error:"Unable to record credential security audit."},{status:503});}
+
+ const{data:links,error:linkError}=await admin.from("identity_person_links").select("identity_id,status,updated_at").eq("tenant_id",tenantId).eq("person_id",personId).eq("link_type",kind).order("updated_at",{ascending:false}).limit(1);
+ if(linkError){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to resolve portal identity."},{status:500});}
+ const linked=links?.[0];
+ if(linked?.identity_id){
+  if(linked.status==="verified"){
+   await audit("succeeded").catch(()=>{});
+   return NextResponse.json({credentialState:"existing_account",email:target.email},{status:200,headers:{"cache-control":"no-store"}});
+  }
+  await audit("failed").catch(()=>{});
+  return NextResponse.json({error:"This portal account is disabled. Enable access instead of creating another account."},{status:409});
+ }
+
+ const existing=await admin.rpc("find_auth_identity_by_email_v1",{p_email:target.email});
+ if(existing.error){await audit("failed").catch(()=>{});return NextResponse.json({error:"Unable to resolve portal login identity."},{status:500});}
+ if(typeof existing.data==="string"&&existing.data){
+  await audit("failed").catch(()=>{});
+  return NextResponse.json({error:"An account already exists for this email. The account owner must claim this institution through verified portal access.",credentialState:"owner_claim_required"},{status:409,headers:{"cache-control":"no-store"}});
+ }
+
+ const password=temporaryPassword();
+ const made=await admin.auth.admin.createUser({email:target.email,password,email_confirm:true,app_metadata:{portal_account:true,must_change_password:true,provisioned_from:"portal_access_center"}});
+ if(made.error||!made.data.user?.id){
+  const retry=await admin.rpc("find_auth_identity_by_email_v1",{p_email:target.email});
+  if(!retry.error&&typeof retry.data==="string"&&retry.data){
+   await audit("failed").catch(()=>{});
+   return NextResponse.json({error:"An account now exists for this email. The account owner must claim this institution through verified portal access.",credentialState:"owner_claim_required"},{status:409,headers:{"cache-control":"no-store"}});
+  }
+  await audit("failed").catch(()=>{});
+  return NextResponse.json({error:"Unable to create portal account."},{status:503});
+ }
+
+ const portalIdentityId=made.data.user.id;
+ const linkedResult=await admin.rpc("link_portal_identity_v1",{p_identity_id:actorIdentityId,p_tenant_id:tenantId,p_branch_id:branchId,p_person_id:personId,p_link_type:kind,p_portal_identity_id:portalIdentityId});
+ if(linkedResult.error){await compensate(admin,portalIdentityId);await audit("failed").catch(()=>{});return NextResponse.json({error:linkedResult.error.message.includes("another person")?linkedResult.error.message:"Unable to link portal account."},{status:409});}
  const auditWarning=await audit("succeeded").then(()=>undefined).catch(()=>"The portal account was linked, but the final success-audit follow-up could not be recorded; the pre-action security audit remains recorded.");
- return NextResponse.json({credentialState:created?"temporary_password_created":"existing_account_linked",email:target.email,temporaryPassword:created?password:undefined,auditWarning},{status:created?201:200,headers:{"cache-control":"no-store"}});
+ return NextResponse.json({credentialState:"temporary_password_created",email:target.email,temporaryPassword:password,auditWarning},{status:201,headers:{"cache-control":"no-store"}});
 }

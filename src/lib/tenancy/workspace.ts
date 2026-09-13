@@ -1,7 +1,10 @@
 export function selectWorkspaceBranchId(
   primaryBranchId: number | null,
   allBranches: boolean,
-  scopedBranchIds: readonly number[]
+  scopedBranchIds: readonly number[],
+  preferredBranchId?: number | null
 ): number | null {
-  return allBranches ? primaryBranchId : scopedBranchIds[0] ?? null;
+  if (preferredBranchId && (allBranches || scopedBranchIds.includes(preferredBranchId))) return preferredBranchId;
+  if (allBranches) return primaryBranchId;
+  return scopedBranchIds[0] ?? null;
 }

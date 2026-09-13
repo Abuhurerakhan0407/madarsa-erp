@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "node scripts/materialize-lockfile.mjs && npx --yes pnpm@11.26.0 install --frozen-lockfile --registry=https://registry.npmjs.org"
+}

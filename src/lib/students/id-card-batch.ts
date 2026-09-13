@@ -14,6 +14,7 @@ export type IdCardBatchStudent = {
   program: string;
   group: string;
   guardianName: string | null;
+  photoStoragePath: string | null;
 };
 
 export type IdCardBatchResult = {
@@ -37,6 +38,7 @@ type StudentRow = {
   group_key: string | null;
   group_labels: unknown;
   guardian_name: string | null;
+  photo_storage_path: string | null;
 };
 type RuntimeResult = { sessions?: LabelRow[]; groups?: GroupRow[]; students?: StudentRow[]; limit?: number };
 
@@ -85,7 +87,8 @@ export async function getStudentIdCardBatch(options: {
       status: row.status,
       program: row.program_key ? localizedLabel(row.program_labels, options.locale, row.program_key) : "—",
       group: row.group_key ? localizedLabel(row.group_labels, options.locale, row.group_key) : "—",
-      guardianName: row.guardian_name
+      guardianName: row.guardian_name,
+      photoStoragePath: row.photo_storage_path
     })),
     limit: Math.min(Number(result.limit ?? ID_CARD_BATCH_LIMIT), ID_CARD_BATCH_LIMIT)
   };

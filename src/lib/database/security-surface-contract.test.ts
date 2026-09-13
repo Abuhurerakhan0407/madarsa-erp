@@ -8,53 +8,75 @@ const migrations = migrationFiles.map((name) => ({
   name,
   sql: readFileSync(join(migrationsDir, name), "utf8")
 }));
+const allSql = migrations.map(({sql}) => sql).join("\n");
 
-function count(pattern: RegExp, value: string): number {
-  return [...value.matchAll(pattern)].length;
+const privateAuthenticatedRlsHelpers = new Set([
+  "person_branch_read_allowed_v1",
+  "student_profile_branch_read_allowed_v1",
+  "attendance_record_branch_read_allowed_v1",
+  "mark_entry_branch_read_allowed_v1",
+  "identity_assigned_teacher_for_student_v1",
+  "attendance_record_scoped_read_allowed_v2",
+  "mark_entry_scoped_read_allowed_v2"
+]);
+
+function escapeRegex(value:string):string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+}
+
+type FunctionBlock={schema:string;name:string;sql:string};
+function functionBlocks(sql:string):FunctionBlock[]{
+  const starts=[...sql.matchAll(/create\s+or\s+replace\s+function\s+([a-z0-9_]+)\.([a-z0-9_]+)\s*\(/gi)];
+  return starts.map((start,index)=>({
+    schema:start[1].toLowerCase(),
+    name:start[2].toLowerCase(),
+    sql:sql.slice(start.index??0,index+1<starts.length?(starts[index+1].index??sql.length):sql.length)
+  }));
 }
 
 describe("database migration security surface", () => {
-  it("never grants function execution directly to browser roles", () => {
+  it("never grants public RPC execution directly to browser roles", () => {
     for (const migration of migrations) {
-      const statements = migration.sql.split(";");
-      const unsafe = statements.filter((statement) =>
-        /grant\s+execute\s+on\s+function\b[\s\S]*?\bto\s+(?:public|anon|authenticated)\b/i.test(statement)
+      const unsafe = migration.sql.split(";").filter((statement) =>
+        /grant\s+execute\s+on\s+function\s+public\.[\s\S]*?\bto\s+(?:public|anon|authenticated)\b/i.test(statement)
       );
       expect(unsafe, migration.name).toEqual([]);
     }
   });
 
-  it("hardens SECURITY DEFINER functions and exposes only public entrypoints to service_role", () => {
+  it("allows authenticated private-function execution only for explicit RLS helpers", () => {
     for (const migration of migrations) {
-      const definerCount = count(/security\s+definer/gi, migration.sql);
-      if (definerCount === 0) continue;
+      for (const statement of migration.sql.split(";")) {
+        const match=statement.match(/grant\s+execute\s+on\s+function\s+private\.([a-z0-9_]+)\([^;]*?\)\s+to\s+([^;]+)/i);
+        if(!match)continue;
+        const functionName=match[1].toLowerCase();
+        const grantees=match[2].toLowerCase().split(",").map(value=>value.trim());
+        if(grantees.includes("authenticated")){
+          expect(privateAuthenticatedRlsHelpers.has(functionName), `${migration.name}: authenticated private helper allowlist`).toBe(true);
+        }
+        expect(grantees, `${migration.name}: private helper must never be anon/public`).not.toContain("anon");
+        expect(grantees, `${migration.name}: private helper must never be anon/public`).not.toContain("public");
+      }
+    }
 
-      const publicDefinerCount = count(
-        /create\s+or\s+replace\s+function\s+public\.[\s\S]*?security\s+definer/gi,
-        migration.sql
-      );
-      // PostgreSQL accepts both `SET search_path = ...` and `SET search_path TO ...`.
-      // Treat either explicit form as a hardened per-function search_path declaration.
-      const searchPathCount = count(/set\s+search_path\s*(?:=|\bto\b)/gi, migration.sql);
-      const browserRevokeCount = count(
-        /revoke\s+all\s+on\s+function\b[\s\S]*?\bfrom\s+public\s*,\s*anon\s*,\s*authenticated/gi,
-        migration.sql
-      );
-      const serviceRoleGrantCount = count(
-        /grant\s+execute\s+on\s+function\s+public\.[\s\S]*?\bto\s+service_role/gi,
-        migration.sql
-      );
-      const privateServiceRoleGrants = migration.sql.split(";").filter((statement) =>
-        /grant\s+execute\s+on\s+function\s+private\./i.test(statement)
-      );
+    const aclMigration=readFileSync(join(migrationsDir,"20260912013000_master_audit_rls_helper_acl.sql"),"utf8").toLowerCase();
+    for(const functionName of privateAuthenticatedRlsHelpers){
+      expect(aclMigration, `${functionName}: final revoke`).toContain(`revoke all on function private.${functionName}`);
+      expect(aclMigration, `${functionName}: authenticated RLS execution`).toMatch(new RegExp(`grant\\s+execute\\s+on\\s+function\\s+private\\.${escapeRegex(functionName)}\\([^;]+\\)\\s+to\\s+authenticated`,"i"));
+    }
+    expect(aclMigration).not.toMatch(/grant\s+execute\s+on\s+function\s+private\.[^;]+\bto\s+service_role/i);
+  });
 
-      expect(searchPathCount, `${migration.name}: search_path`).toBeGreaterThanOrEqual(definerCount);
-      // Public SECURITY DEFINER entrypoints must revoke browser execution in the defining migration.
-      // Private helper ACLs may be tightened by an append-only follow-up migration and are covered
-      // by phase-specific contracts; they must never be granted directly to service_role here.
-      expect(browserRevokeCount, `${migration.name}: browser revoke`).toBeGreaterThanOrEqual(publicDefinerCount);
-      expect(serviceRoleGrantCount, `${migration.name}: public service_role grant`).toBeGreaterThanOrEqual(publicDefinerCount);
-      expect(privateServiceRoleGrants, `${migration.name}: private functions stay internal`).toEqual([]);
+  it("hardens actual SECURITY DEFINER functions and exposes public entrypoints only to service_role", () => {
+    for (const migration of migrations) {
+      for(const fn of functionBlocks(migration.sql)){
+        if(!/security\s+definer/i.test(fn.sql))continue;
+        expect(fn.sql, `${migration.name}: ${fn.schema}.${fn.name} search_path`).toMatch(/set\s+search_path\s*(?:=|\bto\b)/i);
+        if(fn.schema!=="public")continue;
+        const escaped=escapeRegex(fn.name);
+        expect(allSql, `${fn.name}: browser revoke`).toMatch(new RegExp(`revoke\\s+all\\s+on\\s+function\\s+public\\.${escaped}\\([^;]+\\)\\s+from\\s+public\\s*,\\s*anon\\s*,\\s*authenticated`,"i"));
+        expect(allSql, `${fn.name}: service role grant`).toMatch(new RegExp(`grant\\s+execute\\s+on\\s+function\\s+public\\.${escaped}\\([^;]+\\)\\s+to\\s+service_role`,"i"));
+      }
     }
   });
 

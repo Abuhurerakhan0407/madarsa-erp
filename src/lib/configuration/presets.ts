@@ -17,6 +17,20 @@ const terminology = (
 
 export const configurationPresets: readonly ConfigurationPreset[] = [
   {
+    key: "deeniyat_primary",
+    name: label("Deeniyat Primary (1–5)", "دینیات پرائمری (1–5)", "الدينيات الابتدائية (1–5)"),
+    terminology: terminology(
+      label("Student", "طالب علم", "طالب"),
+      label("Students", "طلبہ", "طلاب"),
+      label("Ustad", "استاد", "أستاذ"),
+      label("Asatiza", "اساتذہ", "أساتذة"),
+      label("Course", "کورس", "المستوى"),
+      label("Courses", "کورسز", "المستويات")
+    ),
+    enabledDomains: ["admissions", "attendance", "academics", "nazra", "qaida", "exams"],
+    defaultAttendanceStatuses: ["present", "absent", "late", "leave"]
+  },
+  {
     key: "maktab",
     name: label("Maktab", "مکتب", "الكتّاب"),
     terminology: terminology(

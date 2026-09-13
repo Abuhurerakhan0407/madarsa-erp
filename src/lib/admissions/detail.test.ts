@@ -10,6 +10,22 @@ vi.mock("@/lib/supabase/server", () => ({
       const result = { data: fixtures.rows[table] ?? null, error: null };
       const query = {
         select: () => query, eq: () => query, order: () => query, limit: () => query,
+        is: () => query, gt: () => query,
+        maybeSingle: () => Promise.resolve(result),
+        then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve)
+      };
+      return query;
+    }
+  })
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: (table: string) => {
+      fixtures.queried.push(table);
+      const result = { data: fixtures.rows[table] ?? null, error: null };
+      const query = {
+        select: () => query, eq: () => query, order: () => query, limit: () => query,
+        is: () => query, gt: () => query,
         maybeSingle: () => Promise.resolve(result),
         then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve)
       };

@@ -9,27 +9,20 @@ import {
 describe("client capability profiles", () => {
   it("preserves full-product behavior by default", () => {
     const profile = resolveClientProfileFromConfig("default-madarsa", {});
-
     expect(profile.key).toBe("full-product");
     expect(isNavItemEnabled(profile, "fees")).toBe(true);
     expect(isNavItemEnabled(profile, "branches")).toBe(true);
   });
 
   it("uses a persisted client-v2 tenant profile", () => {
-    const profile = resolveClientProfileFromConfig("abu-school", {
-      tenantProfile: "client-v2"
-    });
-
+    const profile = resolveClientProfileFromConfig("abu-school", {tenantProfile: "client-v2"});
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(false);
     expect(isNavItemEnabled(profile, "students")).toBe(true);
   });
 
   it("disables only client-hidden modules for configured tenant slugs", () => {
-    const profile = resolveClientProfileFromConfig("CLIENT-MADARSA", {
-      clientV2TenantSlugs: "client-madarsa, another-client"
-    });
-
+    const profile = resolveClientProfileFromConfig("CLIENT-MADARSA", {clientV2TenantSlugs: "client-madarsa, another-client"});
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(false);
     expect(isNavItemEnabled(profile, "operations")).toBe(false);
@@ -45,24 +38,24 @@ describe("client capability profiles", () => {
   });
 
   it("supports a deployment-wide client-v2 profile", () => {
-    const profile = resolveClientProfileFromConfig("any-tenant", {
-      profileOverride: "client-v2"
-    });
-
+    const profile = resolveClientProfileFromConfig("any-tenant", {profileOverride: "client-v2"});
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(false);
     expect(isNavItemEnabled(profile, "students")).toBe(true);
   });
 
   it("lets an explicit full-product override win over persisted and slug profiles", () => {
-    const profile = resolveClientProfileFromConfig("client-madarsa", {
-      profileOverride: "full-product",
-      tenantProfile: "client-v2",
-      clientV2TenantSlugs: "client-madarsa"
-    });
-
+    const profile = resolveClientProfileFromConfig("client-madarsa", {profileOverride: "full-product",tenantProfile: "client-v2",clientV2TenantSlugs: "client-madarsa"});
     expect(profile.key).toBe("full-product");
     expect(isCapabilityEnabled(profile, "fees_accounting")).toBe(true);
+  });
+
+  it("keeps Furkania WhatsApp unavailable until its notification scope is explicitly approved",()=>{
+    const profile=resolveClientProfileFromConfig("madrasa-e-furkania",{profileOverride:"full-product"});
+    expect(profile.key).toBe("full-product");
+    expect(isCapabilityEnabled(profile,"fees_accounting")).toBe(true);
+    expect(isCapabilityEnabled(profile,"whatsapp_automation")).toBe(false);
+    expect(isNavItemEnabled(profile,"whatsapp")).toBe(false);
   });
 
   it("coerces unknown database values to the safe full-product default", () => {
