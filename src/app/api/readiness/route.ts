@@ -1,16 +1,22 @@
 import { getSupabasePublicEnv } from "@/lib/env";
 
 const PROBE_TIMEOUT_MS = 2500;
+const REST_PROBE_PATH = "/rest/v1/tenants";
 
 type DependencyState = "ok" | "unavailable";
+type ProbeMethod = "GET" | "OPTIONS";
 
-async function probe(url: string, publishableKey: string): Promise<DependencyState> {
+async function probe(
+  url: string,
+  publishableKey: string,
+  method: ProbeMethod = "GET"
+): Promise<DependencyState> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
-      method: "GET",
+      method,
       headers: {
         apikey: publishableKey
       },
@@ -54,7 +60,11 @@ export async function GET() {
   const baseUrl = env.url.replace(/\/$/, "");
   const [supabaseAuth, supabaseRest] = await Promise.all([
     probe(`${baseUrl}/auth/v1/health`, env.publishableKey),
-    probe(`${baseUrl}/rest/v1/`, env.publishableKey)
+    // Supabase no longer permits publishable/anon keys to read the PostgREST
+    // OpenAPI document at /rest/v1/. OPTIONS on a known table verifies that
+    // the Data REST gateway and PostgREST route are reachable without reading
+    // tenant data or requiring elevated server-side credentials.
+    probe(`${baseUrl}${REST_PROBE_PATH}`, env.publishableKey, "OPTIONS")
   ]);
 
   const ready = supabaseAuth === "ok" && supabaseRest === "ok";
