@@ -20,26 +20,26 @@ try {
 const lockfile = await readFile(source);
 const encoded = gzipSync(lockfile, { level: 9 }).toString("base64");
 const chunkSize = 3000;
-const chunkCount = Math.ceil(encoded.length / chunkSize);
-
-await mkdir(chunksDir, { recursive: true });
-for (let index = 0; index < chunkCount; index += 1) {
-  const part = String(index + 1).padStart(2, "0");
-  const chunk = encoded.slice(index * chunkSize, (index + 1) * chunkSize);
-  await writeFile(resolve(chunksDir, `part-${part}.b64`), chunk, "utf8");
+const chunks = [];
+for (let offset = 0; offset < encoded.length; offset += chunkSize) {
+  chunks.push(encoded.slice(offset, offset + chunkSize));
 }
 
-await writeFile(
-  resolve(chunksDir, "manifest.json"),
-  JSON.stringify({
-    chunkSize,
-    chunkCount,
-    encodedLength: encoded.length,
-    lockfileSha256: createHash("sha256").update(lockfile).digest("hex"),
-  }),
-  "utf8",
-);
+await mkdir(chunksDir, { recursive: true });
+for (let index = 0; index < chunks.length; index += 1) {
+  const part = String(index + 1).padStart(2, "0");
+  await writeFile(resolve(chunksDir, `part-${part}.b64`), chunks[index], "utf8");
+}
+
+const manifest = {
+  chunkSize,
+  chunkCount: chunks.length,
+  encodedLength: encoded.length,
+  lockfileSha256: createHash("sha256").update(lockfile).digest("hex"),
+};
+await writeFile(resolve(chunksDir, "manifest.json"), JSON.stringify(manifest), "utf8");
+await writeFile(resolve(chunksDir, "bundle.json"), JSON.stringify({ ...manifest, chunks }), "utf8");
 
 await mkdir(dirname(destination), { recursive: true });
 await copyFile(source, destination);
-console.log(`Temporary lockfile audit artifacts prepared in ${chunkCount} safe chunks.`);
+console.log(`Temporary lockfile audit artifacts prepared in ${chunks.length} safe chunks.`);
