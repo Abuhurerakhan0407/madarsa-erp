@@ -6,14 +6,29 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n/config";
 
 type Result = { personId: number; name: string; nativeName: string | null; studentNumber: string; status: string; program: string; group: string };
+type UiLocale = "en" | "ur";
+
 const copy = {
-  en: { label: "Find student", placeholder: "Name, student/admission no. or guardian phone", empty: "No matching students", loading: "Searching…", opening: "Opening student…" },
-  ur: { label: "طالب علم تلاش کریں", placeholder: "نام، طالب علم/داخلہ نمبر یا سرپرست فون", empty: "کوئی طالب علم نہیں ملا", loading: "تلاش جاری ہے…", opening: "طالب علم کھل رہا ہے…" },
-  ar: { label: "البحث عن طالب", placeholder: "الاسم أو رقم الطالب/القبول أو هاتف ولي الأمر", empty: "لا يوجد طالب مطابق", loading: "جارٍ البحث…", opening: "جارٍ فتح الطالب…" }
+  en: { label: "Find student", placeholder: "Name, student/admission no. or guardian phone", empty: "No matching students", emptyHelp: "Try a different name or ID", loading: "Searching…", opening: "Opening student…", active: "Active", inactive: "Inactive", graduated: "Graduated", withdrawn: "Withdrawn" },
+  ur: { label: "طالب علم تلاش کریں", placeholder: "نام، طالب علم/داخلہ نمبر یا سرپرست فون", empty: "کوئی طالب علم نہیں ملا", emptyHelp: "کوئی دوسرا نام یا ID آزمائیں", loading: "تلاش جاری ہے…", opening: "طالب علم کھل رہا ہے…", active: "فعال", inactive: "غیر فعال", graduated: "فارغ التحصیل", withdrawn: "دستبردار" }
 } as const;
 
+function uiLocale(locale: Locale): UiLocale {
+  return locale === "ur" ? "ur" : "en";
+}
+
+function statusLabel(status: string, locale: UiLocale) {
+  const text = copy[locale];
+  if (status === "active") return text.active;
+  if (status === "inactive") return text.inactive;
+  if (status === "graduated") return text.graduated;
+  if (status === "withdrawn") return text.withdrawn;
+  return status;
+}
+
 export function GlobalStudentSearch({ locale }: { locale: Locale }) {
-  const t = copy[locale];
+  const language = uiLocale(locale);
+  const t = copy[language];
   const box = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -118,7 +133,7 @@ export function GlobalStudentSearch({ locale }: { locale: Locale }) {
     <input id="global-student-search" className="text-field" type="search" value={q} onChange={(event) => changeQuery(event.target.value)} onFocus={() => q.trim().length >= 2 && setOpen(true)} onKeyDown={handleKeyDown} role="combobox" aria-expanded={open} aria-controls="global-search-listbox" aria-autocomplete="list" aria-busy={busy || navigating || undefined} aria-activedescendant={activeIndex >= 0 ? `global-search-option-${results[activeIndex]?.personId}` : undefined} placeholder={t.placeholder} autoComplete="off" />
     {busy || navigating ? <span className="global-search-progress" title={navigating ? t.opening : t.loading}><span className="inline-spinner" aria-hidden="true" /><span className="sr-only">{navigating ? t.opening : t.loading}</span></span> : null}
     {open ? <div id="global-search-listbox" role="listbox" aria-label={t.label} style={{ position: "absolute", insetInline: 0, top: "calc(100% + .45rem)", zIndex: 80, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: ".85rem", boxShadow: "0 18px 45px rgb(20 49 32 / 16%)", padding: ".45rem", maxHeight: "24rem", overflowY: "auto" }}>
-      {busy ? <p style={{ padding: ".7rem", margin: 0, display: "flex", alignItems: "center", gap: ".5rem" }} role="status" aria-live="polite"><span className="inline-spinner" aria-hidden="true" />{t.loading}</p> : results.length ? results.map((result, index) => <Link key={result.personId} id={`global-search-option-${result.personId}`} role="option" aria-selected={index === activeIndex} href={`/${locale}/students/${result.personId}`} prefetch={false} onMouseEnter={() => router.prefetch(`/${locale}/students/${result.personId}`)} onFocus={() => router.prefetch(`/${locale}/students/${result.personId}`)} onClick={(event) => { event.preventDefault(); openStudent(result.personId); }} style={{ display: "grid", padding: ".7rem .8rem", borderRadius: ".65rem", textDecoration: "none", color: "inherit", gap: ".15rem", background: index === activeIndex ? "var(--surface-hover, #f3f4f6)" : "transparent", outline: index === activeIndex ? "2px solid var(--border)" : "none" }}><strong>{result.name}</strong>{result.nativeName ? <span dir="auto">{result.nativeName}</span> : null}<small>{result.studentNumber} · {result.program} · {result.group} · {result.status}</small></Link>) : <p style={{ padding: ".7rem", margin: 0 }} role="status">{t.empty} — try a different name or ID</p>}
+      {busy ? <p style={{ padding: ".7rem", margin: 0, display: "flex", alignItems: "center", gap: ".5rem" }} role="status" aria-live="polite"><span className="inline-spinner" aria-hidden="true" />{t.loading}</p> : results.length ? results.map((result, index) => <Link key={result.personId} id={`global-search-option-${result.personId}`} role="option" aria-selected={index === activeIndex} href={`/${locale}/students/${result.personId}`} prefetch={false} onMouseEnter={() => router.prefetch(`/${locale}/students/${result.personId}`)} onFocus={() => router.prefetch(`/${locale}/students/${result.personId}`)} onClick={(event) => { event.preventDefault(); openStudent(result.personId); }} style={{ display: "grid", padding: ".7rem .8rem", borderRadius: ".65rem", textDecoration: "none", color: "inherit", gap: ".15rem", background: index === activeIndex ? "var(--surface-hover, #f3f4f6)" : "transparent", outline: index === activeIndex ? "2px solid var(--border)" : "none" }}><strong>{result.name}</strong>{result.nativeName ? <span dir="auto">{result.nativeName}</span> : null}<small>{result.studentNumber} · {result.program} · {result.group} · {statusLabel(result.status, language)}</small></Link>) : <p style={{ padding: ".7rem", margin: 0 }} role="status">{t.empty} — {t.emptyHelp}</p>}
     </div> : null}
   </div>;
 }
