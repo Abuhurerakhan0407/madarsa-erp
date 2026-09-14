@@ -3,19 +3,19 @@ import { notFound } from "next/navigation";
 import { StudentEditForm } from "@/components/student-edit-form";
 import { StudentGuardianForm } from "@/components/student-guardian-form";
 import { StudentPlacementForm } from "@/components/student-placement-form";
-import type { Locale } from "@/lib/i18n/config";
+import { isLocale, type SupportedLocale } from "@/lib/i18n/config";
 import { getStudentDetail } from "@/lib/students/detail";
 import { getStudentPlacement } from "@/lib/students/placement";
 
 const copy = {
   en: { kicker: "Student profile · Edit", title: "Edit student", body: "Update identity, class placement, language, health, safeguarding and primary guardian information.", back: "Back to profile", placement: "Academic placement", placementBody: "Move the student between active classes within the current academic session and program. Every change is recorded." },
-  ur: { kicker: "طالب علم پروفائل · ترمیم", title: "طالب علم میں ترمیم", body: "شناخت، کلاس پلیسمنٹ، زبان، صحت، حفاظت اور بنیادی سرپرست کی معلومات اپ ڈیٹ کریں۔", back: "پروفائل پر واپس", placement: "تعلیمی پلیسمنٹ", placementBody: "موجودہ تعلیمی سال اور پروگرام کے فعال گروپس کے درمیان طالب علم کی کلاس تبدیل کریں۔ ہر تبدیلی ریکارڈ ہوتی ہے۔" },
-  ar: { kicker: "ملف الطالب · تعديل", title: "تعديل الطالب", body: "حدّث الهوية والتوزيع الدراسي واللغة والصحة والحماية وولي الأمر الأساسي.", back: "العودة للملف", placement: "التوزيع الأكاديمي", placementBody: "انقل الطالب بين الفصول النشطة ضمن العام الدراسي والبرنامج الحاليين. يتم تسجيل كل تغيير." }
-} as const;
+  ur: { kicker: "طالب علم پروفائل · ترمیم", title: "طالب علم میں ترمیم", body: "شناخت، کلاس پلیسمنٹ، زبان، صحت، حفاظت اور بنیادی سرپرست کی معلومات اپ ڈیٹ کریں۔", back: "پروفائل پر واپس", placement: "تعلیمی پلیسمنٹ", placementBody: "موجودہ تعلیمی سال اور پروگرام کے فعال گروپس کے درمیان طالب علم کی کلاس تبدیل کریں۔ ہر تبدیلی ریکارڈ ہوتی ہے۔" }
+} as const satisfies Record<SupportedLocale, object>;
 
 export default async function EditStudentPage({ params }: { params: Promise<{ locale: string; personId: string }> }) {
   const raw = await params;
-  const locale = raw.locale as Locale;
+  if (!isLocale(raw.locale)) notFound();
+  const locale: SupportedLocale = raw.locale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
   const [student, placement] = await Promise.all([
