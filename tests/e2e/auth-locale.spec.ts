@@ -22,5 +22,5 @@ test("returns an incomplete Urdu confirmation link to localized sign in", async 
   await page.goto(`/auth/callback?next=${encodedNext("/ur/students")}`);
   await expect(page).toHaveURL(/\/login\?next=%2Fur%2Fstudents&auth=missing_code$/);
   await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("alert")).toContainText("تصدیقی لنک");
+  await expect(page.locator("main.auth-screen .form-message[role=\"alert\"]")).toContainText("تصدیقی لنک");
 });
