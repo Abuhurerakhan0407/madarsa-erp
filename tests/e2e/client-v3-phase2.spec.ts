@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("Client V3 walk-in admission stays protected behind sign in", async ({ page }) => {
+test("Client V3 walk-in admission stays protected behind localized sign in", async ({ page }) => {
   await page.goto("/ur/students/new");
   await expect(page).toHaveURL(/\/login\?next=%2Fur%2Fstudents%2Fnew$/);
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
 });
 
 test("public admission renders the complete Urdu intake in RTL without horizontal overflow", async ({ page }) => {
