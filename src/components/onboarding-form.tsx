@@ -61,7 +61,7 @@ export function OnboardingForm({ email, locale }: { email?: string; locale: Supp
   const [institutionName, setInstitutionName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
-  const [branchName, setBranchName] = useState(text.defaultBranch);
+  const [branchName, setBranchName] = useState<string>(text.defaultBranch);
   const [branchCode, setBranchCode] = useState("MAIN");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,16 +109,7 @@ export function OnboardingForm({ email, locale }: { email?: string; locale: Supp
         </div>
         <label className="field-label">
           {text.yourName}
-          <input
-            className="text-field"
-            autoComplete="name"
-            minLength={2}
-            maxLength={160}
-            required
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-            disabled={busy}
-          />
+          <input className="text-field" autoComplete="name" minLength={2} maxLength={160} required value={displayName} onChange={(event) => setDisplayName(event.target.value)} disabled={busy} />
         </label>
       </div>
 
@@ -131,33 +122,11 @@ export function OnboardingForm({ email, locale }: { email?: string; locale: Supp
         <div className="onboarding-fields">
           <label className="field-label">
             {text.institutionName}
-            <input
-              className="text-field"
-              minLength={2}
-              maxLength={160}
-              required
-              value={institutionName}
-              onChange={(event) => {
-                const value = event.target.value;
-                setInstitutionName(value);
-                if (!slugEdited) setSlug(slugify(value));
-              }}
-              disabled={busy}
-            />
+            <input className="text-field" minLength={2} maxLength={160} required value={institutionName} onChange={(event) => { const value = event.target.value; setInstitutionName(value); if (!slugEdited) setSlug(slugify(value)); }} disabled={busy} />
           </label>
           <label className="field-label">
             {text.slug}
-            <input
-              className="text-field"
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              required
-              value={slug}
-              onChange={(event) => {
-                setSlugEdited(true);
-                setSlug(slugify(event.target.value));
-              }}
-              disabled={busy}
-            />
+            <input className="text-field" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required value={slug} onChange={(event) => { setSlugEdited(true); setSlug(slugify(event.target.value)); }} disabled={busy} />
             <small>{text.slugHelp}</small>
           </label>
         </div>
@@ -172,26 +141,11 @@ export function OnboardingForm({ email, locale }: { email?: string; locale: Supp
         <div className="onboarding-fields">
           <label className="field-label">
             {text.branchName}
-            <input
-              className="text-field"
-              minLength={2}
-              maxLength={160}
-              required
-              value={branchName}
-              onChange={(event) => setBranchName(event.target.value)}
-              disabled={busy}
-            />
+            <input className="text-field" minLength={2} maxLength={160} required value={branchName} onChange={(event) => setBranchName(event.target.value)} disabled={busy} />
           </label>
           <label className="field-label">
             {text.branchCode}
-            <input
-              className="text-field"
-              pattern="[A-Z0-9][A-Z0-9_-]{0,31}"
-              required
-              value={branchCode}
-              onChange={(event) => setBranchCode(event.target.value.toUpperCase())}
-              disabled={busy}
-            />
+            <input className="text-field" pattern="[A-Z0-9][A-Z0-9_-]{0,31}" required value={branchCode} onChange={(event) => setBranchCode(event.target.value.toUpperCase())} disabled={busy} />
           </label>
         </div>
       </div>
