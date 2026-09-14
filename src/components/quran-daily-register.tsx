@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { QuranDailyAction, QuranDailyTarget } from "@/lib/quran/daily-register-model";
 import type { QuranDailyRegister as Register, QuranDailyRow, QuranDailyTargetView } from "@/lib/quran/daily-register";
@@ -27,33 +27,36 @@ const extraCopy = {
     recorded: "Recorded", support: "Needs support", month: "Month entries", monthAverage: "Month average",
     quality: "Quality", mistakes: "Mistakes", nextTarget: "Next target", actions: "Quick actions", pass: "Pass", repeat: "Repeat",
     needsSupport: "Needs support", absent: "Absent", noLesson: "No lesson", details: "Details", hideDetails: "Hide details",
-    useLast: "Last target", noTarget: "Set a target before recording", todayStatus: "Today", saveError: "Unable to update this student.",
-    saved: "Saved", target: "Target", teacherNote: "Teacher note", revisionDate: "Revision due", optional: "Optional",
+    useLast: "Last target", noTarget: "Set a target before recording", targetRequired: "Set a Juz, Ayah range or page range before recording.", nextTargetRequired: "Set a Juz, Ayah range or page range for the next target.", todayStatus: "Today", saveError: "Unable to update this student.",
+    saved: "Saved", saving: "Saving…", loading: "Loading…", target: "Target", teacherNote: "Teacher note", revisionDate: "Revision due", optional: "Optional",
     setNext: "Set next target", parentSummary: "Parent summary", progressWall: "30-Juz progress",
     scoreHint: "0–100", targetHelp: "The previous target is reused by default for fast entry.", noGroup: "Choose a group and date to load the class roster.",
-    history: "History", student: "Student", revisionQueue: "Revision queue", result: "Result", saveNext: "Save & Next Student", saveOnly: "Save only"
+    history: "History", student: "Student", revisionQueue: "Revision queue", result: "Result", saveNext: "Save & Next Student", saveOnly: "Save only",
+    progressAria: (count:number)=>`${count} of 30 Juz completed`
   },
   ur: {
     group: "حلقہ / گروپ", date: "سبق کی تاریخ", chooseGroup: "حلقہ یا گروپ منتخب کریں", roster: "روزانہ رجسٹر",
     recorded: "درج شدہ", support: "توجہ درکار", month: "ماہانہ اندراجات", monthAverage: "ماہانہ اوسط",
     quality: "معیار", mistakes: "غلطیاں", nextTarget: "اگلا ہدف", actions: "فوری عمل", pass: "پاس", repeat: "اعادہ",
     needsSupport: "مدد درکار", absent: "غیر حاضر", noLesson: "سبق نہیں", details: "تفصیل", hideDetails: "تفصیل بند کریں",
-    useLast: "پچھلا ہدف", noTarget: "ریکارڈ کرنے سے پہلے ہدف مقرر کریں", todayStatus: "آج", saveError: "طالب علم کا ریکارڈ محفوظ نہیں ہو سکا۔",
-    saved: "محفوظ", target: "ہدف", teacherNote: "استاد کا نوٹ", revisionDate: "نظر ثانی کی تاریخ", optional: "اختیاری",
+    useLast: "پچھلا ہدف", noTarget: "ریکارڈ کرنے سے پہلے ہدف مقرر کریں", targetRequired: "ریکارڈ کرنے سے پہلے پارہ، آیات کی حد یا صفحات کی حد مقرر کریں۔", nextTargetRequired: "اگلے ہدف کے لیے پارہ، آیات کی حد یا صفحات کی حد مقرر کریں۔", todayStatus: "آج", saveError: "طالب علم کا ریکارڈ محفوظ نہیں ہو سکا۔",
+    saved: "محفوظ", saving: "محفوظ ہو رہا ہے…", loading: "لوڈ ہو رہا ہے…", target: "ہدف", teacherNote: "استاد کا نوٹ", revisionDate: "نظر ثانی کی تاریخ", optional: "اختیاری",
     setNext: "اگلا ہدف مقرر کریں", parentSummary: "والدین کے لیے خلاصہ", progressWall: "30 پارہ پیش رفت",
     scoreHint: "0–100", targetHelp: "تیز اندراج کے لیے پچھلا ہدف خودکار طور پر دوبارہ استعمال ہوتا ہے۔", noGroup: "کلاس رجسٹر کے لیے گروپ اور تاریخ منتخب کریں۔",
-    history: "تاریخ", student: "طالب علم", revisionQueue: "نظر ثانی قطار", result: "نتیجہ", saveNext: "محفوظ کریں اور اگلا طالب علم", saveOnly: "صرف محفوظ کریں"
+    history: "تاریخ", student: "طالب علم", revisionQueue: "نظر ثانی قطار", result: "نتیجہ", saveNext: "محفوظ کریں اور اگلا طالب علم", saveOnly: "صرف محفوظ کریں",
+    progressAria: (count:number)=>`30 میں سے ${count} پارے مکمل`
   },
   ar: {
     group: "الحلقة / المجموعة", date: "تاريخ الدرس", chooseGroup: "اختر حلقة أو مجموعة", roster: "السجل اليومي",
     recorded: "مسجل", support: "يحتاج دعماً", month: "إدخالات الشهر", monthAverage: "متوسط الشهر",
     quality: "الجودة", mistakes: "الأخطاء", nextTarget: "الهدف التالي", actions: "إجراءات سريعة", pass: "اجتاز", repeat: "إعادة",
     needsSupport: "يحتاج دعماً", absent: "غائب", noLesson: "لا درس", details: "التفاصيل", hideDetails: "إخفاء التفاصيل",
-    useLast: "الهدف السابق", noTarget: "حدد هدفاً قبل التسجيل", todayStatus: "اليوم", saveError: "تعذر تحديث سجل الطالب.",
-    saved: "تم الحفظ", target: "الهدف", teacherNote: "ملاحظة المعلم", revisionDate: "موعد المراجعة", optional: "اختياري",
+    useLast: "الهدف السابق", noTarget: "حدد هدفاً قبل التسجيل", targetRequired: "حدد جزءاً أو نطاق آيات أو صفحات قبل التسجيل.", nextTargetRequired: "حدد جزءاً أو نطاق آيات أو صفحات للهدف التالي.", todayStatus: "اليوم", saveError: "تعذر تحديث سجل الطالب.",
+    saved: "تم الحفظ", saving: "جارٍ الحفظ…", loading: "جارٍ التحميل…", target: "الهدف", teacherNote: "ملاحظة المعلم", revisionDate: "موعد المراجعة", optional: "اختياري",
     setNext: "تحديد الهدف التالي", parentSummary: "ملخص لولي الأمر", progressWall: "تقدم 30 جزءاً",
     scoreHint: "0–100", targetHelp: "يعاد استخدام الهدف السابق تلقائياً لتسريع الإدخال.", noGroup: "اختر المجموعة والتاريخ لعرض سجل الفصل.",
-    history: "السجل", student: "الطالب", revisionQueue: "قائمة المراجعة", result: "النتيجة", saveNext: "حفظ والطالب التالي", saveOnly: "حفظ فقط"
+    history: "السجل", student: "الطالب", revisionQueue: "قائمة المراجعة", result: "النتيجة", saveNext: "حفظ والطالب التالي", saveOnly: "حفظ فقط",
+    progressAria: (count:number)=>`${count} من 30 جزءاً مكتمل`
   }
 } as const;
 
@@ -154,8 +157,7 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
   async function submit(action: QuranDailyAction, detailed = false, advance = false) {
     if (action !== "absent" && action !== "no_lesson" && !currentTarget) {
       setExpanded(true);
-      setError(`${x.noTarget} — ${quranCopy[locale].juz} / ${quranCopy[locale].ayah} / ${quranCopy[locale].page} required`);
-      // focus the target Juz input for quick correction
+      setError(x.targetRequired);
       window.requestAnimationFrame(()=>{
         const el = document.querySelector(`#quran-target-${row.personId}-juz`) as HTMLInputElement | null;
         el?.focus();
@@ -180,7 +182,7 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
       if (useNextTarget) {
         const nextTarget = targetPayload(nextTargetDraft,true);
         if (!nextTarget) {
-          setError(`${x.noTarget} — next target Juz/Ayah/Page required`);
+          setError(x.nextTargetRequired);
           window.requestAnimationFrame(()=>{
             const el = document.querySelector(`#quran-next-target-${row.personId}-juz`) as HTMLInputElement | null;
             el?.focus();
@@ -194,14 +196,14 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
     try {
       const response = await fetch("/api/quran/daily", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body) });
       const payload = await response.json().catch(()=>({})) as { error?: string };
-      if (!response.ok) { setError(payload.error ?? x.saveError); return; }
+      if (!response.ok) { setError(locale === "ur" ? x.saveError : (payload.error ?? x.saveError)); return; }
       setSaved(true);
       if (advance) onSavedAndNext();
       router.refresh();
     } catch { setError(x.saveError); } finally { setBusy(false); }
   }
 
-  return <article className="quran-daily-row" id={`quran-student-${row.personId}`}>
+  return <article className="quran-daily-row" id={`quran-student-${row.personId}`} aria-busy={busy||undefined}>
     <div className="quran-daily-student">
       <strong>{row.name}</strong>{row.nameNative ? <span dir="auto">{row.nameNative}</span> : null}<small>{row.studentNumber}</small>
       <div className="quran-daily-links"><Link href={`/${locale}/quran/${row.personId}`} className="quiet-link">{x.history}</Link><Link href={`/${locale}/students/${row.personId}`} className="quiet-link">{x.student}</Link></div>
@@ -221,25 +223,26 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
         <button type="button" disabled={busy} onClick={()=>submit("absent")}>{x.absent}</button>
         <button type="button" disabled={busy} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
       </div> : null}
-      <button className="quiet-link quran-details-toggle" type="button" onClick={()=>setExpanded((value)=>!value)}>{isExpanded?x.hideDetails:x.details}</button>
+      {busy ? <span className="form-message" role="status"><span className="inline-spinner" aria-hidden="true"/>{x.saving}</span> : null}
+      <button className="quiet-link quran-details-toggle" type="button" disabled={busy} onClick={()=>setExpanded((value)=>!value)}>{isExpanded?x.hideDetails:x.details}</button>
     </div>
     {isExpanded ? <div className="quran-daily-detail">
-      <div className="quran-detail-heading"><div><strong>{x.target}</strong><span>{x.targetHelp}</span></div>{row.repeatTarget?<button type="button" className="action-button" onClick={()=>setTargetDraft(draftFromTarget(row.repeatTarget))}>{x.useLast}: {row.repeatTarget.label}</button>:null}</div>
+      <div className="quran-detail-heading"><div><strong>{x.target}</strong><span>{x.targetHelp}</span></div>{row.repeatTarget?<button type="button" className="action-button" disabled={busy} onClick={()=>setTargetDraft(draftFromTarget(row.repeatTarget))}>{x.useLast}: {row.repeatTarget.label}</button>:null}</div>
       <TargetFields draft={targetDraft} setDraft={setTargetDraft} locale={locale} includeWork idPrefix={`quran-target-${row.personId}`} />
       <div className="quran-score-fields">
-        <label className="field-label">{x.quality}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={quality} onChange={(event)=>setQuality(event.target.value)}/></label>
-        <label className="field-label">{t.tajweedScore}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={tajweed} onChange={(event)=>setTajweed(event.target.value)}/></label>
-        <label className="field-label">{t.fluency}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={fluency} onChange={(event)=>setFluency(event.target.value)}/></label>
-        <label className="field-label">{x.mistakes}<input className="text-field" type="number" min="0" max="99" value={mistakes} onChange={(event)=>setMistakes(event.target.value)}/></label>
-        <label className="field-label">{x.revisionDate} · {x.optional}<input className="text-field" type="date" min={sessionDate} value={revisionDate} onChange={(event)=>setRevisionDate(event.target.value)}/></label>
-        <label className="field-label">{x.result}<select className="text-field" value={detailedAction} onChange={(event)=>setDetailedAction(event.target.value as QuranDailyAction)}><option value="pass">{x.pass}</option><option value="repeat">{x.repeat}</option><option value="needs_support">{x.needsSupport}</option><option value="absent">{x.absent}</option><option value="no_lesson">{x.noLesson}</option></select></label>
+        <label className="field-label">{x.quality}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={quality} disabled={busy} onChange={(event)=>setQuality(event.target.value)}/></label>
+        <label className="field-label">{t.tajweedScore}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={tajweed} disabled={busy} onChange={(event)=>setTajweed(event.target.value)}/></label>
+        <label className="field-label">{t.fluency}<input className="text-field" type="number" min="0" max="100" placeholder={x.scoreHint} value={fluency} disabled={busy} onChange={(event)=>setFluency(event.target.value)}/></label>
+        <label className="field-label">{x.mistakes}<input className="text-field" type="number" min="0" max="99" value={mistakes} disabled={busy} onChange={(event)=>setMistakes(event.target.value)}/></label>
+        <label className="field-label">{x.revisionDate} · {x.optional}<input className="text-field" type="date" min={sessionDate} value={revisionDate} disabled={busy} onChange={(event)=>setRevisionDate(event.target.value)}/></label>
+        <label className="field-label">{x.result}<select className="text-field" value={detailedAction} disabled={busy} onChange={(event)=>setDetailedAction(event.target.value as QuranDailyAction)}><option value="pass">{x.pass}</option><option value="repeat">{x.repeat}</option><option value="needs_support">{x.needsSupport}</option><option value="absent">{x.absent}</option><option value="no_lesson">{x.noLesson}</option></select></label>
       </div>
-      <label className="field-label">{x.teacherNote} · {x.optional}<textarea className="text-field" rows={2} maxLength={1000} value={teacherNote} onChange={(event)=>setTeacherNote(event.target.value)}/></label>
-      <label className="quran-next-toggle"><input type="checkbox" checked={useNextTarget} onChange={(event)=>setUseNextTarget(event.target.checked)}/><span>{x.setNext}</span></label>
+      <label className="field-label">{x.teacherNote} · {x.optional}<textarea className="text-field" rows={2} maxLength={1000} value={teacherNote} disabled={busy} onChange={(event)=>setTeacherNote(event.target.value)}/></label>
+      <label className="quran-next-toggle"><input type="checkbox" checked={useNextTarget} disabled={busy} onChange={(event)=>setUseNextTarget(event.target.checked)}/><span>{x.setNext}</span></label>
       {useNextTarget ? <TargetFields draft={nextTargetDraft} setDraft={setNextTargetDraft} locale={locale} includeWork idPrefix={`quran-next-target-${row.personId}`} /> : null}
-      <div className="quran-progress-summary"><div><span>{x.progressWall}</span><div className="quran-juz-wall" aria-label={`${row.memorizedJuz} of 30 Juz passed`}>{Array.from({length:30},(_,index)=><i key={index} data-complete={index<row.memorizedJuz?"true":"false"}>{index+1}</i>)}</div></div><div><span>{x.parentSummary}</span><strong>{parentSummary}</strong></div></div>
+      <div className="quran-progress-summary"><div><span>{x.progressWall}</span><div className="quran-juz-wall" aria-label={x.progressAria(row.memorizedJuz)}>{Array.from({length:30},(_,index)=><i key={index} data-complete={index<row.memorizedJuz?"true":"false"}>{index+1}</i>)}</div></div><div><span>{x.parentSummary}</span><strong>{parentSummary}</strong></div></div>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}{saved ? <p className="form-message form-success" role="status">{x.saved}</p> : null}
-      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,hasNext)}>{hasNext?x.saveNext:x.saveOnly}</button>{hasNext?<button className="action-button" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,false)}>{x.saveOnly}</button>:null}</div> : null}
+      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} aria-busy={busy||undefined} onClick={()=>submit(detailedAction,true,hasNext)}>{busy?<><span className="inline-spinner" aria-hidden="true"/>{x.saving}</>:(hasNext?x.saveNext:x.saveOnly)}</button>{hasNext?<button className="action-button" type="button" disabled={busy} onClick={()=>submit(detailedAction,true,false)}>{x.saveOnly}</button>:null}</div> : null}
     </div> : null}
   </article>;
 }
@@ -252,20 +255,22 @@ function minimumRegisterDate(localDate: string) {
 
 export function QuranDailyRegister({ locale, data }: Props) {
   const router = useRouter(); const t = quranCopy[locale]; const x = extraCopy[locale];
+  const [navigating,startNavigation]=useTransition();
   const selectedGroup = useMemo(()=>data.groups.find((group)=>group.id===data.selectedGroupId)??null,[data.groups,data.selectedGroupId]);
   const minimumDate = minimumRegisterDate(data.localDate);
   const [focusPersonId,setFocusPersonId]=useState<number|null>(null);
   function navigate(groupId: number | null, date: string) {
     setFocusPersonId(null);
     const query = new URLSearchParams(); if(groupId) query.set("group",String(groupId)); if(date) query.set("date",date);
-    router.push(`/${locale}/quran?${query.toString()}`);
+    startNavigation(()=>router.push(`/${locale}/quran?${query.toString()}`));
   }
   function advanceFrom(index:number){const next=data.rows[index+1];if(next)setFocusPersonId(next.personId);}
-  return <div className="quran-daily-register">
+  return <div className="quran-daily-register" aria-busy={navigating||undefined}>
     <section className="quran-daily-toolbar" data-page-section>
-      <label className="field-label">{x.group}<select className="text-field" value={data.selectedGroupId??""} onChange={(event)=>navigate(event.target.value?Number(event.target.value):null,data.selectedDate)}><option value="">{x.chooseGroup}</option>{data.groups.map((group)=><option key={group.id} value={group.id}>{group.label} · {group.students}</option>)}</select></label>
-      <label className="field-label">{x.date}<input className="text-field" type="date" min={minimumDate} max={data.localDate} value={data.selectedDate} onChange={(event)=>navigate(data.selectedGroupId,event.target.value)}/></label>
+      <label className="field-label">{x.group}<select className="text-field" value={data.selectedGroupId??""} disabled={navigating} onChange={(event)=>navigate(event.target.value?Number(event.target.value):null,data.selectedDate)}><option value="">{x.chooseGroup}</option>{data.groups.map((group)=><option key={group.id} value={group.id}>{group.label} · {group.students}</option>)}</select></label>
+      <label className="field-label">{x.date}<input className="text-field" type="date" min={minimumDate} max={data.localDate} value={data.selectedDate} disabled={navigating} onChange={(event)=>navigate(data.selectedGroupId,event.target.value)}/></label>
       <Link className="action-button" href={`/${locale}/quran/revision`}>{x.revisionQueue}</Link>
+      {navigating?<span className="form-message" role="status"><span className="inline-spinner" aria-hidden="true"/>{x.loading}</span>:null}
     </section>
     {selectedGroup ? <>
       <section className="quran-daily-metrics" data-page-section>
