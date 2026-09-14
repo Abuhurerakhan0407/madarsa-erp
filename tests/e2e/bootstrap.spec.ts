@@ -9,12 +9,9 @@ test("protects the root workspace behind sign in", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("protects localized institution routes", async ({ page }) => {
+test("protects supported localized institution routes", async ({ page }) => {
   await page.goto("/ur");
   await expect(page).toHaveURL(/\/login\?next=%2Fur$/);
-
-  await page.goto("/ar/settings/configuration");
-  await expect(page).toHaveURL(/\/login\?next=%2Far%2Fsettings%2Fconfiguration$/);
 
   await page.goto("/en/programs");
   await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fprograms$/);
@@ -27,7 +24,7 @@ test("protects onboarding until an identity is authenticated", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("renders accessible trilingual sign in and signup modes", async ({ page }) => {
+test("renders accessible English and Urdu sign in and signup modes", async ({ page }) => {
   await page.goto("/login?next=%2Fen%2Fstudents");
 
   await expect(page.getByLabel("Email address")).toHaveAttribute("type", "email");
@@ -37,16 +34,12 @@ test("renders accessible trilingual sign in and signup modes", async ({ page }) 
   await expect(page.getByRole("navigation", { name: "Language" })).toBeVisible();
   await expect(page.getByRole("button", { name: "English" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("button", { name: "اردو" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "العربية" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "العربية" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "اردو" }).click();
   await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fstudents$/);
   await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
-
-  await page.getByRole("button", { name: "العربية" }).click();
-  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("heading", { name: "مرحبًا بعودتك" })).toBeVisible();
 
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "ltr");
