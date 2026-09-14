@@ -6,7 +6,7 @@ const read=(path:string)=>readFileSync(resolve(process.cwd(),path),"utf8");
 describe("Phase 9 Teachers + Portals UI contracts",()=>{
  it("renames the client-facing staff surface to Teachers and exposes required teacher fields",()=>{
   const page=read("src/app/[locale]/staff/page.tsx");const list=read("src/components/teachers-workspace.tsx");const detail=read("src/app/[locale]/staff/[employmentId]/page.tsx");
-  expect(page).toContain("Teachers");expect(list).toContain("teacherId");expect(list).toContain("designation");expect(detail).toContain("assignedPrograms");expect(detail).toContain("assignedSubjects");expect(detail).toContain("assignedGroups");expect(detail).toContain("t.timetable");expect(detail).toContain("t.attendance");expect(detail).toContain("/api/teachers/photo/");
+  expect(page).toContain("Teachers");expect(list).toContain("teacherId");expect(list).toContain("designation");expect(detail).toContain("assignedPrograms");expect(detail).toContain("assignedSubjects");expect(detail).toContain("assignedGroups");expect(detail).toContain("teacher.timetable");expect(detail).toContain("teacher.attendance");expect(detail).toContain("/api/teachers/photo/");
  });
  it("keeps the client-facing teacher editor away from private payroll and qualification controls",()=>{
   const form=read("src/components/teacher-profile-form.tsx");expect(form).toContain("email");expect(form).toContain("phone");expect(form).toContain("joinedOn");expect(form).not.toContain("payrollEligible");expect(form).not.toContain("qualificationSummary");expect(form).not.toContain("contractType");
