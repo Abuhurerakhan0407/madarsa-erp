@@ -48,7 +48,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
       <header className="topbar professional-topbar client-v2-topbar" style={{ gap: ".75rem", flexWrap: "wrap" }}>
         <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {copy.year}</p></div>
         {audience === "office" ? <GlobalStudentSearch locale={locale} /> : null}
-        <div className="topbar-actions">{audience === "office" ? <AppNavLink className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</AppNavLink> : null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} /></div>
+        <div className="topbar-actions">{audience === "office" ? <AppNavLink className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</AppNavLink> : null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale === "ur" ? "ur" : "en"} /></div>
       </header>
       <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion />{children}</main>
     </div>
