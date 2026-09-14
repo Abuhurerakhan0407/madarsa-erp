@@ -7,42 +7,28 @@ export function InterfaceMotion() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let cancelled = false;
-    let context: { revert: () => void } | undefined;
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>("#main-content > [data-page-section]")
+    );
 
-    const timer = window.setTimeout(() => {
-      void import("gsap").then(({ gsap }) => {
-        if (cancelled) return;
+    const animations = elements.map((element, index) =>
+      element.animate(
+        [
+          { opacity: 0, transform: "translateY(6px)" },
+          { opacity: 1, transform: "translateY(0)" }
+        ],
+        {
+          duration: 180,
+          delay: index * 18,
+          easing: "cubic-bezier(.2,.8,.2,1)",
+          fill: "both"
+        }
+      )
+    );
 
-        const elements = gsap.utils.toArray<HTMLElement>("#main-content > [data-page-section]");
-        if (elements.length === 0) return;
-
-        context = gsap.context(() => {
-          gsap.fromTo(
-            elements,
-            { autoAlpha: 0, y: 10 },
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: 0.38,
-              stagger: 0.035,
-              ease: "power2.out",
-              clearProps: "opacity,visibility,transform"
-            }
-          );
-        });
-      });
-    }, 120);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-      context?.revert();
-    };
+    return () => animations.forEach((animation) => animation.cancel());
   }, [pathname]);
 
   return null;

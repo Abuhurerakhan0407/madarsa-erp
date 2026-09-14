@@ -1,7 +1,11 @@
-export const locales = ["en", "ur", "ar"] as const;
-export type Locale = (typeof locales)[number];
+export const locales = ["en", "ur"] as const;
+export type SupportedLocale = (typeof locales)[number];
 
-export const defaultLocale: Locale = "en";
+// Keep the legacy union for internal localized database labels while the
+// application itself only exposes English and Urdu routes.
+export type Locale = SupportedLocale | "ar";
+
+export const defaultLocale: SupportedLocale = "en";
 
 export const localeLabels: Record<Locale, string> = {
   en: "English",
@@ -9,8 +13,8 @@ export const localeLabels: Record<Locale, string> = {
   ar: "العربية"
 };
 
-export function isLocale(value: string): value is Locale {
-  return locales.includes(value as Locale);
+export function isLocale(value: string): value is SupportedLocale {
+  return locales.includes(value as SupportedLocale);
 }
 
 export function getDirection(locale: Locale): "ltr" | "rtl" {

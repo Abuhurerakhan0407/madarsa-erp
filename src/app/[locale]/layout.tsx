@@ -19,6 +19,7 @@ import "../client-v2.css";
 import "../client-v2-polish.css";
 import "../quran-v2.css";
 import "../academics-v2.css";
+import "../phase5-polish.css";
 
 export const metadata: Metadata = {
   title: {

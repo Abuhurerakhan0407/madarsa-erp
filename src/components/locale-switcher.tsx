@@ -1,8 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {usePathname,useRouter} from "next/navigation";
-import {localeLabels,locales,type Locale} from "@/lib/i18n/config";
-type Props={currentLocale:Locale;label:string};
-export function localizedHref(pathname:string,query:string,locale:Locale):string{const parts=pathname.split("/");if(parts.length>1&&locales.includes(parts[1] as Locale))parts[1]=locale;else parts.splice(1,0,locale);const path=parts.join("/")||`/${locale}`;return query?`${path}?${query}`:path;}
-export function LocaleSwitcher({currentLocale,label}:Props){const pathname=usePathname(),router=useRouter();return <nav aria-label={label} className="locale-switcher">{locales.map(locale=>{const baseHref=localizedHref(pathname,"",locale);return <Link key={locale} href={baseHref} aria-current={locale===currentLocale?"page":undefined} className="locale-link" hrefLang={locale} onClick={event=>{event.preventDefault();const query=window.location.search.replace(/^\?/,"");router.push(localizedHref(pathname,query,locale))}}>{localeLabels[locale]}</Link>})}</nav>}
+import { usePathname, useRouter } from "next/navigation";
+import { localeLabels, locales, type Locale, type SupportedLocale } from "@/lib/i18n/config";
+
+type Props = { currentLocale: Locale; label: string };
+
+export function localizedHref(pathname: string, query: string, locale: Locale): string {
+  const parts = pathname.split("/");
+  if (parts.length > 1 && locales.includes(parts[1] as SupportedLocale)) parts[1] = locale;
+  else parts.splice(1, 0, locale);
+  const path = parts.join("/") || `/${locale}`;
+  return query ? `${path}?${query}` : path;
+}
+
+export function LocaleSwitcher({ currentLocale, label }: Props) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [pendingLocale, setPendingLocale] = useState<SupportedLocale | null>(null);
+
+  useEffect(() => setPendingLocale(null), [pathname]);
+
+  return (
+    <nav aria-label={label} className="locale-switcher">
+      {locales.map((locale) => {
+        const baseHref = localizedHref(pathname, "", locale);
+        const pending = pendingLocale === locale;
+        return (
+          <Link
+            key={locale}
+            href={baseHref}
+            aria-current={locale === currentLocale ? "page" : undefined}
+            aria-busy={pending || undefined}
+            className="locale-link"
+            hrefLang={locale}
+            prefetch
+            onClick={(event) => {
+              if (locale === currentLocale) return;
+              event.preventDefault();
+              setPendingLocale(locale);
+              const query = window.location.search.replace(/^\?/, "");
+              router.push(localizedHref(pathname, query, locale));
+            }}
+          >
+            <span>{localeLabels[locale]}</span>
+            {pending ? <span className="inline-spinner" aria-hidden="true" /> : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
