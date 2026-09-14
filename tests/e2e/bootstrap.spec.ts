@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const sameOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000").origin;
+
 test("protects the root workspace behind sign in", async ({ page }) => {
   await page.goto("/");
 
@@ -189,7 +191,7 @@ test("public admission submission requires JSON before database access", async (
   const response = await request.post("/api/public/admissions/test-institution/submit", {
     headers: {
       "content-type": "text/plain",
-      origin: "http://localhost:3000"
+      origin: sameOrigin
     },
     data: "application"
   });
