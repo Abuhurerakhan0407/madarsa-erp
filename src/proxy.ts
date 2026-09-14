@@ -33,6 +33,12 @@ export default async function proxy(request: NextRequest) {
     });
   }
 
+  if (pathname === "/ar" || pathname.startsWith("/ar/")) {
+    const normalized = request.nextUrl.clone();
+    normalized.pathname = pathname.replace(/^\/ar(?=\/|$)/, "/en");
+    return NextResponse.redirect(normalized);
+  }
+
   if (pathname.startsWith("/apply/") || pathname === "/track" || pathname === "/certificate/verify") {
     return NextResponse.next({ request });
   }
@@ -56,7 +62,7 @@ export default async function proxy(request: NextRequest) {
     if (identityId) return sessionResponse;
 
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", "/onboarding");
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
   }
 
