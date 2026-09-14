@@ -11,6 +11,22 @@ test("uses an Urdu protected target as the initial sign-in locale", async ({ pag
   await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
 });
 
+test("keeps Urdu portal administration intent through sign in", async ({ page }) => {
+  const destination = "/ur/portals";
+  await page.goto(destination);
+  await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodedNext(destination)}$`));
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
+});
+
+test("keeps Urdu self-service portal intent through sign in", async ({ page }) => {
+  const destination = "/portal?locale=ur";
+  await page.goto(destination);
+  await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodedNext(destination)}$`));
+  await expect(page.locator("main.auth-screen")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "خوش آمدید" })).toBeVisible();
+});
+
 test("preserves Urdu onboarding intent through the anonymous auth redirect", async ({ page }) => {
   const destination = "/onboarding?locale=ur";
   await page.goto(destination);
