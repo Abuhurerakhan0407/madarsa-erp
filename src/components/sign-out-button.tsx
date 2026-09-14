@@ -23,12 +23,14 @@ export function SignOutButton({
   label,
   initials,
   title,
-  locale = "en"
+  locale = "en",
+  afterSignOut = "/login"
 }: {
   label: string;
   initials: string;
   title: string;
   locale?: UiLocale;
+  afterSignOut?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -47,7 +49,7 @@ export function SignOutButton({
         setError(text.error);
         return;
       }
-      router.push("/login");
+      router.push(afterSignOut);
       router.refresh();
     } catch {
       setError(text.error);
