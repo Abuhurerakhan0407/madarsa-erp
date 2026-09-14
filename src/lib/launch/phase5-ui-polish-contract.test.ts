@@ -13,6 +13,9 @@ const login = source("src/app/login/page.tsx");
 const motion = source("src/components/interface-motion.tsx");
 const localeLayout = source("src/app/[locale]/layout.tsx");
 const polish = source("src/app/phase5-polish.css");
+const getFilterForm = source("src/components/get-filter-form.tsx");
+const students = source("src/app/[locale]/students/page.tsx");
+const documents = source("src/app/[locale]/documents/page.tsx");
 
 describe("Client V3 Phase 5 UI polish contract", () => {
   it("exposes only English and Urdu application routes", () => {
@@ -31,6 +34,17 @@ describe("Client V3 Phase 5 UI polish contract", () => {
     expect(login).toContain("Signing in…");
     expect(login).toContain("navigating = true");
     expect(login).toContain("aria-busy");
+  });
+
+  it("keeps GET filter submissions visibly pending", () => {
+    expect(getFilterForm).toContain("startTransition");
+    expect(getFilterForm).toContain("router.push");
+    expect(getFilterForm).toContain('className="inline-spinner"');
+    expect(getFilterForm).toContain("aria-busy");
+    expect(students).toContain("GetFilterSubmitButton");
+    expect(students).toContain("Filtering…");
+    expect(documents).toContain("GetFilterSubmitButton");
+    expect(documents).toContain("t.applying");
   });
 
   it("uses lightweight native interface motion instead of route-time GSAP loading", () => {

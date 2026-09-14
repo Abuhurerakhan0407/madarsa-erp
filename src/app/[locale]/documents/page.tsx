@@ -3,6 +3,7 @@ import {notFound} from 'next/navigation';
 import {routing} from '@/i18n/routing';
 import type {Locale} from '@/lib/i18n/config';
 import {DocumentCenterV2} from '@/components/document-center-v2';
+import {GetFilterForm,GetFilterSubmitButton} from '@/components/get-filter-form';
 import {InlineState} from '@/components/workspace-ui';
 import {documentsCopy} from '@/lib/documents/copy';
 import {clientDocumentTypes,getDocumentCenter,isClientDocumentType} from '@/lib/documents/workspace';
@@ -20,13 +21,13 @@ export default async function DocumentsPage({params,searchParams}:{params:Promis
  return <div className="documents-shell">
   <section className="documents-hero"><div><p className="eyebrow">{t.documents}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div><div className="documents-count"><strong>{data.total}</strong><span>{t.showing}</span></div></section>
   <section className="panel"><p className="eyebrow">{t.whatGenerate}</p><div className="reports-picker">{clientDocumentTypes.map(key=><Link key={key} className={`report-card ${type===key?'is-selected':''}`} href={`/${locale}/documents?${new URLSearchParams({...formBase,type:key,page:'1'})}`}><strong>{t[key]}</strong></Link>)}</div></section>
-  <form className="panel document-filter-grid" method="get"><input type="hidden" name="type" value={type}/>
+  <GetFilterForm className="panel document-filter-grid"><input type="hidden" name="type" value={type}/>
    <label className="field-label">{t.academicYear}<select className="text-field" name="session" defaultValue={sessionId??''}><option value="">{t.allYears}</option>{data.filters.sessions.map(item=><option key={item.id} value={item.id}>{localized(item.labels,locale,item.key)}</option>)}</select></label>
    <label className="field-label">{t.program}<select className="text-field" name="program" defaultValue={programId??''}><option value="">{t.allPrograms}</option>{data.filters.programs.map(item=><option key={item.id} value={item.id}>{localized(item.labels,locale,item.key)}</option>)}</select></label>
    <label className="field-label">{t.group}<select className="text-field" name="group" defaultValue={groupId??''}><option value="">{t.allGroups}</option>{data.filters.groups.filter(item=>!programId||item.programId===programId).map(item=><option key={item.id} value={item.id}>{localized(item.labels,locale,item.key)}</option>)}</select></label>
    <label className="field-label">{t.student}<select className="text-field" name="student" defaultValue={studentPersonId??''}><option value="">{t.allStudents}</option>{data.filters.students.map(item=><option key={item.personId} value={item.personId}>{item.name} · {item.studentNumber}</option>)}</select></label>
-   <label className="field-label document-search-wide">{t.search}<input className="text-field" name="q" defaultValue={search??''} placeholder={t.searchPlaceholder}/></label><div className="quick-actions"><button className="action-button" type="submit">{t.apply}</button><Link className="secondary-button" href={`/${locale}/documents?type=${type}`}>{t.clear}</Link></div>
-  </form>
+   <label className="field-label document-search-wide">{t.search}<input className="text-field" name="q" defaultValue={search??''} placeholder={t.searchPlaceholder}/></label><div className="quick-actions"><GetFilterSubmitButton className="action-button" label={t.apply} pendingLabel={t.applying}/><Link className="secondary-button" href={`/${locale}/documents?type=${type}`}>{t.clear}</Link></div>
+  </GetFilterForm>
   {data.total===0?(filtered?<InlineState title={e.filtered} body={e.filteredBody} action={<Link className="action-button" href={`/${locale}/documents?type=${type}`}>{e.clear}</Link>}/>:<InlineState title={e.none} body={e.noneBody} action={<Link className="action-button action-button-primary" href={`/${locale}/students/new`}>{e.add}</Link>}/>):<DocumentCenterV2 locale={locale} type={type} rows={data.rows} total={data.total} selectionLimit={data.selectionLimit} filters={{sessionId,programId,groupId,studentPersonId,search}}/>}
   {pageCount>1?<nav className="documents-pagination" aria-label={t.pagination}>{page>1?<Link className="secondary-button" href={`/${locale}/documents?${new URLSearchParams({...formBase,page:String(page-1)})}`}>←</Link>:null}<span>{page} / {pageCount}</span>{page<pageCount?<Link className="secondary-button" href={`/${locale}/documents?${new URLSearchParams({...formBase,page:String(page+1)})}`}>→</Link>:null}</nav>:null}
   <section className="panel documents-recent"><header><h2>{t.recent}</h2></header>{data.recentIssued.length?<div>{data.recentIssued.map(item=><article key={item.issueId}><div><strong>{item.studentName}</strong><small>{t[item.templateKey]??item.templateKey} · {t.revision} {item.revision}</small></div><Link className="secondary-button" href={`/${locale}/exams/report-card/${item.personId}`}>{t.preview}</Link></article>)}</div>:<p className="empty-state">{t.noRecent}</p>}</section>
