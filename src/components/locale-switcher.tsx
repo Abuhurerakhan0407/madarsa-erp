@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { localeLabels, locales, type Locale, type SupportedLocale } from "@/lib/i18n/config";
@@ -18,21 +18,20 @@ export function localizedHref(pathname: string, query: string, locale: Locale): 
 export function LocaleSwitcher({ currentLocale, label }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [pendingLocale, setPendingLocale] = useState<SupportedLocale | null>(null);
-
-  useEffect(() => setPendingLocale(null), [pathname]);
 
   return (
     <nav aria-label={label} className="locale-switcher">
       {locales.map((locale) => {
         const baseHref = localizedHref(pathname, "", locale);
-        const pending = pendingLocale === locale;
+        const localePending = pending && pendingLocale === locale;
         return (
           <Link
             key={locale}
             href={baseHref}
             aria-current={locale === currentLocale ? "page" : undefined}
-            aria-busy={pending || undefined}
+            aria-busy={localePending || undefined}
             className="locale-link"
             hrefLang={locale}
             prefetch
@@ -41,11 +40,11 @@ export function LocaleSwitcher({ currentLocale, label }: Props) {
               event.preventDefault();
               setPendingLocale(locale);
               const query = window.location.search.replace(/^\?/, "");
-              router.push(localizedHref(pathname, query, locale));
+              startTransition(() => router.push(localizedHref(pathname, query, locale)));
             }}
           >
             <span>{localeLabels[locale]}</span>
-            {pending ? <span className="inline-spinner" aria-hidden="true" /> : null}
+            {localePending ? <span className="inline-spinner" aria-hidden="true" /> : null}
           </Link>
         );
       })}

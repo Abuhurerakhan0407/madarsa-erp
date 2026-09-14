@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -14,27 +14,22 @@ type AppNavLinkProps = {
 export function AppNavLink({ href, children, className }: AppNavLinkProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [pending, startTransition] = useTransition();
   const normalizedHref = href.replace(/\/$/, "").split("?")[0];
   const isOverview = /^\/(en|ur)$/.test(normalizedHref);
   const isActive = isOverview
     ? pathname === normalizedHref
     : pathname === normalizedHref || pathname.startsWith(`${normalizedHref}/`);
 
-  useEffect(() => {
-    setPending(false);
-  }, [pathname]);
-
   function warmRoute() {
     if (!isActive) router.prefetch(href);
   }
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (pending) {
-      event.preventDefault();
-      return;
-    }
-    if (!isActive) setPending(true);
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (isActive) return;
+    event.preventDefault();
+    startTransition(() => router.push(href));
   }
 
   return (

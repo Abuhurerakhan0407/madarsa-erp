@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n/config";
 
 type Result = { personId: number; name: string; nativeName: string | null; studentNumber: string; status: string; program: string; group: string };
@@ -16,15 +16,12 @@ export function GlobalStudentSearch({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const box = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [busy, setBusy] = useState(false);
-  const [navigating, setNavigating] = useState(false);
+  const [navigating, startNavigation] = useTransition();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-
-  useEffect(() => setNavigating(false), [pathname]);
 
   useEffect(() => {
     const onPointer = (event: PointerEvent) => {
@@ -83,9 +80,8 @@ export function GlobalStudentSearch({ locale }: { locale: Locale }) {
   }
 
   function openStudent(personId: number) {
-    setNavigating(true);
     setOpen(false);
-    router.push(`/${locale}/students/${personId}`);
+    startNavigation(() => router.push(`/${locale}/students/${personId}`));
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -122,7 +118,7 @@ export function GlobalStudentSearch({ locale }: { locale: Locale }) {
     <input id="global-student-search" className="text-field" type="search" value={q} onChange={(event) => changeQuery(event.target.value)} onFocus={() => q.trim().length >= 2 && setOpen(true)} onKeyDown={handleKeyDown} role="combobox" aria-expanded={open} aria-controls="global-search-listbox" aria-autocomplete="list" aria-busy={busy || navigating || undefined} aria-activedescendant={activeIndex >= 0 ? `global-search-option-${results[activeIndex]?.personId}` : undefined} placeholder={t.placeholder} autoComplete="off" />
     {busy || navigating ? <span className="global-search-progress" title={navigating ? t.opening : t.loading}><span className="inline-spinner" aria-hidden="true" /><span className="sr-only">{navigating ? t.opening : t.loading}</span></span> : null}
     {open ? <div id="global-search-listbox" role="listbox" aria-label={t.label} style={{ position: "absolute", insetInline: 0, top: "calc(100% + .45rem)", zIndex: 80, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: ".85rem", boxShadow: "0 18px 45px rgb(20 49 32 / 16%)", padding: ".45rem", maxHeight: "24rem", overflowY: "auto" }}>
-      {busy ? <p style={{ padding: ".7rem", margin: 0, display: "flex", alignItems: "center", gap: ".5rem" }} role="status" aria-live="polite"><span className="inline-spinner" aria-hidden="true" />{t.loading}</p> : results.length ? results.map((result, index) => <Link key={result.personId} id={`global-search-option-${result.personId}`} role="option" aria-selected={index === activeIndex} href={`/${locale}/students/${result.personId}`} prefetch={false} onMouseEnter={() => router.prefetch(`/${locale}/students/${result.personId}`)} onFocus={() => router.prefetch(`/${locale}/students/${result.personId}`)} onClick={() => { setNavigating(true); setOpen(false); }} style={{ display: "grid", padding: ".7rem .8rem", borderRadius: ".65rem", textDecoration: "none", color: "inherit", gap: ".15rem", background: index === activeIndex ? "var(--surface-hover, #f3f4f6)" : "transparent", outline: index === activeIndex ? "2px solid var(--border)" : "none" }}><strong>{result.name}</strong>{result.nativeName ? <span dir="auto">{result.nativeName}</span> : null}<small>{result.studentNumber} · {result.program} · {result.group} · {result.status}</small></Link>) : <p style={{ padding: ".7rem", margin: 0 }} role="status">{t.empty} — try a different name or ID</p>}
+      {busy ? <p style={{ padding: ".7rem", margin: 0, display: "flex", alignItems: "center", gap: ".5rem" }} role="status" aria-live="polite"><span className="inline-spinner" aria-hidden="true" />{t.loading}</p> : results.length ? results.map((result, index) => <Link key={result.personId} id={`global-search-option-${result.personId}`} role="option" aria-selected={index === activeIndex} href={`/${locale}/students/${result.personId}`} prefetch={false} onMouseEnter={() => router.prefetch(`/${locale}/students/${result.personId}`)} onFocus={() => router.prefetch(`/${locale}/students/${result.personId}`)} onClick={(event) => { event.preventDefault(); openStudent(result.personId); }} style={{ display: "grid", padding: ".7rem .8rem", borderRadius: ".65rem", textDecoration: "none", color: "inherit", gap: ".15rem", background: index === activeIndex ? "var(--surface-hover, #f3f4f6)" : "transparent", outline: index === activeIndex ? "2px solid var(--border)" : "none" }}><strong>{result.name}</strong>{result.nativeName ? <span dir="auto">{result.nativeName}</span> : null}<small>{result.studentNumber} · {result.program} · {result.group} · {result.status}</small></Link>) : <p style={{ padding: ".7rem", margin: 0 }} role="status">{t.empty} — try a different name or ID</p>}
     </div> : null}
   </div>;
 }
