@@ -2,6 +2,32 @@ import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/onboarding-form";
 import { createClient } from "@/lib/supabase/server";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
+import { isTransientWorkspaceError } from "@/lib/tenancy/context";
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function readActiveMembership(identityId: string) {
+  const supabase = await createClient();
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { data, error } = await supabase
+      .from("memberships")
+      .select("tenant_id")
+      .eq("identity_id", identityId)
+      .eq("status", "active")
+      .limit(1);
+
+    if (!error) return data ?? [];
+
+    const failure = new Error(`Unable to read account membership: ${error.message}`);
+    if (!isTransientWorkspaceError(failure) || attempt === 2) throw failure;
+    await wait(140 * (attempt + 1));
+  }
+
+  return [];
+}
 
 export default async function OnboardingPage() {
   const identity = await getVerifiedIdentity();
@@ -10,19 +36,9 @@ export default async function OnboardingPage() {
     redirect("/login?next=/onboarding");
   }
 
-  const supabase = await createClient();
-  const { data: memberships, error } = await supabase
-    .from("memberships")
-    .select("tenant_id")
-    .eq("identity_id", identity.id)
-    .eq("status", "active")
-    .limit(1);
+  const memberships = await readActiveMembership(identity.id);
 
-  if (error) {
-    throw new Error(`Unable to read account membership: ${error.message}`);
-  }
-
-  if (memberships?.length) {
+  if (memberships.length) {
     redirect("/en");
   }
 
