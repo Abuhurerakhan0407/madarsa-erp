@@ -42,14 +42,15 @@ describe("Phase 6 portal notification API and UI boundaries",()=>{
     expect(center).not.toContain("useEffect(");
   });
 
-  it("shows unread state priority source time and relevant links in the portal",()=>{
+  it("shows unread state localized priority source time and locale-safe links in the portal",()=>{
     expect(center).toContain("unreadCount");
-    expect(center).toContain("priorityLabel(item.priority)");
-    expect(center).toContain("item.sourceModule");
-    expect(center).toContain("new Date(item.sentAt).toLocaleString()");
+    expect(center).toContain("priorityLabel(item.priority, locale)");
+    expect(center).toContain("moduleLabel(item.sourceModule, locale)");
+    expect(center).toContain("formatPortalDateTime(item.sentAt, locale)");
+    expect(center).toContain("preservePortalLocale(item.link, locale)");
     expect(center).toContain("Mark read");
     expect(center).toContain("<Link");
-    expect(portalPage).toContain("<PortalNotificationCenter tenantId={tenantId} initial={notifications}/>");
+    expect(portalPage).toContain("<PortalNotificationCenter tenantId={tenantId} initial={notifications} locale={locale} />");
   });
 
   it("limits push notification clicks to the same application origin",()=>{
