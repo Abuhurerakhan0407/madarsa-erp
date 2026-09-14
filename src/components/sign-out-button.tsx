@@ -23,12 +23,12 @@ export function SignOutButton({
   label,
   initials,
   title,
-  locale
+  locale = "en"
 }: {
   label: string;
   initials: string;
   title: string;
-  locale: UiLocale;
+  locale?: UiLocale;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
