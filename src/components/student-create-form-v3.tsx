@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FieldGroup } from "@/components/workspace-ui";
-import type { Locale } from "@/lib/i18n/config";
+import type { Locale, SupportedLocale } from "@/lib/i18n/config";
 
 type Option = { id: number; label: string };
 type GroupOption = Option & { sessionId: number; programId: number };
@@ -14,7 +14,7 @@ type CreateBody = {
   dateOfBirth?: string;
   ageYears?: number;
   gender?: string;
-  preferredLocale: Locale;
+  preferredLocale: SupportedLocale;
   sessionId: number;
   programId: number;
   groupId: number;
@@ -35,7 +35,7 @@ type CreateResult = {
 type Extras = {
   nameNative: string;
   gender: string;
-  preferredLocale: Locale;
+  preferredLocale: SupportedLocale;
   medicalSummary: string;
   accessibilityNeeds: string;
   pickupRestrictions: string;
@@ -45,7 +45,7 @@ const copy = {
   en: {
     progress: "New admission", step: "Step", of: "of", student: "Student", guardian: "Guardian", placement: "Placement", review: "Review",
     studentHelp: "Start with the details you normally ask for at the desk.", guardianHelp: "Add the primary person the madrasa should contact.", placementHelp: "Choose where this student will study.", reviewHelp: "Check the details before creating the permanent student record.",
-    name: "Student name", native: "Name in Urdu / Arabic", dob: "Date of birth", age: "Age (if date of birth is not known)", gender: "Gender", language: "Preferred language", more: "More details",
+    name: "Student name", native: "Name in Urdu", dob: "Date of birth", age: "Age (if date of birth is not known)", gender: "Gender", language: "Preferred language", more: "More details",
     session: "Academic year", program: "Program", group: "Class / group", joined: "Joining date", guardianName: "Guardian name", relationship: "Relationship", phone: "Mobile / WhatsApp",
     medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", continue: "Continue", back: "Back", confirmAdmission: "Confirm Admission", creating: "Admitting student…",
     duplicateTitle: "Possible duplicate found", duplicate: "A matching student may already exist. Review the details before creating a separate permanent record.", duplicateCount: "possible matching record(s)", createSeparate: "Create as a separate student", changeDetails: "Change details",
@@ -56,7 +56,7 @@ const copy = {
   ur: {
     progress: "نیا داخلہ", step: "مرحلہ", of: "از", student: "طالب علم", guardian: "سرپرست", placement: "تعلیمی تعیناتی", review: "جائزہ",
     studentHelp: "وہ بنیادی معلومات درج کریں جو عام طور پر داخلے کے وقت پوچھی جاتی ہیں۔", guardianHelp: "بنیادی سرپرست یا رابطہ شخص شامل کریں۔", placementHelp: "طالب علم کے پروگرام اور کلاس کا انتخاب کریں۔", reviewHelp: "مستقل ریکارڈ بنانے سے پہلے داخلے کی تفصیلات چیک کریں۔",
-    name: "طالب علم کا نام", native: "اردو / عربی نام", dob: "تاریخ پیدائش", age: "عمر (اگر تاریخ پیدائش معلوم نہ ہو)", gender: "جنس", language: "ترجیحی زبان", more: "مزید تفصیلات",
+    name: "طالب علم کا نام", native: "نام اردو میں", dob: "تاریخ پیدائش", age: "عمر (اگر تاریخ پیدائش معلوم نہ ہو)", gender: "جنس", language: "ترجیحی زبان", more: "مزید تفصیلات",
     session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "تاریخ شمولیت", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "موبائل / واٹس ایپ",
     medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", continue: "جاری رکھیں", back: "واپس", confirmAdmission: "داخلہ کی تصدیق کریں", creating: "داخلہ کیا جا رہا ہے…",
     duplicateTitle: "ممکنہ ڈپلیکیٹ ملا", duplicate: "ممکن ہے یہی طالب علم پہلے سے موجود ہو۔ الگ مستقل ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", duplicateCount: "ممکنہ ملتے جلتے ریکارڈ", createSeparate: "الگ طالب علم ریکارڈ بنائیں", changeDetails: "تفصیلات تبدیل کریں",
@@ -67,7 +67,7 @@ const copy = {
   ar: {
     progress: "قبول جديد", step: "الخطوة", of: "من", student: "الطالب", guardian: "ولي الأمر", placement: "التوزيع الدراسي", review: "المراجعة",
     studentHelp: "ابدأ بالمعلومات الأساسية التي تُطلب عادة عند مكتب القبول.", guardianHelp: "أضف ولي الأمر أو جهة الاتصال الأساسية.", placementHelp: "اختر البرنامج والفصل المناسبين للطالب.", reviewHelp: "راجع بيانات القبول قبل إنشاء السجل الدائم للطالب.",
-    name: "اسم الطالب", native: "الاسم بالأردية / العربية", dob: "تاريخ الميلاد", age: "العمر (إذا لم يُعرف تاريخ الميلاد)", gender: "الجنس", language: "اللغة المفضلة", more: "تفاصيل إضافية",
+    name: "اسم الطالب", native: "الاسم بالأردية", dob: "تاريخ الميلاد", age: "العمر (إذا لم يُعرف تاريخ الميلاد)", gender: "الجنس", language: "اللغة المفضلة", more: "تفاصيل إضافية",
     session: "العام الدراسي", program: "البرنامج", group: "الفصل / المجموعة", joined: "تاريخ الالتحاق", guardianName: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "الجوال / واتساب",
     medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", continue: "متابعة", back: "رجوع", confirmAdmission: "تأكيد القبول", creating: "جارٍ قبول الطالب…",
     duplicateTitle: "تم العثور على تطابق محتمل", duplicate: "قد يكون هذا الطالب موجودًا بالفعل. راجع البيانات قبل إنشاء سجل دائم منفصل.", duplicateCount: "سجل/سجلات محتملة المطابقة", createSeparate: "إنشاء طالب منفصل", changeDetails: "تعديل البيانات",
@@ -92,6 +92,7 @@ function browserToday(): string {
 
 export function StudentCreateForm({ locale, sessions, programs, groups }: { locale: Locale; sessions: Option[]; programs: Option[]; groups: GroupOption[] }) {
   const text = copy[locale];
+  const defaultPreferredLocale: SupportedLocale = locale === "ur" ? "ur" : "en";
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +113,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
   const [extras, setExtras] = useState<Extras>({
     nameNative: "",
     gender: "",
-    preferredLocale: locale,
+    preferredLocale: defaultPreferredLocale,
     medicalSummary: "",
     accessibilityNeeds: "",
     pickupRestrictions: ""
@@ -241,7 +242,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     setProgramId(programs[0]?.id ?? 0);
     setGroupId(0);
     setJoinedOn("");
-    setExtras({ nameNative: "", gender: "", preferredLocale: locale, medicalSummary: "", accessibilityNeeds: "", pickupRestrictions: "" });
+    setExtras({ nameNative: "", gender: "", preferredLocale: defaultPreferredLocale, medicalSummary: "", accessibilityNeeds: "", pickupRestrictions: "" });
   }
 
   if (success) {
@@ -282,7 +283,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
             <div className="configuration-form-grid">
               <FieldGroup label={text.native}><input maxLength={160} dir="auto" value={extras.nameNative} onChange={(event) => setExtras((value) => ({ ...value, nameNative: event.target.value }))} /></FieldGroup>
               <FieldGroup label={text.gender}><select value={extras.gender} onChange={(event) => setExtras((value) => ({ ...value, gender: event.target.value }))}><option value="">{text.select}</option><option value="male">{text.male}</option><option value="female">{text.female}</option><option value="other">{text.other}</option><option value="undisclosed">{text.undisclosed}</option></select></FieldGroup>
-              <FieldGroup label={text.language}><select value={extras.preferredLocale} onChange={(event) => setExtras((value) => ({ ...value, preferredLocale: event.target.value as Locale }))}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></FieldGroup>
+              <FieldGroup label={text.language}><select value={extras.preferredLocale} onChange={(event) => setExtras((value) => ({ ...value, preferredLocale: event.target.value as SupportedLocale }))}><option value="en">English</option><option value="ur">اردو</option></select></FieldGroup>
               <FieldGroup label={text.medical}><textarea rows={3} maxLength={1000} value={extras.medicalSummary} onChange={(event) => setExtras((value) => ({ ...value, medicalSummary: event.target.value }))} /></FieldGroup>
               <FieldGroup label={text.accessibility}><textarea rows={3} maxLength={1000} value={extras.accessibilityNeeds} onChange={(event) => setExtras((value) => ({ ...value, accessibilityNeeds: event.target.value }))} /></FieldGroup>
               <FieldGroup label={text.pickup}><textarea rows={3} maxLength={1000} value={extras.pickupRestrictions} onChange={(event) => setExtras((value) => ({ ...value, pickupRestrictions: event.target.value }))} /></FieldGroup>
