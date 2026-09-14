@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const sameOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000").origin;
+
 const validPayload = {
   pattern: "STU-{BRANCH}-{SESSION}-{SEQ}",
   startValue: 1,
@@ -23,7 +25,7 @@ test.describe("student numbering API security", () => {
   test("requires JSON mutation requests", async ({ request }) => {
     const response = await request.post("/api/configuration/student-numbering", {
       headers: {
-        origin: "http://localhost:3000",
+        origin: sameOrigin,
         "content-type": "text/plain"
       },
       data: JSON.stringify(validPayload)
@@ -35,7 +37,7 @@ test.describe("student numbering API security", () => {
   test("requires an authenticated tenant member", async ({ request }) => {
     const response = await request.post("/api/configuration/student-numbering", {
       headers: {
-        origin: "http://localhost:3000",
+        origin: sameOrigin,
         "content-type": "application/json"
       },
       data: validPayload
