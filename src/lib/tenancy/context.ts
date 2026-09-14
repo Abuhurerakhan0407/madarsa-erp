@@ -19,7 +19,25 @@ export type TenantContext = {
   branchCode: string | null;
 };
 
-async function resolveTenantContext(): Promise<TenantContext | null> {
+const TRANSIENT_WORKSPACE_PATTERN =
+  /bad gateway|failed to get api key info|failed to get project config|fetch failed|network|timeout|timed out|502|503|504|connection reset|socket/i;
+
+function workspaceErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return String(error ?? "Unknown workspace error");
+}
+
+export function isTransientWorkspaceError(error: unknown): boolean {
+  return TRANSIENT_WORKSPACE_PATTERN.test(workspaceErrorMessage(error));
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveTenantContextOnce(): Promise<TenantContext | null> {
   const identity = await getVerifiedIdentity();
   if (!identity) return null;
 
@@ -114,6 +132,22 @@ async function resolveTenantContext(): Promise<TenantContext | null> {
     branchName: branch?.name ?? null,
     branchCode: branch?.code ?? null
   };
+}
+
+async function resolveTenantContext(): Promise<TenantContext | null> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await resolveTenantContextOnce();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientWorkspaceError(error) || attempt === 2) throw error;
+      await wait(140 * (attempt + 1));
+    }
+  }
+
+  throw lastError;
 }
 
 // Layouts and pages often need the same authenticated workspace in one render pass.
