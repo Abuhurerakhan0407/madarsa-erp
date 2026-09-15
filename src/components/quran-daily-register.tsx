@@ -113,6 +113,15 @@ function statusLabel(status: string | null, text: ExtraCopy) {
   return null;
 }
 
+function actionFromDayStatus(status: string | null): QuranDailyAction | null {
+  if (status === "passed") return "pass";
+  if (status === "repeat") return "repeat";
+  if (status === "partial") return "needs_support";
+  if (status === "absent") return "absent";
+  if (status === "no_lesson") return "no_lesson";
+  return null;
+}
+
 function TargetFields({ draft, setDraft, locale, includeWork = false, idPrefix }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: Locale; includeWork?: boolean; idPrefix?: string }) {
   const t = quranCopy[locale];
   return <div className="quran-daily-target-fields">
@@ -135,6 +144,7 @@ function TargetFields({ draft, setDraft, locale, includeWork = false, idPrefix }
 function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, forceExpanded, hasNext, onSavedAndNext }: { locale: Locale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean; forceExpanded: boolean; hasNext: boolean; onSavedAndNext: () => void }) {
   const t = quranCopy[locale]; const x = extraCopy[locale]; const router = useRouter();
   const baseTarget = row.nextTarget ?? row.repeatTarget;
+  const initialAction = actionFromDayStatus(row.dayStatus) ?? "pass";
   const [expanded,setExpanded] = useState(!baseTarget);
   const [targetDraft,setTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(baseTarget));
   const [nextTargetDraft,setNextTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(null));
@@ -142,11 +152,18 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
   const [quality,setQuality] = useState(row.qualityScore === null ? "" : String(row.qualityScore));
   const [tajweed,setTajweed] = useState(""); const [fluency,setFluency] = useState(""); const [mistakes,setMistakes] = useState(String(row.mistakeCount || 0));
   const [teacherNote,setTeacherNote] = useState(""); const [revisionDate,setRevisionDate] = useState(row.revisionDueOn ?? "");
-  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>("pass");
+  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>(initialAction);
+  const [savedAction,setSavedAction] = useState<QuranDailyAction|null>(null);
   const [busy,setBusy] = useState(false); const [error,setError] = useState<string|null>(null); const [saved,setSaved] = useState(false);
   const currentTarget = targetPayload(targetDraft) ?? targetViewPayload(baseTarget);
   const parentSummary = `${row.memorizedJuz}/30 · ${x.quality}: ${row.qualityScore ?? "—"} · ${t.revision}: ${row.revisionDue}`;
   const isExpanded = expanded || forceExpanded;
+  const selectedAction = savedAction ?? actionFromDayStatus(row.dayStatus);
+
+  useEffect(()=>{
+    setSavedAction(null);
+    setDetailedAction(actionFromDayStatus(row.dayStatus) ?? "pass");
+  },[row.dayStatus]);
 
   useEffect(()=>{
     if (!forceExpanded) return;
@@ -197,6 +214,8 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
       const response = await fetch("/api/quran/daily", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body) });
       const payload = await response.json().catch(()=>({})) as { error?: string };
       if (!response.ok) { setError(locale === "ur" ? x.saveError : (payload.error ?? x.saveError)); return; }
+      setSavedAction(action);
+      setDetailedAction(action);
       setSaved(true);
       if (advance) onSavedAndNext();
       router.refresh();
@@ -216,12 +235,12 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
     <div className="quran-daily-cell quran-daily-target"><span>{x.nextTarget}</span><strong>{row.nextTarget?.label ?? (row.repeatTarget ? `${x.useLast}: ${row.repeatTarget.label}` : "—")}</strong>{row.revisionDue>0?<small>{t.revisionFlag}: {row.revisionDue}</small>:null}</div>
     <div className="quran-daily-actions">
       {row.dayStatus ? <span className="quran-daily-status">{x.todayStatus}: {statusLabel(row.dayStatus,x)}</span> : null}
-      {canRecord ? <div className="quran-quick-buttons">
-        <button type="button" disabled={busy} onClick={()=>submit("pass")}>{x.pass}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("repeat")}>{x.repeat}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("needs_support")}>{x.needsSupport}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("absent")}>{x.absent}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
+      {canRecord ? <div className="quran-quick-buttons" role="group" aria-label={x.actions}>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="pass"} onClick={()=>submit("pass")}>{x.pass}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="repeat"} onClick={()=>submit("repeat")}>{x.repeat}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="needs_support"} onClick={()=>submit("needs_support")}>{x.needsSupport}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="absent"} onClick={()=>submit("absent")}>{x.absent}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="no_lesson"} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
       </div> : null}
       {busy ? <span className="form-message" role="status"><span className="inline-spinner" aria-hidden="true"/>{x.saving}</span> : null}
       <button className="quiet-link quran-details-toggle" type="button" disabled={busy} onClick={()=>setExpanded((value)=>!value)}>{isExpanded?x.hideDetails:x.details}</button>
