@@ -6,6 +6,9 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    "/api/*": ["./node_modules/@embedpdf/fonts-arabic/fonts/*.ttf"]
+  },
   async headers() {
     return [
       {
