@@ -9,8 +9,8 @@ type Result = { personId: number; name: string; nativeName: string | null; stude
 type UiLocale = "en" | "ur";
 
 const copy = {
-  en: { label: "Find student", placeholder: "Name, student/admission no. or guardian phone", empty: "No matching students", emptyHelp: "Try a different name or ID", loading: "Searching…", opening: "Opening student…", active: "Active", inactive: "Inactive", graduated: "Graduated", withdrawn: "Withdrawn" },
-  ur: { label: "طالب علم تلاش کریں", placeholder: "نام، طالب علم/داخلہ نمبر یا سرپرست فون", empty: "کوئی طالب علم نہیں ملا", emptyHelp: "کوئی دوسرا نام یا ID آزمائیں", loading: "تلاش جاری ہے…", opening: "طالب علم کھل رہا ہے…", active: "فعال", inactive: "غیر فعال", graduated: "فارغ التحصیل", withdrawn: "دستبردار" }
+  en: { label: "Find student", placeholder: "Name, student/admission no. or guardian phone", empty: "No matching students", emptyHelp: "Try a different name or ID", loading: "Searching…", opening: "Opening student…", active: "Active", inactive: "Inactive", graduated: "Graduated", withdrawn: "Withdrawn", otherStatus: "Other status" },
+  ur: { label: "طالب علم تلاش کریں", placeholder: "نام، طالب علم/داخلہ نمبر یا سرپرست فون", empty: "کوئی طالب علم نہیں ملا", emptyHelp: "کوئی دوسرا نام یا ID آزمائیں", loading: "تلاش جاری ہے…", opening: "طالب علم کھل رہا ہے…", active: "فعال", inactive: "غیر فعال", graduated: "فارغ التحصیل", withdrawn: "دستبردار", otherStatus: "دیگر حالت" }
 } as const;
 
 function uiLocale(locale: Locale): UiLocale {
@@ -23,7 +23,7 @@ function statusLabel(status: string, locale: UiLocale) {
   if (status === "inactive") return text.inactive;
   if (status === "graduated") return text.graduated;
   if (status === "withdrawn") return text.withdrawn;
-  return status;
+  return text.otherStatus;
 }
 
 export function GlobalStudentSearch({ locale }: { locale: Locale }) {

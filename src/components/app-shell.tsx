@@ -15,9 +15,9 @@ import type { TenantContext } from "@/lib/tenancy/context";
 
 type AppShellProps = { children: ReactNode; locale: Locale; workspace: TenantContext };
 const shellCopy = {
-  en: { productLine: "Institution operations", year: "Academic year", navigation: "Workspace navigation", menu: "Menu", close: "Close menu", workspace: "Workspace", more: "More", newAdmission: "+ New Admission" },
-  ur: { productLine: "ادارہ آپریشنز", year: "تعلیمی سال", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس", more: "مزید", newAdmission: "+ نیا داخلہ" },
-  ar: { productLine: "عمليات المؤسسة", year: "العام الدراسي", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة", workspace: "مساحة العمل", more: "المزيد", newAdmission: "+ قبول جديد" }
+  en: { productLine: "Institution operations", year: "Academic year", navigation: "Workspace navigation", menu: "Menu", close: "Close menu", workspace: "Workspace", more: "More", newAdmission: "+ New Admission", mainBranch: "Main Branch" },
+  ur: { productLine: "ادارہ آپریشنز", year: "تعلیمی سال", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس", more: "مزید", newAdmission: "+ نیا داخلہ", mainBranch: "مرکزی برانچ" },
+  ar: { productLine: "عمليات المؤسسة", year: "العام الدراسي", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة", workspace: "مساحة العمل", more: "المزيد", newAdmission: "+ قبول جديد", mainBranch: "الفرع الرئيسي" }
 } as const;
 
 function initials(name: string) {
@@ -29,8 +29,8 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
     getTranslations("App"),
     getCurrentAcademicSessionLabel(locale)
   ]);
-  const branchLabel = workspace.branchName || "Main Branch";
   const copy = shellCopy[locale];
+  const branchLabel = workspace.branchName || copy.mainBranch;
   const academicSessionLabel = configuredSessionLabel || copy.year;
   const audience = await getNavigationAudience(workspace);
   const nav = getClientV3Navigation(audience);
