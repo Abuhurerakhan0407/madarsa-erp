@@ -26,4 +26,11 @@ describe("Phase 5 exams Urdu and pending-state contract", () => {
     expect(text).toContain('aria-busy={busy==="workflow-calculate"||undefined}');
     expect(text).toContain("inline-spinner");
   });
+
+  it("never falls from a missing Urdu exam or subject label back to English", () => {
+    const text = source();
+    expect(text).toContain('if(locale==="ur")return labels.ur||"—"');
+    expect(text).toContain("return labels.en||fallback");
+    expect(text).not.toContain("return labels[locale]||labels.en||fallback");
+  });
 });
