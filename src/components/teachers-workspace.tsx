@@ -104,7 +104,8 @@ function uiLocale(locale: Locale): UiLocale {
 }
 
 function label(labels: TeacherLabels, locale: Locale, fallback: string) {
-  return labels[locale] || labels.en || labels.ur || labels.ar || fallback;
+  if (locale === "ur") return labels.ur || fallback;
+  return labels.en || fallback;
 }
 
 function account(status: string, locale: UiLocale) {
