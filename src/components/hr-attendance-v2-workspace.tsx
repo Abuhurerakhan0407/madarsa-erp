@@ -10,9 +10,34 @@ type Authorization = { id: number; scopeType: string; reason: string; startsAt: 
 type Data = { date: string; summary: { total: number; marked: number; present: number; absent: number; late: number; leave: number; unmarked: number }; canManage: boolean; emergency: { canManage: boolean; authorizations: Authorization[] }; insights: { dailyPercent: number; weeklyPercent: number; monthlyPercent: number; trend: Array<{ date: string; recorded: number; attendancePercent: number }> }; rows: Row[] };
 
 const copy = {
-  en: { teachers: "Teachers", present: "Present", absent: "Absent", late: "Late", leave: "Leave", unmarked: "Unmarked", daily: "Today", weekly: "7 days", monthly: "30 days", trend: "Attendance trend", first: "First scan", last: "Last scan", source: "Source", biometric: "Biometric", legacyDevice: "Legacy device", imported: "Imported", device: "Device", emergency: "Emergency manual", manualHint: "Manual controls are visible only while an active emergency authorization matches this teacher.", saving: "Saving…", none: "No teachers/staff match this view.", recorded: "recorded", error: "Unable to save attendance. Please try again.", teacher: "Teacher", seniorTeacher: "Senior teacher", headTeacher: "Head teacher" },
-  ur: { teachers: "اساتذہ", present: "حاضر", absent: "غیر حاضر", late: "تاخیر", leave: "رخصت", unmarked: "درج نہیں", daily: "آج", weekly: "7 دن", monthly: "30 دن", trend: "حاضری رجحان", first: "پہلا اسکین", last: "آخری اسکین", source: "ذریعہ", biometric: "بایومیٹرک", legacyDevice: "پرانا ڈیوائس", imported: "درآمد شدہ", device: "ڈیوائس", emergency: "ہنگامی دستی", manualHint: "دستی کنٹرول صرف اس وقت دکھائے جاتے ہیں جب اس استاد کے لیے فعال ہنگامی اجازت موجود ہو۔", saving: "محفوظ ہو رہا ہے…", none: "کوئی استاد یا عملہ اس منظر سے مطابقت نہیں رکھتا۔", recorded: "ریکارڈ شدہ", error: "حاضری محفوظ نہیں ہو سکی۔ دوبارہ کوشش کریں۔", teacher: "استاد", seniorTeacher: "سینئر استاد", headTeacher: "صدر مدرس" },
-  ar: { teachers: "المعلمون", present: "حاضر", absent: "غائب", late: "متأخر", leave: "إجازة", unmarked: "غير مسجل", daily: "اليوم", weekly: "7 أيام", monthly: "30 يوماً", trend: "اتجاه الحضور", first: "أول مسح", last: "آخر مسح", source: "المصدر", biometric: "بيومتري", legacyDevice: "جهاز قديم", imported: "مستورد", device: "جهاز", emergency: "يدوي طارئ", manualHint: "تظهر أدوات التسجيل اليدوي فقط أثناء تفويض طارئ نشط يطابق هذا المعلم.", saving: "جارٍ الحفظ…", none: "لا يوجد معلمون أو موظفون مطابقون.", recorded: "مسجل", error: "تعذر حفظ الحضور. حاول مرة أخرى.", teacher: "معلم", seniorTeacher: "معلم أول", headTeacher: "رئيس المعلمين" }
+  en: { teachers: "Teachers", present: "Present", absent: "Absent", late: "Late", leave: "Leave", unmarked: "Unmarked", daily: "Today", weekly: "7 days", monthly: "30 days", trend: "Attendance trend", first: "First scan", last: "Last scan", source: "Source", biometric: "Biometric", legacyDevice: "Legacy device", imported: "Imported", device: "Device", emergency: "Emergency manual", manualHint: "Manual controls are visible only while an active emergency authorization matches this teacher.", saving: "Saving…", none: "No teachers/staff match this view.", recorded: "recorded", error: "Unable to save attendance. Please try again." },
+  ur: { teachers: "اساتذہ", present: "حاضر", absent: "غیر حاضر", late: "تاخیر", leave: "رخصت", unmarked: "درج نہیں", daily: "آج", weekly: "7 دن", monthly: "30 دن", trend: "حاضری رجحان", first: "پہلا اسکین", last: "آخری اسکین", source: "ذریعہ", biometric: "بایومیٹرک", legacyDevice: "پرانا ڈیوائس", imported: "درآمد شدہ", device: "ڈیوائس", emergency: "ہنگامی دستی", manualHint: "دستی کنٹرول صرف اس وقت دکھائے جاتے ہیں جب اس استاد کے لیے فعال ہنگامی اجازت موجود ہو۔", saving: "محفوظ ہو رہا ہے…", none: "کوئی استاد یا عملہ اس منظر سے مطابقت نہیں رکھتا۔", recorded: "ریکارڈ شدہ", error: "حاضری محفوظ نہیں ہو سکی۔ دوبارہ کوشش کریں۔" },
+  ar: { teachers: "المعلمون", present: "حاضر", absent: "غائب", late: "متأخر", leave: "إجازة", unmarked: "غير مسجل", daily: "اليوم", weekly: "7 أيام", monthly: "30 يوماً", trend: "اتجاه الحضور", first: "أول مسح", last: "آخر مسح", source: "المصدر", biometric: "بيومتري", legacyDevice: "جهاز قديم", imported: "مستورد", device: "جهاز", emergency: "يدوي طارئ", manualHint: "تظهر أدوات التسجيل اليدوي فقط أثناء تفويض طارئ نشط يطابق هذا المعلم.", saving: "جارٍ الحفظ…", none: "لا يوجد معلمون أو موظفون مطابقون.", recorded: "مسجل", error: "تعذر حفظ الحضور. حاول مرة أخرى." }
+} as const;
+
+const designationCopy = {
+  en: {
+    teacher: "Teacher",
+    senior_teacher: "Senior teacher",
+    head_teacher: "Head teacher",
+    assistant_teacher: "Assistant teacher",
+    attendance_supervisor: "Attendance supervisor",
+    dars_e_nizami_teacher: "Dars-e-Nizami teacher",
+    admissions_coordinator: "Admissions coordinator",
+    hifz_instructor: "Hifz instructor",
+    exam_evaluator: "Exam evaluator"
+  },
+  ur: {
+    teacher: "استاد",
+    senior_teacher: "سینئر استاد",
+    head_teacher: "صدر مدرس",
+    assistant_teacher: "معاون استاد",
+    attendance_supervisor: "حاضری نگران",
+    dars_e_nizami_teacher: "درسِ نظامی استاد",
+    admissions_coordinator: "داخلہ رابطہ کار",
+    hifz_instructor: "حفظ استاد",
+    exam_evaluator: "امتحانی ممتحن"
+  }
 } as const;
 
 function time(value: string | null, locale: Locale) {
@@ -33,11 +58,8 @@ function statusLabel(status: string, locale: Locale) {
 }
 
 function designationLabel(key: string, locale: Locale) {
-  const t = copy[locale];
-  if (key === "teacher") return t.teacher;
-  if (key === "senior_teacher") return t.seniorTeacher;
-  if (key === "head_teacher") return t.headTeacher;
-  return key.replaceAll("_", " ");
+  const language = locale === "ur" ? "ur" : "en";
+  return designationCopy[language][key as keyof typeof designationCopy.en] ?? key.replaceAll("_", " ");
 }
 
 function sourceLabel(row: Row, locale: Locale) {
