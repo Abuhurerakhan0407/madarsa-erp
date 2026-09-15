@@ -8,7 +8,7 @@ test("serves the public marketing homepage without opening a workspace", async (
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Run your institution with less noise." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
 });
 
 test("protects supported localized institution routes", async ({ page }) => {

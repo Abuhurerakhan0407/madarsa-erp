@@ -12,7 +12,7 @@ test.describe("public Ilmgaah marketing homepage", () => {
 
   test("keeps the authenticated workspace entry point available", async ({ page }) => {
     await page.goto("/");
-    const signIn = page.getByRole("link", { name: "Sign in" });
+    const signIn = page.getByRole("banner").getByRole("link", { name: "Sign in" });
 
     await expect(signIn).toHaveAttribute("href", "/login");
   });
