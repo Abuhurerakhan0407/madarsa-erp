@@ -17,4 +17,13 @@ describe("Phase 5 reports English and Urdu error contract", () => {
     expect(source).toContain("inline-spinner");
     expect(source).toContain("t.loading");
   });
+
+  it("uses one report selector and renders the selected report controls below it", () => {
+    const source = read("src/components/reports-hub.tsx");
+    expect(source).toContain("{t.chooseReport}<select");
+    expect(source).toContain("onChange={e=>selectReport(e.target.value)}");
+    expect(source).toContain("report-selected-summary");
+    expect(source).toContain("const active=useMemo(()=>definitions.find(d=>d.key===selected)??null");
+    expect(source).not.toContain("report-card-grid");
+  });
 });
