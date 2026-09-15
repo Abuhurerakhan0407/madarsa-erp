@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "privacy:check": "node ./scripts/privacy-release-gate.mjs",
+    "privacy:check:generated": "node ./scripts/privacy-release-gate.mjs --generated",
+    "build": "npm run privacy:check && tsc -b && vite build",
     "preview": "vite preview",
     "cap:sync": "cap sync android",
     "android:add": "cap add android",
