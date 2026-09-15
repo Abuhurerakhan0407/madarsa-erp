@@ -1,3 +1,5 @@
+import {escapePdfLiteralText} from './pdf-text';
+
 export type PdfJpegImage = {
   data: Uint8Array;
   pixelWidth: number;
@@ -19,15 +21,6 @@ type ImageCommand = Extract<PdfLayoutCommand, { type: "image" }>;
 type PageImageRef = { command: ImageCommand; name: string; objectRef: number };
 
 const encoder = new TextEncoder();
-
-function ascii(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]/g, "?")
-    .replace(/\\/g, "\\\\")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
-}
 
 function number(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
@@ -69,7 +62,7 @@ function pageContent(commands: PdfLayoutCommand[], imageRefs: PageImageRef[]): s
     }
     const size = Math.min(Math.max(command.size ?? 9, 6), 24);
     const font = command.bold ? "F2" : "F1";
-    return `BT /${font} ${number(size)} Tf ${number(command.x)} ${number(command.y)} Td (${ascii(command.text)}) Tj ET`;
+    return `BT /${font} ${number(size)} Tf ${number(command.x)} ${number(command.y)} Td (${escapePdfLiteralText(command.text)}) Tj ET`;
   }).join("\n");
 }
 
