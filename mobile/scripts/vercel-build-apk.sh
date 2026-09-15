@@ -48,8 +48,9 @@ sdkmanager --sdk_root="$SDK" \
   'platforms;android-36' \
   'build-tools;36.0.0'
 
-# Build only the isolated mobile workspace. Root ERP dependencies are not touched.
-npm --prefix "$MOBILE" install --no-audit --no-fund
+# Build only the isolated mobile workspace. Vercel sets NODE_ENV=production,
+# so explicitly include devDependencies required for TypeScript/Vite/Capacitor CLI.
+npm --prefix "$MOBILE" install --include=dev --no-audit --no-fund
 npm --prefix "$MOBILE" run build
 
 # Internal-development APK: loads the canonical HTTPS ERP at runtime so web
@@ -93,7 +94,11 @@ manifest.write_text(text, encoding='utf-8')
 
 gradle = mobile / 'android/app/build.gradle'
 src = gradle.read_text(encoding='utf-8')
-build_number = int(os.environ.get('VERCEL_DEPLOYMENT_ID', '0').encode().hex()[:6], 16) % 2000000000 + 1
+sha = os.environ.get('VERCEL_GIT_COMMIT_SHA', '1')
+try:
+    build_number = (int(sha[:8], 16) % 2_000_000_000) + 1
+except ValueError:
+    build_number = 1
 src = re.sub(r'versionCode\s+\d+', f'versionCode {build_number}', src, count=1)
 src = re.sub(r'versionName\s+"[^"]+"', 'versionName "0.1.0-dev"', src, count=1)
 gradle.write_text(src, encoding='utf-8')
@@ -155,7 +160,7 @@ cat > "$OUT/index.html" <<'HTML'
   <meta name="robots" content="noindex,nofollow">
   <title>Ilmgaah Android Development Build</title>
   <style>
-    body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0f3329;color:#f4f0e7;min-height:100vh;display:grid;place-items:center;padding:24px}main{max-width:620px;border:1px solid #ffffff20;border-radius:28px;padding:32px;background:#ffffff0c}h1{font-size:32px;margin:0 0 12px}p{line-height:1.55;color:#f4f0e7cc}.button{display:inline-block;margin-top:14px;padding:14px 18px;border-radius:14px;background:#f4f0e7;color:#194d3d;text-decoration:none;font-weight:700}code{word-break:break-all;color:#9de0c8}.small{font-size:13px;opacity:.72}</style>
+    body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0f3329;color:#f4f0e7;min-height:100vh;display:grid;place-items:center;padding:24px}main{max-width:620px;border:1px solid #ffffff20;border-radius:28px;padding:32px;background:#ffffff0c}h1{font-size:32px;margin:0 0 12px}p{line-height:1.55;color:#f4f0e7cc}.button{display:inline-block;margin-top:14px;padding:14px 18px;border-radius:14px;background:#f4f0e7;color:#194d3d;text-decoration:none;font-weight:700}.small{font-size:13px;opacity:.72}</style>
 </head>
 <body><main><h1>Ilmgaah Android</h1><p>Internal development APK. It follows the hosted Ilmgaah ERP during active development, so web-layer releases appear without reinstalling this APK.</p><a class="button" href="/Ilmgaah-Android-Dev.apk">Download APK</a><p class="small">Internal QA build — not a Google Play production binary.</p></main></body>
 </html>
