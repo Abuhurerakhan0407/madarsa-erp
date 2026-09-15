@@ -1,4 +1,5 @@
 import { createLayoutPdf, type PdfJpegImage, type PdfLayoutCommand } from "../documents/layout-pdf";
+import { createUnicodeLayoutPdf } from "../documents/unicode-layout-pdf";
 
 export type IdCardPdfStudent = {
   studentNumber: string;
@@ -86,7 +87,7 @@ function backCard(student: IdCardPdfStudent, context: IdCardPdfContext, x: numbe
   ];
 }
 
-export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Uint8Array {
+function idCardPages(students: IdCardPdfStudent[], context: IdCardPdfContext): PdfLayoutCommand[][] {
   if (!students.length) throw new Error("At least one student is required for an ID-card PDF.");
   const pages: PdfLayoutCommand[][] = [];
 
@@ -103,6 +104,13 @@ export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], contex
     });
     pages.push(commands);
   }
+  return pages;
+}
 
-  return createLayoutPdf({ pages });
+export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Uint8Array {
+  return createLayoutPdf({ pages: idCardPages(students, context) });
+}
+
+export async function createUnicodeStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Promise<Uint8Array> {
+  return createUnicodeLayoutPdf({ pages: idCardPages(students, context) });
 }

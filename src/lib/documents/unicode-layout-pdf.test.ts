@@ -7,8 +7,8 @@ describe("Unicode PDF text rasterization", () => {
     expect(needsComplexPdfText("Student: Muhammad Abdullah Khan")).toBe(false);
   });
 
-  it("renders Urdu through the bundled Noto Naskh TTF as a JPEG XObject", async () => {
-    const command = { type: "text" as const, x: 72, y: 700, text: "طالب علم: محمد عبداللہ خان — جماعت ۵", size: 12, bold: false };
+  it("renders bold Urdu through the bundled Noto Naskh TTF as a JPEG XObject", async () => {
+    const command = { type: "text" as const, x: 72, y: 700, text: "طالب علم: محمد عبداللہ خان — جماعت ۵", size: 12, bold: true };
     const rendered = await rasterizeComplexPdfText(command);
     expect(rendered.type).toBe("image");
     if (rendered.type !== "image") throw new Error("Expected rasterized Urdu PDF text.");

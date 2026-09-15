@@ -2,12 +2,17 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin();
+const arabicPdfFonts = ["./node_modules/@embedpdf/fonts-arabic/fonts/*.ttf"];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   outputFileTracingIncludes: {
-    "/api/*": ["./node_modules/@embedpdf/fonts-arabic/fonts/*.ttf"]
+    "/api/documents/pdf": arabicPdfFonts,
+    "/api/documents/student-status-certificate/[personId]/pdf": arabicPdfFonts,
+    "/api/exams/report-card/[personId]/pdf": arabicPdfFonts,
+    "/api/reports/pdf": arabicPdfFonts,
+    "/api/students/id-cards/pdf": arabicPdfFonts
   },
   async headers() {
     return [

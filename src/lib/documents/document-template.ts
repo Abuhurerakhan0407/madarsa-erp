@@ -1,4 +1,5 @@
 import {createLayoutPdf,type PdfLayoutCommand} from './layout-pdf';
+import {createUnicodeLayoutPdf} from './unicode-layout-pdf';
 
 export type StructuredDocumentField={label:string;value:string|number|null|undefined};
 export type StructuredDocumentPage={heading:string;subheading?:string|null;fields:StructuredDocumentField[];details?:string[];footer?:string|null};
@@ -40,7 +41,15 @@ function page(options:TemplateOptions,document:StructuredDocumentPage):PdfLayout
  return commands;
 }
 
-export function createStructuredDocumentPdf(options:TemplateOptions):Uint8Array{
+function pages(options:TemplateOptions):PdfLayoutCommand[][]{
  if(!options.documents.length)throw new Error('At least one document is required.');
- return createLayoutPdf({pages:options.documents.map(document=>page(options,document))});
+ return options.documents.map(document=>page(options,document));
+}
+
+export function createStructuredDocumentPdf(options:TemplateOptions):Uint8Array{
+ return createLayoutPdf({pages:pages(options)});
+}
+
+export async function createStructuredUnicodeDocumentPdf(options:TemplateOptions):Promise<Uint8Array>{
+ return createUnicodeLayoutPdf({pages:pages(options)});
 }

@@ -1,4 +1,5 @@
 import { createLayoutPdf, type PdfLayoutCommand } from "./layout-pdf";
+import { createUnicodeLayoutPdf } from "./unicode-layout-pdf";
 import type { StudentStatusCertificate } from "./student-status";
 
 function text(x: number, y: number, value: string, size = 10, bold = false): PdfLayoutCommand {
@@ -10,9 +11,9 @@ function fit(value: string | null | undefined, max = 68): string {
   return normalized.length <= max ? normalized : `${normalized.slice(0, max - 3)}...`;
 }
 
-export function createStudentStatusCertificatePdf(certificate: StudentStatusCertificate): Uint8Array {
+function certificateCommands(certificate: StudentStatusCertificate): PdfLayoutCommand[] {
   const { snapshot } = certificate;
-  const commands: PdfLayoutCommand[] = [
+  return [
     { type: "rect", x: 32, y: 32, width: 531, height: 778, lineWidth: 1.4 },
     { type: "rect", x: 41, y: 41, width: 513, height: 760, lineWidth: 0.45 },
     text(70, 760, fit(snapshot.tenantName, 56), 19, true),
@@ -38,5 +39,12 @@ export function createStudentStatusCertificatePdf(certificate: StudentStatusCert
     text(360, 132, certificate.verificationCode, 8),
     text(70, 78, `Document issue #${certificate.issueId} · Revision ${certificate.revision}`, 7)
   ];
-  return createLayoutPdf({ pages: [commands] });
+}
+
+export function createStudentStatusCertificatePdf(certificate: StudentStatusCertificate): Uint8Array {
+  return createLayoutPdf({ pages: [certificateCommands(certificate)] });
+}
+
+export async function createUnicodeStudentStatusCertificatePdf(certificate: StudentStatusCertificate): Promise<Uint8Array> {
+  return createUnicodeLayoutPdf({ pages: [certificateCommands(certificate)] });
 }

@@ -9,10 +9,12 @@ type UnicodePdfLayoutOptions = {
 };
 
 type TextCommand = Extract<PdfLayoutCommand, { type: "text" }>;
+type TextJob = { pageIndex: number; commandIndex: number; command: TextCommand };
 
 const ARABIC_SCRIPT = /[\u0600-\u06ff\u0750-\u077f\u0870-\u089f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u;
 const RASTER_DPI = 144;
 const POINTS_PER_INCH = 72;
+const RASTER_WORKERS = 4;
 
 export function needsComplexPdfText(text: string): boolean {
   return ARABIC_SCRIPT.test(text);
@@ -33,16 +35,21 @@ function arabicFontPath(bold: boolean): string {
   );
 }
 
+function renderKey(command: TextCommand): string {
+  return `${command.bold ? "b" : "r"}|${command.size ?? 9}|${command.text}`;
+}
+
 export async function rasterizeComplexPdfText(command: TextCommand): Promise<PdfLayoutCommand> {
   if (!needsComplexPdfText(command.text)) return command;
 
   const size = Math.min(Math.max(command.size ?? 9, 6), 24);
-  const font = command.bold ? `Noto Naskh Arabic Bold ${size}` : `Noto Naskh Arabic ${size}`;
+  const bold = Boolean(command.bold);
+  const font = bold ? `Noto Naskh Arabic Bold ${size}` : `Noto Naskh Arabic ${size}`;
   const { data, info } = await sharp({
     text: {
       text: pangoEscape(command.text),
       font,
-      fontfile: arabicFontPath(Boolean(command.bold)),
+      fontfile: arabicFontPath(bold),
       dpi: RASTER_DPI,
       rgba: true,
       align: "right"
@@ -60,24 +67,44 @@ export async function rasterizeComplexPdfText(command: TextCommand): Promise<Pdf
     pixelWidth: info.width,
     pixelHeight: info.height
   };
-  const height = info.height * scale;
 
   return {
     type: "image",
     x: command.x,
     y: command.y - size * 0.25,
     width: info.width * scale,
-    height,
+    height: info.height * scale,
     image
   };
 }
 
 export async function createUnicodeLayoutPdf(options: UnicodePdfLayoutOptions): Promise<Uint8Array> {
-  const pages = await Promise.all(
-    options.pages.map(async (commands) => Promise.all(
-      commands.map(async (command) => command.type === "text" ? rasterizeComplexPdfText(command) : command)
-    ))
-  );
+  const pages = options.pages.map((commands) => [...commands]);
+  const jobs: TextJob[] = [];
+  pages.forEach((commands, pageIndex) => {
+    commands.forEach((command, commandIndex) => {
+      if (command.type === "text" && needsComplexPdfText(command.text)) jobs.push({ pageIndex, commandIndex, command });
+    });
+  });
 
+  const cache = new Map<string, Promise<PdfLayoutCommand>>();
+  let cursor = 0;
+  async function worker() {
+    while (true) {
+      const jobIndex = cursor;
+      cursor += 1;
+      if (jobIndex >= jobs.length) return;
+      const job = jobs[jobIndex];
+      const key = renderKey(job.command);
+      let rendered = cache.get(key);
+      if (!rendered) {
+        rendered = rasterizeComplexPdfText(job.command);
+        cache.set(key, rendered);
+      }
+      pages[job.pageIndex][job.commandIndex] = await rendered;
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(RASTER_WORKERS, Math.max(1, jobs.length)) }, () => worker()));
   return createLayoutPdf({ ...options, pages });
 }

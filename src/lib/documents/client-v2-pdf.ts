@@ -1,10 +1,10 @@
-import {createStructuredDocumentPdf,type StructuredDocumentField} from './document-template';
+import {createStructuredDocumentPdf,createStructuredUnicodeDocumentPdf,type StructuredDocumentField} from './document-template';
 
 export type ClientDocumentPdfEntry={heading:string;subheading?:string|null;fields:Array<{label:string;value:string|number|null|undefined}>;details?:string[];footer?:string|null};
 
-export function createClientDocumentPdf(title:string,institutionName:string,branchName:string,entries:ClientDocumentPdfEntry[]):Uint8Array{
+function options(title:string,institutionName:string,branchName:string,entries:ClientDocumentPdfEntry[]){
  if(!entries.length)throw new Error('At least one document is required.');
- return createStructuredDocumentPdf({
+ return{
   title,
   institutionName,
   branchName,
@@ -15,5 +15,13 @@ export function createClientDocumentPdf(title:string,institutionName:string,bran
    details:entry.details,
    footer:entry.footer
   }))
- });
+ };
+}
+
+export function createClientDocumentPdf(title:string,institutionName:string,branchName:string,entries:ClientDocumentPdfEntry[]):Uint8Array{
+ return createStructuredDocumentPdf(options(title,institutionName,branchName,entries));
+}
+
+export async function createClientDocumentUnicodePdf(title:string,institutionName:string,branchName:string,entries:ClientDocumentPdfEntry[]):Promise<Uint8Array>{
+ return createStructuredUnicodeDocumentPdf(options(title,institutionName,branchName,entries));
 }

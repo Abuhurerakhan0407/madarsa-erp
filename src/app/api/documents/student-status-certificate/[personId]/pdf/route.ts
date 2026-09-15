@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createStudentStatusCertificatePdf } from "@/lib/documents/student-status-pdf";
+import { createUnicodeStudentStatusCertificatePdf } from "@/lib/documents/student-status-pdf";
 import { getStudentStatusCertificate } from "@/lib/documents/student-status";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ per
   try {
     const certificate = await getStudentStatusCertificate(personId);
     if (!certificate) return NextResponse.json({ error: "Student status certificate has not been issued." }, { status: 404 });
-    const pdf = createStudentStatusCertificatePdf(certificate);
+    const pdf = await createUnicodeStudentStatusCertificatePdf(certificate);
     const buffer = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     return new Response(buffer, {
       status: 200,

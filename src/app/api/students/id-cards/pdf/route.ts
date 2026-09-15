@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import type { PdfJpegImage } from "@/lib/documents/layout-pdf";
-import { createStudentIdCardSheetPdf } from "@/lib/students/id-card-pdf";
+import { createUnicodeStudentIdCardSheetPdf } from "@/lib/students/id-card-pdf";
 import { getStudentIdCardBatch, normalizeIdCardStudentIds, type IdCardBatchStudent } from "@/lib/students/id-card-batch";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
     }
     const academicYear = result.sessions.find((session) => session.id === sessionId)?.label || "Current academic year";
     const students = await hydrateStudentPhotos(result.students, workspace.tenantId);
-    const pdf = createStudentIdCardSheetPdf(students, {
+    const pdf = await createUnicodeStudentIdCardSheetPdf(students, {
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || "Main Branch",
       academicYear
