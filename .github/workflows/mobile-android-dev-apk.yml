@@ -1,0 +1,193 @@
+name: Ilmgaah Android Dev APK
+
+on:
+  push:
+    branches:
+      - mobile/android-dev-apk-v1
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-android-dev-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ilmgaah-android-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android-dev-apk:
+    name: Build Android dev APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout isolated mobile branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Ensure Android API 36 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'platforms;android-36' \
+            'build-tools;36.0.0' \
+            'platform-tools'
+
+      - name: Install pinned mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Build bundled mobile shell
+        working-directory: mobile
+        run: npm run build
+
+      - name: Activate internal live-update development configuration
+        working-directory: mobile
+        shell: bash
+        run: cp capacitor.config.dev.ts capacitor.config.ts
+
+      - name: Generate Android native project
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx cap add android
+          npx cap sync android
+
+      - name: Generate branded Android icon and splash assets
+        working-directory: mobile
+        run: npm run assets:android
+
+      - name: Harden Android manifest and network policy
+        working-directory: mobile
+        shell: bash
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+            <base-config cleartextTrafficPermitted="false">
+              <trust-anchors>
+                <certificates src="system" />
+              </trust-anchors>
+            </base-config>
+          </network-security-config>
+          XML
+
+          python - <<'PY'
+          from pathlib import Path
+          import os, re
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text(encoding='utf-8')
+          text = text.replace('android:allowBackup="true"', 'android:allowBackup="false"', 1)
+          if 'android:usesCleartextTraffic=' not in text:
+              text = text.replace('<application', '<application\n        android:usesCleartextTraffic="false"', 1)
+          if 'android:networkSecurityConfig=' not in text:
+              text = text.replace('<application', '<application\n        android:networkSecurityConfig="@xml/network_security_config"', 1)
+          manifest.write_text(text, encoding='utf-8')
+
+          gradle = Path('android/app/build.gradle')
+          src = gradle.read_text(encoding='utf-8')
+          build_number = int(os.environ['BUILD_NUMBER'])
+          src = re.sub(r'versionCode\s+\d+', f'versionCode {build_number}', src, count=1)
+          src = re.sub(r'versionName\s+"[^"]+"', f'versionName "0.1.0-dev.{build_number}"', src, count=1)
+          gradle.write_text(src, encoding='utf-8')
+          PY
+
+      - name: Verify generated security configuration
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
+          grep -q 'android:usesCleartextTraffic="false"' android/app/src/main/AndroidManifest.xml
+          grep -q 'android:networkSecurityConfig="@xml/network_security_config"' android/app/src/main/AndroidManifest.xml
+          grep -q 'cleartextTrafficPermitted="false"' android/app/src/main/res/xml/network_security_config.xml
+          grep -q 'targetSdkVersion = 36' android/variables.gradle
+          grep -q 'compileSdkVersion = 36' android/variables.gradle
+
+      - name: Android lint, unit tests and APK build
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug
+
+      - name: Verify APK signature and inspect package
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='android/app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee apk-signature.txt
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | tee apk-badging.txt
+          grep -q "package: name='in.ilmgaah.app'" apk-badging.txt
+          grep -q "targetSdkVersion:'36'" apk-badging.txt
+
+      - name: Build checksum and metadata
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/Ilmgaah-Android-Dev.apk
+          sha256sum artifacts/Ilmgaah-Android-Dev.apk | tee artifacts/Ilmgaah-Android-Dev.sha256
+          cp apk-signature.txt artifacts/
+          cp apk-badging.txt artifacts/
+          {
+            echo "Ilmgaah Android Development APK"
+            echo "Commit: $GITHUB_SHA"
+            echo "Workflow run: $GITHUB_RUN_NUMBER"
+            echo "App ID: in.ilmgaah.app"
+            echo "Mode: internal development / live web-backed"
+            echo "Canonical web origin: https://madarsa-erp.vercel.app"
+            echo "Target SDK: 36"
+            echo "Minimum SDK: 24"
+            echo "Java: 21"
+            echo "Capacitor: 8.5.2"
+            echo "Do not distribute as production release."
+          } > artifacts/BUILD-INFO.txt
+
+      - name: Capture dependency audit report
+        working-directory: mobile
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --json > artifacts/npm-audit-runtime.json
+          exit 0
+
+      - name: Upload installable APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ilmgaah-android-dev-apk-${{ github.run_number }}
+          path: |
+            mobile/artifacts/Ilmgaah-Android-Dev.apk
+            mobile/artifacts/Ilmgaah-Android-Dev.sha256
+            mobile/artifacts/BUILD-INFO.txt
+            mobile/artifacts/apk-signature.txt
+            mobile/artifacts/apk-badging.txt
+            mobile/artifacts/npm-audit-runtime.json
+          if-no-files-found: error
+          retention-days: 14
