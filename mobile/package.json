@@ -11,20 +11,22 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "cap:sync": "cap sync android",
-    "android:add": "cap add android"
+    "android:add": "cap add android",
+    "assets:android": "capacitor-assets generate --android --iconBackgroundColor '#F4F0E7' --iconBackgroundColorDark '#194D3D' --splashBackgroundColor '#F4F0E7' --splashBackgroundColorDark '#0F3329'"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
-    "@capacitor/app": "8.0.0",
+    "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.2",
     "@capacitor/haptics": "8.0.0",
-    "@capacitor/network": "8.0.0",
-    "@capacitor/splash-screen": "8.0.0",
-    "@capacitor/status-bar": "8.0.0",
+    "@capacitor/network": "8.0.1",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@capacitor/assets": "3.0.5",
     "@capacitor/cli": "8.5.2",
     "@types/react": "19.1.12",
     "@types/react-dom": "19.1.9",
