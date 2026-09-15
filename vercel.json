@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "installCommand": "echo 'Ilmgaah mobile branch: skipping root ERP dependency install'",
   "buildCommand": "MOBILE_DIR=mobile bash mobile/scripts/vercel-build-apk.sh",
   "outputDirectory": "mobile/apk-dist",
