@@ -144,7 +144,7 @@ function TargetFields({ draft, setDraft, locale, includeWork = false, idPrefix }
 function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, forceExpanded, hasNext, onSavedAndNext }: { locale: Locale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean; forceExpanded: boolean; hasNext: boolean; onSavedAndNext: () => void }) {
   const t = quranCopy[locale]; const x = extraCopy[locale]; const router = useRouter();
   const baseTarget = row.nextTarget ?? row.repeatTarget;
-  const initialAction = actionFromDayStatus(row.dayStatus) ?? "pass";
+  const persistedAction = actionFromDayStatus(row.dayStatus);
   const [expanded,setExpanded] = useState(!baseTarget);
   const [targetDraft,setTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(baseTarget));
   const [nextTargetDraft,setNextTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(null));
@@ -152,18 +152,13 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord, fo
   const [quality,setQuality] = useState(row.qualityScore === null ? "" : String(row.qualityScore));
   const [tajweed,setTajweed] = useState(""); const [fluency,setFluency] = useState(""); const [mistakes,setMistakes] = useState(String(row.mistakeCount || 0));
   const [teacherNote,setTeacherNote] = useState(""); const [revisionDate,setRevisionDate] = useState(row.revisionDueOn ?? "");
-  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>(initialAction);
+  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>(()=>persistedAction ?? "pass");
   const [savedAction,setSavedAction] = useState<QuranDailyAction|null>(null);
   const [busy,setBusy] = useState(false); const [error,setError] = useState<string|null>(null); const [saved,setSaved] = useState(false);
   const currentTarget = targetPayload(targetDraft) ?? targetViewPayload(baseTarget);
   const parentSummary = `${row.memorizedJuz}/30 · ${x.quality}: ${row.qualityScore ?? "—"} · ${t.revision}: ${row.revisionDue}`;
   const isExpanded = expanded || forceExpanded;
-  const selectedAction = savedAction ?? actionFromDayStatus(row.dayStatus);
-
-  useEffect(()=>{
-    setSavedAction(null);
-    setDetailedAction(actionFromDayStatus(row.dayStatus) ?? "pass");
-  },[row.dayStatus]);
+  const selectedAction = savedAction ?? persistedAction;
 
   useEffect(()=>{
     if (!forceExpanded) return;
@@ -298,7 +293,7 @@ export function QuranDailyRegister({ locale, data }: Props) {
       <section className="quran-daily-roster" data-page-section>
         <header><div><p className="state-kicker">{x.roster}</p><h2>{selectedGroup.label}</h2></div><time dateTime={data.selectedDate}>{data.selectedDate}</time></header>
         <div className="quran-daily-head" aria-hidden="true"><span>{x.student}</span><span>{t.sabaq}</span><span>{t.sabqi}</span><span>{t.manzil}</span><span>{x.quality}</span><span>{x.mistakes}</span><span>{x.nextTarget}</span><span>{x.actions}</span></div>
-        {data.rows.length ? data.rows.map((row,index)=><QuranDailyStudentRow key={row.personId} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord} forceExpanded={focusPersonId===row.personId} hasNext={index<data.rows.length-1} onSavedAndNext={()=>advanceFrom(index)}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
+        {data.rows.length ? data.rows.map((row,index)=><QuranDailyStudentRow key={`${data.selectedDate}:${row.personId}`} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord} forceExpanded={focusPersonId===row.personId} hasNext={index<data.rows.length-1} onSavedAndNext={()=>advanceFrom(index)}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
       </section>
     </> : <section className="workspace-inline-state" data-page-section><strong>{x.noGroup}</strong><span>{x.targetHelp}</span></section>}
   </div>;

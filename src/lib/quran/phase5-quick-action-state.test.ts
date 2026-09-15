@@ -16,11 +16,17 @@ describe("Phase 5 Qur'an daily quick-action selected state", () => {
 
   it("initializes detailed result from persisted status and keeps the successful action selected immediately", () => {
     const source = read("src/components/quran-daily-register.tsx");
-    expect(source).toContain('const initialAction = actionFromDayStatus(row.dayStatus) ?? "pass"');
-    expect(source).toContain("const [detailedAction,setDetailedAction] = useState<QuranDailyAction>(initialAction)");
+    expect(source).toContain("const persistedAction = actionFromDayStatus(row.dayStatus)");
+    expect(source).toContain('useState<QuranDailyAction>(()=>persistedAction ?? "pass")');
     expect(source).toContain("const [savedAction,setSavedAction] = useState<QuranDailyAction|null>(null)");
+    expect(source).toContain("const selectedAction = savedAction ?? persistedAction");
     expect(source).toContain("setSavedAction(action)");
     expect(source).toContain("setDetailedAction(action)");
+  });
+
+  it("remounts rows per lesson date so optimistic state cannot bleed into another day", () => {
+    const source = read("src/components/quran-daily-register.tsx");
+    expect(source).toContain('key={`${data.selectedDate}:${row.personId}`}');
   });
 
   it("exposes the selected quick action semantically and visually", () => {
