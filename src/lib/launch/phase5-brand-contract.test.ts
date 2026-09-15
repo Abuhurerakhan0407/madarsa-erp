@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { extname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const roots = ["src/app", "src/components"];
+const roots = ["src/app", "src/components", "src/lib"];
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const legacyBrandMarkers = ["Madarsa ERP", "مدرسہ ای آر پی", "نظام إدارة المدرسة"];
 
