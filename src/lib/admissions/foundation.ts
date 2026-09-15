@@ -31,8 +31,11 @@ function localizedLabels(value: unknown): LocalizedLabels | null {
   const candidate = value as Record<string, unknown>;
   const en = typeof candidate.en === "string" ? candidate.en.trim() : "";
   const ur = typeof candidate.ur === "string" ? candidate.ur.trim() : "";
-  const ar = typeof candidate.ar === "string" ? candidate.ar.trim() : "";
-  if (!en || !ur || !ar || en.length > 120 || ur.length > 120 || ar.length > 120) return null;
+  // Arabic is no longer a visible/configurable product locale. Preserve the
+  // legacy storage key internally so older database contracts remain valid.
+  const suppliedAr = typeof candidate.ar === "string" ? candidate.ar.trim() : "";
+  const ar = suppliedAr || ur;
+  if (!en || !ur || en.length > 120 || ur.length > 120 || ar.length > 120) return null;
   return { en, ur, ar };
 }
 
@@ -56,8 +59,8 @@ export function parseAdmissionsFoundationInput(body: unknown): {
 
   if (!sessionKeyPattern.test(sessionKey)) errors.push("Session key is invalid.");
   if (!programKeyPattern.test(programKey)) errors.push("Program key is invalid.");
-  if (!sessionLabels) errors.push("English, Urdu and Arabic session labels are required.");
-  if (!programLabels) errors.push("English, Urdu and Arabic program labels are required.");
+  if (!sessionLabels) errors.push("English and Urdu session labels are required.");
+  if (!programLabels) errors.push("English and Urdu program labels are required.");
   if (!admissionProgramTypes.includes(programType as AdmissionProgramType)) {
     errors.push("Program type is invalid.");
   }
