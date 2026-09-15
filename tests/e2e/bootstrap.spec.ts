@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-test("protects the root workspace behind sign in", async ({ page }) => {
+test("renders the public Ilmgaah homepage", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page).toHaveURL(/\/login\?next=%2F$/);
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("heading", { name: "Run the institution. Keep the calm." })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Book a Free Demo on WhatsApp" }).first()
+  ).toHaveAttribute("href", /^https:\/\/wa\.me\/919833001193\?text=/);
 });
 
 test("protects localized institution routes", async ({ page }) => {
