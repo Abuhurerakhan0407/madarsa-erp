@@ -1,11 +1,13 @@
 import {createClientDocumentPdf} from '@/lib/documents/client-v2-pdf';
 import type {ExamReportCard} from './workspace';
 
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const;
 function englishLabel(labels:{en?:string},fallback:string):string{return labels.en?.trim()||fallback;}
 function value(input:string|number|null|undefined):string{return input===null||input===undefined||input===''?'—':String(input);}
 function humanize(input:string|null|undefined):string{const normalized=value(input);return normalized==='—'?normalized:normalized.replaceAll('_',' ').replace(/\b\w/g,match=>match.toUpperCase());}
-function dateOnly(input:string|null|undefined):string{if(!input)return '—';const match=/^(\d{4})-(\d{2})-(\d{2})/.exec(input);if(!match)return input;const date=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])));return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).format(date);}
-function dateTime(input:string|null|undefined):string{if(!input)return '—';const date=new Date(input);if(Number.isNaN(date.valueOf()))return input;return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'}).format(date);}
+function dateParts(input:string|null|undefined){if(!input)return null;const date=new Date(input);if(Number.isNaN(date.valueOf()))return null;return{day:String(date.getUTCDate()).padStart(2,'0'),month:months[date.getUTCMonth()],year:date.getUTCFullYear(),hour:String(date.getUTCHours()).padStart(2,'0'),minute:String(date.getUTCMinutes()).padStart(2,'0')};}
+function dateOnly(input:string|null|undefined):string{const parts=dateParts(input);return parts?`${parts.day} ${parts.month} ${parts.year}`:value(input);}
+function dateTime(input:string|null|undefined):string{const parts=dateParts(input);return parts?`${parts.day} ${parts.month} ${parts.year} ${parts.hour}:${parts.minute} UTC`:value(input);}
 function percentage(input:number|null):string{return input===null?'—':`${input}%`;}
 
 export function createReportCardPdf(card:ExamReportCard,context:{institutionName:string;branchName:string}):Uint8Array{
