@@ -33,6 +33,17 @@ describe("Phase 5 biometric-only attendance product contract", () => {
     expect(dbContract).toContain("'nfc'");
   });
 
+  it("presents historical student NFC records as a neutral legacy device source", () => {
+    const workspace = read("src/components/attendance-v2-workspace.tsx");
+    expect(workspace).toContain('row.source==="nfc"');
+    expect(workspace).toContain('legacyDevice:"Legacy device"');
+    expect(workspace).toContain('legacyDevice:"پرانا ڈیوائس"');
+    expect(workspace).toContain('row.source==="import"');
+    expect(workspace).toContain("t.deviceSource");
+    expect(workspace).not.toContain('nfc:"NFC"');
+    expect(workspace).not.toContain("row.source.toUpperCase()");
+  });
+
   it("keeps biometric configuration mutations visibly pending", () => {
     const center = read("src/components/attendance-device-center.tsx");
     expect(center).toContain('setBusyAction("create")');
