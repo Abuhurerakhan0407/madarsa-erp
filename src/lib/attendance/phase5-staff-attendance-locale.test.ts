@@ -27,6 +27,16 @@ describe("Phase 5 teacher attendance English and Urdu contract", () => {
     expect(workspace).not.toContain('row.status.replaceAll("_"," ")');
   });
 
+  it("covers the designation keys used by current teacher records in Urdu", () => {
+    const workspace = read("src/components/hr-attendance-v2-workspace.tsx");
+    expect(workspace).toContain('assistant_teacher: "معاون استاد"');
+    expect(workspace).toContain('attendance_supervisor: "حاضری نگران"');
+    expect(workspace).toContain('dars_e_nizami_teacher: "درسِ نظامی استاد"');
+    expect(workspace).toContain('admissions_coordinator: "داخلہ رابطہ کار"');
+    expect(workspace).toContain('hifz_instructor: "حفظ استاد"');
+    expect(workspace).toContain('exam_evaluator: "امتحانی ممتحن"');
+  });
+
   it("does not present retired NFC as an active teacher-attendance capability", () => {
     const workspace = read("src/components/hr-attendance-v2-workspace.tsx");
     expect(workspace).toContain('row.source === "nfc"');
