@@ -20,4 +20,19 @@ describe("Phase 5 teacher attendance resilience", () => {
     expect(source).toContain("monthlyPercent:n(insights.monthly_percent)??0");
     expect(source).toContain("trend:arr(insights.trend)");
   });
+
+  it("keeps the teacher attendance insights FILTER attached to the aggregate", () => {
+    const migration = read(
+      "supabase/migrations/20260915111000_phase5_fix_hr_attendance_insights_filter.sql",
+    );
+    expect(migration).toContain(
+      "round((avg(ratio) filter (where attendance_date = p_attendance_date)) * 100, 1)",
+    );
+    expect(migration).toContain(
+      "round((avg(ratio) filter (where attendance_date between p_attendance_date - 6 and p_attendance_date)) * 100, 1)",
+    );
+    expect(migration).not.toContain(
+      "round(avg(ratio)*100,1) filter(where attendance_date=p_attendance_date)",
+    );
+  });
 });
