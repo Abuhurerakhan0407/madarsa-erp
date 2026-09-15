@@ -5,7 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Ilmgaah',
   webDir: 'dist',
   backgroundColor: '#0F5F46',
-  loggingBehavior: 'debug',
+  // Even internal builds can display real student/guardian data. Keep native
+  // bridge logging disabled so personal data and session details are not
+  // accidentally exposed through device logs.
+  loggingBehavior: 'none',
   android: {
     allowMixedContent: false,
     webContentsDebuggingEnabled: false,
