@@ -72,12 +72,12 @@ export default function LoginPage() {
   return (
     <main className="auth-screen professional-auth-screen">
       <section className="auth-card professional-auth-card" aria-labelledby="auth-title">
-        <aside className="auth-presentation" aria-label="Madarsa ERP">
+        <aside className="auth-presentation" aria-label="Ilmgaah">
           <div className="auth-brand auth-brand-light">
-            <span className="brand-mark" aria-hidden="true">M</span>
+            <span className="brand-mark" aria-hidden="true">I</span>
             <div>
-              <strong>Madarsa ERP</strong>
-              <span>School administration platform</span>
+              <strong>Ilmgaah</strong>
+              <span>Institution operations platform</span>
             </div>
           </div>
 
@@ -101,12 +101,12 @@ export default function LoginPage() {
 
         <div className="auth-form-panel">
           <div className="auth-heading">
-            <p className="state-kicker">Secure access</p>
+            <p className="state-kicker">Secure Ilmgaah access</p>
             <h1 id="auth-title">{mode === "signin" ? "Welcome back" : "Create your institution account"}</h1>
             <p>
               {mode === "signin"
-                ? "Sign in to continue."
-                : "Create an account. Your institution or portal setup continues next."}
+                ? "Sign in to enter your institution workspace."
+                : "Create an account. Your institution setup continues next."}
             </p>
           </div>
 
