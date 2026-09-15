@@ -1,12 +1,55 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
+import type { PdfJpegImage } from "@/lib/documents/layout-pdf";
 import { createStudentIdCardSheetPdf } from "@/lib/students/id-card-pdf";
-import { getStudentIdCardBatch, normalizeIdCardStudentIds } from "@/lib/students/id-card-batch";
+import { getStudentIdCardBatch, normalizeIdCardStudentIds, type IdCardBatchStudent } from "@/lib/students/id-card-batch";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
+
+const PHOTO_WORKERS = 4;
 
 function positive(value: string | null): number | null {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+async function normalizeStudentPhoto(input: ArrayBuffer): Promise<PdfJpegImage> {
+  const { data, info } = await sharp(Buffer.from(input))
+    .rotate()
+    .resize(320, 400, { fit: "cover", position: "centre" })
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
+    .jpeg({ quality: 84, chromaSubsampling: "4:4:4" })
+    .toBuffer({ resolveWithObject: true });
+  if (!info.width || !info.height) throw new Error("Student photo dimensions are unavailable.");
+  return { data: new Uint8Array(data), pixelWidth: info.width, pixelHeight: info.height };
+}
+
+async function hydrateStudentPhotos(students: IdCardBatchStudent[], tenantId: number) {
+  const admin = createAdminClient();
+  const bucket = admin.storage.from("tenant-documents");
+  const output = new Array<IdCardBatchStudent & { photo: PdfJpegImage | null }>(students.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= students.length) return;
+      const student = students[index];
+      if (!student.photoStoragePath) {
+        output[index] = { ...student, photo: null };
+        continue;
+      }
+      if (!student.photoStoragePath.startsWith(`${tenantId}/`)) throw new Error("Student photo path is outside the active institution.");
+      const { data, error } = await bucket.download(student.photoStoragePath);
+      if (error || !data) throw new Error("Unable to load a stored student photo.");
+      output[index] = { ...student, photo: await normalizeStudentPhoto(await data.arrayBuffer()) };
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(PHOTO_WORKERS, Math.max(1, students.length)) }, () => worker()));
+  return output;
 }
 
 export async function GET(request: Request) {
@@ -37,7 +80,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "One or more selected students are no longer eligible for this ID-card batch." }, { status: 409 });
     }
     const academicYear = result.sessions.find((session) => session.id === sessionId)?.label || "Current academic year";
-    const pdf = createStudentIdCardSheetPdf(result.students, {
+    const students = await hydrateStudentPhotos(result.students, workspace.tenantId);
+    const pdf = createStudentIdCardSheetPdf(students, {
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || "Main Branch",
       academicYear
