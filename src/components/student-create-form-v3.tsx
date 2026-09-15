@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { StudentPhotoPicker } from "@/components/student-photo-picker";
 import { FieldGroup } from "@/components/workspace-ui";
 import type { Locale, SupportedLocale } from "@/lib/i18n/config";
 
@@ -50,6 +51,7 @@ const copy = {
     medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", continue: "Continue", back: "Back", confirmAdmission: "Confirm Admission", creating: "Admitting student…",
     duplicateTitle: "Possible duplicate found", duplicate: "A matching student may already exist. Review the details before creating a separate permanent record.", duplicateCount: "possible matching record(s)", createSeparate: "Create as a separate student", changeDetails: "Change details",
     error: "Unable to admit the student.", studentError: "Enter the student name and either date of birth or age.", guardianError: "Enter the guardian name and mobile / WhatsApp number.", placementError: "Choose the academic year, program, class / group, and joining date.", select: "Select",
+    photoRequired: "Take or upload the student's photo before continuing.", photoUploadError: "Student was admitted, but the photo could not be attached. Retry the photo upload without creating the student again.", photoPendingTitle: "Student admitted — photo needs attention", photoPendingBody: "The permanent student record already exists. Attach the required photo now; retrying here will not create a duplicate student.", retryPhoto: "Retry Photo Upload", uploadingPhoto: "Attaching photo…", photoReady: "Photo ready",
     male: "Male", female: "Female", other: "Other", undisclosed: "Undisclosed", father: "Father", mother: "Mother", guardianRole: "Guardian",
     successTitle: "Student admitted successfully", studentNumber: "Student number", openProfile: "Open Student Profile", printId: "Print ID Card", addAnother: "Add Another Student"
   },
@@ -61,6 +63,7 @@ const copy = {
     medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", continue: "جاری رکھیں", back: "واپس", confirmAdmission: "داخلہ کی تصدیق کریں", creating: "داخلہ کیا جا رہا ہے…",
     duplicateTitle: "ممکنہ ڈپلیکیٹ ملا", duplicate: "ممکن ہے یہی طالب علم پہلے سے موجود ہو۔ الگ مستقل ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", duplicateCount: "ممکنہ ملتے جلتے ریکارڈ", createSeparate: "الگ طالب علم ریکارڈ بنائیں", changeDetails: "تفصیلات تبدیل کریں",
     error: "طالب علم کا داخلہ نہیں ہو سکا۔", studentError: "طالب علم کا نام اور تاریخ پیدائش یا عمر درج کریں۔", guardianError: "سرپرست کا نام اور موبائل / واٹس ایپ نمبر درج کریں۔", placementError: "تعلیمی سال، پروگرام، کلاس / گروپ اور شمولیت کی تاریخ منتخب کریں۔", select: "منتخب کریں",
+    photoRequired: "آگے بڑھنے سے پہلے طالب علم کی تصویر لیں یا اپ لوڈ کریں۔", photoUploadError: "طالب علم کا داخلہ ہو گیا، لیکن تصویر منسلک نہیں ہو سکی۔ نیا طالب علم بنائے بغیر تصویر دوبارہ اپ لوڈ کریں۔", photoPendingTitle: "طالب علم داخل ہو گیا — تصویر مکمل کریں", photoPendingBody: "مستقل طالب علم ریکارڈ پہلے ہی بن چکا ہے۔ مطلوبہ تصویر ابھی منسلک کریں؛ دوبارہ کوشش سے نیا ڈپلیکیٹ طالب علم نہیں بنے گا۔", retryPhoto: "تصویر دوبارہ اپ لوڈ کریں", uploadingPhoto: "تصویر منسلک ہو رہی ہے…", photoReady: "تصویر تیار ہے",
     male: "مرد", female: "خاتون", other: "دیگر", undisclosed: "درج نہیں", father: "والد", mother: "والدہ", guardianRole: "سرپرست",
     successTitle: "طالب علم کا داخلہ کامیابی سے ہو گیا", studentNumber: "طالب علم نمبر", openProfile: "طالب علم پروفائل کھولیں", printId: "ID کارڈ پرنٹ کریں", addAnother: "ایک اور طالب علم شامل کریں"
   },
@@ -72,6 +75,7 @@ const copy = {
     medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", continue: "متابعة", back: "رجوع", confirmAdmission: "تأكيد القبول", creating: "جارٍ قبول الطالب…",
     duplicateTitle: "تم العثور على تطابق محتمل", duplicate: "قد يكون هذا الطالب موجودًا بالفعل. راجع البيانات قبل إنشاء سجل دائم منفصل.", duplicateCount: "سجل/سجلات محتملة المطابقة", createSeparate: "إنشاء طالب منفصل", changeDetails: "تعديل البيانات",
     error: "تعذر قبول الطالب.", studentError: "أدخل اسم الطالب وتاريخ الميلاد أو العمر.", guardianError: "أدخل اسم ولي الأمر ورقم الجوال / واتساب.", placementError: "اختر العام الدراسي والبرنامج والفصل / المجموعة وتاريخ الالتحاق.", select: "اختر",
+    photoRequired: "التقط صورة الطالب أو ارفعها قبل المتابعة.", photoUploadError: "تم قبول الطالب، لكن تعذر إرفاق الصورة. أعد رفع الصورة من دون إنشاء طالب جديد.", photoPendingTitle: "تم قبول الطالب — أكمل الصورة", photoPendingBody: "تم إنشاء السجل الدائم بالفعل. أرفق الصورة المطلوبة الآن؛ إعادة المحاولة هنا لن تنشئ طالبًا مكررًا.", retryPhoto: "إعادة رفع الصورة", uploadingPhoto: "جارٍ إرفاق الصورة…", photoReady: "الصورة جاهزة",
     male: "ذكر", female: "أنثى", other: "أخرى", undisclosed: "غير مذكور", father: "الأب", mother: "الأم", guardianRole: "ولي أمر",
     successTitle: "تم قبول الطالب بنجاح", studentNumber: "رقم الطالب", openProfile: "فتح ملف الطالب", printId: "طباعة بطاقة الهوية", addAnother: "إضافة طالب آخر"
   }
@@ -95,10 +99,13 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
   const defaultPreferredLocale: SupportedLocale = locale === "ur" ? "ur" : "en";
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateBody, setDuplicateBody] = useState<CreateBody | null>(null);
   const [duplicateCount, setDuplicateCount] = useState<number | null>(null);
   const [success, setSuccess] = useState<CreateResult | null>(null);
+  const [pendingPhotoStudent, setPendingPhotoStudent] = useState<CreateResult | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
 
   const [displayName, setDisplayName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -137,6 +144,10 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       const hasAge = ageYears !== "" && Number.isInteger(age) && age >= 1 && age <= 120;
       if (displayName.trim().length < 2 || (!dateOfBirth && !hasAge)) {
         setError(text.studentError);
+        return false;
+      }
+      if (!photo) {
+        setError(text.photoRequired);
         return false;
       }
     }
@@ -184,6 +195,37 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     };
   }
 
+  async function attachPhoto(result: CreateResult): Promise<boolean> {
+    if (!photo) {
+      setPendingPhotoStudent(result);
+      setError(text.photoRequired);
+      return false;
+    }
+
+    setPhotoUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.set("photo", photo);
+      const response = await fetch(`/api/students/photo/${result.personId}/upload`, { method: "POST", body: formData });
+      const payload = await response.json().catch(() => ({})) as { error?: string; result?: { photoAttached?: boolean } };
+      if (!response.ok || payload.result?.photoAttached !== true) {
+        setPendingPhotoStudent(result);
+        setError(payload.error || text.photoUploadError);
+        return false;
+      }
+      setPendingPhotoStudent(null);
+      setSuccess(result);
+      return true;
+    } catch {
+      setPendingPhotoStudent(result);
+      setError(text.photoUploadError);
+      return false;
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
   async function create(body: CreateBody) {
     setBusy(true);
     setError(null);
@@ -212,7 +254,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       }
       setDuplicateBody(null);
       setDuplicateCount(null);
-      setSuccess(payload.result);
+      await attachPhoto(payload.result);
     } catch {
       setError(text.error);
     } finally {
@@ -228,10 +270,13 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
   function reset() {
     setStep(1);
     setBusy(false);
+    setPhotoUploading(false);
     setError(null);
     setDuplicateBody(null);
     setDuplicateCount(null);
     setSuccess(null);
+    setPendingPhotoStudent(null);
+    setPhoto(null);
     setDisplayName("");
     setDateOfBirth("");
     setAgeYears("");
@@ -243,6 +288,24 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     setGroupId(0);
     setJoinedOn("");
     setExtras({ nameNative: "", gender: "", preferredLocale: defaultPreferredLocale, medicalSummary: "", accessibilityNeeds: "", pickupRestrictions: "" });
+  }
+
+  if (pendingPhotoStudent) {
+    return (
+      <section className="panel" aria-live="polite" data-page-section>
+        <header className="panel-header"><div><h2>{text.photoPendingTitle}</h2><p>{text.photoPendingBody}</p></div></header>
+        <div className="student-detail-grid">
+          <div><span>{text.name}</span><strong>{displayName}</strong></div>
+          <div><span>{text.studentNumber}</span><strong>{pendingPhotoStudent.studentNumber}</strong></div>
+          <div><span>{text.group}</span><strong>{groupLabel}</strong></div>
+        </div>
+        <StudentPhotoPicker locale={locale} file={photo} disabled={photoUploading} onChange={setPhoto} onError={setError} />
+        {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
+        <div className="quick-actions">
+          <button className="action-button action-button-primary" type="button" disabled={photoUploading || !photo} onClick={() => attachPhoto(pendingPhotoStudent)}>{photoUploading ? text.uploadingPhoto : text.retryPhoto}</button>
+        </div>
+      </section>
+    );
   }
 
   if (success) {
@@ -264,7 +327,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
   }
 
   return (
-    <div className="configuration-form client-v2-form" aria-busy={busy}>
+    <div className="configuration-form client-v2-form" aria-busy={busy || photoUploading}>
       <section className="workspace-context-strip" aria-label={text.progress} data-page-section>
         <div><strong>{text.progress}</strong><span>{text.step} {step} {text.of} 4</span></div>
         <p>{steps.map((label, index) => `${index + 1}. ${label}`).join(" · ")}</p>
@@ -278,6 +341,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
             <FieldGroup label={text.dob}><input type="date" value={dateOfBirth} onChange={(event) => { setDateOfBirth(event.target.value); if (event.target.value) setAgeYears(""); }} /></FieldGroup>
             <FieldGroup label={text.age}><input type="number" min={1} max={120} inputMode="numeric" value={ageYears} onChange={(event) => { setAgeYears(event.target.value); if (event.target.value) setDateOfBirth(""); }} /></FieldGroup>
           </div>
+          <StudentPhotoPicker locale={locale} file={photo} disabled={busy || photoUploading} onChange={setPhoto} onError={setError} />
           <details>
             <summary>{text.more}</summary>
             <div className="configuration-form-grid">
@@ -322,6 +386,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
             <div><span>{text.student}</span><strong>{displayName}</strong><small>{dateOfBirth || `${text.age}: ${ageYears}`}</small></div>
             <div><span>{text.guardian}</span><strong>{guardianName}</strong><small>{guardianPhone}</small></div>
             <div><span>{text.placement}</span><strong>{programLabel} · {groupLabel}</strong><small>{sessionLabel} · {joinedOn}</small></div>
+            <div><span>{text.photoReady}</span><strong>{photo?.name || text.photoRequired}</strong></div>
           </div>
         </section>
       ) : null}
@@ -332,8 +397,8 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
           <p>{error || text.duplicate}</p>
           {duplicateCount !== null ? <p><strong>{duplicateCount}</strong> {text.duplicateCount}</p> : null}
           <div className="quick-actions">
-            <button className="action-button" type="button" disabled={busy} onClick={() => { clearResultMessages(); setStep(1); }}>{text.changeDetails}</button>
-            <button className="action-button action-button-primary" type="button" disabled={busy} onClick={() => create({ ...duplicateBody, confirmNewPerson: true })}>{busy ? text.creating : text.createSeparate}</button>
+            <button className="action-button" type="button" disabled={busy || photoUploading} onClick={() => { clearResultMessages(); setStep(1); }}>{text.changeDetails}</button>
+            <button className="action-button action-button-primary" type="button" disabled={busy || photoUploading} onClick={() => create({ ...duplicateBody, confirmNewPerson: true })}>{busy ? text.creating : text.createSeparate}</button>
           </div>
         </section>
       ) : null}
@@ -342,9 +407,9 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
 
       {!duplicateBody ? (
         <div className="quick-actions">
-          {step > 1 ? <button className="action-button" type="button" disabled={busy} onClick={previousStep}>{text.back}</button> : null}
-          {step < 4 ? <button className="action-button action-button-primary" type="button" disabled={busy || !sessions.length || !programs.length} onClick={nextStep}>{text.continue}</button> : null}
-          {step === 4 ? <button className="action-button action-button-primary" type="button" disabled={busy} onClick={confirmAdmission}>{busy ? text.creating : text.confirmAdmission}</button> : null}
+          {step > 1 ? <button className="action-button" type="button" disabled={busy || photoUploading} onClick={previousStep}>{text.back}</button> : null}
+          {step < 4 ? <button className="action-button action-button-primary" type="button" disabled={busy || photoUploading || !sessions.length || !programs.length} onClick={nextStep}>{text.continue}</button> : null}
+          {step === 4 ? <button className="action-button action-button-primary" type="button" disabled={busy || photoUploading} onClick={confirmAdmission}>{busy || photoUploading ? text.creating : text.confirmAdmission}</button> : null}
         </div>
       ) : null}
     </div>
