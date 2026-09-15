@@ -70,7 +70,7 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
    const response=await fetch('/api/reports/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reportKey:submittedReport,parameters:submittedParameters,outputFormat:output,requestKey:crypto.randomUUID()})});
    const payload=await response.json().catch(()=>({})) as {result?:Result;error?:string};
    if(requestId!==requestVersion.current)return;
-   if(!response.ok||!payload.result){setError(payload.error||t.error);return;}
+   if(!response.ok||!payload.result){setError(locale==='ur'?t.error:(payload.error||t.error));return;}
    setResult(payload.result);
    if(output==='csv')downloadCsv(payload.result);
   }catch{
@@ -89,7 +89,7 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
   try{
    const response=await fetch('/api/reports/pdf',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reportKey:submittedReport,parameters:submittedParameters})});
    if(requestId!==requestVersion.current)return;
-   if(!response.ok){const payload=await response.json().catch(()=>({})) as {error?:string};setError(payload.error||t.error);return;}
+   if(!response.ok){const payload=await response.json().catch(()=>({})) as {error?:string};setError(locale==='ur'?t.error:(payload.error||t.error));return;}
    const blob=await response.blob();
    if(requestId!==requestVersion.current)return;
    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${submittedReport.replaceAll('_','-')}-${dateTo}.pdf`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
