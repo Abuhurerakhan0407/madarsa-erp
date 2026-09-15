@@ -31,6 +31,23 @@ describe("Phase 5 portal English and Urdu contract", () => {
     expect(notifications).not.toContain('for (const key of ["en", "ur", "ar"])');
   });
 
+  it("does not expose retired NFC or raw backend source keys in parent attendance", () => {
+    const attendance = read("src/components/portal-attendance-v2-section.tsx");
+    expect(attendance).toContain('value === "nfc"');
+    expect(attendance).toContain('legacyDevice: "Legacy device"');
+    expect(attendance).toContain('legacyDevice: "پرانا ڈیوائس"');
+    expect(attendance).toContain('value === "import"');
+    expect(attendance).toContain("return value ? t.device");
+    expect(attendance).not.toContain('return value ? value : "—"');
+    expect(attendance).not.toContain('nfc: "NFC"');
+  });
+
+  it("does not render unknown notification module keys as raw English/internal copy", () => {
+    const notifications = read("src/components/portal-notification-center.tsx");
+    expect(notifications).toContain("return known[normalized] ?? t.update");
+    expect(notifications).not.toContain("return known[normalized] ?? value");
+  });
+
   it("preserves locale through claim, password change and sign out", () => {
     const claimPage = read("src/app/portal/claim/page.tsx");
     const claimForm = read("src/components/portal-claim-form.tsx");

@@ -22,6 +22,9 @@ const copy = {
     emergency: "Emergency manual",
     manual: "Manual",
     biometric: "Biometric",
+    legacyDevice: "Legacy device",
+    imported: "Imported",
+    device: "Device",
     present: "Present",
     absent: "Absent",
     late: "Late",
@@ -41,6 +44,9 @@ const copy = {
     emergency: "ہنگامی دستی اندراج",
     manual: "دستی",
     biometric: "بایومیٹرک",
+    legacyDevice: "پرانا ڈیوائس",
+    imported: "درآمد شدہ",
+    device: "ڈیوائس",
     present: "حاضر",
     absent: "غیر حاضر",
     late: "تاخیر",
@@ -56,13 +62,15 @@ function sourceLabel(row: Raw, locale: SupportedLocale) {
   if (value === "manual" && text(row.source_ref).startsWith("emergency:")) return t.emergency;
   if (value === "manual") return t.manual;
   if (value === "biometric") return t.biometric;
-  return value ? value : "—";
+  if (value === "nfc") return t.legacyDevice;
+  if (value === "import") return t.imported;
+  return value ? t.device : "—";
 }
 
 function statusLabel(value: string, locale: SupportedLocale) {
   const t = copy[locale];
   const key = value.toLowerCase() as keyof typeof t;
-  return key in t ? t[key] : value || t.unmarked;
+  return key in t ? t[key] : t.unmarked;
 }
 
 export async function PortalAttendanceV2Section({ tenantId, locale }: { tenantId: number; locale: SupportedLocale }) {

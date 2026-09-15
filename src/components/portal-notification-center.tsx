@@ -95,7 +95,7 @@ function moduleLabel(value: string, locale: SupportedLocale) {
     homework: t.homework,
     portal: t.portal
   };
-  return known[normalized] ?? value;
+  return known[normalized] ?? t.update;
 }
 
 export function PortalNotificationCenter({ tenantId, initial, locale }: Props) {
