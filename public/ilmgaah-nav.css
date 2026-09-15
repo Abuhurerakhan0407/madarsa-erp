@@ -18,26 +18,34 @@
 .story-bar .wordmark { width: 92px !important; height: 38px !important; }
 .footer .wordmark { width: 126px !important; height: 52px !important; }
 
+/* Dashboard mark: light surface, exact selected icon, no extra status dot. */
 .command-mark {
-  background-color: var(--ink) !important;
+  background-color: #edf3ef !important;
   background-image: url('/ilmgaah-icon.svg') !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
-  background-size: 58% auto !important;
+  background-size: 62% auto !important;
   color: transparent !important;
   font-size: 0 !important;
+  border: 1px solid rgba(25,77,61,.10);
 }
-.command-mark > span { display: none !important; }
+.command-mark > span,
+.command-mark > i { display: none !important; }
 
-.command-greeting .avatar {
-  background-color: var(--green-pale) !important;
-  background-image: url('/ilmgaah-icon.svg') !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-size: 52% auto !important;
-  color: transparent !important;
-  font-size: 0 !important;
+/* Remove duplicated brand mark beside the dashboard greeting. */
+.command-greeting .avatar { display: none !important; }
+
+/* Keep the experience-window branding legible on the same light system surface. */
+.story-window {
+  background: #f2efe8 !important;
+  border-color: rgba(16,19,17,.12) !important;
+  box-shadow: 0 46px 130px rgba(20,35,27,.16) !important;
 }
+.story-bar {
+  background: #f2efe8 !important;
+  border-bottom-color: rgba(16,19,17,.10) !important;
+}
+.story-bar small { color: rgba(16,19,17,.48) !important; }
 
 .closing-orbit > span {
   width: 100px !important;
@@ -46,6 +54,21 @@
   background: url('/ilmgaah-icon.svg') center / contain no-repeat !important;
   color: transparent !important;
   font-size: 0 !important;
+}
+
+/* Prevent the collapsed mobile menu row from leaving hidden space below the logo. */
+@media (max-width: 960px) {
+  .site-mobile-panel:not(.is-open) {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none;
+  }
+  .site-mobile-panel:not(.is-open) .site-mobile-panel-inner {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-top: 0 !important;
+  }
 }
 
 @media (max-width: 700px) {
