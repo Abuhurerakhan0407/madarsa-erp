@@ -45,7 +45,7 @@ describe("Phase 5 claim-only portal lifecycle", () => {
   });
 
   it("keeps guardian preparation identity-free until the claim step", () => {
-    const migration = read("supabase/migrations/20260916173000_phase5_claim_only_portal_lifecycle.sql");
+    const migration = read("supabase/migrations/20260916124501_phase5_claim_only_portal_lifecycle.sql");
     expect(migration).toContain("convert_admission_to_student_v3");
     expect(migration).toContain("portal_invitation_status");
     expect(migration).toContain("'not_invited'");

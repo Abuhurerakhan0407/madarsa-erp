@@ -15,7 +15,7 @@ export async function getNavigationAudience(workspace: TenantContext): Promise<N
   if (roles.error) throw new Error(`Unable to resolve navigation roles: ${roles.error.message}`);
 
   const roleIds = (roles.data ?? []).map((row) => Number(row.role_id)).filter(Number.isFinite);
-  if (!roleIds.length) return "office";
+  if (!roleIds.length) return "restricted";
 
   const [roleRows, permissionRows] = await Promise.all([
     admin.from("roles").select("key").eq("tenant_id", workspace.tenantId).in("id", roleIds),
@@ -25,6 +25,6 @@ export async function getNavigationAudience(workspace: TenantContext): Promise<N
   if (permissionRows.error) throw new Error(`Unable to resolve navigation permissions: ${permissionRows.error.message}`);
 
   const permissions = (permissionRows.data ?? []).map((row) => String(row.permission_code));
-  if (!permissions.length) return "office";
+  if (!permissions.length) return "restricted";
   return classifyNavigationAudience((roleRows.data ?? []).map((row) => String(row.key)), permissions);
 }

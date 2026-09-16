@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RestrictedHome } from "@/components/restricted-home";
 import { TeacherHome } from "@/components/teacher-home";
 import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
 import { getGuidedSetupSnapshot } from "@/lib/configuration/setup-readiness";
@@ -213,6 +214,9 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   if (!workspace) return null;
 
   const audience = await getNavigationAudience(workspace);
+  if (audience === "restricted") {
+    return <RestrictedHome locale={locale} />;
+  }
   if (audience === "teacher") {
     return <TeacherHome locale={locale} tenantName={workspace.tenantName} />;
   }
