@@ -69,6 +69,21 @@ export type ParentPortalAttendance = {
   }>;
 };
 
+export type TeacherPortalClasses = {
+  readOnly: true;
+  groups: Array<{ id: number; name: string; studentCount: number }>;
+  students: Array<{
+    personId: number;
+    groupId: number;
+    groupName: string;
+    studentNumber: string;
+    name: string;
+    nativeName: string | null;
+    status: string;
+    enrollmentStatus: string;
+  }>;
+};
+
 export type MobilePortalHome = TeacherPortalHome | ParentPortalHome;
 
 async function token() {
@@ -110,4 +125,22 @@ export async function getParentPortalAttendance(workspace: MobileWorkspace): Pro
   if (response.status === 404) throw new Error('Native guardian attendance is not enabled on the live ERP yet.');
   if (!response.ok) throw new Error('Attendance is temporarily unavailable.');
   return (await response.json()) as ParentPortalAttendance;
+}
+
+export async function getTeacherPortalClasses(workspace: MobileWorkspace): Promise<TeacherPortalClasses> {
+  if (workspace.accessMode !== 'portal' || workspace.surface !== 'teacher' || !workspace.branchId) {
+    throw new Error('Teacher classes require an assigned teacher branch.');
+  }
+  const accessToken = await token();
+  const params = new URLSearchParams({ tenantId: String(workspace.tenantId), branchId: String(workspace.branchId) });
+  const response = await fetch(`${apiOrigin}/api/mobile/portal/classes?${params.toString()}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  });
+  if (response.status === 401) throw new Error('Your session expired. Sign in again.');
+  if (response.status === 403) throw new Error('Your assigned teaching scope could not be verified.');
+  if (response.status === 404) throw new Error('Native teacher classes are not enabled on the live ERP yet.');
+  if (!response.ok) throw new Error('Assigned classes are temporarily unavailable.');
+  return (await response.json()) as TeacherPortalClasses;
 }
