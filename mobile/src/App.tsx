@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
 import HomePanel from './HomePanel';
+import PortalHomePanel from './PortalHomePanel';
 import StudentsPanel from './StudentsPanel';
 import { modulesBySurface } from './app-model';
 import { getMobileBootstrap, type MobileBootstrap, type MobileWorkspace } from './lib/mobile-api';
@@ -250,6 +251,8 @@ export default function App() {
     );
   }
 
+  const isPortal = workspace.accessMode === 'portal';
+
   return (
     <main className="workspace-shell">
       {!online ? <div className="offline-banner">Offline · reconnect to refresh data</div> : null}
@@ -258,7 +261,7 @@ export default function App() {
         <button className="ghost-button" type="button" onClick={() => void signOut()} disabled={busy}>Sign out</button>
       </header>
       <section className="workspace-intro">
-        <p className="eyebrow">{workspace.surface}</p>
+        <p className="eyebrow">{workspace.surface} · {workspace.accessMode}</p>
         <h1>{selectedModule?.label ?? 'Home'}</h1>
         <p>{selectedModule?.description ?? 'Your Ilmgaah workspace.'}</p>
       </section>
@@ -276,9 +279,9 @@ export default function App() {
         <div className="institution-card"><span>Workspace</span><strong>{workspaceLabel(workspace)}</strong></div>
       )}
 
-      {activeModule === 'home' ? <HomePanel workspace={workspace} online={online} /> : null}
-      {activeModule === 'attendance' ? <AttendancePanel workspace={workspace} online={online} /> : null}
-      {activeModule === 'students' ? <StudentsPanel workspace={workspace} online={online} /> : null}
+      {activeModule === 'home' ? (isPortal ? <PortalHomePanel workspace={workspace} online={online} /> : <HomePanel workspace={workspace} online={online} />) : null}
+      {activeModule === 'attendance' && !isPortal ? <AttendancePanel workspace={workspace} online={online} /> : null}
+      {activeModule === 'students' && !isPortal ? <StudentsPanel workspace={workspace} online={online} /> : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
         {modules.map((module, index) => (
