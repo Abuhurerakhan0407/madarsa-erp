@@ -16,6 +16,26 @@ function workspaceLabel(workspace: MobileWorkspace) {
   return workspace.branchName ? `${workspace.tenantName} · ${workspace.branchName}` : workspace.tenantName;
 }
 
+function moduleFromAppUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const isNativeScheme = url.protocol === 'ilmgaah:';
+    const isTrustedWebLink = url.protocol === 'https:' && (url.hostname === 'ilmgaah.in' || url.hostname === 'www.ilmgaah.in');
+    if (!isNativeScheme && !isTrustedWebLink) return null;
+
+    if (isNativeScheme && url.hostname) return url.hostname.toLowerCase();
+    const requested = url.searchParams.get('module')?.trim().toLowerCase();
+    if (requested) return requested;
+
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (!parts.length) return 'home';
+    if ((parts[0] === 'app' || parts[0] === 'mobile') && parts[1]) return parts[1].toLowerCase();
+    return parts[0].toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [online, setOnline] = useState(true);
   const [email, setEmail] = useState('');
@@ -25,6 +45,10 @@ export default function App() {
   const [bootstrap, setBootstrap] = useState<MobileBootstrap | null>(null);
   const [workspace, setWorkspace] = useState<MobileWorkspace | null>(null);
   const [activeModule, setActiveModule] = useState('home');
+  const [pendingModule, setPendingModule] = useState<string | null>(null);
+
+  const modules = useMemo(() => (workspace ? modulesBySurface[workspace.surface] : []), [workspace]);
+  const selectedModule = modules.find((item) => item.id === activeModule) ?? modules[0];
 
   useEffect(() => {
     void StatusBar.setStyle({ style: Style.Light }).catch(() => undefined);
@@ -37,10 +61,31 @@ export default function App() {
       if (status.connected) setError((current) => (current === 'You are offline.' ? null : current));
     });
 
+    const urlListener = CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+      const requestedModule = moduleFromAppUrl(url);
+      if (requestedModule) setPendingModule(requestedModule);
+    });
+
+    void CapacitorApp.getLaunchUrl().then((launch) => {
+      if (!launch?.url) return;
+      const requestedModule = moduleFromAppUrl(launch.url);
+      if (requestedModule) setPendingModule(requestedModule);
+    }).catch(() => undefined);
+
     return () => {
       void networkListener.then((handle) => handle.remove());
+      void urlListener.then((handle) => handle.remove());
     };
   }, []);
+
+  useEffect(() => {
+    if (!pendingModule || !workspace) return;
+    if (modules.some((module) => module.id === pendingModule)) {
+      setActiveModule(pendingModule);
+      feedback();
+    }
+    setPendingModule(null);
+  }, [modules, pendingModule, workspace]);
 
   useEffect(() => {
     const listener = CapacitorApp.addListener('backButton', ({ canGoBack }) => {
@@ -61,8 +106,38 @@ export default function App() {
     };
   }, [activeModule, workspace]);
 
-  const modules = useMemo(() => (workspace ? modulesBySurface[workspace.surface] : []), [workspace]);
-  const selectedModule = modules.find((item) => item.id === activeModule) ?? modules[0];
+  useEffect(() => {
+    const listener = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) return;
+      void Network.getStatus().then(async (status) => {
+        setOnline(status.connected);
+        if (!status.connected || !workspace || !supabase) return;
+
+        const { data, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !data.session) {
+          setBootstrap(null);
+          setWorkspace(null);
+          setActiveModule('home');
+          setError('Your session expired. Sign in again.');
+        }
+      }).catch(() => undefined);
+    });
+
+    return () => {
+      void listener.then((handle) => handle.remove());
+    };
+  }, [workspace]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== 'SIGNED_OUT') return;
+      setBootstrap(null);
+      setWorkspace(null);
+      setActiveModule('home');
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const signIn = useCallback(async () => {
     setError(null);
@@ -229,7 +304,7 @@ export default function App() {
       )}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
-        {modules.map((module) => (
+        {modules.map((module, index) => (
           <button
             key={module.id}
             type="button"
@@ -239,7 +314,7 @@ export default function App() {
               feedback();
             }}
           >
-            <span className="module-index">{String(modules.indexOf(module) + 1).padStart(2, '0')}</span>
+            <span className="module-index">{String(index + 1).padStart(2, '0')}</span>
             <strong>{module.shortLabel}</strong>
             <span>{module.description}</span>
           </button>
