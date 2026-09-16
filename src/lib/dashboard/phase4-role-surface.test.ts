@@ -24,6 +24,13 @@ describe("Client V3 Phase 4 role surfaces", () => {
     expect(teacher).not.toContain("/admissions");
   });
 
+  it("keeps dashboard quick routes inside the visible release scope", () => {
+    expect(dashboard).toContain("/${locale}/portals");
+    expect(dashboard).not.toContain("/${locale}/demo");
+    expect(dashboard).not.toContain("/${locale}/programs");
+    expect(dashboard).not.toContain("showfullsuite");
+  });
+
   it("gives incomplete office setup one clear guided next action", () => {
     expect(dashboard).toContain("getguidedsetupsnapshot(locale)");
     expect(dashboard).toContain("!setup.steps.start");
