@@ -55,6 +55,20 @@ export type ParentPortalHome = {
   };
 };
 
+export type ParentPortalAttendance = {
+  readOnly: true;
+  children: Array<{
+    personId: number;
+    studentNumber: string | null;
+    name: string;
+    dailyPercent: number;
+    weeklyPercent: number;
+    monthlyPercent: number;
+    trend: Array<{ date: string | null; percent: number; recorded: number }>;
+    recent: Array<{ date: string | null; status: string | null; source: string | null; markedAt: string | null }>;
+  }>;
+};
+
 export type MobilePortalHome = TeacherPortalHome | ParentPortalHome;
 
 async function token() {
@@ -80,4 +94,20 @@ export async function getMobilePortalHome(workspace: MobileWorkspace): Promise<M
   if (response.status === 404) throw new Error('Native portal access is not enabled on the live ERP yet.');
   if (!response.ok) throw new Error('Portal data is temporarily unavailable.');
   return (await response.json()) as MobilePortalHome;
+}
+
+export async function getParentPortalAttendance(workspace: MobileWorkspace): Promise<ParentPortalAttendance> {
+  if (workspace.accessMode !== 'portal' || workspace.surface !== 'parent') throw new Error('Guardian attendance requires a parent portal workspace.');
+  const accessToken = await token();
+  const params = new URLSearchParams({ tenantId: String(workspace.tenantId) });
+  const response = await fetch(`${apiOrigin}/api/mobile/portal/attendance?${params.toString()}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  });
+  if (response.status === 401) throw new Error('Your session expired. Sign in again.');
+  if (response.status === 403) throw new Error('Guardian access could not be verified.');
+  if (response.status === 404) throw new Error('Native guardian attendance is not enabled on the live ERP yet.');
+  if (!response.ok) throw new Error('Attendance is temporarily unavailable.');
+  return (await response.json()) as ParentPortalAttendance;
 }
