@@ -10,6 +10,9 @@ const batchId = read("../../app/[locale]/students/id-cards/print/page.tsx");
 const batchPdf = read("../../app/api/students/id-cards/pdf/route.ts");
 const documentsPage = read("../../app/[locale]/documents/page.tsx");
 const documentsPdf = read("../../app/api/documents/pdf/route.ts");
+const studentDocuments = read("../documents/student-files.ts");
+const studentDocumentsPage = read("../../app/[locale]/documents/student-documents/[personId]/page.tsx");
+const studentDocumentDownload = read("../../app/api/students/[personId]/documents/[documentId]/download/route.ts");
 const photoUpload = read("../../app/api/students/photo/[personId]/upload/route.ts");
 
 describe("student operations UI hardening", () => {
@@ -47,6 +50,15 @@ describe("student operations UI hardening", () => {
     expect(documentsPdf).not.toContain("Multiple academic years");
     expect(documentsPdf).toContain("academicYears.length!==1");
     expect(documentsPdf).toContain("{label:'Native name',value:student.nativeName}");
+  });
+
+  it("shows only real linked student documents and keeps downloads private", () => {
+    expect(documentsPage).toContain("student-documents/${studentPersonId}");
+    expect(studentDocuments).toContain('in("target_type", ["student", "person"])');
+    expect(studentDocuments).toContain('operatorHasPermissions(workspace, ["documents.file.read"])');
+    expect(studentDocumentsPage).toContain("No required-document checklist is configured");
+    expect(studentDocumentDownload).toContain('startsWith(`${workspace.tenantId}/`)');
+    expect(studentDocumentDownload).toContain('storage.from("tenant-documents").createSignedUrl');
   });
 
   it("removes the previous tenant-scoped private photo object after a successful replacement", () => {

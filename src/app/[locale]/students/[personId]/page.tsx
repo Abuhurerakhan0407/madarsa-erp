@@ -78,7 +78,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
             {!isTeacher ? <Link className="action-button action-button-primary" href={`/${locale}/students/${personId}/id-card`}>{text.printId}</Link> : null}
             <Link className="action-button" href={`/${locale}/attendance?q=${encodeURIComponent(student.studentNumber)}`}>{text.openAttendance}</Link>
             <Link className="action-button" href={`/${locale}/quran/${personId}`}>{text.quranProgress}</Link>
-            {!isTeacher ? <Link className="action-button" href={`/${locale}/documents?student=${personId}`}>{text.documents}</Link> : null}
+            {!isTeacher ? <Link className="action-button" href={`/${locale}/documents/student-documents/${personId}`}>{text.documents}</Link> : null}
           </div>
         </article>
       </div>
