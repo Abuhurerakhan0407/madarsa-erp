@@ -19,18 +19,39 @@ const validPoolerUrl =
 const validLocalRestoreUrl = "postgresql://postgres:secret@127.0.0.1:54329/postgres";
 
 function runValidation(overrides: Record<string, string>) {
-  return spawnSync("bash", ["scripts/recovery-drill.sh"], {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      SOURCE_DB_URL: validPoolerUrl,
-      RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
-      RESTORE_DB_URL: validLocalRestoreUrl,
-      RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
-      TARGET_RPO_HOURS: "24",
-      ...overrides
+  const validationEnv = {
+    SOURCE_DB_URL: validPoolerUrl,
+    RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
+    RESTORE_DB_URL: validLocalRestoreUrl,
+    RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
+    TARGET_RPO_HOURS: "24",
+    ...overrides
+  };
+  const injectedEnvironment = [
+    'export SOURCE_DB_URL="$1"',
+    'export RECOVERY_PASSPHRASE="$2"',
+    'export RESTORE_DB_URL="$3"',
+    'export RECOVERY_OUTPUT_DIR="$4"',
+    'export TARGET_RPO_HOURS="$5"'
+  ].join("\n");
+
+  return spawnSync(
+    "bash",
+    [
+      "-s",
+      "--",
+      validationEnv.SOURCE_DB_URL,
+      validationEnv.RECOVERY_PASSPHRASE,
+      validationEnv.RESTORE_DB_URL,
+      validationEnv.RECOVERY_OUTPUT_DIR,
+      validationEnv.TARGET_RPO_HOURS
+    ],
+    {
+      encoding: "utf8",
+      input: `${injectedEnvironment}\n${script.replace(/\r\n?/g, "\n")}`,
+      env: process.env
     }
-  });
+  );
 }
 
 describe("database recovery drill automation", () => {
