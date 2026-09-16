@@ -13,24 +13,61 @@ type Workspace = {
   roleKeys: string[];
 };
 
+const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
+
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization")?.trim() ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
   return match?.[1]?.trim() || null;
 }
 
-function unauthorized() {
-  return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+function nativeCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get("origin")?.trim() ?? "";
+  if (!origin || !NATIVE_ORIGINS.has(origin)) return null;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin"
+  };
+}
+
+function json(request: NextRequest, body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  const cors = nativeCorsHeaders(request);
+  if (cors) {
+    for (const [key, value] of Object.entries(cors)) response.headers.set(key, value);
+  }
+  response.headers.set("Cache-Control", "no-store, private");
+  return response;
+}
+
+function unauthorized(request: NextRequest) {
+  return json(request, { error: "unauthorized" }, { status: 401 });
+}
+
+export function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin")?.trim() ?? "";
+  if (!NATIVE_ORIGINS.has(origin)) {
+    return new NextResponse(null, { status: 403, headers: { Vary: "Origin" } });
+  }
+  return new NextResponse(null, { status: 204, headers: nativeCorsHeaders(request) ?? undefined });
 }
 
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin")?.trim() ?? "";
+  if (origin && !NATIVE_ORIGINS.has(origin) && origin !== request.nextUrl.origin) {
+    return json(request, { error: "origin_not_allowed" }, { status: 403 });
+  }
+
   const token = getBearerToken(request);
-  if (!token) return unauthorized();
+  if (!token) return unauthorized(request);
 
   const admin = createAdminClient();
   const { data: authData, error: authError } = await admin.auth.getUser(token);
   const user = authData.user;
-  if (authError || !user) return unauthorized();
+  if (authError || !user) return unauthorized(request);
 
   const now = new Date().toISOString();
   const { data: memberships, error: membershipError } = await admin
@@ -46,7 +83,7 @@ export async function GET(request: NextRequest) {
     console.error("mobile bootstrap membership resolution failed", {
       code: membershipError.code
     });
-    return NextResponse.json({ error: "workspace_unavailable" }, { status: 503 });
+    return json(request, { error: "workspace_unavailable" }, { status: 503 });
   }
 
   const workspaces: Workspace[] = [];
@@ -166,19 +203,12 @@ export async function GET(request: NextRequest) {
       ? user.user_metadata.display_name.trim()
       : user.email ?? "Account";
 
-  return NextResponse.json(
-    {
-      identity: {
-        id: user.id,
-        email: user.email ?? null,
-        displayName
-      },
-      workspaces
+  return json(request, {
+    identity: {
+      id: user.id,
+      email: user.email ?? null,
+      displayName
     },
-    {
-      headers: {
-        "Cache-Control": "no-store, private"
-      }
-    }
-  );
+    workspaces
+  });
 }
