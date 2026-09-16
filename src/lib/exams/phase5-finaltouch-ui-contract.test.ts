@@ -23,10 +23,13 @@ describe("Phase 5 Exams final-touch UI contract",()=>{
     expect(css).toContain("grid-template-columns: minmax(0, 1fr)");
   });
 
-  it("preserves the governed marks-open lock in the existing client workspace",()=>{
+  it("preserves the governed marks-open lock through the centralized state helper",()=>{
     const hub=read("src/components/exams-results-v2-hub.tsx");
-    expect(hub).toContain('selectedExam.state!=="marks_open"');
-    expect(hub).toContain('selectedExam.state==="marks_open"');
-    expect(hub).toContain('selectedExam.state!=="results_published"');
+    const state=read("src/lib/exams/state.ts");
+    expect(hub).toContain('disabled={!availability?.enterMarks}');
+    expect(hub).toContain('availability?.moderateMarks');
+    expect(state).toContain("const editable=input.state==='marks_open'");
+    expect(state).toContain("const moderationState=['marks_open','marks_locked','results_approved']");
+    expect(state).toContain("reports:input.state==='results_published'");
   });
 });
