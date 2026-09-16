@@ -32,20 +32,6 @@ export async function resolveMobileStaffWorkspace(
   const user = authData.user;
   if (authError || !user) return null;
 
-  const now = new Date().toISOString();
-  const { data: memberships, error: membershipError } = await admin
-    .from("memberships")
-    .select("id, tenant_id, all_branches")
-    .eq("identity_id", user.id)
-    .eq("tenant_id", options.tenantId)
-    .eq("status", "active")
-    .or(`starts_at.is.null,starts_at.lte.${now}`)
-    .or(`ends_at.is.null,ends_at.gt.${now}`)
-    .limit(1);
-
-  const membership = memberships?.[0];
-  if (membershipError || !membership) return null;
-
   const { data: tenant, error: tenantError } = await admin
     .from("tenants")
     .select("id, state, primary_branch_id")
@@ -53,63 +39,95 @@ export async function resolveMobileStaffWorkspace(
     .maybeSingle();
   if (tenantError || !tenant || tenant.state !== "active") return null;
 
-  const { data: roleLinks, error: roleLinkError } = await admin
-    .from("membership_roles")
-    .select("role_id")
-    .eq("tenant_id", options.tenantId)
-    .eq("membership_id", membership.id);
-  if (roleLinkError) return null;
-
-  const roleIds = (roleLinks ?? []).map((row) => row.role_id);
-  if (!roleIds.length) return null;
-
-  const { data: roles, error: roleError } = await admin
-    .from("roles")
-    .select("key")
+  const now = new Date().toISOString();
+  const { data: memberships, error: membershipError } = await admin
+    .from("memberships")
+    .select("id, tenant_id, all_branches, created_at")
+    .eq("identity_id", user.id)
     .eq("tenant_id", options.tenantId)
     .eq("status", "active")
-    .in("id", roleIds);
-  if (roleError) return null;
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gt.${now}`)
+    .order("created_at", { ascending: true });
+  if (membershipError || !memberships?.length) return null;
 
-  const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
-  const surface = roleKeys.includes("teacher") && !roleKeys.some((key) => key === "owner" || key === "admin" || key === "accountant")
-    ? "teacher"
-    : roleKeys.some((key) => key === "owner" || key === "admin" || key === "accountant")
-      ? "admin"
-      : null;
-  if (!surface) return null;
+  const requestedBranchId = options.branchId ?? null;
 
-  let branchId = options.branchId ?? null;
-  if (membership.all_branches) {
-    branchId = branchId ?? tenant.primary_branch_id ?? null;
-  } else {
-    const { data: scopes, error: scopeError } = await admin
-      .from("membership_branch_scopes")
-      .select("branch_id")
+  for (const membership of memberships) {
+    const { data: roleLinks, error: roleLinkError } = await admin
+      .from("membership_roles")
+      .select("role_id")
       .eq("tenant_id", options.tenantId)
       .eq("membership_id", membership.id);
-    if (scopeError || !scopes?.length) return null;
+    if (roleLinkError) continue;
 
-    const allowedBranchIds = new Set(scopes.map((scope) => scope.branch_id));
-    if (branchId == null) branchId = scopes[0].branch_id;
-    if (!allowedBranchIds.has(branchId)) return null;
-  }
+    const roleIds = (roleLinks ?? []).map((row) => row.role_id);
+    if (!roleIds.length) continue;
 
-  if (branchId != null) {
+    const { data: roles, error: roleError } = await admin
+      .from("roles")
+      .select("key")
+      .eq("tenant_id", options.tenantId)
+      .eq("status", "active")
+      .in("id", roleIds);
+    if (roleError) continue;
+
+    const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
+    const isAdmin = roleKeys.some((key) => key === "owner" || key === "admin" || key === "accountant");
+    const surface = isAdmin ? "admin" : roleKeys.includes("teacher") ? "teacher" : null;
+    if (!surface) continue;
+
+    let branchId: number | null = requestedBranchId;
+
+    if (membership.all_branches) {
+      if (branchId == null) {
+        const primaryBranchId = tenant.primary_branch_id;
+        if (typeof primaryBranchId === "number" && Number.isInteger(primaryBranchId) && primaryBranchId > 0) {
+          branchId = primaryBranchId;
+        } else {
+          const { data: firstBranch, error: firstBranchError } = await admin
+            .from("branches")
+            .select("id")
+            .eq("tenant_id", options.tenantId)
+            .eq("status", "active")
+            .order("id", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (firstBranchError || !firstBranch) continue;
+          branchId = firstBranch.id;
+        }
+      }
+    } else {
+      const { data: scopes, error: scopeError } = await admin
+        .from("membership_branch_scopes")
+        .select("branch_id")
+        .eq("tenant_id", options.tenantId)
+        .eq("membership_id", membership.id)
+        .order("branch_id", { ascending: true });
+      if (scopeError || !scopes?.length) continue;
+
+      const allowedBranchIds = new Set(scopes.map((scope) => scope.branch_id));
+      if (branchId == null) branchId = scopes[0].branch_id;
+      if (!allowedBranchIds.has(branchId)) continue;
+    }
+
+    if (branchId == null) continue;
     const { data: branch, error: branchError } = await admin
       .from("branches")
       .select("id, status")
       .eq("tenant_id", options.tenantId)
       .eq("id", branchId)
       .maybeSingle();
-    if (branchError || !branch || branch.status !== "active") return null;
+    if (branchError || !branch || branch.status !== "active") continue;
+
+    return {
+      identityId: user.id,
+      tenantId: options.tenantId,
+      branchId,
+      roleKeys,
+      surface,
+    };
   }
 
-  return {
-    identityId: user.id,
-    tenantId: options.tenantId,
-    branchId,
-    roleKeys,
-    surface,
-  };
+  return null;
 }
