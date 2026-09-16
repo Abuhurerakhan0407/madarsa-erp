@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TeacherProfileForm } from "@/components/teacher-profile-form";
+import { EntityNotFoundState } from "@/components/workspace-ui";
 import { isLocale, type SupportedLocale } from "@/lib/i18n/config";
 import type { TeacherLabels } from "@/lib/teachers/workspace";
 import { getTeacherByEmploymentId } from "@/lib/teachers/workspace";
@@ -79,10 +80,10 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   const id = Number(rawId);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
 
-  const data = await getTeacherByEmploymentId(id);
-  if (!data) notFound();
-  const teacher = data.teacher;
   const text = copy[locale];
+  const data = await getTeacherByEmploymentId(id);
+  if (!data) return <EntityNotFoundState locale={locale} entityLabel={text.teacher} backHref={`/${locale}/staff`} backLabel={text.all} />;
+  const teacher = data.teacher;
   const dateLocale = locale === "ur" ? "ur-PK" : "en-US";
 
   return (

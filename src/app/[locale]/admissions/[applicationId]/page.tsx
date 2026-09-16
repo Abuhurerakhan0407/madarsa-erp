@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdmissionSimpleActions } from "@/components/admission-simple-actions";
+import { EntityNotFoundState } from "@/components/workspace-ui";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
 import { admissionDecisionOutcomeLabel, admissionReviewOutcomeLabel, admissionReviewTypeLabel, admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { Locale } from "@/lib/i18n/config";
@@ -93,13 +94,12 @@ export default async function AdmissionDetailPage({ params }: AdmissionDetailPag
   const workspace = await getTenantContext();
   if (!workspace || !Number.isSafeInteger(applicationId) || applicationId <= 0) notFound();
 
+  const text = copy[locale];
   const [detail, createOptions] = await Promise.all([
     getAdmissionDetail(workspace, applicationId),
     getStudentCreateOptions(locale)
   ]);
-  if (!detail) notFound();
-
-  const text = copy[locale];
+  if (!detail) return <EntityNotFoundState locale={locale} entityLabel={text.title} backHref={`/${locale}/admissions`} backLabel={text.back} />;
   const historyCount = detail.reviews.length + detail.decisions.length;
 
   return (

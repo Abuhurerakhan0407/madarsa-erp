@@ -5,6 +5,7 @@ import { getQuranStudentDetail } from "@/lib/quran/detail";
 import { quranOutcomeLabel, quranWorkLabel, quranCopy } from "@/lib/quran/copy";
 import { PrintAction } from "@/components/print-action";
 import { QuranCorrectionControl } from "@/components/quran-correction-control";
+import { EntityNotFoundState } from "@/components/workspace-ui";
 
 const extra={
   en:{back:"Qur'an register",student:"Student profile",print:"Print progress report",wall:"30-Juz Hifz wall",history:"Recitation history",mistakes:"Mistake patterns",revisions:"Revision obligations",attempts:"Attempts",average:"Average score",passed:"Passed",repeat:"Repeat",openRevision:"Open revision",remarks:"Remarks",parent:"Parent note",private:"Private staff note",none:"None",notStarted:"Not started",sessions:"sessions",due:"Due",corrected:"Corrected",correctionReason:"Correction reason"},
@@ -14,8 +15,13 @@ const extra={
 
 export default async function QuranStudentPage({params}:{params:Promise<{locale:string;personId:string}>}){
   const {locale:raw,personId:rawId}=await params;const locale=(raw==="ur"||raw==="ar"?raw:"en") as Locale;const personId=Number(rawId);if(!Number.isInteger(personId)||personId<1)notFound();
-  let data;try{data=await getQuranStudentDetail(personId);}catch{notFound();}
   const t=extra[locale],qt=quranCopy[locale];
+  let data;
+  try{data=await getQuranStudentDetail(personId);}
+  catch(error){
+    if(error instanceof Error&&error.message==="Student Qur'an record not found.")return <EntityNotFoundState locale={locale} entityLabel={t.student} backHref={`/${locale}/quran`} backLabel={t.back} />;
+    throw error;
+  }
   return <div className="quran-detail-report">
     <section className="page-heading quran-detail-heading" data-page-section><div><p className="state-kicker">{data.student.studentNumber}</p><h1>{data.student.name}</h1><p>{data.student.groupName||"—"}{data.student.nameNative?` · ${data.student.nameNative}`:""}</p></div><div className="quran-detail-actions no-print"><Link className="action-button" href={`/${locale}/quran`}>{t.back}</Link><Link className="action-button" href={`/${locale}/students/${personId}`}>{t.student}</Link><PrintAction label={t.print}/></div></section>
     <section className="quran-detail-metrics" data-page-section>{[[t.attempts,data.summary.attempts],[t.average,data.summary.averageScore??"—"],[t.passed,data.summary.passed],[t.repeat,data.summary.repeat],[t.openRevision,data.summary.openRevision]].map(([label,value])=><article className="quran-metric" key={String(label)}><span>{label}</span><strong>{value}</strong></article>)}</section>

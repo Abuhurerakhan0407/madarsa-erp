@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
-import { SuccessNotice, WorkspacePageHeader } from "@/components/workspace-ui";
+import { EntityNotFoundState, SuccessNotice, WorkspacePageHeader } from "@/components/workspace-ui";
 import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { Locale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
@@ -34,9 +34,9 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   if (!Number.isInteger(personId) || personId <= 0 || !workspace) notFound();
   const audience = await getNavigationAudience(workspace);
   const isTeacher = audience === "teacher";
-  const student = await getStudentDetail(personId, locale);
-  if (!student) notFound();
   const text = copy[locale];
+  const student = await getStudentDetail(personId, locale);
+  if (!student) return <EntityNotFoundState locale={locale} entityLabel={text.kicker} backHref={isTeacher ? `/${locale}/my-students` : `/${locale}/students`} backLabel={isTeacher ? text.backTeaching : text.back} />;
   const profile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
   const showFinance = !isTeacher && isCapabilityEnabled(profile, "fees_accounting");
   const hasMetrics = student.attendance !== null || student.quranAttempts !== null || student.resultCount !== null;

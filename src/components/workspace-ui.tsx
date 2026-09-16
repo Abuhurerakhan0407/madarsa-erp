@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { SupportedLocale } from "@/lib/i18n/config";
+import type { Locale } from "@/lib/i18n/config";
 
 export type WorkspaceAction = {
   label: string;
@@ -170,8 +170,8 @@ export function ResponsiveTable({ table, cards, label }: { table: ReactNode; car
 }
 
 
-export function EntityNotFoundState({ locale, entityLabel, backHref, backLabel }: { locale: SupportedLocale; entityLabel: string; backHref: string; backLabel: string }) {
-  const title = locale === "ur" ? `${entityLabel} نہیں ملا` : `${entityLabel} not found`;
-  const body = locale === "ur" ? "یہ ریکارڈ موجود نہیں ہے یا آپ کو اس تک رسائی نہیں ہے۔" : "This record does not exist, is no longer available, or is outside your access.";
+export function EntityNotFoundState({ locale, entityLabel, backHref, backLabel }: { locale: Locale; entityLabel: string; backHref: string; backLabel: string }) {
+  const title = locale === "ur" ? `${entityLabel} \u0646\u06c1\u06cc\u06ba \u0645\u0644\u0627` : `${entityLabel} not found`;
+  const body = locale === "ur" ? "\u06cc\u06c1 \u0631\u06cc\u06a9\u0627\u0631\u0688 \u0645\u0648\u062c\u0648\u062f \u0646\u06c1\u06cc\u06ba \u06c1\u06d2 \u06cc\u0627 \u0622\u067e \u06a9\u0648 \u0627\u0633 \u062a\u06a9 \u0631\u0633\u0627\u0626\u06cc \u0646\u06c1\u06cc\u06ba \u06c1\u06d2\u06d4" : "This record does not exist, is no longer available, or is outside your access.";
   return <WorkspaceState code="404" eyebrow="Ilmgaah" title={title} body={body} action={<Link className="action-button action-button-primary" href={backHref}>{backLabel}</Link>} />;
 }

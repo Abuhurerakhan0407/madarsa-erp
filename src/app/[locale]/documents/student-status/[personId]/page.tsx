@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StudentStatusCertificateAction } from "@/components/student-status-certificate-action";
+import { EntityNotFoundState } from "@/components/workspace-ui";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentStatusCertificate } from "@/lib/documents/student-status";
@@ -18,9 +19,9 @@ export default async function StudentStatusCertificatePage({ params }: { params:
   const locale = rawLocale as Locale;
   const personId = Number(rawPersonId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
-  const [certificate, student] = await Promise.all([getStudentStatusCertificate(personId), getStudentDetail(personId, locale)]);
-  if (!student) notFound();
   const t = copy[locale];
+  const [certificate, student] = await Promise.all([getStudentStatusCertificate(personId), getStudentDetail(personId, locale)]);
+  if (!student) return <EntityNotFoundState locale={locale} entityLabel={t.status} backHref={`/${locale}/documents`} backLabel={t.back} />;
 
   return <div className="documents-shell">
     <section className="documents-hero"><div><p className="eyebrow">{t.title}</p><h1>{student.name}</h1><p>{t.body}</p></div><Link className="secondary-button" href={`/${locale}/documents`}>{t.back}</Link></section>
