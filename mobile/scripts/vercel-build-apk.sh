@@ -6,18 +6,20 @@ MOBILE="$ROOT/mobile"
 OUT="$MOBILE/apk-dist"
 SDK="$MOBILE/.android-sdk"
 TOOLS_ZIP="$MOBILE/.commandlinetools.zip"
+CONFIG_BACKUP="$MOBILE/.capacitor.config.production.tmp"
 
 mkdir -p "$OUT" "$SDK/cmdline-tools"
-rm -rf "$OUT"/* "$MOBILE/android" "$SDK" "$TOOLS_ZIP"
+rm -rf "$OUT"/* "$MOBILE/android" "$SDK" "$TOOLS_ZIP" "$CONFIG_BACKUP"
 mkdir -p "$OUT" "$SDK/cmdline-tools"
+cp "$MOBILE/capacitor.config.ts" "$CONFIG_BACKUP"
+trap 'cp "$CONFIG_BACKUP" "$MOBILE/capacitor.config.ts" 2>/dev/null || true; rm -f "$CONFIG_BACKUP"' EXIT
 
 echo '== Ilmgaah isolated Android builder =='
 echo "Commit: ${VERCEL_GIT_COMMIT_SHA:-unknown}"
 echo "Branch: ${VERCEL_GIT_COMMIT_REF:-unknown}"
 echo 'This build changes no ERP runtime/database state.'
 
-# Capacitor 8 requires Java 21. Vercel's base image includes Java 11,
-# so install Corretto 21 only inside this disposable build container.
+# Capacitor 8 requires Java 21. Install it only inside this disposable builder.
 dnf install -y java-21-amazon-corretto-devel >/dev/null
 JAVA_BIN="$(readlink -f "$(command -v javac)")"
 export JAVA_HOME="$(dirname "$(dirname "$JAVA_BIN")")"
@@ -39,7 +41,6 @@ export ANDROID_HOME="$SDK"
 export ANDROID_SDK_ROOT="$SDK"
 export PATH="$SDK/cmdline-tools/latest/bin:$SDK/platform-tools:$SDK/build-tools/36.0.0:$PATH"
 
-# Accept official Android SDK licenses non-interactively in the disposable builder.
 set +o pipefail
 yes | sdkmanager --sdk_root="$SDK" --licenses >/dev/null
 set -o pipefail
@@ -48,24 +49,31 @@ sdkmanager --sdk_root="$SDK" \
   'platforms;android-36' \
   'build-tools;36.0.0'
 
-# Build only the isolated mobile workspace. Vercel sets NODE_ENV=production,
-# so explicitly include devDependencies required for TypeScript/Vite/Capacitor CLI.
+# Reuse the ERP's public Supabase client configuration when Vercel exposes it.
+# Never map server/admin/service-role secrets into Vite client variables.
+export VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
+export VITE_SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY:-${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}}"
+export VITE_ILMGAAH_API_ORIGIN="${VITE_ILMGAAH_API_ORIGIN:-https://madarsa-erp.vercel.app}"
+if [[ -n "$VITE_SUPABASE_URL" && -n "$VITE_SUPABASE_PUBLISHABLE_KEY" ]]; then
+  echo 'Native preview public auth configuration: available'
+else
+  echo 'Native preview public auth configuration: not injected; UI will remain safely unconfigured'
+fi
+
+# Build/typecheck the bundled React mobile UI once. Vercel uses NODE_ENV=production,
+# so explicitly install devDependencies needed by TypeScript/Vite/Capacitor CLI.
 npm --prefix "$MOBILE" install --include=dev --no-audit --no-fund
 npm --prefix "$MOBILE" run build
 
-# Internal-development APK: loads the canonical HTTPS ERP at runtime so web
-# deployments appear without rebuilding/reinstalling this APK.
-cp "$MOBILE/capacitor.config.dev.ts" "$MOBILE/capacitor.config.ts"
-(
-  cd "$MOBILE"
-  npx cap add android
-  npx cap sync android
-  npm run assets:android
-)
+APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+AAPT="$(find "$SDK/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+export GRADLE_OPTS='-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8'
+export ILMGAAH_MOBILE_DIR="$MOBILE"
 
-# Defense-in-depth Android network/backup policy for the generated project.
-mkdir -p "$MOBILE/android/app/src/main/res/xml"
-cat > "$MOBILE/android/app/src/main/res/xml/network_security_config.xml" <<'XML'
+harden_android() {
+  local version_name="$1"
+  mkdir -p "$MOBILE/android/app/src/main/res/xml"
+  cat > "$MOBILE/android/app/src/main/res/xml/network_security_config.xml" <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <base-config cleartextTrafficPermitted="false">
@@ -76,11 +84,11 @@ cat > "$MOBILE/android/app/src/main/res/xml/network_security_config.xml" <<'XML'
 </network-security-config>
 XML
 
-python3 - <<'PY'
+  ILMGAAH_VERSION_NAME="$version_name" python3 - <<'PY'
 from pathlib import Path
 import os, re
 
-mobile = Path(os.environ.get('MOBILE_DIR', 'mobile'))
+mobile = Path(os.environ['ILMGAAH_MOBILE_DIR'])
 manifest = mobile / 'android/app/src/main/AndroidManifest.xml'
 text = manifest.read_text(encoding='utf-8')
 text = text.replace('android:allowBackup="true"', 'android:allowBackup="false"', 1)
@@ -100,55 +108,107 @@ try:
 except ValueError:
     build_number = 1
 src = re.sub(r'versionCode\s+\d+', f'versionCode {build_number}', src, count=1)
-src = re.sub(r'versionName\s+"[^"]+"', 'versionName "0.1.0-dev"', src, count=1)
+src = re.sub(r'versionName\s+"[^"]+"', f'versionName "{os.environ["ILMGAAH_VERSION_NAME"]}"', src, count=1)
 gradle.write_text(src, encoding='utf-8')
 PY
 
-# Assert generated hardening before compiling.
-grep -q 'android:allowBackup="false"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
-grep -q 'android:usesCleartextTraffic="false"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
-grep -q 'android:networkSecurityConfig="@xml/network_security_config"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
-grep -q 'cleartextTrafficPermitted="false"' "$MOBILE/android/app/src/main/res/xml/network_security_config.xml"
-grep -q 'targetSdkVersion = 36' "$MOBILE/android/variables.gradle"
-grep -q 'compileSdkVersion = 36' "$MOBILE/android/variables.gradle"
+  grep -q 'android:allowBackup="false"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
+  grep -q 'android:usesCleartextTraffic="false"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
+  grep -q 'android:networkSecurityConfig="@xml/network_security_config"' "$MOBILE/android/app/src/main/AndroidManifest.xml"
+  grep -q 'cleartextTrafficPermitted="false"' "$MOBILE/android/app/src/main/res/xml/network_security_config.xml"
+  grep -q 'targetSdkVersion = 36' "$MOBILE/android/variables.gradle"
+  grep -q 'compileSdkVersion = 36' "$MOBILE/android/variables.gradle"
+}
 
-export GRADLE_OPTS='-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8'
-(
-  cd "$MOBILE/android"
-  chmod +x gradlew
-  ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug
-)
+verify_and_export() {
+  local output_name="$1"
+  local expected_package="$2"
+  local report_prefix="$3"
+  local apk="$MOBILE/android/app/build/outputs/apk/debug/app-debug.apk"
 
-APK="$MOBILE/android/app/build/outputs/apk/debug/app-debug.apk"
-test -s "$APK"
-APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-AAPT="$(find "$SDK/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-"$APKSIGNER" verify --verbose --print-certs "$APK" | tee "$OUT/apk-signature.txt"
-"$AAPT" dump badging "$APK" | tee "$OUT/apk-badging.txt"
-grep -q "package: name='in.ilmgaah.app'" "$OUT/apk-badging.txt"
-grep -q "targetSdkVersion:'36'" "$OUT/apk-badging.txt"
+  test -s "$apk"
+  "$APKSIGNER" verify --verbose --print-certs "$apk" | tee "$OUT/${report_prefix}-signature.txt"
+  "$AAPT" dump badging "$apk" | tee "$OUT/${report_prefix}-badging.txt"
+  grep -q "package: name='${expected_package}'" "$OUT/${report_prefix}-badging.txt"
+  grep -q "targetSdkVersion:'36'" "$OUT/${report_prefix}-badging.txt"
+  cp "$apk" "$OUT/$output_name"
+  (cd "$OUT" && sha256sum "$output_name" > "${output_name}.sha256")
+}
 
-cp "$APK" "$OUT/Ilmgaah-Android-Dev.apk"
-(
-  cd "$OUT"
-  sha256sum Ilmgaah-Android-Dev.apk > Ilmgaah-Android-Dev.sha256
-)
+build_variant() {
+  local config_file="$1"
+  local version_name="$2"
+  local output_name="$3"
+  local expected_package="$4"
+  local report_prefix="$5"
+  local run_full_checks="$6"
+
+  echo "== Building ${output_name} =="
+  rm -rf "$MOBILE/android"
+  cp "$MOBILE/$config_file" "$MOBILE/capacitor.config.ts"
+  (
+    cd "$MOBILE"
+    npx cap add android
+    npx cap sync android
+    npm run assets:android
+  )
+  harden_android "$version_name"
+
+  (
+    cd "$MOBILE/android"
+    chmod +x gradlew
+    if [[ "$run_full_checks" == 'yes' ]]; then
+      ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug
+    else
+      ./gradlew --no-daemon assembleDebug
+    fi
+  )
+
+  verify_and_export "$output_name" "$expected_package" "$report_prefix"
+}
+
+# Bundled native preview has a separate app ID, so it can coexist with the already-installed
+# live-web development APK. It is still debug-signed and is not a Play release binary.
+build_variant \
+  'capacitor.config.preview.ts' \
+  '0.2.0-native-preview' \
+  'Ilmgaah-Android-Native-Preview.apk' \
+  'in.ilmgaah.app.preview' \
+  'native-preview' \
+  'yes'
+
+# Internal-development APK keeps the existing app ID and live hosted ERP behavior.
+build_variant \
+  'capacitor.config.dev.ts' \
+  '0.1.0-dev' \
+  'Ilmgaah-Android-Dev.apk' \
+  'in.ilmgaah.app' \
+  'dev' \
+  'no'
 
 cat > "$OUT/BUILD-INFO.txt" <<EOF
-Ilmgaah Android Development APK
+Ilmgaah Android QA Artifacts
 Commit: ${VERCEL_GIT_COMMIT_SHA:-unknown}
 Branch: ${VERCEL_GIT_COMMIT_REF:-unknown}
-App ID: in.ilmgaah.app
-Mode: internal development / live web-backed
-Canonical ERP origin: https://madarsa-erp.vercel.app/login
 Target SDK: 36
 Minimum SDK: 24
 Java: 21
 Capacitor: 8.5.2
 Signing: Android debug signing (internal QA only)
-Auto-update behavior: web-layer changes appear from the canonical hosted ERP without APK rebuild.
-Native/plugin/manifest changes still require a new binary.
-Do not submit this development build to Google Play.
+
+Ilmgaah-Android-Dev.apk
+App ID: in.ilmgaah.app
+Mode: internal development / live web-backed
+Canonical ERP origin: https://madarsa-erp.vercel.app/login
+Behavior: ordinary web-layer ERP updates appear without rebuilding/reinstalling.
+
+Ilmgaah-Android-Native-Preview.apk
+App ID: in.ilmgaah.app.preview
+Mode: bundled native-preview React/Capacitor UI
+Behavior: installs beside Dev APK; validates the production mobile architecture without replacing Dev.
+Native/API integration remains under active development.
+
+Neither artifact is a Google Play production binary.
 EOF
 
 cat > "$OUT/index.html" <<'HTML'
@@ -158,14 +218,15 @@ cat > "$OUT/index.html" <<'HTML'
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Ilmgaah Android Development Build</title>
+  <title>Ilmgaah Android QA Builds</title>
   <style>
-    body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0f3329;color:#f4f0e7;min-height:100vh;display:grid;place-items:center;padding:24px}main{max-width:620px;border:1px solid #ffffff20;border-radius:28px;padding:32px;background:#ffffff0c}h1{font-size:32px;margin:0 0 12px}p{line-height:1.55;color:#f4f0e7cc}.button{display:inline-block;margin-top:14px;padding:14px 18px;border-radius:14px;background:#f4f0e7;color:#194d3d;text-decoration:none;font-weight:700}.small{font-size:13px;opacity:.72}</style>
+    body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0f3329;color:#f4f0e7;min-height:100vh;display:grid;place-items:center;padding:24px}main{max-width:680px;border:1px solid #ffffff20;border-radius:28px;padding:32px;background:#ffffff0c}h1{font-size:32px;margin:0 0 12px}p{line-height:1.55;color:#f4f0e7cc}.buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.button{display:inline-block;padding:14px 18px;border-radius:14px;background:#f4f0e7;color:#194d3d;text-decoration:none;font-weight:750}.button.alt{background:#ffffff12;color:#f4f0e7;border:1px solid #ffffff22}.small{font-size:13px;opacity:.72;margin-top:18px}</style>
 </head>
-<body><main><h1>Ilmgaah Android</h1><p>Internal development APK. It follows the hosted Ilmgaah ERP during active development, so web-layer releases appear without reinstalling this APK.</p><a class="button" href="/Ilmgaah-Android-Dev.apk">Download APK</a><p class="small">Internal QA build — not a Google Play production binary.</p></main></body>
+<body><main><h1>Ilmgaah Android</h1><p><strong>Dev APK</strong> follows the hosted Ilmgaah ERP automatically. <strong>Native Preview</strong> installs separately and lets us test the bundled production-mobile UI while development continues.</p><div class="buttons"><a class="button" href="/Ilmgaah-Android-Dev.apk">Download Dev APK</a><a class="button alt" href="/Ilmgaah-Android-Native-Preview.apk">Download Native Preview</a></div><p class="small">Internal QA builds only — neither is a Google Play production binary.</p></main></body>
 </html>
 HTML
 
-echo '== APK build complete =='
-ls -lh "$OUT/Ilmgaah-Android-Dev.apk"
-cat "$OUT/Ilmgaah-Android-Dev.sha256"
+echo '== APK builds complete =='
+ls -lh "$OUT"/*.apk
+cat "$OUT/Ilmgaah-Android-Dev.apk.sha256"
+cat "$OUT/Ilmgaah-Android-Native-Preview.apk.sha256"
