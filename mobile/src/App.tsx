@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { modulesBySurface } from './app-model';
 import { getMobileBootstrap, type MobileBootstrap, type MobileWorkspace } from './lib/mobile-api';
+import { clearSecureSessionStorage } from './lib/secure-session-storage';
 import { mobileAuthConfigured, supabase } from './lib/supabase';
 
 function feedback(style: ImpactStyle = ImpactStyle.Light) {
@@ -41,6 +42,7 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [restoring, setRestoring] = useState(mobileAuthConfigured);
   const [error, setError] = useState<string | null>(null);
   const [bootstrap, setBootstrap] = useState<MobileBootstrap | null>(null);
   const [workspace, setWorkspace] = useState<MobileWorkspace | null>(null);
@@ -75,6 +77,45 @@ export default function App() {
     return () => {
       void networkListener.then((handle) => handle.remove());
       void urlListener.then((handle) => handle.remove());
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      if (!supabase) {
+        setRestoring(false);
+        return;
+      }
+
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !data.session?.access_token) return;
+
+        const nextBootstrap = await getMobileBootstrap(data.session.access_token);
+        if (!nextBootstrap.workspaces.length) {
+          await supabase.auth.signOut();
+          await clearSecureSessionStorage();
+          return;
+        }
+
+        if (cancelled) return;
+        setBootstrap(nextBootstrap);
+        setWorkspace(nextBootstrap.workspaces[0]);
+        setActiveModule('home');
+      } catch {
+        if (!cancelled) setError('Your saved session could not be restored. Sign in again.');
+        await supabase.auth.signOut().catch(() => undefined);
+        await clearSecureSessionStorage().catch(() => undefined);
+      } finally {
+        if (!cancelled) setRestoring(false);
+      }
+    }
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -119,6 +160,7 @@ export default function App() {
           setWorkspace(null);
           setActiveModule('home');
           setError('Your session expired. Sign in again.');
+          await clearSecureSessionStorage().catch(() => undefined);
         }
       }).catch(() => undefined);
     });
@@ -167,6 +209,7 @@ export default function App() {
       const nextBootstrap = await getMobileBootstrap(data.session.access_token);
       if (!nextBootstrap.workspaces.length) {
         await supabase.auth.signOut();
+        await clearSecureSessionStorage();
         throw new Error('No mobile workspace is assigned to this account.');
       }
 
@@ -186,6 +229,7 @@ export default function App() {
     setBusy(true);
     try {
       await supabase?.auth.signOut();
+      await clearSecureSessionStorage();
     } finally {
       setBootstrap(null);
       setWorkspace(null);
@@ -195,6 +239,23 @@ export default function App() {
       feedback();
     }
   }, []);
+
+  if (restoring) {
+    return (
+      <main className="app-shell auth-shell restore-shell" aria-live="polite">
+        <section className="auth-hero restore-card">
+          <div className="brand-row" aria-label="Ilmgaah">
+            <img src="/ilmgaah-mark.svg" className="brand-logo" alt="" />
+            <span>Ilmgaah</span>
+          </div>
+          <p className="eyebrow">Secure session</p>
+          <h1>Opening your workspace.</h1>
+          <p className="lead">Verifying your saved session and access scope.</p>
+          <div className="restore-progress" aria-hidden="true"><span /></div>
+        </section>
+      </main>
+    );
+  }
 
   if (!bootstrap || !workspace) {
     return (
@@ -249,7 +310,7 @@ export default function App() {
             {busy ? 'Opening workspace…' : 'Sign in'}
           </button>
 
-          <p className="privacy-note">Your session is kept in memory only in this production foundation build.</p>
+          <p className="privacy-note">On Android, your session is encrypted with a device KeyStore-backed key. Browser previews keep sessions in memory only.</p>
         </section>
       </main>
     );
