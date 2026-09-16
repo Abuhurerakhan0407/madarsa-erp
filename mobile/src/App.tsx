@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
 import HomePanel from './HomePanel';
+import StudentsPanel from './StudentsPanel';
 import { modulesBySurface } from './app-model';
 import { getMobileBootstrap, type MobileBootstrap, type MobileWorkspace } from './lib/mobile-api';
 import { clearSecureSessionStorage } from './lib/secure-session-storage';
@@ -277,6 +278,7 @@ export default function App() {
 
       {activeModule === 'home' ? <HomePanel workspace={workspace} online={online} /> : null}
       {activeModule === 'attendance' ? <AttendancePanel workspace={workspace} online={online} /> : null}
+      {activeModule === 'students' ? <StudentsPanel workspace={workspace} online={online} /> : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
         {modules.map((module, index) => (
