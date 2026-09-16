@@ -130,7 +130,7 @@ export async function getQuranDailyRegister(args: {
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
 
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("get_quran_hifz_daily_register_v1", {
+  const { data, error } = await admin.rpc("get_quran_hifz_daily_register_v2", {
     p_identity_id: workspace.identityId,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
