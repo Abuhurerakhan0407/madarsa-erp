@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 export type WorkspaceAction = {
   label: string;
@@ -87,7 +88,7 @@ export function InlineState({ title, body, action }: { title: string; body?: str
   return <div className="workspace-inline-state" role="status"><strong>{title}</strong>{body ? <span>{body}</span> : null}{action ? <div className="workspace-state-action">{action}</div> : null}</div>;
 }
 
-type WorkspaceStateProps = {
+export type WorkspaceStateProps = {
   code?: string;
   eyebrow?: string;
   title: string;
@@ -113,4 +114,64 @@ export function WorkspaceState({ code, eyebrow, title, body, action, tone = "neu
 
 export function SuccessNotice({ title, body }: { title: string; body?: string }) {
   return <div className="workspace-success" role="status"><strong>{title}</strong>{body ? <span>{body}</span> : null}</div>;
+}
+
+
+export const PageHeader = WorkspacePageHeader;
+export const Field = FieldGroup;
+
+export function Section({ title, description, actions, children }: { title?: string; description?: string; actions?: ReactNode; children: ReactNode }) {
+  return <section className="workspace-section" data-page-section>{title || description || actions ? <header className="workspace-section-header"><div>{title ? <h2>{title}</h2> : null}{description ? <p>{description}</p> : null}</div>{actions ? <div className="workspace-section-actions">{actions}</div> : null}</header> : null}{children}</section>;
+}
+
+export function StatGrid({ children }: { children: ReactNode }) {
+  return <div className="workspace-stat-grid">{children}</div>;
+}
+
+export function ResponsiveList({ children, label }: { children: ReactNode; label?: string }) {
+  return <div className="workspace-responsive-list" role="list" aria-label={label}>{children}</div>;
+}
+
+export function RecordCard({ children, href, label }: { children: ReactNode; href?: string; label?: string }) {
+  const content = <div className="workspace-record-card" role="listitem">{children}</div>;
+  return href ? <Link className="workspace-record-link" href={href} aria-label={label}>{content}</Link> : content;
+}
+
+export function FormSection({ title, description, children }: { title?: string; description?: string; children: ReactNode }) {
+  return <fieldset className="workspace-form-section"><legend>{title}</legend>{description ? <p>{description}</p> : null}<div className="workspace-form-grid">{children}</div></fieldset>;
+}
+
+export function SegmentedControl({ children, label }: { children: ReactNode; label: string }) {
+  return <div className="workspace-segmented-control" role="group" aria-label={label}>{children}</div>;
+}
+
+export function StatusBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warning" | "danger" }) {
+  return <span className="workspace-status-badge" data-tone={tone}>{children}</span>;
+}
+
+export function EmptyState(props: Omit<WorkspaceStateProps, "tone" | "role">) {
+  return <WorkspaceState {...props} tone="neutral" role="status" />;
+}
+
+export function ErrorState(props: Omit<WorkspaceStateProps, "tone" | "role">) {
+  return <WorkspaceState {...props} tone="danger" role="alert" />;
+}
+
+export function LoadingState({ label = "Loading" }: { label?: string }) {
+  return <div className="workspace-loading-state" role="status" aria-live="polite" aria-busy="true"><span className="inline-spinner" aria-hidden="true" /><span>{label}</span></div>;
+}
+
+export function StickyActionBar({ children, label }: { children: ReactNode; label?: string }) {
+  return <div className="workspace-sticky-actions" role="group" aria-label={label}>{children}</div>;
+}
+
+export function ResponsiveTable({ table, cards, label }: { table: ReactNode; cards: ReactNode; label?: string }) {
+  return <div className="workspace-responsive-table" aria-label={label}><div className="workspace-responsive-table-desktop"><TableFrame label={label}>{table}</TableFrame></div><div className="workspace-responsive-table-cards" role="list">{cards}</div></div>;
+}
+
+
+export function EntityNotFoundState({ locale, entityLabel, backHref, backLabel }: { locale: SupportedLocale; entityLabel: string; backHref: string; backLabel: string }) {
+  const title = locale === "ur" ? `${entityLabel} نہیں ملا` : `${entityLabel} not found`;
+  const body = locale === "ur" ? "یہ ریکارڈ موجود نہیں ہے یا آپ کو اس تک رسائی نہیں ہے۔" : "This record does not exist, is no longer available, or is outside your access.";
+  return <WorkspaceState code="404" eyebrow="Ilmgaah" title={title} body={body} action={<Link className="action-button action-button-primary" href={backHref}>{backLabel}</Link>} />;
 }
