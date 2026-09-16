@@ -5,6 +5,7 @@ import { Network } from '@capacitor/network';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
+import HomePanel from './HomePanel';
 import { modulesBySurface } from './app-model';
 import { getMobileBootstrap, type MobileBootstrap, type MobileWorkspace } from './lib/mobile-api';
 import { clearSecureSessionStorage } from './lib/secure-session-storage';
@@ -24,11 +25,9 @@ function moduleFromAppUrl(value: string) {
     const isNativeScheme = url.protocol === 'ilmgaah:';
     const isTrustedWebLink = url.protocol === 'https:' && (url.hostname === 'ilmgaah.in' || url.hostname === 'www.ilmgaah.in');
     if (!isNativeScheme && !isTrustedWebLink) return null;
-
     if (isNativeScheme && url.hostname) return url.hostname.toLowerCase();
     const requested = url.searchParams.get('module')?.trim().toLowerCase();
     if (requested) return requested;
-
     const parts = url.pathname.split('/').filter(Boolean);
     if (!parts.length) return 'home';
     if ((parts[0] === 'app' || parts[0] === 'mobile') && parts[1]) return parts[1].toLowerCase();
@@ -57,24 +56,20 @@ export default function App() {
     void StatusBar.setStyle({ style: Style.Light }).catch(() => undefined);
     void StatusBar.setBackgroundColor({ color: '#0F3329' }).catch(() => undefined);
     void SplashScreen.hide().catch(() => undefined);
-
     void Network.getStatus().then((status) => setOnline(status.connected));
     const networkListener = Network.addListener('networkStatusChange', (status) => {
       setOnline(status.connected);
       if (status.connected) setError((current) => (current === 'You are offline.' ? null : current));
     });
-
     const urlListener = CapacitorApp.addListener('appUrlOpen', ({ url }) => {
       const requestedModule = moduleFromAppUrl(url);
       if (requestedModule) setPendingModule(requestedModule);
     });
-
     void CapacitorApp.getLaunchUrl().then((launch) => {
       if (!launch?.url) return;
       const requestedModule = moduleFromAppUrl(launch.url);
       if (requestedModule) setPendingModule(requestedModule);
     }).catch(() => undefined);
-
     return () => {
       void networkListener.then((handle) => handle.remove());
       void urlListener.then((handle) => handle.remove());
@@ -83,24 +78,20 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-
     async function restoreSession() {
       if (!supabase) {
         setRestoring(false);
         return;
       }
-
       try {
         const { data, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !data.session?.access_token) return;
-
         const nextBootstrap = await getMobileBootstrap(data.session.access_token);
         if (!nextBootstrap.workspaces.length) {
           await supabase.auth.signOut();
           await clearSecureSessionStorage();
           return;
         }
-
         if (cancelled) return;
         setBootstrap(nextBootstrap);
         setWorkspace(nextBootstrap.workspaces[0]);
@@ -113,11 +104,8 @@ export default function App() {
         if (!cancelled) setRestoring(false);
       }
     }
-
     void restoreSession();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -142,10 +130,7 @@ export default function App() {
       }
       void CapacitorApp.minimizeApp().catch(() => undefined);
     });
-
-    return () => {
-      void listener.then((handle) => handle.remove());
-    };
+    return () => { void listener.then((handle) => handle.remove()); };
   }, [activeModule, workspace]);
 
   useEffect(() => {
@@ -154,7 +139,6 @@ export default function App() {
       void Network.getStatus().then(async (status) => {
         setOnline(status.connected);
         if (!status.connected || !workspace || !supabase) return;
-
         const { data, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !data.session) {
           setBootstrap(null);
@@ -165,10 +149,7 @@ export default function App() {
         }
       }).catch(() => undefined);
     });
-
-    return () => {
-      void listener.then((handle) => handle.remove());
-    };
+    return () => { void listener.then((handle) => handle.remove()); };
   }, [workspace]);
 
   useEffect(() => {
@@ -196,24 +177,16 @@ export default function App() {
       setError('Enter your email and password.');
       return;
     }
-
     setBusy(true);
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (authError || !data.session?.access_token) {
-        throw new Error('Email or password is incorrect.');
-      }
-
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (authError || !data.session?.access_token) throw new Error('Email or password is incorrect.');
       const nextBootstrap = await getMobileBootstrap(data.session.access_token);
       if (!nextBootstrap.workspaces.length) {
         await supabase.auth.signOut();
         await clearSecureSessionStorage();
         throw new Error('No mobile workspace is assigned to this account.');
       }
-
       setBootstrap(nextBootstrap);
       setWorkspace(nextBootstrap.workspaces[0]);
       setActiveModule('home');
@@ -245,10 +218,7 @@ export default function App() {
     return (
       <main className="app-shell auth-shell restore-shell" aria-live="polite">
         <section className="auth-hero restore-card">
-          <div className="brand-row" aria-label="Ilmgaah">
-            <img src="/ilmgaah-mark.svg" className="brand-logo" alt="" />
-            <span>Ilmgaah</span>
-          </div>
+          <div className="brand-row" aria-label="Ilmgaah"><img src="/ilmgaah-mark.svg" className="brand-logo" alt="" /><span>Ilmgaah</span></div>
           <p className="eyebrow">Secure session</p>
           <h1>Opening your workspace.</h1>
           <p className="lead">Verifying your saved session and access scope.</p>
@@ -262,55 +232,17 @@ export default function App() {
     return (
       <main className="app-shell auth-shell">
         <section className="auth-hero">
-          <div className="brand-row" aria-label="Ilmgaah">
-            <img src="/ilmgaah-mark.svg" className="brand-logo" alt="" />
-            <span>Ilmgaah</span>
-          </div>
+          <div className="brand-row" aria-label="Ilmgaah"><img src="/ilmgaah-mark.svg" className="brand-logo" alt="" /><span>Ilmgaah</span></div>
           <p className="eyebrow">Institution operating system</p>
           <h1>Everything important, in one calm place.</h1>
           <p className="lead">A focused mobile workspace for administrators, teachers and families.</p>
         </section>
-
         <section className="auth-card" aria-label="Sign in to Ilmgaah">
-          <div className="connection-line">
-            <span className={`connection-dot ${online ? 'is-online' : 'is-offline'}`} />
-            {online ? 'Connected securely' : 'Offline'}
-          </div>
-
-          <label>
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@institution.org"
-              disabled={busy}
-            />
-          </label>
-
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void signIn();
-              }}
-              placeholder="Your password"
-              disabled={busy}
-            />
-          </label>
-
+          <div className="connection-line"><span className={`connection-dot ${online ? 'is-online' : 'is-offline'}`} />{online ? 'Connected securely' : 'Offline'}</div>
+          <label><span>Email</span><input type="email" autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@institution.org" disabled={busy} /></label>
+          <label><span>Password</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void signIn(); }} placeholder="Your password" disabled={busy} /></label>
           {error ? <p className="form-error" role="alert">{error}</p> : null}
-
-          <button className="primary-button" type="button" onClick={() => void signIn()} disabled={busy}>
-            {busy ? 'Opening workspace…' : 'Sign in'}
-          </button>
-
+          <button className="primary-button" type="button" onClick={() => void signIn()} disabled={busy}>{busy ? 'Opening workspace…' : 'Sign in'}</button>
           <p className="privacy-note">On Android, your session is encrypted with a device KeyStore-backed key. Browser previews keep sessions in memory only.</p>
         </section>
       </main>
@@ -320,85 +252,41 @@ export default function App() {
   return (
     <main className="workspace-shell">
       {!online ? <div className="offline-banner">Offline · reconnect to refresh data</div> : null}
-
       <header className="mobile-header">
-        <div className="brand-row compact" aria-label="Ilmgaah">
-          <img src="/ilmgaah-mark.svg" className="brand-logo" alt="" />
-          <span>Ilmgaah</span>
-        </div>
+        <div className="brand-row compact" aria-label="Ilmgaah"><img src="/ilmgaah-mark.svg" className="brand-logo" alt="" /><span>Ilmgaah</span></div>
         <button className="ghost-button" type="button" onClick={() => void signOut()} disabled={busy}>Sign out</button>
       </header>
-
       <section className="workspace-intro">
         <p className="eyebrow">{workspace.surface}</p>
         <h1>{selectedModule?.label ?? 'Home'}</h1>
         <p>{selectedModule?.description ?? 'Your Ilmgaah workspace.'}</p>
       </section>
-
       {bootstrap.workspaces.length > 1 ? (
         <label className="workspace-switcher">
           <span>Workspace</span>
-          <select
-            value={`${workspace.tenantId}:${workspace.branchId ?? 'all'}:${workspace.surface}`}
-            onChange={(event) => {
-              const next = bootstrap.workspaces.find(
-                (item) => `${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}` === event.target.value,
-              );
-              if (next) {
-                setWorkspace(next);
-                setActiveModule('home');
-                feedback();
-              }
-            }}
-          >
-            {bootstrap.workspaces.map((item) => (
-              <option key={`${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}`} value={`${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}`}>
-                {workspaceLabel(item)} · {item.surface}
-              </option>
-            ))}
+          <select value={`${workspace.tenantId}:${workspace.branchId ?? 'all'}:${workspace.surface}`} onChange={(event) => {
+            const next = bootstrap.workspaces.find((item) => `${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}` === event.target.value);
+            if (next) { setWorkspace(next); setActiveModule('home'); feedback(); }
+          }}>
+            {bootstrap.workspaces.map((item) => <option key={`${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}`} value={`${item.tenantId}:${item.branchId ?? 'all'}:${item.surface}`}>{workspaceLabel(item)} · {item.surface}</option>)}
           </select>
         </label>
       ) : (
-        <div className="institution-card">
-          <span>Workspace</span>
-          <strong>{workspaceLabel(workspace)}</strong>
-        </div>
+        <div className="institution-card"><span>Workspace</span><strong>{workspaceLabel(workspace)}</strong></div>
       )}
 
+      {activeModule === 'home' ? <HomePanel workspace={workspace} online={online} /> : null}
       {activeModule === 'attendance' ? <AttendancePanel workspace={workspace} online={online} /> : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
         {modules.map((module, index) => (
-          <button
-            key={module.id}
-            type="button"
-            className={`module-card ${activeModule === module.id ? 'is-active' : ''}`}
-            onClick={() => {
-              setActiveModule(module.id);
-              feedback();
-            }}
-          >
-            <span className="module-index">{String(index + 1).padStart(2, '0')}</span>
-            <strong>{module.shortLabel}</strong>
-            <span>{module.description}</span>
+          <button key={module.id} type="button" className={`module-card ${activeModule === module.id ? 'is-active' : ''}`} onClick={() => { setActiveModule(module.id); feedback(); }}>
+            <span className="module-index">{String(index + 1).padStart(2, '0')}</span><strong>{module.shortLabel}</strong><span>{module.description}</span>
           </button>
         ))}
       </section>
-
       <nav className="bottom-nav" aria-label="Primary navigation">
-        {modules.slice(0, 4).map((module) => (
-          <button
-            key={module.id}
-            type="button"
-            className={activeModule === module.id ? 'is-active' : ''}
-            onClick={() => {
-              setActiveModule(module.id);
-              feedback();
-            }}
-          >
-            {module.shortLabel}
-          </button>
-        ))}
+        {modules.slice(0, 4).map((module) => <button key={module.id} type="button" className={activeModule === module.id ? 'is-active' : ''} onClick={() => { setActiveModule(module.id); feedback(); }}>{module.shortLabel}</button>)}
       </nav>
     </main>
   );
