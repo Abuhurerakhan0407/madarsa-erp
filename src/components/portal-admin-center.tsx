@@ -11,8 +11,7 @@ type Props = {
   initialTab?: "parents" | "teachers";
   locale: SupportedLocale;
 };
-type Credential = { name: string; email: string; password: string | null };
-type IssuedCode = { name: string; code: string; claimPath: string };
+type IssuedCode = { name: string; email: string | null; code: string; claimPath: string };
 type Raw = Record<string, unknown>;
 
 const raw = (value: unknown): Raw => value && typeof value === "object" && !Array.isArray(value) ? value as Raw : {};
@@ -20,17 +19,14 @@ const text = (value: unknown) => typeof value === "string" ? value : "";
 
 const copy = {
   en: {
-    shareOnce: "Share once",
-    portalLogin: "portal login",
+    oneTimeCode: "One-time claim code",
+    claimBody: "Share this code with the intended person. They sign in with their own account and claim access. Staff never creates, resets, or shares a portal password.",
+    copyActivation: "Copy activation details",
+    copied: "Copied",
     done: "Done",
-    temporaryPassword: "This temporary password is shown only in this response. The user must change it on first login.",
-    copyPassword: "Copy password",
-    existingLogin: "Existing login linked safely. Its password was not changed.",
-    fallbackCode: "Fallback claim code",
-    fallbackBody: "This one-time code is for the existing claim-code flow; it does not reveal or store a password.",
     accessKicker: "Parent & Teacher Access",
     accounts: "Portal accounts",
-    accountsBody: "Create or link logins, reset ERP-managed passwords, and disable only this institution's access.",
+    accountsBody: "Issue one-time claim codes, review linked access, and enable or disable only this institution's portal access.",
     eligible: "eligible",
     parents: "Parents",
     teachers: "Teachers",
@@ -43,16 +39,12 @@ const copy = {
     emailRequired: "Email required",
     active: "Active",
     disabled: "Disabled",
-    notCreated: "Not created",
+    notCreated: "Not claimed",
     never: "Never",
     noLinkedChild: "No linked child/class",
     noAssignedClass: "No assigned class",
     student: "Student",
     group: "Group",
-    creating: "Creating…",
-    createLogin: "Create login",
-    resetting: "Resetting…",
-    resetPassword: "Reset password",
     disabling: "Disabling…",
     disable: "Disable",
     enabling: "Enabling…",
@@ -87,23 +79,19 @@ const copy = {
     claimed: "Claimed",
     expired: "Expired",
     revoked: "Revoked",
-    credentialsError: "Unable to manage portal credentials. Please try again.",
     accessError: "Unable to update portal access. Please try again.",
     issueError: "Unable to issue an access code. Please try again.",
     publishError: "Unable to publish the notice. Please try again."
   },
   ur: {
-    shareOnce: "صرف ایک بار شیئر کریں",
-    portalLogin: "پورٹل لاگ اِن",
+    oneTimeCode: "ایک بار استعمال ہونے والا کلیم کوڈ",
+    claimBody: "یہ کوڈ مطلوبہ شخص کو دیں۔ وہ اپنے اکاؤنٹ سے لاگ اِن ہو کر رسائی کلیم کرے گا۔ عملہ پورٹل پاس ورڈ نہ بناتا، نہ ری سیٹ کرتا اور نہ شیئر کرتا ہے۔",
+    copyActivation: "فعال کرنے کی تفصیل کاپی کریں",
+    copied: "کاپی ہو گیا",
     done: "مکمل",
-    temporaryPassword: "یہ عارضی پاس ورڈ صرف اسی جواب میں دکھایا جا رہا ہے۔ صارف کو پہلی لاگ اِن پر اسے تبدیل کرنا ہوگا۔",
-    copyPassword: "پاس ورڈ کاپی کریں",
-    existingLogin: "موجودہ لاگ اِن محفوظ طریقے سے منسلک ہو گیا۔ اس کا پاس ورڈ تبدیل نہیں کیا گیا۔",
-    fallbackCode: "متبادل کلیم کوڈ",
-    fallbackBody: "یہ ایک بار استعمال ہونے والا کوڈ موجودہ کلیم کوڈ عمل کے لیے ہے؛ یہ پاس ورڈ ظاہر یا محفوظ نہیں کرتا۔",
     accessKicker: "والدین اور اساتذہ کی رسائی",
     accounts: "پورٹل اکاؤنٹس",
-    accountsBody: "لاگ اِن بنائیں یا منسلک کریں، ERP کے زیر انتظام پاس ورڈ ری سیٹ کریں، اور صرف اسی ادارے کی رسائی بند کریں۔",
+    accountsBody: "ایک بار استعمال ہونے والے کلیم کوڈ جاری کریں، منسلک رسائی دیکھیں، اور صرف اسی ادارے کی پورٹل رسائی فعال یا بند کریں۔",
     eligible: "اہل",
     parents: "والدین",
     teachers: "اساتذہ",
@@ -116,16 +104,12 @@ const copy = {
     emailRequired: "ای میل درکار ہے",
     active: "فعال",
     disabled: "غیر فعال",
-    notCreated: "ابھی نہیں بنا",
+    notCreated: "ابھی کلیم نہیں ہوا",
     never: "کبھی نہیں",
     noLinkedChild: "کوئی طالب علم یا کلاس منسلک نہیں",
     noAssignedClass: "کوئی کلاس مقرر نہیں",
     student: "طالب علم",
     group: "گروپ",
-    creating: "بن رہا ہے…",
-    createLogin: "لاگ اِن بنائیں",
-    resetting: "ری سیٹ ہو رہا ہے…",
-    resetPassword: "پاس ورڈ ری سیٹ کریں",
     disabling: "بند ہو رہا ہے…",
     disable: "رسائی بند کریں",
     enabling: "فعال ہو رہی ہے…",
@@ -160,7 +144,6 @@ const copy = {
     claimed: "فعال شدہ",
     expired: "میعاد ختم",
     revoked: "منسوخ",
-    credentialsError: "پورٹل اسناد منظم نہیں ہو سکیں۔ دوبارہ کوشش کریں۔",
     accessError: "پورٹل رسائی تبدیل نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
     issueError: "رسائی کوڈ جاری نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
     publishError: "اطلاع شائع نہیں ہو سکی۔ دوبارہ کوشش کریں۔"
@@ -207,32 +190,10 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
   const t = copy[locale];
   const [tab, setTab] = useState<"parents" | "teachers">(initialTab);
   const [busy, setBusy] = useState<string | null>(null);
-  const [credential, setCredential] = useState<Credential | null>(null);
   const [issued, setIssued] = useState<IssuedCode | null>(null);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const list = tab === "parents" ? center.parents : center.teachers;
-
-  async function credentials(candidate: PortalAccessCandidate, action: "provision" | "reset") {
-    const key = `${action}:${candidate.kind}:${candidate.personId}`;
-    setBusy(key);
-    setError(null);
-    setCredential(null);
-    try {
-      const response = await fetch("/api/portals/credentials", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ personId: candidate.personId, kind: candidate.kind, action })
-      });
-      const body = await response.json() as { temporaryPassword?: string; email?: string };
-      if (!response.ok) throw new Error(t.credentialsError);
-      setCredential({ name: candidate.name, email: body.email || candidate.email || "", password: body.temporaryPassword || null });
-      router.refresh();
-    } catch {
-      setError(t.credentialsError);
-    } finally {
-      setBusy(null);
-    }
-  }
 
   async function access(candidate: PortalAccessCandidate, enabled: boolean) {
     const key = `access:${candidate.kind}:${candidate.personId}`;
@@ -258,6 +219,7 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
     setBusy(key);
     setError(null);
     setIssued(null);
+    setCopied(false);
     try {
       const response = await fetch("/api/portals/access", {
         method: "POST",
@@ -266,7 +228,12 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
       });
       const body = await response.json() as Record<string, unknown>;
       if (!response.ok) throw new Error(t.issueError);
-      setIssued({ name: candidate.name, code: String(body.code ?? ""), claimPath: String(body.claimPath ?? "") });
+      setIssued({
+        name: candidate.name,
+        email: candidate.email,
+        code: String(body.code ?? ""),
+        claimPath: String(body.claimPath ?? "")
+      });
       router.refresh();
     } catch {
       setError(t.issueError);
@@ -299,33 +266,32 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
     }
   }
 
+  async function copyIssued() {
+    if (!issued) return;
+    const claimPath = preservePortalLocale(issued.claimPath, locale);
+    const value = `${issued.email ? `${t.email}: ${issued.email}\n` : ""}${t.oneTimeCode}: ${issued.code}\n${claimPath}`;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
     <div className="flow-stack" lang={locale}>
       {error ? <div className="notice notice-danger" role="alert">{error}</div> : null}
 
-      {credential ? (
-        <section className="professional-card">
-          <div className="section-heading">
-            <div><p className="state-kicker">{t.shareOnce}</p><h2>{credential.name} · {t.portalLogin}</h2><p>{credential.email}</p></div>
-            <button className="action-button" type="button" onClick={() => setCredential(null)}>{t.done}</button>
-          </div>
-          {credential.password ? <>
-            <p>{t.temporaryPassword}</p>
-            <div className="code-block"><strong>{credential.password}</strong></div>
-            <button className="action-button" type="button" onClick={() => void navigator.clipboard?.writeText(credential.password || "")}>{t.copyPassword}</button>
-          </> : <p>{t.existingLogin}</p>}
-        </section>
-      ) : null}
-
       {issued ? (
         <section className="professional-card">
           <div className="section-heading">
-            <div><p className="state-kicker">{t.fallbackCode}</p><h2>{issued.name}</h2></div>
-            <button className="action-button" type="button" onClick={() => setIssued(null)}>{t.done}</button>
+            <div><p className="state-kicker">{t.oneTimeCode}</p><h2>{issued.name}</h2>{issued.email ? <p>{issued.email}</p> : null}</div>
+            <button className="action-button" type="button" onClick={() => { setIssued(null); setCopied(false); }}>{t.done}</button>
           </div>
-          <p>{t.fallbackBody}</p>
+          <p>{t.claimBody}</p>
           <div className="code-block"><strong>{issued.code}</strong></div>
           <p><code>{preservePortalLocale(issued.claimPath, locale)}</code></p>
+          <button className="action-button" type="button" onClick={() => void copyIssued()}>{copied ? t.copied : t.copyActivation}</button>
         </section>
       ) : null}
 
@@ -344,8 +310,6 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
             <tbody>{list.map((candidate) => {
               const accessKey = `access:${candidate.kind}:${candidate.personId}`;
               const issueKey = `code:${candidate.kind}:${candidate.personId}`;
-              const provisionKey = `provision:${candidate.kind}:${candidate.personId}`;
-              const resetKey = `reset:${candidate.kind}:${candidate.personId}`;
               return <tr key={`${candidate.kind}:${candidate.personId}`}>
                 <td><strong>{candidate.name}</strong>{candidate.reference ? <><br /><small>{candidate.reference}</small></> : null}</td>
                 <td>{candidate.email || <span className="status-pill">{t.emailRequired}</span>}</td>
@@ -353,12 +317,9 @@ export function PortalAdminCenter({ center, initialTab = "parents", locale }: Pr
                 <td>{statusLabel(candidate.accountStatus, locale)}</td>
                 <td>{candidate.lastLogin ? formatPortalDateTime(candidate.lastLogin, locale) : t.never}</td>
                 <td><div className="quick-actions">
-                  {candidate.accountStatus === "not_created" ? <button className="action-button action-button-primary" type="button" disabled={busy !== null || !candidate.email} aria-busy={busy === provisionKey || undefined} onClick={() => void credentials(candidate, "provision")}>{busy === provisionKey ? t.creating : t.createLogin}</button> : null}
-                  {candidate.accountStatus === "active" && candidate.erpManaged ? <button className="action-button" type="button" disabled={busy !== null} aria-busy={busy === resetKey || undefined} onClick={() => void credentials(candidate, "reset")}>{busy === resetKey ? t.resetting : t.resetPassword}</button> : null}
+                  {candidate.accountStatus === "not_created" ? <button className="action-button action-button-primary" type="button" disabled={busy !== null || !candidate.email} aria-busy={busy === issueKey || undefined} onClick={() => void issue(candidate)}>{busy === issueKey ? t.issuing : t.issueCode}</button> : null}
                   {candidate.accountStatus === "active" ? <button className="action-button" type="button" disabled={busy !== null} aria-busy={busy === accessKey || undefined} onClick={() => void access(candidate, false)}>{busy === accessKey ? t.disabling : t.disable}</button> : null}
                   {candidate.accountStatus === "disabled" ? <button className="action-button action-button-primary" type="button" disabled={busy !== null} aria-busy={busy === accessKey || undefined} onClick={() => void access(candidate, true)}>{busy === accessKey ? t.enabling : t.enable}</button> : null}
-                  {candidate.accountStatus === "disabled" && candidate.erpManaged ? <button className="action-button" type="button" disabled={busy !== null} aria-busy={busy === resetKey || undefined} onClick={() => void credentials(candidate, "reset")}>{busy === resetKey ? t.resetting : t.resetPassword}</button> : null}
-                  {candidate.accountStatus !== "active" ? <button className="action-button" type="button" disabled={busy !== null} aria-busy={busy === issueKey || undefined} onClick={() => void issue(candidate)}>{busy === issueKey ? t.issuing : t.issueCode}</button> : null}
                 </div></td>
               </tr>;
             })}</tbody>

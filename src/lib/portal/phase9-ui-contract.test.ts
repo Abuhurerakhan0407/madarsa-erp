@@ -11,12 +11,12 @@ describe("Phase 9 Teachers + Portals UI contracts",()=>{
  it("keeps the client-facing teacher editor away from private payroll and qualification controls",()=>{
   const form=read("src/components/teacher-profile-form.tsx");expect(form).toContain("email");expect(form).toContain("phone");expect(form).toContain("joinedOn");expect(form).not.toContain("payrollEligible");expect(form).not.toContain("qualificationSummary");expect(form).not.toContain("contractType");
  });
- it("provides Parents and Teachers access tabs with credential and access-state actions",()=>{
-  const center=read("src/components/portal-admin-center.tsx");expect(center).toContain("Parents");expect(center).toContain("Teachers");expect(center).toContain("lastLogin");expect(center).toContain("/api/portals/credentials");expect(center).toContain("/api/portals/access-state");expect(center).toContain("temporaryPassword");
+ it("provides Parents and Teachers access tabs with claim-only issuance and access-state actions",()=>{
+  const center=read("src/components/portal-admin-center.tsx");expect(center).toContain("Parents");expect(center).toContain("Teachers");expect(center).toContain("lastLogin");expect(center).toContain("/api/portals/access");expect(center).toContain("/api/portals/access-state");expect(center).toContain("Issue claim code");expect(center).not.toContain("/api/portals/credentials");expect(center).not.toContain("temporaryPassword");expect(center).not.toContain("Reset password");
  });
- it("forces ERP-managed reset safety from app metadata and records credential audit first",()=>{
-  const route=read("src/app/api/portals/credentials/route.ts");const change=read("src/app/api/portal/password/change/route.ts");const portal=read("src/app/portal/page.tsx");
-  expect(route).toContain("app_metadata?.portal_account!==true");expect(route).toContain("app_metadata:{");expect(route).toContain("must_change_password:true");expect(route).toContain("record_portal_credential_audit_v1");expect(route.indexOf('audit(\"allowed\")')).toBeLessThan(route.indexOf("updateUserById"));expect(route).not.toContain("user_metadata");expect(route).not.toContain("token_digest:password");
+ it("retires temporary-password credential provisioning while preserving legacy first-login cleanup",()=>{
+  const retired=read("src/app/api/portals/credentials/route.ts");const change=read("src/app/api/portal/password/change/route.ts");const portal=read("src/app/portal/page.tsx");
+  expect(retired).toContain("PORTAL_CREDENTIALS_RETIRED");expect(retired).toContain("status: 410");expect(retired).not.toContain("randomBytes");expect(retired).not.toContain("createUser");expect(retired).not.toContain("updateUserById");expect(retired).not.toContain("temporaryPassword");
   expect(change).toContain("app_metadata?.portal_account !== true");expect(change).toContain("app_metadata?.must_change_password !== true");expect(change).not.toContain("user_metadata");expect(portal).toMatch(/app_metadata\?\.must_change_password\s*===\s*true/);
  });
  it("renders parent overview in the handoff priority order",()=>{
