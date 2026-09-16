@@ -19,14 +19,12 @@ echo "Commit: ${VERCEL_GIT_COMMIT_SHA:-unknown}"
 echo "Branch: ${VERCEL_GIT_COMMIT_REF:-unknown}"
 echo 'This build changes no ERP runtime/database state.'
 
-# Capacitor 8 requires Java 21. Install it only inside this disposable builder.
 dnf install -y java-21-amazon-corretto-devel >/dev/null
 JAVA_BIN="$(readlink -f "$(command -v javac)")"
 export JAVA_HOME="$(dirname "$(dirname "$JAVA_BIN")")"
 export PATH="$JAVA_HOME/bin:$PATH"
 java -version
 
-# Official Android command-line tools, pinned and checksum verified.
 CMDLINE_VERSION='15859902'
 CMDLINE_SHA256='4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583'
 curl --fail --location --retry 3 \
@@ -49,8 +47,6 @@ sdkmanager --sdk_root="$SDK" \
   'platforms;android-36' \
   'build-tools;36.0.0'
 
-# Reuse the ERP's public Supabase client configuration when Vercel exposes it.
-# Never map server/admin/service-role secrets into Vite client variables.
 export VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
 export VITE_SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY:-${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}}"
 export VITE_ILMGAAH_API_ORIGIN="${VITE_ILMGAAH_API_ORIGIN:-https://madarsa-erp.vercel.app}"
@@ -60,8 +56,6 @@ else
   echo 'Native preview public auth configuration: not injected; UI will remain safely unconfigured'
 fi
 
-# Build/typecheck the bundled React mobile UI once. Vercel uses NODE_ENV=production,
-# so explicitly install devDependencies needed by TypeScript/Vite/Capacitor CLI.
 npm --prefix "$MOBILE" install --include=dev --no-audit --no-fund
 npm --prefix "$MOBILE" run build
 
@@ -127,8 +121,10 @@ verify_and_export() {
   local apk="$MOBILE/android/app/build/outputs/apk/debug/app-debug.apk"
 
   test -s "$apk"
+  npm --prefix "$MOBILE" run privacy:check:generated
   "$APKSIGNER" verify --verbose --print-certs "$apk" | tee "$OUT/${report_prefix}-signature.txt"
   "$AAPT" dump badging "$apk" | tee "$OUT/${report_prefix}-badging.txt"
+  "$AAPT" dump permissions "$apk" | tee "$OUT/${report_prefix}-permissions.txt"
   grep -q "package: name='${expected_package}'" "$OUT/${report_prefix}-badging.txt"
   grep -q "targetSdkVersion:'36'" "$OUT/${report_prefix}-badging.txt"
   cp "$apk" "$OUT/$output_name"
@@ -167,8 +163,6 @@ build_variant() {
   verify_and_export "$output_name" "$expected_package" "$report_prefix"
 }
 
-# Bundled native preview has a separate app ID, so it can coexist with the already-installed
-# live-web development APK. It is still debug-signed and is not a Play release binary.
 build_variant \
   'capacitor.config.preview.ts' \
   '0.2.0-native-preview' \
@@ -177,7 +171,6 @@ build_variant \
   'native-preview' \
   'yes'
 
-# Internal-development APK keeps the existing app ID and live hosted ERP behavior.
 build_variant \
   'capacitor.config.dev.ts' \
   '0.1.0-dev' \
@@ -195,6 +188,7 @@ Minimum SDK: 24
 Java: 21
 Capacitor: 8.5.2
 Signing: Android debug signing (internal QA only)
+Privacy gate: source/config + generated/merged Android manifests
 
 Ilmgaah-Android-Dev.apk
 App ID: in.ilmgaah.app
