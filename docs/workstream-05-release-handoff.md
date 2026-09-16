@@ -20,6 +20,7 @@ Base: `feature/client-v3-phase-5-qa-demo-hardening` @ `a4ce612bfcb639df4afb8d7aa
 - TypeScript `tsc --noEmit`: passing.
 - ESLint on changed WS05 files: passing.
 - Full Vitest under repository-supported Node 22.23.2: **763/763 passing** across 162 files after release-infrastructure-only cross-platform test normalization.
+- Follow-up Windows stability: recovery validation and recursive brand-scan tests now allow 30 seconds for WSL/filesystem cold-start only; assertions and production behavior are unchanged. Full suite remained **763/763 passing**.
 - Platform triage: one Phase 2 SQL contract assertion was CRLF-sensitive; four recovery-drill validation tests were blocked first by CRLF Bash parsing and then by WindowsApps/WSL custom-environment propagation. Test harnesses now normalize input newlines and pass synthetic validation values as Bash positional arguments; production SQL and recovery behavior were not changed.
 - GitHub Actions run #940 triggered on the WS05 head, but `checks` completed with zero steps and no job log while `e2e` was skipped. Run #939 had the exact GitHub annotation: "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings". This is an infrastructure blocker, not a product test result.
 ## Claim migration audit
@@ -27,6 +28,12 @@ Base: `feature/client-v3-phase-5-qa-demo-hardening` @ `a4ce612bfcb639df4afb8d7aa
 - Exact base `a4ce612bfcb639df4afb8d7aa1790352da336530` already contained that migration but its claim lifecycle contract still referenced nonexistent `20260916173000_phase5_claim_only_portal_lifecycle.sql`; the base commit itself is the history-alignment commit removing the duplicate timestamp.
 - WS05 changed only the stale contract path (`b9cdb9033c09bd0a9b138b28d6b39f5019778497`); no migration was renamed, generated, applied, or reordered.
 - Claim lifecycle contract under Node 22.23.2: **5/5 passing**.
+
+## Parallel dependency checkpoint
+- Chat 01 observed head: `81d12eddc3d3dc5cd5fc3bf0695b8ec14b7de7c4`. Its current `getNavigationAudience` returns `teacher` when role IDs or permissions are empty, conflicting with WS05's required `restricted` fail-closed fallback. Do not merge either implementation until the manager selects one final contract.
+- Chat 02 observed head: `88d3e21bff480be39395384dbe041ddcd3160f05`. Student Detail still derives teacher groups only from `timetable_entries`; primary-teacher-only and curriculum-only assignments remain inconsistent with My Students. P1 stays open.
+- Chat 03 observed head remains `18a1f591acbfa71417e2db3703681353d5bf832c`. No new manager-requested executable evidence has arrived after that claim, so the Qur'an assignment-scope P0 stays open.
+- Chat 04 observed head remains base `a4ce612bfcb639df4afb8d7aa1790352da336530`; committed handoff is still pending.
 
 ## Role matrix status
 - Owner/admin: office surfaces are server-gated by domain permissions; static authorization contracts pass. Authenticated live role crawl not run.

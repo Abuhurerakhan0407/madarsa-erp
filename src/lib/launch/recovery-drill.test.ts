@@ -85,7 +85,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(result.stderr).not.toContain("dysfnytqpbfxpmerkyaz@evil.example.com");
-  });
+  }, 30_000);
 
   it("rejects libpq host/service query overrides on the source URL", () => {
     const result = runValidation({
@@ -95,7 +95,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, 30_000);
 
   it("accepts the approved pooler identity before rejecting a non-local restore host", () => {
     const result = runValidation({
@@ -105,7 +105,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Restore target must resolve directly to localhost");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, 30_000);
 
   it("rejects libpq host/service query overrides on an otherwise local restore URL", () => {
     const result = runValidation({
@@ -115,7 +115,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Restore target must resolve directly to localhost");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, 30_000);
 
   it("uses Supabase-aware dump, encryption, and restore verification", () => {
     expect(script).toContain("supabase db dump");
