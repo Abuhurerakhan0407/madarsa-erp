@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { secureSessionStorage } from './secure-session-storage';
 
 const url = import.meta.env.VITE_SUPABASE_URL?.trim();
 const publishableKey = (
@@ -7,12 +8,13 @@ const publishableKey = (
 
 export const mobileAuthConfigured = Boolean(url && publishableKey);
 
-// Deliberately no localStorage/session persistence. Until OS-backed secure storage
-// is integrated and audited, authentication lives only inside the current process.
+// Supabase session persistence is routed through the native Android KeyStore/iOS
+// Keychain adapter. Browser/Vite development intentionally falls back to memory only.
 export const supabase: SupabaseClient | null = mobileAuthConfigured
   ? createClient(url!, publishableKey!, {
       auth: {
-        persistSession: false,
+        storage: secureSessionStorage,
+        persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
       },
