@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ pers
   const identity=await getVerifiedIdentity();if(!identity)return NextResponse.json({error:"Authentication required."},{status:401});
   const workspace=await getTenantContext();if(!workspace||workspace.identityId!==identity.id||!workspace.branchId)return NextResponse.json({error:"Active institution membership required."},{status:403});
   const personId=Number((await params).personId);if(!Number.isInteger(personId)||personId<=0)return NextResponse.json({error:"Student is invalid."},{status:400});
-  const url=new URL(request.url);const examValue=Number(url.searchParams.get("exam"));const examId=Number.isInteger(examValue)&&examValue>0?examValue:null;const requestedLocale=url.searchParams.get("locale");const locale=(requestedLocale==="ur"||requestedLocale==="ar"?requestedLocale:"en") as ReportCardPdfLocale;
+  const url=new URL(request.url);const examValue=Number(url.searchParams.get("exam"));const examId=Number.isInteger(examValue)&&examValue>0?examValue:null;const requestedLocale=url.searchParams.get("locale");const locale=(requestedLocale==="ur"?"ur":"en") as ReportCardPdfLocale;
   try{
     const card=await getExamReportCard(personId,examId);if(!card||!card.issue?.verificationCode)return NextResponse.json({error:"Published report card is not available."},{status:404});
     const pdf=await createUnicodeReportCardPdf(card,{institutionName:workspace.tenantName,branchName:workspace.branchName||"Main Branch"},locale);const body=pdf.buffer.slice(pdf.byteOffset,pdf.byteOffset+pdf.byteLength) as ArrayBuffer;const filename=`report-card-${safeFilename(card.student.studentNumber)}-${card.exam.id}.pdf`;
