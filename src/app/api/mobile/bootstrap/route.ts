@@ -83,12 +83,23 @@ export async function GET(request: NextRequest) {
   }
 
   const workspaces: Workspace[] = [];
-  const workspaceKeys = new Set<string>();
+  const workspaceIndexes = new Map<string, number>();
   const pushWorkspace = (workspace: Workspace) => {
     const key = `${workspace.tenantId}:${workspace.branchId ?? "tenant"}:${workspace.surface}`;
-    if (workspaceKeys.has(key)) return;
+    const existingIndex = workspaceIndexes.get(key);
+    if (existingIndex != null) {
+      const existing = workspaces[existingIndex];
+      if (
+        workspace.surface === "teacher" &&
+        workspace.accessMode === "portal" &&
+        existing.accessMode === "membership"
+      ) {
+        workspaces[existingIndex] = workspace;
+      }
+      return;
+    }
+    workspaceIndexes.set(key, workspaces.length);
     workspaces.push(workspace);
-    workspaceKeys.add(key);
   };
 
   for (const membership of memberships ?? []) {
