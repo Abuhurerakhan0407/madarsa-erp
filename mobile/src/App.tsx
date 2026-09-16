@@ -9,6 +9,7 @@ import HomePanel from './HomePanel';
 import PortalAttendancePanel from './PortalAttendancePanel';
 import PortalHomePanel from './PortalHomePanel';
 import StudentsPanel from './StudentsPanel';
+import TeacherClassesPanel from './TeacherClassesPanel';
 import { modulesBySurface } from './app-model';
 import { getMobileBootstrap, type MobileBootstrap, type MobileWorkspace } from './lib/mobile-api';
 import { clearSecureSessionStorage } from './lib/secure-session-storage';
@@ -253,6 +254,7 @@ export default function App() {
   }
 
   const isPortal = workspace.accessMode === 'portal';
+  const isPortalTeacher = isPortal && workspace.surface === 'teacher';
 
   return (
     <main className="workspace-shell">
@@ -282,7 +284,8 @@ export default function App() {
 
       {activeModule === 'home' ? (isPortal ? <PortalHomePanel workspace={workspace} online={online} /> : <HomePanel workspace={workspace} online={online} />) : null}
       {activeModule === 'attendance' ? (isPortal ? <PortalAttendancePanel workspace={workspace} online={online} /> : <AttendancePanel workspace={workspace} online={online} />) : null}
-      {activeModule === 'students' && !isPortal ? <StudentsPanel workspace={workspace} online={online} /> : null}
+      {activeModule === 'classes' && isPortalTeacher ? <TeacherClassesPanel workspace={workspace} online={online} mode="classes" /> : null}
+      {activeModule === 'students' ? (isPortalTeacher ? <TeacherClassesPanel workspace={workspace} online={online} mode="students" /> : !isPortal ? <StudentsPanel workspace={workspace} online={online} /> : null) : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
         {modules.map((module, index) => (
