@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
 import HomePanel from './HomePanel';
+import ParentCoursesPanel from './ParentCoursesPanel';
 import PortalAttendancePanel from './PortalAttendancePanel';
 import PortalHomePanel from './PortalHomePanel';
 import PortalModulePanel from './PortalModulePanel';
@@ -288,6 +289,7 @@ export default function App() {
       {activeModule === 'attendance' ? (isPortal ? <PortalAttendancePanel workspace={workspace} online={online} /> : <AttendancePanel workspace={workspace} online={online} />) : null}
       {activeModule === 'classes' && isPortalTeacher ? <TeacherClassesPanel workspace={workspace} online={online} mode="classes" /> : null}
       {activeModule === 'students' ? (isPortalTeacher ? <TeacherClassesPanel workspace={workspace} online={online} mode="students" /> : !isPortal ? <StudentsPanel workspace={workspace} online={online} /> : null) : null}
+      {activeModule === 'courses' && isPortalParent ? <ParentCoursesPanel workspace={workspace} online={online} /> : null}
       {activeModule === 'timetable' && isPortalParent ? <PortalModulePanel workspace={workspace} online={online} mode="timetable" /> : null}
       {activeModule === 'homework' && isPortalParent ? <PortalModulePanel workspace={workspace} online={online} mode="homework" /> : null}
       {activeModule === 'results' && isPortalParent ? <PortalModulePanel workspace={workspace} online={online} mode="results" /> : null}
