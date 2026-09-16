@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
 import HomePanel from './HomePanel';
+import ModuleGatePanel from './ModuleGatePanel';
 import ParentCoursesPanel from './ParentCoursesPanel';
 import PortalAttendancePanel from './PortalAttendancePanel';
 import PortalHomePanel from './PortalHomePanel';
@@ -258,6 +259,12 @@ export default function App() {
   const isPortal = workspace.accessMode === 'portal';
   const isPortalTeacher = isPortal && workspace.surface === 'teacher';
   const isPortalParent = isPortal && workspace.surface === 'parent';
+  const hasNativeSurface =
+    activeModule === 'home' ||
+    activeModule === 'attendance' ||
+    (activeModule === 'students' && !isPortal) ||
+    (isPortalTeacher && (activeModule === 'classes' || activeModule === 'students' || activeModule === 'notifications')) ||
+    (isPortalParent && (activeModule === 'courses' || activeModule === 'timetable' || activeModule === 'homework' || activeModule === 'results' || activeModule === 'notifications'));
 
   return (
     <main className="workspace-shell">
@@ -294,6 +301,7 @@ export default function App() {
       {activeModule === 'homework' && isPortalParent ? <PortalModulePanel workspace={workspace} online={online} mode="homework" /> : null}
       {activeModule === 'results' && isPortalParent ? <PortalModulePanel workspace={workspace} online={online} mode="results" /> : null}
       {activeModule === 'notifications' && isPortal ? <PortalModulePanel workspace={workspace} online={online} mode="notifications" /> : null}
+      {!hasNativeSurface && selectedModule ? <ModuleGatePanel workspace={workspace} moduleLabel={selectedModule.label} /> : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
         {modules.map((module, index) => (
