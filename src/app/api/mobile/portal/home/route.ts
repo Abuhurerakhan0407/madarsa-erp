@@ -85,7 +85,11 @@ export async function GET(request: NextRequest) {
     if (employmentError || !employments?.length) return json(request, { error: "portal_scope_denied" }, { status: 403 });
   }
 
-  const { data, error } = await admin.rpc("get_portal_home_v3", {
+  // Teacher home only needs the base employee/notices payload. Parent home uses v3 because
+  // that RPC composes guardian schedule, homework and result data. Keeping teachers on v1
+  // avoids unnecessary guardian-side resolution and preserves least-privilege data access.
+  const portalHomeRpc = requestedSurface === "teacher" ? "get_portal_home_v1" : "get_portal_home_v3";
+  const { data, error } = await admin.rpc(portalHomeRpc, {
     p_identity_id: user.id,
     p_tenant_id: tenantId,
   });
