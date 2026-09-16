@@ -5,6 +5,7 @@ import './styles.css';
 import './restore.css';
 import './home.css';
 import './attendance.css';
+import './students.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
