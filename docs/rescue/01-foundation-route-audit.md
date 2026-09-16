@@ -31,6 +31,12 @@ Exact base: `a4ce612bfcb639df4afb8d7aa1790352da336530`
 - `/{locale}/attendance` — Attendance
 - `/{locale}/quran` — Qur'an / Hifz
 
+## Unresolved authorization
+
+- Missing, permission-less, or otherwise unclassified workspace authorization resolves to a neutral fail-closed audience.
+- Neutral audiences receive no operational desktop or mobile navigation and render a minimal access-unavailable state with language and sign-out controls only.
+- Teacher navigation requires a verified teacher role plus the required teaching/student-read permissions; teaching permissions alone never imply teacher navigation.
+
 ## Deferred / hidden release surfaces
 
 These implementations remain in code but are not exposed by Client V3 navigation or dashboard quick routes:

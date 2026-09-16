@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { TeacherHome } from "@/components/teacher-home";
 import { getGuidedSetupSnapshot } from "@/lib/configuration/setup-readiness";
 import type { Locale } from "@/lib/i18n/config";
@@ -208,6 +209,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   if (!workspace) return null;
 
   const audience = await getNavigationAudience(workspace);
+  if (audience === "neutral") redirect(`/${locale}/forbidden`);
   if (audience === "teacher") {
     return <TeacherHome locale={locale} tenantName={workspace.tenantName} />;
   }

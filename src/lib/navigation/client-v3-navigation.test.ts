@@ -31,6 +31,14 @@ describe("Client V3 navigation", () => {
     expect(getSupplementalMobileNavigation(nav)).toEqual([]);
   });
 
+  it("uses no operational navigation for an unresolved audience", () => {
+    const nav = getClientV3Navigation("neutral");
+    expect(nav.primary).toEqual([]);
+    expect(nav.more).toEqual([]);
+    expect(nav.mobile).toEqual([]);
+    expect(getSupplementalMobileNavigation(nav)).toEqual([]);
+  });
+
   it("keeps office mobile navigation to five tabs including the menu", () => {
     const nav = getClientV3Navigation("office");
     const supplemental = getSupplementalMobileNavigation(nav);
@@ -56,8 +64,11 @@ describe("Client V3 navigation", () => {
     expect(classifyNavigationAudience(["teacher"], ["students.profile.read", "attendance.student.read", "attendance.student.mark", "learning.progress.read"])).toBe("teacher");
   });
 
-  it("fails ambiguous or office-capable memberships to office", () => {
+  it("requires a verified teacher role and fail-closes unknown authorization", () => {
     expect(classifyNavigationAudience(["teacher"], ["students.profile.read", "attendance.student.mark", "settings.configuration.read"])).toBe("office");
-    expect(classifyNavigationAudience([], [])).toBe("office");
+    expect(classifyNavigationAudience([], [])).toBe("neutral");
+    expect(classifyNavigationAudience([], ["students.profile.read", "attendance.student.mark"])).toBe("neutral");
+    expect(classifyNavigationAudience(["assistant"], ["students.profile.read", "attendance.student.mark"])).toBe("neutral");
+    expect(classifyNavigationAudience(["office_admin"], ["settings.configuration.read"])).toBe("office");
   });
 });

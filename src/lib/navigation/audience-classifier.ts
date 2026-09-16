@@ -9,5 +9,7 @@ export function classifyNavigationAudience(roleKeys:string[],permissions:string[
  const teaching=permissions.some(code=>TEACHING_PREFIXES.some(prefix=>code.startsWith(prefix)));
  const studentRead=permissions.includes("students.profile.read");
  const teacherRole=normalized.some(key=>key==="teacher"||key.startsWith("teacher_")||key.endsWith("_teacher"));
- return !office&&studentRead&&teaching&&(teacherRole||permissions.includes("attendance.student.mark"))?"teacher":"office";
+ if(teacherRole&&!office&&studentRead&&teaching) return "teacher";
+ if(office) return "office";
+ return "neutral";
 }

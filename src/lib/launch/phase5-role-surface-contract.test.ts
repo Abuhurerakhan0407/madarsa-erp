@@ -9,6 +9,8 @@ function source(path: string) {
 const permissionHelper = source("src/lib/access/operator-permission.ts");
 const officeGuard = source("src/lib/navigation/office-surface.ts");
 const audienceSource = source("src/lib/navigation/audience.ts");
+const audienceClassifier = source("src/lib/navigation/audience-classifier.ts");
+const appShell = source("src/components/app-shell.tsx");
 const studentRegister = source("src/app/[locale]/students/page.tsx");
 const studentDetail = source("src/lib/students/detail.ts");
 const studentPage = source("src/app/[locale]/students/[personId]/page.tsx");
@@ -46,9 +48,13 @@ describe("Client V3 Phase 5 role-surface hardening", () => {
     expect(officeGuard).not.toContain("user_metadata");
   });
 
-  it("fail-closes role-less or permission-less navigation instead of presenting office controls", () => {
-    expect(audienceSource).toContain('if(!roleIds.length) return "teacher"');
-    expect(audienceSource).toContain('if(!permissions.length) return "teacher"');
+  it("fail-closes unresolved authorization without inheriting teacher navigation", () => {
+    expect(audienceSource).toContain('if(!roleIds.length) return "neutral"');
+    expect(audienceSource).toContain('if(!permissions.length) return "neutral"');
+    expect(audienceClassifier).toContain('if(teacherRole&&!office&&studentRead&&teaching) return "teacher"');
+    expect(audienceClassifier).toContain('return "neutral"');
+    expect(appShell).toContain('audience === "neutral"');
+    expect(appShell).toContain('data-navigation-audience="neutral"');
   });
 
   it("server-gates each office-only route with a domain permission", () => {

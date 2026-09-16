@@ -7,6 +7,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { RoutePendingFeedback } from "@/components/route-pending-feedback";
 import { SignOutButton } from "@/components/sign-out-button";
+import { ErrorState } from "@/components/workspace-ui";
 import { getCurrentAcademicSessionLabel } from "@/lib/academics/current-session";
 import type { Locale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
@@ -19,20 +20,37 @@ const shellCopy = {
   ur: { productLine: "ادارہ آپریشنز", year: "تعلیمی سال", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس", more: "مزید", newAdmission: "+ نیا داخلہ", mainBranch: "مرکزی برانچ" },
   ar: { productLine: "عمليات المؤسسة", year: "العام الدراسي", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة", workspace: "مساحة العمل", more: "المزيد", newAdmission: "+ قبول جديد", mainBranch: "الفرع الرئيسي" }
 } as const;
+const accessDeniedCopy = {
+  en: { title: "Workspace access unavailable", body: "Your account does not have a verified workspace role. Ask an administrator to review your access before continuing." },
+  ur: { title: "ورک اسپیس تک رسائی دستیاب نہیں", body: "آپ کے اکاؤنٹ کے لیے تصدیق شدہ ورک اسپیس کردار موجود نہیں ہے۔ جاری رکھنے سے پہلے منتظم سے اپنی رسائی چیک کروائیں۔" },
+  ar: { title: "الوصول إلى مساحة العمل غير متاح", body: "لا يملك حسابك دورًا موثقًا لمساحة العمل. اطلب من المسؤول مراجعة صلاحياتك قبل المتابعة." }
+} as const;
 
 function initials(name: string) {
   return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
 }
 
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
-  const [app, configuredSessionLabel] = await Promise.all([
-    getTranslations("App"),
-    getCurrentAcademicSessionLabel(locale)
-  ]);
+  const app = await getTranslations("App");
   const copy = shellCopy[locale];
+  const audience = await getNavigationAudience(workspace);
+
+  if (audience === "neutral") {
+    const denied = accessDeniedCopy[locale];
+    return <div className="app-shell professional-shell client-v2-shell" data-client-v3 data-navigation-audience="neutral">
+      <main id="main-content" className="main-content professional-main-content client-v2-main">
+        <ErrorState code="403" title={denied.title} body={denied.body} />
+        <div className="topbar-actions">
+          <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
+          <SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale === "ur" ? "ur" : "en"} />
+        </div>
+      </main>
+    </div>;
+  }
+
+  const configuredSessionLabel = await getCurrentAcademicSessionLabel(locale);
   const branchLabel = workspace.branchName || copy.mainBranch;
   const academicSessionLabel = configuredSessionLabel || copy.year;
-  const audience = await getNavigationAudience(workspace);
   const nav = getClientV3Navigation(audience);
   const supplementalMobileItems = getSupplementalMobileNavigation(nav);
   const mobileGroups = supplementalMobileItems.length ? [{ key: "menu", label: copy.more, items: supplementalMobileItems.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) })) }] : [];

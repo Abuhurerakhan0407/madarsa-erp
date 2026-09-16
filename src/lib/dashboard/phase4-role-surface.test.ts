@@ -10,7 +10,9 @@ const portal = readFileSync(resolve(process.cwd(), "src/app/portal/page.tsx"), "
 describe("Client V3 Phase 4 role surfaces", () => {
   it("resolves the authoritative navigation audience before rendering office data", () => {
     expect(dashboard).toContain("getnavigationaudience(workspace)");
+    expect(dashboard).toContain('audience === "neutral"');
     expect(dashboard).toContain('audience === "teacher"');
+    expect(dashboard.indexOf('audience === "neutral"')).toBeLessThan(dashboard.indexOf("getoperationaldashboard(locale)"));
     expect(dashboard.indexOf('audience === "teacher"')).toBeLessThan(dashboard.indexOf("getoperationaldashboard(locale)"));
   });
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
 import { EntityNotFoundState, SuccessNotice, WorkspacePageHeader } from "@/components/workspace-ui";
 import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
@@ -33,6 +33,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0 || !workspace) notFound();
   const audience = await getNavigationAudience(workspace);
+  if (audience === "neutral") redirect(`/${locale}/forbidden`);
   const isTeacher = audience === "teacher";
   const text = copy[locale];
   const student = await getStudentDetail(personId, locale);

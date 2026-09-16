@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n/config";
 
-export type NavigationAudience = "office" | "teacher";
+export type NavigationAudience = "office" | "teacher" | "neutral";
 export type ClientV3NavItem = { key: string; labels: Record<Locale, string>; href: (locale: Locale) => string };
 export type ClientV3Navigation = { primary: ClientV3NavItem[]; more: ClientV3NavItem[]; mobile: ClientV3NavItem[] };
 
@@ -30,6 +30,7 @@ const teacherPrimary:ClientV3NavItem[]=[
 
 export function getClientV3Navigation(audience:NavigationAudience):ClientV3Navigation{
  if(audience==="teacher") return {primary:teacherPrimary,more:[],mobile:teacherPrimary};
+ if(audience==="neutral") return {primary:[],more:[],mobile:[]};
  return {primary:officePrimary,more:officeMore,mobile:[officePrimary[0],officePrimary[1],officePrimary[2],officePrimary[3]]};
 }
 
