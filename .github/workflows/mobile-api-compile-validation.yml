@@ -1,0 +1,37 @@
+name: Mobile API compile validation
+
+on:
+  push:
+    branches:
+      - mobile/api-compile-validation-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-api-compile-validation
+  cancel-in-progress: true
+
+jobs:
+  validate-root-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install root dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: TypeScript check
+        run: pnpm typecheck
+      - name: Production Next.js build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dysfnytqpbfxpmerkyaz.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JE-qS9os44gw9TKy4GxYSA_5ZH_17H7
