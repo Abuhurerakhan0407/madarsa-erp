@@ -13,7 +13,7 @@ describe("Phase 5 portal administration locale contract", () => {
     expect(page).toContain("والدین اور اساتذہ کی رسائی");
   });
 
-  it("localizes account states, actions, errors, dates and claim links", () => {
+  it("localizes claim-only account states, actions, errors, dates and claim links", () => {
     const center = read("src/components/portal-admin-center.tsx");
     expect(center).toContain("locale: SupportedLocale");
     expect(center).toContain("scopeLabel(candidate, locale)");
@@ -22,16 +22,19 @@ describe("Phase 5 portal administration locale contract", () => {
     expect(center).toContain("formatPortalDate(item.expiresAt, locale)");
     expect(center).toContain("preservePortalLocale(issued.claimPath, locale)");
     expect(center).toContain("پورٹل اکاؤنٹس");
-    expect(center).toContain("پورٹل اسناد منظم نہیں ہو سکیں");
+    expect(center).toContain("رسائی کوڈ جاری نہیں ہو سکا");
+    expect(center).toContain("پورٹل رسائی تبدیل نہیں ہو سکی");
+    expect(center).not.toContain("/api/portals/credentials");
+    expect(center).not.toContain("temporaryPassword");
     expect(center).not.toContain("text(labels.ar)");
   });
 
-  it("keeps every mutating portal-admin action visibly pending", () => {
+  it("keeps every remaining mutating portal-admin action visibly pending", () => {
     const center = read("src/components/portal-admin-center.tsx");
-    expect(center).toContain("aria-busy={busy === provisionKey || undefined}");
-    expect(center).toContain("aria-busy={busy === resetKey || undefined}");
     expect(center).toContain("aria-busy={busy === accessKey || undefined}");
     expect(center).toContain("aria-busy={busy === issueKey || undefined}");
     expect(center).toContain('aria-busy={busy === "notice" || undefined}');
+    expect(center).not.toContain("provisionKey");
+    expect(center).not.toContain("resetKey");
   });
 });
