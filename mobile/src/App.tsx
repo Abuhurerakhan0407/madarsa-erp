@@ -6,6 +6,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AttendancePanel from './AttendancePanel';
 import HomePanel from './HomePanel';
+import PortalAttendancePanel from './PortalAttendancePanel';
 import PortalHomePanel from './PortalHomePanel';
 import StudentsPanel from './StudentsPanel';
 import { modulesBySurface } from './app-model';
@@ -280,7 +281,7 @@ export default function App() {
       )}
 
       {activeModule === 'home' ? (isPortal ? <PortalHomePanel workspace={workspace} online={online} /> : <HomePanel workspace={workspace} online={online} />) : null}
-      {activeModule === 'attendance' && !isPortal ? <AttendancePanel workspace={workspace} online={online} /> : null}
+      {activeModule === 'attendance' ? (isPortal ? <PortalAttendancePanel workspace={workspace} online={online} /> : <AttendancePanel workspace={workspace} online={online} />) : null}
       {activeModule === 'students' && !isPortal ? <StudentsPanel workspace={workspace} online={online} /> : null}
 
       <section className="module-grid" aria-label={`${workspace.surface} modules`}>
