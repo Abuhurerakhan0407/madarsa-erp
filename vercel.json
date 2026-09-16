@@ -1,32 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "installCommand": "echo 'Ilmgaah mobile branch: skipping root ERP dependency install'",
-  "buildCommand": "MOBILE_DIR=mobile bash mobile/scripts/vercel-build-apk.sh",
-  "outputDirectory": "mobile/apk-dist",
-  "cleanUrls": false,
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Referrer-Policy", "value": "no-referrer" }
-      ]
-    },
-    {
-      "source": "/Ilmgaah-Android-Dev.apk",
-      "headers": [
-        { "key": "Content-Disposition", "value": "attachment; filename=Ilmgaah-Android-Dev.apk" },
-        { "key": "Cache-Control", "value": "private, no-store" }
-      ]
-    },
-    {
-      "source": "/Ilmgaah-Android-Native-Preview.apk",
-      "headers": [
-        { "key": "Content-Disposition", "value": "attachment; filename=Ilmgaah-Android-Native-Preview.apk" },
-        { "key": "Cache-Control", "value": "private, no-store" }
-      ]
-    }
-  ]
+  "framework": "nextjs"
 }
