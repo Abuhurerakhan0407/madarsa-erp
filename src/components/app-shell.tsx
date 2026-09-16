@@ -10,7 +10,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { getCurrentAcademicSessionLabel } from "@/lib/academics/current-session";
 import type { Locale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
-import { getClientV3Navigation } from "@/lib/navigation/client-v3-navigation";
+import { getClientV3Navigation, getSupplementalMobileNavigation } from "@/lib/navigation/client-v3-navigation";
 import type { TenantContext } from "@/lib/tenancy/context";
 
 type AppShellProps = { children: ReactNode; locale: Locale; workspace: TenantContext };
@@ -34,7 +34,8 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
   const academicSessionLabel = configuredSessionLabel || copy.year;
   const audience = await getNavigationAudience(workspace);
   const nav = getClientV3Navigation(audience);
-  const mobileGroups = [{ key: "menu", label: copy.more, items: (audience === "office" ? [nav.primary[4], ...nav.more] : nav.primary).map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) })) }];
+  const supplementalMobileItems = getSupplementalMobileNavigation(nav);
+  const mobileGroups = supplementalMobileItems.length ? [{ key: "menu", label: copy.more, items: supplementalMobileItems.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) })) }] : [];
   const quickItems = nav.mobile.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }));
 
   return <div className="app-shell professional-shell client-v2-shell" data-client-v3 data-navigation-audience={audience}>

@@ -14,6 +14,7 @@ const officePrimary:ClientV3NavItem[]=[
  item("quran","Qur'an & Hifz","قرآن و حفظ","القرآن والحفظ",l=>`/${l}/quran`)
 ];
 const officeMore:ClientV3NavItem[]=[
+ item("portals","Parent & Teacher Access","?????? ? ?????? ?????","???? ???????? ?????????",l=>`/${l}/portals`),
  item("teachers","Teachers","اساتذہ","المعلمون",l=>`/${l}/staff`),
  item("exams","Exams","امتحانات","الاختبارات",l=>`/${l}/exams`),
  item("documents","IDs & Documents","ID و دستاویزات","الهويات والمستندات",l=>`/${l}/documents`),
@@ -30,4 +31,9 @@ const teacherPrimary:ClientV3NavItem[]=[
 export function getClientV3Navigation(audience:NavigationAudience):ClientV3Navigation{
  if(audience==="teacher") return {primary:teacherPrimary,more:[],mobile:teacherPrimary};
  return {primary:officePrimary,more:officeMore,mobile:[officePrimary[0],officePrimary[1],officePrimary[2],officePrimary[3]]};
+}
+
+export function getSupplementalMobileNavigation(navigation:ClientV3Navigation):ClientV3NavItem[]{
+ const quickKeys=new Set(navigation.mobile.map(item=>item.key));
+ return [...navigation.primary,...navigation.more].filter(item=>!quickKeys.has(item.key));
 }
