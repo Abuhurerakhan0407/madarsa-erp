@@ -9,6 +9,7 @@ type ModuleSummary = { attendance?: unknown; finance?: unknown; quran_attempts?:
 
 type EnrollmentScope = {
   id: number;
+  session_id: number | null;
   program_id: number | null;
   group_id: number | null;
   status: string;
@@ -29,6 +30,7 @@ export type StudentDetail = {
   medicalSummary: string | null;
   accessibilityNeeds: string | null;
   pickupRestrictions: string | null;
+  academicSession: string;
   program: string;
   group: string;
   guardian: { name: string; relationship: string; phone: string | null; occupation: string | null; education: string | null; canCollect: boolean } | null;
@@ -109,7 +111,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
 
     const assignedEnrollment = await admin
       .from("enrollments")
-      .select("id,program_id,group_id,status")
+      .select("id,session_id,program_id,group_id,status")
       .eq("tenant_id", workspace.tenantId)
       .eq("branch_id", workspace.branchId)
       .eq("student_person_id", personId)
@@ -124,7 +126,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   } else {
     const association = await supabase
       .from("enrollments")
-      .select("id,program_id,group_id,status")
+      .select("id,session_id,program_id,group_id,status")
       .eq("tenant_id", workspace.tenantId)
       .eq("branch_id", workspace.branchId)
       .eq("student_person_id", personId)
@@ -148,11 +150,13 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   const relationship = await admin.from("person_relationships").select("source_person_id,relationship_type,can_collect_student").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
-  const [program, group, moduleResult] = await Promise.all([
+  const [session, program, group, moduleResult] = await Promise.all([
+    enrollmentScope.session_id ? admin.from("academic_sessions").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollmentScope.session_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     enrollmentScope.program_id ? admin.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollmentScope.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     enrollmentScope.group_id ? admin.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollmentScope.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     admin.rpc("get_student_module_summary", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_person_id: personId })
   ]);
+  if (session.error) throw new Error(`Unable to load academic session: ${session.error.message}`);
   if (program.error) throw new Error(`Unable to load student program: ${program.error.message}`);
   if (group.error) throw new Error(`Unable to load student group: ${group.error.message}`);
   if (moduleResult.error) throw new Error(`Unable to load student module summary: ${moduleResult.error.message}`);
@@ -193,6 +197,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     medicalSummary: profile.data.medical_summary,
     accessibilityNeeds: profile.data.accessibility_needs,
     pickupRestrictions: profile.data.pickup_restrictions,
+    academicSession: session.data ? label(session.data.labels, locale, session.data.key) : "—",
     program: program.data ? label(program.data.labels, locale, program.data.key) : "—",
     group: group.data ? label(group.data.labels, locale, group.data.key) : "—",
     guardian,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StudentPhotoPicker } from "@/components/student-photo-picker";
 import { FieldGroup } from "@/components/workspace-ui";
 import type { Locale, SupportedLocale } from "@/lib/i18n/config";
@@ -100,6 +100,8 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const submissionLock = useRef(false);
+  const photoUploadLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateBody, setDuplicateBody] = useState<CreateBody | null>(null);
   const [duplicateCount, setDuplicateCount] = useState<number | null>(null);
@@ -201,7 +203,9 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       setError(text.photoRequired);
       return false;
     }
+    if (photoUploadLock.current) return false;
 
+    photoUploadLock.current = true;
     setPhotoUploading(true);
     setError(null);
     try {
@@ -222,11 +226,14 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       setError(text.photoUploadError);
       return false;
     } finally {
+      photoUploadLock.current = false;
       setPhotoUploading(false);
     }
   }
 
   async function create(body: CreateBody) {
+    if (submissionLock.current) return;
+    submissionLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -258,6 +265,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     } catch {
       setError(text.error);
     } finally {
+      submissionLock.current = false;
       setBusy(false);
     }
   }

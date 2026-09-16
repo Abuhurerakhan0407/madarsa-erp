@@ -118,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ per
   const upload = await bucket.upload(storagePath, bytes, { contentType: detectedType, cacheControl: "0", upsert: false });
   if (upload.error) return NextResponse.json({ error: "Unable to store student photo." }, { status: 503 });
 
-  const { error } = await admin.rpc("update_student_photo_v1", {
+  const { data, error } = await admin.rpc("update_student_photo_v1", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
@@ -139,6 +139,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ per
       return NextResponse.json({ error: "Student photo path was rejected." }, { status: 400 });
     }
     return NextResponse.json({ error: "Unable to attach the student photo." }, { status: 500 });
+  }
+
+  const previousStoragePath = data && typeof data === "object" && !Array.isArray(data)
+    ? (data as { previous_storage_path?: unknown }).previous_storage_path
+    : null;
+  if (typeof previousStoragePath === "string" && previousStoragePath !== storagePath) {
+    const expectedPrefix = `${workspace.tenantId}/students/photos/${personId}/`;
+    if (previousStoragePath.startsWith(expectedPrefix)) {
+      await bucket.remove([previousStoragePath]);
+    }
   }
 
   return NextResponse.json(

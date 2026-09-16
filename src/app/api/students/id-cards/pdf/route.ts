@@ -70,8 +70,8 @@ export async function GET(request: Request) {
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid student selection." }, { status: 400 });
   }
-  if (!groupId || studentIds.length === 0) {
-    return NextResponse.json({ error: "Class and at least one student are required." }, { status: 400 });
+  if (!sessionId || !groupId || studentIds.length === 0) {
+    return NextResponse.json({ error: "Academic session, class, and at least one student are required." }, { status: 400 });
   }
 
   try {
@@ -79,11 +79,14 @@ export async function GET(request: Request) {
     if (result.students.length !== studentIds.length) {
       return NextResponse.json({ error: "One or more selected students are no longer eligible for this ID-card batch." }, { status: 409 });
     }
-    const academicYear = result.sessions.find((session) => session.id === sessionId)?.label || "Current academic year";
+    const academicYear = result.sessions.find((session) => session.id === sessionId)?.label;
+    if (!academicYear) {
+      return NextResponse.json({ error: "The selected academic session is no longer available." }, { status: 409 });
+    }
     const students = await hydrateStudentPhotos(result.students, workspace.tenantId);
     const pdf = await createUnicodeStudentIdCardSheetPdf(students, {
       institutionName: workspace.tenantName,
-      branchName: workspace.branchName || "Main Branch",
+      branchName: workspace.branchName || workspace.branchCode || "—",
       academicYear
     });
     const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;

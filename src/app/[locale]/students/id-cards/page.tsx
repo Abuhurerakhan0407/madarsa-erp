@@ -21,7 +21,7 @@ export default async function BulkIdCardsPage({ params, searchParams }: { params
   const groupId = positive(query.group);
   const result = await getStudentIdCardBatch({ locale, sessionId, groupId });
   const text = copy[locale];
-  const groups = sessionId ? result.groups.filter((group) => group.sessionId === sessionId) : result.groups;
+  const groups = sessionId ? result.groups.filter((group) => group.sessionId === sessionId) : [];
 
   return <>
     <section className="page-heading" data-page-section>
@@ -31,8 +31,8 @@ export default async function BulkIdCardsPage({ params, searchParams }: { params
 
     <section className="panel" data-page-section>
       <form className={styles.filterGrid} method="get">
-        <label className="field-label">{text.session}<select className="text-field" name="session" defaultValue={sessionId ?? ""}><option value="">{text.chooseSession}</option>{result.sessions.map((session) => <option value={session.id} key={session.id}>{session.label}</option>)}</select></label>
-        <label className="field-label">{text.group}<select className="text-field" name="group" defaultValue={groupId ?? ""}><option value="">{text.chooseGroup}</option>{groups.map((group) => <option value={group.id} key={group.id}>{group.label}</option>)}</select></label>
+        <label className="field-label">{text.session}<select className="text-field" name="session" defaultValue={sessionId ?? ""} required><option value="">{text.chooseSession}</option>{result.sessions.map((session) => <option value={session.id} key={session.id}>{session.label}</option>)}</select></label>
+        <label className="field-label">{text.group}<select className="text-field" name="group" defaultValue={groupId ?? ""} required disabled={!sessionId}><option value="">{text.chooseGroup}</option>{groups.map((group) => <option value={group.id} key={group.id}>{group.label}</option>)}</select></label>
         <button className="action-button" type="submit">{text.load}</button>
       </form>
     </section>

@@ -32,6 +32,9 @@ describe("student photo update final-touch contract", () => {
     expect(uploadRoute).toContain("tenant-documents");
     expect(uploadRoute).toContain("update_student_photo_v1");
     expect(uploadRoute).toContain("await bucket.remove([storagePath])");
+    expect(uploadRoute).toContain("previous_storage_path");
+    expect(uploadRoute).toContain("expectedPrefix");
+    expect(uploadRoute).toContain("await bucket.remove([previousStoragePath])");
   });
 
   it("requires a camera or uploaded photo in the staff walk-in flow and retries attachment without recreating the student", () => {
@@ -40,5 +43,7 @@ describe("student photo update final-touch contract", () => {
     expect(admissionForm).toContain("photoRequired");
     expect(admissionForm).toContain("pendingPhotoStudent");
     expect(admissionForm).toContain("/upload");
+    expect(admissionForm).toContain("submissionLock.current");
+    expect(admissionForm).toContain("photoUploadLock.current");
   });
 });
