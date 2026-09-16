@@ -58,26 +58,25 @@ function inspectSourceSecrets() {
     const text = read(path);
     for (const [name, pattern] of secretPatterns) {
       pattern.lastIndex = 0;
-      if (pattern.test(text)) {
-        fail(`${relative(root, path)}: contains forbidden ${name}`);
-      }
+      if (pattern.test(text)) fail(`${relative(root, path)}: contains forbidden ${name}`);
     }
   }
 }
 
-function inspectAndroidManifest() {
-  const manifest = join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
-  if (!existsSync(manifest)) {
+function generatedManifestPaths() {
+  const sourceManifest = join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  const intermediates = join(root, 'android', 'app', 'build', 'intermediates');
+  const merged = walk(intermediates).filter(
+    (path) => path.endsWith('AndroidManifest.xml') && /merged_manifest|merged_manifests|packaged_manifests/.test(path),
+  );
+  return [...new Set([sourceManifest, ...merged])].filter(existsSync);
+}
+
+function inspectAndroidManifests() {
+  const manifests = generatedManifestPaths();
+  if (!manifests.length) {
     fail('generated AndroidManifest.xml is missing');
     return;
-  }
-  const text = read(manifest);
-
-  if (!/android:allowBackup=['"]false['"]/.test(text)) {
-    fail('Android manifest: application backup must be disabled for child/student data');
-  }
-  if (!/android:usesCleartextTraffic=['"]false['"]/.test(text)) {
-    fail('Android manifest: cleartext traffic must be disabled');
   }
 
   const forbiddenPermissions = [
@@ -94,9 +93,17 @@ function inspectAndroidManifest() {
     'android.permission.MANAGE_EXTERNAL_STORAGE',
   ];
 
-  for (const permission of forbiddenPermissions) {
-    if (text.includes(permission)) {
-      fail(`Android manifest: forbidden default permission ${permission}`);
+  for (const manifest of manifests) {
+    const text = read(manifest);
+    const label = relative(root, manifest);
+    if (!/android:allowBackup=['"]false['"]/.test(text)) {
+      fail(`${label}: application backup must be disabled for child/student data`);
+    }
+    if (!/android:usesCleartextTraffic=['"]false['"]/.test(text)) {
+      fail(`${label}: cleartext traffic must be disabled`);
+    }
+    for (const permission of forbiddenPermissions) {
+      if (text.includes(permission)) fail(`${label}: forbidden default permission ${permission}`);
     }
   }
 }
@@ -106,10 +113,11 @@ if (!existsSync(join(root, 'DPDP_PRIVACY_RELEASE_GATE.md'))) {
 }
 
 if (generatedOnly) {
-  inspectAndroidManifest();
+  inspectAndroidManifests();
 } else {
   inspectConfig('production', join(root, 'capacitor.config.ts'), { production: true });
   inspectConfig('internal development', join(root, 'capacitor.config.dev.ts'));
+  inspectConfig('native preview', join(root, 'capacitor.config.preview.ts'), { production: true });
   inspectSourceSecrets();
 }
 
@@ -119,4 +127,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Ilmgaah privacy release gate passed (${generatedOnly ? 'generated Android' : 'source/config'}).`);
+console.log(`Ilmgaah privacy release gate passed (${generatedOnly ? 'generated/merged Android manifests' : 'source/config'}).`);
