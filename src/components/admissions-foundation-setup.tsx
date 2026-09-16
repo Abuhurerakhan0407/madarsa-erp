@@ -30,16 +30,14 @@ export function AdmissionsFoundationSetup({ locale }: { locale: ConfigurationLoc
           sessionKey: value("sessionKey"),
           sessionLabels: {
             en: value("sessionEn"),
-            ur: value("sessionUr"),
-            ar: value("sessionAr")
+            ur: value("sessionUr")
           },
           startsOn: value("startsOn"),
           endsOn: value("endsOn"),
           programKey: value("programKey"),
           programLabels: {
             en: value("programEn"),
-            ur: value("programUr"),
-            ar: value("programAr")
+            ur: value("programUr")
           },
           programType: value("programType")
         })
@@ -87,10 +85,6 @@ export function AdmissionsFoundationSetup({ locale }: { locale: ConfigurationLoc
               <input className="text-field" name="sessionUr" maxLength={120} required dir="rtl" />
             </label>
             <label className="field-label">
-              {copy.sessionAr}
-              <input className="text-field" name="sessionAr" maxLength={120} required dir="rtl" />
-            </label>
-            <label className="field-label">
               {copy.startsOn}
               <input className="text-field" name="startsOn" type="date" required />
             </label>
@@ -113,10 +107,6 @@ export function AdmissionsFoundationSetup({ locale }: { locale: ConfigurationLoc
             <label className="field-label">
               {copy.programUr}
               <input className="text-field" name="programUr" maxLength={120} required dir="rtl" />
-            </label>
-            <label className="field-label">
-              {copy.programAr}
-              <input className="text-field" name="programAr" maxLength={120} required dir="rtl" />
             </label>
             <label className="field-label">
               {copy.programType}

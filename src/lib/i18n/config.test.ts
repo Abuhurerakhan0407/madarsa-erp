@@ -15,19 +15,20 @@ function messageKeys(value: object, prefix = ""): string[] {
 }
 
 describe("locale configuration", () => {
-  it("supports the approved locales", () => {
-    expect(locales).toEqual(["en", "ur", "ar"]);
+  it("exposes only the approved application locales", () => {
+    expect(locales).toEqual(["en", "ur"]);
     expect(isLocale("ur")).toBe(true);
+    expect(isLocale("ar")).toBe(false);
     expect(isLocale("fr")).toBe(false);
   });
 
-  it("maps writing directions correctly", () => {
+  it("keeps writing direction support for legacy localized data", () => {
     expect(getDirection("en")).toBe("ltr");
     expect(getDirection("ur")).toBe("rtl");
     expect(getDirection("ar")).toBe("rtl");
   });
 
-  it("keeps translation keys aligned", () => {
+  it("keeps dormant translation keys aligned", () => {
     const englishKeys = messageKeys(en).sort();
 
     expect(messageKeys(ur).sort()).toEqual(englishKeys);

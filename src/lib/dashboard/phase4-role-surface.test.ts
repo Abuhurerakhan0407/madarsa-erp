@@ -40,7 +40,7 @@ describe("Client V3 Phase 4 role surfaces", () => {
 
   it("keeps the portal separate from office configuration and admissions routes", () => {
     expect(portal).toContain("identity_person_links");
-    expect(portal).toContain('link_type)==="guardian"');
+    expect(portal).toMatch(/link_type\)\s*===\s*"guardian"/);
     expect(portal).not.toContain("/settings/configuration");
     expect(portal).not.toContain("/admissions");
   });

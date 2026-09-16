@@ -35,10 +35,6 @@ export function getAppFontVariables(locale: Locale): string {
     return `${latinFontVariables} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable}`;
   }
 
-  if (locale === "ar") {
-    return `${latinFontVariables} ${notoNaskhArabic.variable}`;
-  }
-
   return latinFontVariables;
 }
 

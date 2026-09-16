@@ -7,25 +7,46 @@ import {
 
 const validInput = {
   sessionKey: "2026_27",
-  sessionLabels: { en: "2026-27", ur: "تعلیمی سال 2026-27", ar: "العام الدراسي 2026-27" },
+  sessionLabels: { en: "2026-27", ur: "تعلیمی سال 2026-27" },
   startsOn: "2026-06-01",
   endsOn: "2027-05-31",
   programKey: "dars_e_nizami",
-  programLabels: { en: "Dars-e-Nizami", ur: "درس نظامی", ar: "الدرس النظامي" },
+  programLabels: { en: "Dars-e-Nizami", ur: "درس نظامی" },
   programType: "dars_e_nizami"
 } as const;
 
 describe("admissions foundation", () => {
-  it("accepts multilingual session and program configuration", () => {
+  it("accepts the visible English and Urdu session/program configuration", () => {
     const result = parseAdmissionsFoundationInput(validInput);
     expect(result.errors).toEqual([]);
     expect(result.value).toMatchObject({
       sessionKey: "2026_27",
-      programType: "dars_e_nizami"
+      programType: "dars_e_nizami",
+      sessionLabels: {
+        en: "2026-27",
+        ur: "تعلیمی سال 2026-27",
+        ar: "تعلیمی سال 2026-27"
+      },
+      programLabels: {
+        en: "Dars-e-Nizami",
+        ur: "درس نظامی",
+        ar: "درس نظامی"
+      }
     });
   });
 
-  it("rejects unstable keys, missing labels, and reversed dates", () => {
+  it("continues accepting a legacy Arabic storage label when supplied internally", () => {
+    const result = parseAdmissionsFoundationInput({
+      ...validInput,
+      sessionLabels: { ...validInput.sessionLabels, ar: "العام الدراسي 2026-27" },
+      programLabels: { ...validInput.programLabels, ar: "الدرس النظامي" }
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.value?.sessionLabels.ar).toBe("العام الدراسي 2026-27");
+    expect(result.value?.programLabels.ar).toBe("الدرس النظامي");
+  });
+
+  it("rejects unstable keys, missing visible labels, and reversed dates", () => {
     const result = parseAdmissionsFoundationInput({
       ...validInput,
       sessionKey: "Year 2026",
@@ -37,7 +58,7 @@ describe("admissions foundation", () => {
 
     expect(result.errors).toContain("Session key is invalid.");
     expect(result.errors).toContain("Program key is invalid.");
-    expect(result.errors).toContain("English, Urdu and Arabic session labels are required.");
+    expect(result.errors).toContain("English and Urdu session labels are required.");
     expect(result.errors).toContain("Session end date must be after its start date.");
   });
 

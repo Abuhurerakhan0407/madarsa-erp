@@ -1,4 +1,5 @@
 import { createLayoutPdf, type PdfLayoutCommand } from "../documents/layout-pdf";
+import { createUnicodeLayoutPdf } from "../documents/unicode-layout-pdf";
 import { operationalReportKeys } from "./model";
 import type { ReportResult } from "./workspace";
 
@@ -9,7 +10,7 @@ function stringValue(value:unknown):string{if(value===null||value===undefined||v
 function fit(value:unknown,maxChars:number):string{const valueText=stringValue(value).replace(/\s+/g,' ').trim();return valueText.length<=maxChars?valueText:`${valueText.slice(0,Math.max(1,maxChars-3))}...`;}
 const titleize=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());
 function text(x:number,y:number,value:string,size=7,bold=false):PdfLayoutCommand{return{type:'text',x,y,text:value,size,bold};}
-export function createOperationalReportPdf(result:ReportResult,context:ReportPdfContext):Uint8Array{
+function reportPages(result:ReportResult,context:ReportPdfContext):PdfLayoutCommand[][]{
  if(!supportsOperationalReportPdf(result.reportKey))throw new Error('PDF output is not supported for this report.');
  const columns=result.columns.length?result.columns:[];const displayColumns=columns.slice(0,10);const width=displayColumns.length?TABLE_WIDTH/displayColumns.length:TABLE_WIDTH;const maxChars=Math.max(8,Math.floor(width/4.8));
  const totalPages=Math.max(1,Math.ceil(result.rows.length/ROWS_PER_PAGE));const pages:PdfLayoutCommand[][]=[];
@@ -19,6 +20,8 @@ export function createOperationalReportPdf(result:ReportResult,context:ReportPdf
   result.rows.slice(pageIndex*ROWS_PER_PAGE,(pageIndex+1)*ROWS_PER_PAGE).forEach((row,rowIndex)=>{const y=TOP-HEADER_HEIGHT-(rowIndex+1)*ROW_HEIGHT+5;commands.push({type:'rect',x:LEFT,y:y-5,width:TABLE_WIDTH,height:ROW_HEIGHT,lineWidth:.35});displayColumns.forEach((column,index)=>commands.push(text(LEFT+index*width+4,y+2,fit(row[column],maxChars),6.2)));});
   commands.push(text(LEFT,20,`${result.rowCount} rows · Generated from live operational report data`,6.5));pages.push(commands);
  }
- return createLayoutPdf({pages,pageWidth:PAGE_WIDTH,pageHeight:PAGE_HEIGHT});
+ return pages;
 }
+export function createOperationalReportPdf(result:ReportResult,context:ReportPdfContext):Uint8Array{return createLayoutPdf({pages:reportPages(result,context),pageWidth:PAGE_WIDTH,pageHeight:PAGE_HEIGHT});}
+export async function createUnicodeOperationalReportPdf(result:ReportResult,context:ReportPdfContext):Promise<Uint8Array>{return createUnicodeLayoutPdf({pages:reportPages(result,context),pageWidth:PAGE_WIDTH,pageHeight:PAGE_HEIGHT});}
 export function supportsOperationalReportPdf(reportKey:string):boolean{return operationalReportKeys.includes(reportKey as typeof operationalReportKeys[number]);}

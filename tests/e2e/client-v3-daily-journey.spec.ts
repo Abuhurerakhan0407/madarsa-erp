@@ -110,14 +110,14 @@ test.describe("phase 3 rescue — authenticated read-only UX", () => {
     const detailsToggle = page.getByRole("button", { name: /Details|Hide details/i }).first();
     if (await detailsToggle.isVisible()) {
       await detailsToggle.click();
-      await expect(page.getByText(/Recitation target|Target/i).first()).toBeVisible();
+      await expect(page.locator(`#quran-target-${FIXTURE.personId}-juz`)).toBeVisible();
     }
   });
 
   test("ID-card preview renders and window.print can be stubbed", async ({ page }) => {
     await page.goto(`/en/students/${FIXTURE.personId}/id-card`);
     await expect(page.getByRole("heading", { name: /Student ID card/i })).toBeVisible();
-    await expect(page.getByText(FIXTURE.studentNumber)).toBeVisible();
+    await expect(page.getByText(FIXTURE.studentNumber, { exact: true }).first()).toBeVisible();
     const printBtn = page.getByRole("button", { name: /Print ID card/i });
     await expect(printBtn).toBeVisible();
     await page.evaluate(() => {
@@ -148,7 +148,7 @@ test.describe("phase 3 rescue — authenticated read-only UX", () => {
     if (targetValue) {
       await examSelect.selectOption(targetValue);
       await page.waitForTimeout(800);
-      await expect(page.getByRole("link", { name: /Enter Marks/i })).toBeVisible({ timeout: 4000 });
+      await expect(page.getByRole("link", { name: /^Enter Marks\s*→?$/i })).toBeVisible({ timeout: 4000 });
     } else {
       // No exam available in this tenant — still passes as read-only discoverability check
       await expect(page.getByText(/Choose exam|Exam history/i).first()).toBeVisible();

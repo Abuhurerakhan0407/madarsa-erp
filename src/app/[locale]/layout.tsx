@@ -19,11 +19,12 @@ import "../client-v2.css";
 import "../client-v2-polish.css";
 import "../quran-v2.css";
 import "../academics-v2.css";
+import "../phase5-polish.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Madarsa ERP",
-    template: "%s | Madarsa ERP"
+    default: "Ilmgaah",
+    template: "%s | Ilmgaah"
   },
   description: "Multi-tenant operating system for Madrasas and Islamic institutions.",
   other: {

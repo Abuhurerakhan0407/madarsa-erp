@@ -1,4 +1,5 @@
-import { createLayoutPdf, type PdfLayoutCommand } from "../documents/layout-pdf";
+import { createLayoutPdf, type PdfJpegImage, type PdfLayoutCommand } from "../documents/layout-pdf";
+import { createUnicodeLayoutPdf } from "../documents/unicode-layout-pdf";
 
 export type IdCardPdfStudent = {
   studentNumber: string;
@@ -8,6 +9,7 @@ export type IdCardPdfStudent = {
   program: string;
   group: string;
   guardianName: string | null;
+  photo?: PdfJpegImage | null;
 };
 
 type IdCardPdfContext = {
@@ -28,24 +30,45 @@ function fit(value: string | null | undefined, max = 34): string {
   return text.length <= max ? text : `${text.slice(0, Math.max(1, max - 3))}...`;
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "ST";
+  const first = parts[0]?.[0] ?? "S";
+  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : parts[0]?.[1] ?? "";
+  return `${first}${last}`.toUpperCase();
+}
+
 function text(x: number, y: number, value: string, size = 8, bold = false): PdfLayoutCommand {
   return { type: "text", x, y, text: value, size, bold };
 }
 
 function frontCard(student: IdCardPdfStudent, context: IdCardPdfContext, x: number, y: number): PdfLayoutCommand[] {
   const top = y + CARD_HEIGHT;
+  const portraitX = x + 169;
+  const portraitY = y + 42;
+  const portraitWidth = 58;
+  const portraitHeight = 76;
+  const portrait: PdfLayoutCommand[] = student.photo
+    ? [
+        { type: "rect", x: portraitX - 1, y: portraitY - 1, width: portraitWidth + 2, height: portraitHeight + 2, lineWidth: 0.7 },
+        { type: "image", x: portraitX, y: portraitY, width: portraitWidth, height: portraitHeight, image: student.photo }
+      ]
+    : [
+        { type: "rect", x: portraitX - 1, y: portraitY - 1, width: portraitWidth + 2, height: portraitHeight + 2, lineWidth: 0.7 },
+        text(portraitX + 18, portraitY + 33, initials(student.name), 13, true)
+      ];
+
   return [
     { type: "rect", x, y, width: CARD_WIDTH, height: CARD_HEIGHT, lineWidth: 0.9 },
-    { type: "rect", x: x + 10, y: top - 33, width: 24, height: 24, lineWidth: 0.8 },
-    text(x + 18, top - 26, "M", 12, true),
-    text(x + 43, top - 18, fit(context.institutionName, 32), 9, true),
-    text(x + 43, top - 30, "Institution identity card", 7),
-    text(x + 12, top - 57, fit(student.name, 32), 12, true),
-    text(x + 12, top - 73, `Student ID: ${fit(student.studentNumber, 28)}`, 8, true),
-    text(x + 12, top - 89, `Program: ${fit(student.program, 30)}`, 8),
-    text(x + 12, top - 104, `Class / group: ${fit(student.group, 27)}`, 8),
-    text(x + 12, top - 126, fit(context.branchName, 30), 7),
-    text(x + 126, top - 126, `Valid: ${fit(context.academicYear, 18)}`, 7, true)
+    text(x + 12, top - 18, fit(context.institutionName, 38), 9, true),
+    text(x + 12, top - 30, "Student identity card", 7),
+    text(x + 12, top - 52, fit(student.name, 22), 11, true),
+    text(x + 12, top - 68, `Student ID: ${fit(student.studentNumber, 16)}`, 8, true),
+    text(x + 12, top - 84, `Program: ${fit(student.program, 18)}`, 8),
+    text(x + 12, top - 99, `Class / group: ${fit(student.group, 14)}`, 8),
+    text(x + 12, top - 119, fit(context.branchName, 21), 7),
+    text(x + 12, top - 135, `Valid: ${fit(context.academicYear, 18)}`, 7, true),
+    ...portrait
   ];
 }
 
@@ -64,7 +87,7 @@ function backCard(student: IdCardPdfStudent, context: IdCardPdfContext, x: numbe
   ];
 }
 
-export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Uint8Array {
+function idCardPages(students: IdCardPdfStudent[], context: IdCardPdfContext): PdfLayoutCommand[][] {
   if (!students.length) throw new Error("At least one student is required for an ID-card PDF.");
   const pages: PdfLayoutCommand[][] = [];
 
@@ -81,6 +104,13 @@ export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], contex
     });
     pages.push(commands);
   }
+  return pages;
+}
 
-  return createLayoutPdf({ pages });
+export function createStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Uint8Array {
+  return createLayoutPdf({ pages: idCardPages(students, context) });
+}
+
+export async function createUnicodeStudentIdCardSheetPdf(students: IdCardPdfStudent[], context: IdCardPdfContext): Promise<Uint8Array> {
+  return createUnicodeLayoutPdf({ pages: idCardPages(students, context) });
 }

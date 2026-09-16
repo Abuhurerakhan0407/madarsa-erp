@@ -54,7 +54,7 @@ type DashboardCopy = {
 
 const copy: Record<Locale, DashboardCopy> = {
   en: {
-    year: "Academic year 2026–27",
+    year: "Academic year",
     subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, teachers and reporting.",
     live: "Live operations",
     metricsTitle: "Institution overview",
@@ -96,7 +96,7 @@ const copy: Record<Locale, DashboardCopy> = {
     alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Teacher leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
   ur: {
-    year: "تعلیمی سال 2026–27",
+    year: "تعلیمی سال",
     subtitle: "طلبہ، داخلہ، حاضری، قرآن، امتحانات، اساتذہ اور رپورٹس کے حقیقی برانچ آپریشنز۔",
     live: "لائیو آپریشنز",
     metricsTitle: "ادارہ جائزہ",
@@ -138,7 +138,7 @@ const copy: Record<Locale, DashboardCopy> = {
     alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "اساتذہ کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
   },
   ar: {
-    year: "العام الدراسي 2026–27",
+    year: "العام الدراسي",
     subtitle: "عمليات الفرع الحية للطلاب والقبول والحضور والقرآن والاختبارات والمعلمين والتقارير.",
     live: "عمليات حية",
     metricsTitle: "نظرة عامة على المؤسسة",
@@ -224,6 +224,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
   const showFullSuite = isCapabilityEnabled(clientProfile, "internal_demo_suite");
   const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
+  const academicYearLabel = setup.sessions[0]?.label || text.year;
   const operationalRoutes = [
     ["admissions", `/${locale}/admissions`],
     ["students", `/${locale}/students`],
@@ -240,7 +241,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   return (
     <div className="operational-dashboard">
       <section className="dashboard-hero" data-page-section>
-        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
+        <div><div className="dashboard-kickers"><span>{academicYearLabel}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
         <time dateTime={dashboard.localDate}>{dateLabel}</time>
       </section>
 

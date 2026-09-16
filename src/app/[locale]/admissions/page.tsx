@@ -17,6 +17,9 @@ const labels = {
     recentBody: "Open a student profile or start another walk-in admission.",
     noRecent: "No students have been admitted yet.",
     noRecentBody: "Use New Admission to add the first walk-in student.",
+    recentError: "Unable to load recent admissions",
+    recentErrorBody: "The student register could not be loaded. Your records have not been changed.",
+    retry: "Retry",
     studentNumber: "Student number",
     applications: "Online applications",
     empty: "No online applications waiting",
@@ -37,6 +40,9 @@ const labels = {
     recentBody: "طالب علم پروفائل کھولیں یا نیا واک اِن داخلہ شروع کریں۔",
     noRecent: "ابھی کوئی طالب علم داخل نہیں کیا گیا۔",
     noRecentBody: "پہلا واک اِن طالب علم شامل کرنے کے لیے نیا داخلہ استعمال کریں۔",
+    recentError: "حالیہ داخلے لوڈ نہیں ہو سکے",
+    recentErrorBody: "طلبہ رجسٹر لوڈ نہیں ہو سکا۔ آپ کے ریکارڈ میں کوئی تبدیلی نہیں کی گئی۔",
+    retry: "دوبارہ کوشش کریں",
     studentNumber: "طالب علم نمبر",
     applications: "آن لائن درخواستیں",
     empty: "کوئی آن لائن درخواست منتظر نہیں",
@@ -57,6 +63,9 @@ const labels = {
     recentBody: "افتح ملف الطالب أو ابدأ قبولًا حضوريًا جديدًا.",
     noRecent: "لم يتم قبول أي طالب حتى الآن.",
     noRecentBody: "استخدم قبول جديد لإضافة أول طالب حضوري.",
+    recentError: "تعذر تحميل القبول الحديث",
+    recentErrorBody: "تعذر تحميل سجل الطلاب. لم يتم تغيير سجلاتك.",
+    retry: "إعادة المحاولة",
     studentNumber: "رقم الطالب",
     applications: "الطلبات الإلكترونية",
     empty: "لا توجد طلبات إلكترونية منتظرة",
@@ -68,6 +77,12 @@ const labels = {
     count: "طلبات"
   }
 } as const;
+
+const statusLabels: Record<Locale, Record<string, string>> = {
+  en: { active: "Active", paused: "Paused", transferred: "Transferred", completed: "Completed", withdrawn: "Withdrawn", alumni: "Alumni", archived: "Archived" },
+  ur: { active: "فعال", paused: "عارضی طور پر رکا", transferred: "منتقل", completed: "مکمل", withdrawn: "دستبردار", alumni: "فارغ / سابق", archived: "آرکائیو" },
+  ar: { active: "نشط", paused: "موقوف مؤقتًا", transferred: "منقول", completed: "مكتمل", withdrawn: "منسحب", alumni: "خريج / سابق", archived: "مؤرشف" }
+};
 
 const dateLocales: Record<Locale, string> = { en: "en-IN", ur: "ur-IN", ar: "ar-SA" };
 
@@ -87,10 +102,13 @@ export default async function AdmissionsPage({ params, searchParams }: Admission
   if (!workspace) return null;
 
   const view = query.view === "online" ? "online" : "recent";
-  const [items, recent] = await Promise.all([
+  const [items, recentState] = await Promise.all([
     getAdmissionsInbox(workspace),
-    getStudentRegister({ locale, page: 1, pageSize: 10 }).catch(() => null)
+    getStudentRegister({ locale, page: 1, pageSize: 10 })
+      .then((data) => ({ data, error: false as const }))
+      .catch(() => ({ data: null, error: true as const }))
   ]);
+  const recent = recentState.data;
   const publicHref = `/apply/${workspace.tenantSlug}?lang=${locale}`;
 
   return (
@@ -112,14 +130,16 @@ export default async function AdmissionsPage({ params, searchParams }: Admission
             <p>{text.recentBody}</p>
             <h2 id="recent-admissions-title">{text.recentTitle}</h2>
           </header>
-          {!recent || recent.rows.length === 0 ? (
+          {recentState.error ? (
+            <InlineState title={text.recentError} body={text.recentErrorBody} action={<Link className="action-button" href={`/${locale}/admissions`}>{text.retry}</Link>} />
+          ) : !recent || recent.rows.length === 0 ? (
             <InlineState title={text.noRecent} body={text.noRecentBody} />
           ) : (
             <div className="workspace-record-list">
               {recent.rows.map((student) => (
                 <Link className="workspace-record-row" href={`/${locale}/students/${student.personId}`} key={student.personId} prefetch>
                   <div className="workspace-record-main">
-                    <span className="module-state module-state-complete">{student.status}</span>
+                    <span className="module-state module-state-complete">{statusLabels[locale][student.status] ?? student.status}</span>
                     <strong>{student.name}</strong>
                     <small>{student.program} · {student.group}</small>
                   </div>

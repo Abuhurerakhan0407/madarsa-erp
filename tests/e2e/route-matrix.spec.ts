@@ -60,9 +60,12 @@ for (const route of AUTHENTICATED_DEMO_AND_LEGACY_ROUTES) {
   });
 }
 
-test("preserves localized protected routes in the post-login next target", async ({ page }) => {
-  for (const route of ["/ur/students", "/ar/admissions"] as const) {
-    await page.goto(route);
-    await expect(page).toHaveURL(expectedLoginPattern(route));
-  }
+test("preserves supported localized protected routes in the post-login next target", async ({ page }) => {
+  await page.goto("/ur/students");
+  await expect(page).toHaveURL(expectedLoginPattern("/ur/students"));
+});
+
+test("normalizes legacy Arabic routes to English before authentication", async ({ page }) => {
+  await page.goto("/ar/admissions");
+  await expect(page).toHaveURL(expectedLoginPattern("/en/admissions"));
 });

@@ -19,6 +19,8 @@ type AdmissionConversionPanelProps = {
   convertedStudent: ConvertedStudent;
 };
 
+type PortalAccessState = "claim_code_issued" | "existing_account" | "claim_code_unavailable" | "manage_separately";
+
 type ConversionResponse = {
   error?: string;
   duplicateReviewRequired?: boolean;
@@ -27,14 +29,19 @@ type ConversionResponse = {
     studentNumber?: string;
     enrollmentId?: number;
     guardianEmail?: string;
-    credentialState?: "temporary_password_created" | "existing_account";
-    temporaryPassword?: string;
+    portalAccessState?: PortalAccessState;
+    claimCode?: string;
+    claimPath?: string;
+    portalAccessWarning?: string;
   };
 };
 
-type CredentialView = {
+type ActivationView = {
   guardianEmail: string;
-  temporaryPassword: string | null;
+  state: PortalAccessState;
+  claimCode: string | null;
+  claimPath: string | null;
+  warning: string | null;
   studentNumber: string | null;
 };
 
@@ -53,14 +60,16 @@ const copy = {
     openStudents: "Open Students & Academics",
     unavailable: "Enrollment becomes available only after an admission offer or payment-pending state.",
     error: "Unable to enroll this applicant.",
-    credentialsTitle: "Guardian portal credentials",
-    credentialsBody: "Copy and send these credentials now. The temporary password will disappear permanently when you close this view.",
-    loginEmail: "Login email",
-    temporaryPassword: "Temporary password",
-    existingAccount: "This guardian already has a portal account. Their existing password was not changed.",
-    copyCredentials: "Copy credentials",
+    activationTitle: "Guardian portal activation",
+    activationBody: "Share this one-time claim code with the guardian. They sign in with their own account and claim access; staff never creates or shares a password.",
+    existingAccount: "This guardian already has verified portal access. No password or login secret was changed.",
+    unavailableActivation: "The student is enrolled, but portal activation needs attention. Issue or manage the guardian claim code from Parent & Teacher Access.",
+    loginEmail: "Guardian email",
+    claimCode: "One-time claim code",
+    claimLink: "Claim link",
+    copyActivation: "Copy activation details",
     copied: "Copied",
-    done: "Done — hide credentials"
+    done: "Done"
   },
   ur: {
     title: "طالب علم کا اندراج",
@@ -76,14 +85,16 @@ const copy = {
     openStudents: "طلبہ اور تعلیمی ڈھانچہ کھولیں",
     unavailable: "اندراج صرف داخلہ پیشکش یا ادائیگی زیر التوا حالت کے بعد دستیاب ہوتا ہے۔",
     error: "اس درخواست گزار کو داخل نہیں کیا جا سکا۔",
-    credentialsTitle: "سرپرست پورٹل کی اسناد",
-    credentialsBody: "یہ اسناد ابھی کاپی کر کے بھیج دیں۔ اس منظر کو بند کرنے کے بعد عارضی پاس ورڈ دوبارہ نہیں دکھایا جائے گا۔",
-    loginEmail: "لاگ اِن ای میل",
-    temporaryPassword: "عارضی پاس ورڈ",
-    existingAccount: "اس سرپرست کا پورٹل اکاؤنٹ پہلے سے موجود ہے۔ موجودہ پاس ورڈ تبدیل نہیں کیا گیا۔",
-    copyCredentials: "اسناد کاپی کریں",
+    activationTitle: "سرپرست پورٹل فعال کریں",
+    activationBody: "یہ ایک بار استعمال ہونے والا کلیم کوڈ سرپرست کو دیں۔ وہ اپنے اکاؤنٹ سے لاگ اِن ہو کر رسائی کلیم کرے گا؛ عملہ کوئی پاس ورڈ بناتا یا شیئر نہیں کرتا۔",
+    existingAccount: "اس سرپرست کی تصدیق شدہ پورٹل رسائی پہلے سے موجود ہے۔ کوئی پاس ورڈ یا لاگ اِن راز تبدیل نہیں کیا گیا۔",
+    unavailableActivation: "طالب علم داخل ہو گیا ہے، لیکن پورٹل فعال کرنے پر توجہ درکار ہے۔ والدین اور اساتذہ کی رسائی سے کلیم کوڈ جاری یا منظم کریں۔",
+    loginEmail: "سرپرست کی ای میل",
+    claimCode: "ایک بار استعمال ہونے والا کلیم کوڈ",
+    claimLink: "کلیم لنک",
+    copyActivation: "فعال کرنے کی تفصیل کاپی کریں",
     copied: "کاپی ہو گیا",
-    done: "مکمل — اسناد چھپائیں"
+    done: "مکمل"
   },
   ar: {
     title: "تسجيل الطالب",
@@ -99,14 +110,16 @@ const copy = {
     openStudents: "فتح الطلاب والهيكل الأكاديمي",
     unavailable: "يصبح التسجيل متاحًا فقط بعد عرض القبول أو حالة انتظار الدفع.",
     error: "تعذر تسجيل هذا المتقدم.",
-    credentialsTitle: "بيانات دخول ولي الأمر",
-    credentialsBody: "انسخ بيانات الدخول وأرسلها الآن. ستختفي كلمة المرور المؤقتة نهائيًا عند إغلاق هذا العرض.",
-    loginEmail: "بريد تسجيل الدخول",
-    temporaryPassword: "كلمة المرور المؤقتة",
-    existingAccount: "لدى ولي الأمر حساب بوابة موجود بالفعل. لم يتم تغيير كلمة المرور الحالية.",
-    copyCredentials: "نسخ بيانات الدخول",
+    activationTitle: "تفعيل بوابة ولي الأمر",
+    activationBody: "شارك رمز المطالبة لمرة واحدة مع ولي الأمر. يسجل الدخول بحسابه الخاص ويطالب بالوصول؛ لا ينشئ الموظفون كلمة مرور ولا يشاركونها.",
+    existingAccount: "لدى ولي الأمر وصول موثق بالفعل. لم يتم تغيير أي كلمة مرور أو سر لتسجيل الدخول.",
+    unavailableActivation: "تم تسجيل الطالب، لكن تفعيل البوابة يحتاج إلى إجراء. أصدر أو أدر رمز المطالبة من وصول الوالدين والمعلمين.",
+    loginEmail: "بريد ولي الأمر",
+    claimCode: "رمز مطالبة لمرة واحدة",
+    claimLink: "رابط المطالبة",
+    copyActivation: "نسخ تفاصيل التفعيل",
     copied: "تم النسخ",
-    done: "تم — إخفاء بيانات الدخول"
+    done: "تم"
   }
 } as const;
 
@@ -125,7 +138,7 @@ export function AdmissionConversionPanel({
   const [candidateCount, setCandidateCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<CredentialView | null>(null);
+  const [activation, setActivation] = useState<ActivationView | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function convert(confirmNewPerson: boolean) {
@@ -158,11 +171,12 @@ export function AdmissionConversionPanel({
       const studentNumber = payload.result?.studentNumber ?? null;
       const guardianEmail = payload.result?.guardianEmail;
       if (guardianEmail) {
-        setCredentials({
+        setActivation({
           guardianEmail,
-          temporaryPassword: payload.result?.credentialState === "temporary_password_created"
-            ? payload.result.temporaryPassword ?? null
-            : null,
+          state: payload.result?.portalAccessState ?? "manage_separately",
+          claimCode: payload.result?.claimCode ?? null,
+          claimPath: payload.result?.claimPath ?? null,
+          warning: payload.result?.portalAccessWarning ?? null,
           studentNumber
         });
       } else {
@@ -176,9 +190,9 @@ export function AdmissionConversionPanel({
     }
   }
 
-  async function copyCredentials() {
-    if (!credentials?.temporaryPassword) return;
-    const value = `${text.loginEmail}: ${credentials.guardianEmail}\n${text.temporaryPassword}: ${credentials.temporaryPassword}`;
+  async function copyActivation() {
+    if (!activation?.claimCode || !activation.claimPath) return;
+    const value = `${text.loginEmail}: ${activation.guardianEmail}\n${text.claimCode}: ${activation.claimCode}\n${text.claimLink}: ${activation.claimPath}`;
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
@@ -187,38 +201,45 @@ export function AdmissionConversionPanel({
     }
   }
 
-  function closeCredentialView() {
-    setCredentials(null);
+  function closeActivationView() {
+    setActivation(null);
     setCopied(false);
     router.refresh();
   }
 
-  if (credentials) {
+  if (activation) {
+    const claimIssued = activation.state === "claim_code_issued" && activation.claimCode && activation.claimPath;
     return (
-      <section className="configuration-detail-card" aria-labelledby="guardian-credentials-title">
+      <section className="configuration-detail-card" aria-labelledby="guardian-activation-title">
         <span>{text.success}</span>
-        <h2 id="guardian-credentials-title">{text.credentialsTitle}</h2>
-        {credentials.temporaryPassword ? <p>{text.credentialsBody}</p> : <p>{text.existingAccount}</p>}
-        {credentials.studentNumber ? <p>{text.studentNumber}: <code>{credentials.studentNumber}</code></p> : null}
+        <h2 id="guardian-activation-title">{text.activationTitle}</h2>
+        {claimIssued ? <p>{text.activationBody}</p> : activation.state === "existing_account" ? <p>{text.existingAccount}</p> : <p>{activation.warning || text.unavailableActivation}</p>}
+        {activation.studentNumber ? <p>{text.studentNumber}: <code>{activation.studentNumber}</code></p> : null}
         <dl className="detail-list">
           <div>
             <dt>{text.loginEmail}</dt>
-            <dd><code>{credentials.guardianEmail}</code></dd>
+            <dd><code>{activation.guardianEmail}</code></dd>
           </div>
-          {credentials.temporaryPassword ? (
-            <div>
-              <dt>{text.temporaryPassword}</dt>
-              <dd><code>{credentials.temporaryPassword}</code></dd>
-            </div>
+          {claimIssued ? (
+            <>
+              <div>
+                <dt>{text.claimCode}</dt>
+                <dd><code>{activation.claimCode}</code></dd>
+              </div>
+              <div>
+                <dt>{text.claimLink}</dt>
+                <dd><code>{activation.claimPath}</code></dd>
+              </div>
+            </>
           ) : null}
         </dl>
         <div className="quick-actions">
-          {credentials.temporaryPassword ? (
-            <button className="action-button" type="button" onClick={copyCredentials}>
-              {copied ? text.copied : text.copyCredentials}
+          {claimIssued ? (
+            <button className="action-button" type="button" onClick={copyActivation}>
+              {copied ? text.copied : text.copyActivation}
             </button>
           ) : null}
-          <button className="action-button action-button-primary" type="button" onClick={closeCredentialView}>
+          <button className="action-button action-button-primary" type="button" onClick={closeActivationView}>
             {text.done}
           </button>
         </div>

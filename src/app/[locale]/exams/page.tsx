@@ -2,8 +2,9 @@ import Link from "next/link";
 import type {Locale} from "@/lib/i18n/config";
 import {ExamsResultsV2Hub,type ExamsV2View} from "@/components/exams-results-v2-hub";
 import {InlineState} from "@/components/workspace-ui";
-import {examsCopy} from "@/lib/exams/copy";
+import {examsCopy,examStateLabel} from "@/lib/exams/copy";
 import {getExamWorkspace} from "@/lib/exams/workspace";
+import styles from "./page.module.css";
 
 const views=new Set<ExamsV2View>(["home","create","marks","results","reports","export","analysis"]);
 const emptyCopy={
@@ -11,12 +12,20 @@ const emptyCopy={
  ur:{missing:"امتحان کے لیے ابھی کوئی کلاس تیار نہیں",missingBody:"پہلے تعلیمی سال، پروگرام اور کلاس مکمل کریں۔ امتحان انہی محفوظ اکیڈمک ریکارڈز کو استعمال کرتا ہے۔",setup:"ادارے کا سیٹ اپ مکمل کریں",none:"ابھی کوئی امتحان نہیں",noneBody:"فعال کلاس کے لیے پہلا امتحان بنائیں، پھر اسی ورک اسپیس سے نمبر درج کریں۔",create:"پہلا امتحان بنائیں",readonly:"ابھی کوئی امتحان دستیاب نہیں",readonlyBody:"امتحان بنانے کی اجازت رکھنے والا دفتری منتظم پہلا امتحان بنائے گا۔"},
  ar:{missing:"لا يوجد فصل جاهز للاختبارات",missingBody:"أكمل العام الدراسي والبرنامج والفصل أولاً. تستخدم الاختبارات نفس السجلات الأكاديمية المحكومة.",setup:"إكمال إعداد المؤسسة",none:"لا توجد اختبارات بعد",noneBody:"أنشئ أول اختبار لفصل نشط ثم أدخل الدرجات من نفس مساحة العمل.",create:"إنشاء أول اختبار",readonly:"لا توجد اختبارات متاحة بعد",readonlyBody:"يجب على مسؤول المكتب الذي لديه صلاحية إعداد الاختبارات إنشاء أول اختبار."}
 } as const;
+const contextCopy={
+ en:{selected:"Selected exam",activeBody:"This is the active exam for the actions below.",publishedBody:"Results are published. Marks are locked; use results and report cards as the primary actions.",marks:"Enter Marks",results:"View Results",reports:"Report Cards",export:"Export",analysis:"Analysis"},
+ ur:{selected:"منتخب امتحان",activeBody:"نیچے دیے گئے کام اسی منتخب امتحان پر ہوں گے۔",publishedBody:"نتائج جاری ہو چکے ہیں۔ نمبر مقفل ہیں؛ اب نتائج اور رپورٹ کارڈ بنیادی کام ہیں۔",marks:"نمبر درج کریں",results:"نتائج دیکھیں",reports:"رپورٹ کارڈ",export:"ایکسپورٹ",analysis:"تجزیہ"},
+ ar:{selected:"الاختبار المحدد",activeBody:"هذا هو الاختبار النشط للإجراءات أدناه.",publishedBody:"تم نشر النتائج. الدرجات مقفلة؛ استخدم النتائج وكشوف الدرجات كإجراءات أساسية.",marks:"إدخال الدرجات",results:"عرض النتائج",reports:"كشوف الدرجات",export:"تصدير",analysis:"التحليل"}
+} as const;
 
 export default async function ExamsPage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{view?:string;exam?:string}>}){
-  const {locale:rawLocale}=await params;const locale=(rawLocale==="ur"||rawLocale==="ar"?rawLocale:"en") as Locale;const t=examsCopy[locale];const e=emptyCopy[locale];
+  const {locale:rawLocale}=await params;const locale=(rawLocale==="ur"||rawLocale==="ar"?rawLocale:"en") as Locale;const t=examsCopy[locale];const e=emptyCopy[locale];const c=contextCopy[locale];
   const search=await searchParams;const requestedView=typeof search.view==="string"?search.view:"home";const view=(views.has(requestedView as ExamsV2View)?requestedView:"home") as ExamsV2View;
   const examId=Number(search.exam);const selectedExamId=Number.isInteger(examId)&&examId>0?examId:null;const data=await getExamWorkspace({examSeriesId:selectedExamId});
-  const empty=data.exams.length===0;
+  const empty=data.exams.length===0;const selectedExam=data.exam;const isPublished=selectedExam?.state==="results_published";
+  const shellClass=[styles.shell,selectedExam?styles.hasSelected:"",isPublished?styles.published:""].filter(Boolean).join(" ");
+  const selectedLabel=selectedExam?(locale==="ur"?selectedExam.labels.ur||"—":locale==="ar"?selectedExam.labels.ar||selectedExam.labels.en||selectedExam.label:selectedExam.labels.en||selectedExam.label):"";
   const emptyState=empty?(data.setup.groups.length===0?<InlineState title={e.missing} body={e.missingBody} action={<Link className="action-button action-button-primary" href={`/${locale}/setup`}>{e.setup}</Link>}/>:data.setup.canCreate?<InlineState title={e.none} body={e.noneBody} action={<Link className="action-button action-button-primary" href={`/${locale}/exams?view=create`}>{e.create}</Link>}/>:<InlineState title={e.readonly} body={e.readonlyBody}/>):null;
-  return <><section className="page-heading" data-page-section><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p></div></section>{emptyState}<ExamsResultsV2Hub locale={locale} data={data} view={view}/></>;
+  const selectedContext=selectedExam?<section className={`professional-card ${styles.contextCard}`} data-testid="exam-selected-context"><div className="section-heading"><div><p className="state-kicker">{c.selected}</p><h2>{selectedLabel}</h2><p>{isPublished?c.publishedBody:c.activeBody}</p></div><span className="status-pill">{examStateLabel(selectedExam.state,t)}</span></div><div className={styles.contextActions}>{isPublished?<><Link className="action-button action-button-primary" href={`/${locale}/exams?view=reports&exam=${selectedExam.id}`}>{c.reports}</Link><Link className="action-button" href={`/${locale}/exams?view=results&exam=${selectedExam.id}`}>{c.results}</Link><Link className="action-button" href={`/${locale}/exams?view=analysis&exam=${selectedExam.id}`}>{c.analysis}</Link><Link className="action-button" href={`/${locale}/exams?view=export&exam=${selectedExam.id}`}>{c.export}</Link></>:<><Link className="action-button action-button-primary" href={`/${locale}/exams?view=marks&exam=${selectedExam.id}`}>{c.marks}</Link><Link className="action-button" href={`/${locale}/exams?view=results&exam=${selectedExam.id}`}>{c.results}</Link></>}</div></section>:null;
+  return <div className={shellClass}><section className="page-heading" data-page-section><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p></div></section>{emptyState}{selectedContext}<ExamsResultsV2Hub locale={locale} data={data} view={view}/></div>;
 }

@@ -2,14 +2,39 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { portalHref } from "@/lib/portal/locale";
 
-export function PortalPasswordChangeForm() {
+const copy = {
+  en: {
+    newPassword: "New password",
+    confirm: "Confirm new password",
+    guidance: "Use at least 12 characters with uppercase, lowercase, a number, and a symbol.",
+    mismatch: "Passwords do not match.",
+    error: "Unable to change password. Please try again.",
+    changing: "Changing password…",
+    submit: "Set new password"
+  },
+  ur: {
+    newPassword: "نیا پاس ورڈ",
+    confirm: "نئے پاس ورڈ کی تصدیق",
+    guidance: "کم از کم 12 حروف استعمال کریں، جن میں بڑے اور چھوٹے انگریزی حروف، ایک نمبر اور ایک علامت شامل ہو۔",
+    mismatch: "دونوں پاس ورڈ ایک جیسے نہیں ہیں۔",
+    error: "پاس ورڈ تبدیل نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+    changing: "پاس ورڈ تبدیل ہو رہا ہے…",
+    submit: "نیا پاس ورڈ مقرر کریں"
+  }
+} as const;
+
+export function PortalPasswordChangeForm({ locale, tenant }: { locale: SupportedLocale; tenant?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = copy[locale];
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
 
@@ -18,7 +43,7 @@ export function PortalPasswordChangeForm() {
     const password = String(data.get("password") ?? "");
     const confirmPassword = String(data.get("confirmPassword") ?? "");
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t.mismatch);
       setBusy(false);
       return;
     }
@@ -29,49 +54,34 @@ export function PortalPasswordChangeForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ password })
       });
-      const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        setError(payload.error || "Unable to change password.");
+        setError(t.error);
         return;
       }
       form.reset();
-      router.replace("/portal");
+      router.replace(portalHref("/portal", locale, { tenant }));
       router.refresh();
     } catch {
-      setError("Unable to change password.");
+      setError(t.error);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="flow-stack" onSubmit={submit}>
+    <form className="flow-stack" onSubmit={submit} aria-busy={busy || undefined}>
       <label>
-        <span>New password</span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={12}
-          maxLength={128}
-          required
-        />
+        <span>{t.newPassword}</span>
+        <input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required disabled={busy} />
       </label>
       <label>
-        <span>Confirm new password</span>
-        <input
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          minLength={12}
-          maxLength={128}
-          required
-        />
+        <span>{t.confirm}</span>
+        <input name="confirmPassword" type="password" autoComplete="new-password" minLength={12} maxLength={128} required disabled={busy} />
       </label>
-      <p>Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+      <p>{t.guidance}</p>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
-      <button className="action-button action-button-primary" type="submit" disabled={busy}>
-        {busy ? "Changing password…" : "Set new password"}
+      <button className="action-button action-button-primary" type="submit" disabled={busy} aria-busy={busy || undefined}>
+        {busy ? <><span className="inline-spinner" aria-hidden="true" /><span>{t.changing}</span></> : t.submit}
       </button>
     </form>
   );

@@ -1,3 +1,4 @@
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -5,6 +6,13 @@ import { getTenantContext } from "@/lib/tenancy/context";
 type AttendanceSummary = { present: number; absent: number; late: number; excused: number; total: number };
 type FinanceSummary = { invoiced: number; paid: number; outstanding: number; currency: string };
 type ModuleSummary = { attendance?: unknown; finance?: unknown; quran_attempts?: unknown; result_count?: unknown };
+
+type EnrollmentScope = {
+  id: number;
+  program_id: number | null;
+  group_id: number | null;
+  status: string;
+};
 
 export type StudentDetail = {
   personId: number;
@@ -67,29 +75,82 @@ function financeSummary(value: unknown): FinanceSummary | null {
 export async function getStudentDetail(personId: number, locale: string): Promise<StudentDetail | null> {
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
+
+  const canReadStudent = await operatorHasPermissions(workspace, ["students.profile.read"]);
+  if (!canReadStudent) return null;
+  const canReadInstitutionStudents = await operatorHasPermissions(workspace, ["people.person.read"]);
   const supabase = await createClient();
+  const admin = createAdminClient();
+  let enrollmentScope: EnrollmentScope | null = null;
 
-  const association = await supabase.from("enrollments").select("id").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").limit(1).maybeSingle();
-  if (association.error) throw new Error(`Unable to verify student branch: ${association.error.message}`);
-  if (!association.data) return null;
+  if (!canReadInstitutionStudents) {
+    const teacherLink = await admin
+      .from("identity_person_links")
+      .select("person_id")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("identity_id", workspace.identityId)
+      .eq("link_type", "employee")
+      .eq("status", "verified")
+      .limit(1)
+      .maybeSingle();
+    if (teacherLink.error) throw new Error(`Unable to verify teacher identity: ${teacherLink.error.message}`);
+    if (!teacherLink.data) return null;
 
-  const [person, profile, enrollment] = await Promise.all([
+    const teachingGroups = await admin
+      .from("timetable_entries")
+      .select("group_id")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("branch_id", workspace.branchId)
+      .eq("teacher_person_id", teacherLink.data.person_id)
+      .eq("status", "active");
+    if (teachingGroups.error) throw new Error(`Unable to verify teaching scope: ${teachingGroups.error.message}`);
+    const groupIds = [...new Set((teachingGroups.data ?? []).map((row) => Number(row.group_id)).filter(Number.isFinite))];
+    if (!groupIds.length) return null;
+
+    const assignedEnrollment = await admin
+      .from("enrollments")
+      .select("id,program_id,group_id,status")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("branch_id", workspace.branchId)
+      .eq("student_person_id", personId)
+      .neq("status", "cancelled")
+      .in("group_id", groupIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (assignedEnrollment.error) throw new Error(`Unable to verify assigned student: ${assignedEnrollment.error.message}`);
+    if (!assignedEnrollment.data) return null;
+    enrollmentScope = assignedEnrollment.data as EnrollmentScope;
+  } else {
+    const association = await supabase
+      .from("enrollments")
+      .select("id,program_id,group_id,status")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("branch_id", workspace.branchId)
+      .eq("student_person_id", personId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (association.error) throw new Error(`Unable to verify student branch: ${association.error.message}`);
+    if (!association.data) return null;
+    enrollmentScope = association.data as EnrollmentScope;
+  }
+
+  const [person, profile] = await Promise.all([
     supabase.from("persons").select("id,display_name,name_native,photo_storage_path,date_of_birth,gender,preferred_locale").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
-    supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle(),
-    supabase.from("enrollments").select("id,program_id,group_id,status").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle()
+    supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle()
   ]);
   if (person.error) throw new Error(`Unable to load student identity: ${person.error.message}`);
   if (profile.error) throw new Error(`Unable to load student profile: ${profile.error.message}`);
-  if (enrollment.error) throw new Error(`Unable to load student enrollment: ${enrollment.error.message}`);
   if (!person.data || !profile.data) return null;
 
-  const admin = createAdminClient();
   const relationship = await admin.from("person_relationships").select("source_person_id,relationship_type,can_collect_student").eq("tenant_id", workspace.tenantId).eq("target_person_id", personId).eq("status", "verified").eq("is_primary", true).limit(1).maybeSingle();
   if (relationship.error) throw new Error(`Unable to load guardian relationship: ${relationship.error.message}`);
 
   const [program, group, moduleResult] = await Promise.all([
-    enrollment.data?.program_id ? supabase.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    enrollment.data?.group_id ? supabase.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollment.data.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    enrollmentScope.program_id ? admin.from("programs").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollmentScope.program_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    enrollmentScope.group_id ? admin.from("academic_groups").select("key,labels").eq("tenant_id", workspace.tenantId).eq("id", enrollmentScope.group_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     admin.rpc("get_student_module_summary", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_person_id: personId })
   ]);
   if (program.error) throw new Error(`Unable to load student program: ${program.error.message}`);
@@ -99,9 +160,9 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   let guardian: StudentDetail["guardian"] = null;
   if (relationship.data?.source_person_id) {
     const [guardianPerson, guardianContact, guardianProfile] = await Promise.all([
-      supabase.from("persons").select("display_name").eq("tenant_id", workspace.tenantId).eq("id", relationship.data.source_person_id).maybeSingle(),
+      admin.from("persons").select("display_name").eq("tenant_id", workspace.tenantId).eq("id", relationship.data.source_person_id).maybeSingle(),
       admin.from("person_contacts").select("value").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).eq("type", "phone").order("is_primary", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("guardian_profiles").select("occupation,education").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).maybeSingle()
+      admin.from("guardian_profiles").select("occupation,education").eq("tenant_id", workspace.tenantId).eq("person_id", relationship.data.source_person_id).maybeSingle()
     ]);
     if (guardianPerson.error) throw new Error(`Unable to load guardian: ${guardianPerson.error.message}`);
     if (guardianContact.error) throw new Error(`Unable to load guardian contact: ${guardianContact.error.message}`);

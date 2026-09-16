@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const sameOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000").origin;
+
 test("tracking page is public without exposing an authenticated workspace", async ({ page }) => {
   await page.goto("/track?lang=en");
 
@@ -34,7 +36,7 @@ test("public admission tracking requires JSON before database access", async ({ 
   const response = await request.post("/api/public/admissions/track", {
     headers: {
       "content-type": "text/plain",
-      origin: "http://localhost:3000"
+      origin: sameOrigin
     },
     data: "tracking"
   });
