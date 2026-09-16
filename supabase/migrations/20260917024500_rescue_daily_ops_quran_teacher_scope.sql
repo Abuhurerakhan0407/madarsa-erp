@@ -120,6 +120,10 @@ revoke all on function public.get_quran_juz_wall_scoped_v1(uuid,bigint,bigint,bi
 revoke all on function public.get_quran_revision_queue_v2(uuid,bigint,bigint,text,integer,integer) from public,anon,authenticated;
 revoke all on function public.correct_quran_recitation_attempt_scoped_v1(uuid,bigint,bigint,text,bigint,text,numeric,numeric,numeric,numeric,integer,text,text,text,text) from public,anon,authenticated;
 
+grant execute on function public.quran_operator_teacher_person_v1(uuid,bigint,bigint) to service_role;
+grant execute on function public.quran_operator_is_privileged_v1(uuid,bigint,bigint) to service_role;
+grant execute on function public.quran_operator_can_access_group_v1(uuid,bigint,bigint,bigint) to service_role;
+grant execute on function public.quran_operator_can_access_student_v1(uuid,bigint,bigint,bigint) to service_role;
 grant execute on function public.get_quran_hifz_daily_register_v2(uuid,bigint,bigint,bigint,date) to service_role;
 grant execute on function public.record_quran_hifz_daily_quick_v2(uuid,bigint,bigint,text,bigint,date,bigint,text,text,jsonb,numeric,numeric,numeric,integer,text,jsonb,date) to service_role;
 grant execute on function public.record_quran_hifz_attempt_scoped_v1(uuid,bigint,bigint,text,bigint,text,smallint,smallint,integer,smallint,integer,integer,integer,numeric,numeric,numeric,numeric,integer,text,text,text,text,jsonb) to service_role;
