@@ -1,4 +1,5 @@
 export type MobileSurface = 'admin' | 'teacher' | 'parent';
+export type MobileAccessMode = 'membership' | 'portal';
 
 export type MobileWorkspace = {
   tenantId: number;
@@ -8,6 +9,7 @@ export type MobileWorkspace = {
   branchName: string | null;
   surface: MobileSurface;
   roleKeys: string[];
+  accessMode: MobileAccessMode;
 };
 
 export type MobileBootstrap = {
