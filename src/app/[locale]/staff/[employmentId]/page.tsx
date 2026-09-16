@@ -8,7 +8,7 @@ import styles from "./page.module.css";
 
 const copy = {
   en: {
-    teacher: "Teacher", portal: "Portal", access: "Access center", all: "All teachers", profile: "Profile", contactStatus: "Contact & status",
+    teacher: "Teacher", portal: "Portal", attendanceAction: "Attendance", leaveAction: "Leave", all: "All teachers", profile: "Profile", contactStatus: "Contact & status",
     email: "Email", phone: "Phone", joined: "Joined", account: "Account", lastLogin: "Last login", notAdded: "Not added", never: "Never",
     attendance: "Attendance", last30: "Last 30 days", recorded: "Recorded", present: "Present", absent: "Absent", late: "Late",
     teachingScope: "Teaching scope", assignments: "Assignments", programs: "Programs", subjects: "Subjects / components", groups: "Groups", notAssigned: "Not assigned",
@@ -16,7 +16,7 @@ const copy = {
     emailRequired: "Email required", notCreated: "Not created"
   },
   ur: {
-    teacher: "استاد", portal: "پورٹل", access: "رسائی مرکز", all: "تمام اساتذہ", profile: "پروفائل", contactStatus: "رابطہ اور حیثیت",
+    teacher: "استاد", portal: "پورٹل", attendanceAction: "حاضری", leaveAction: "رخصت", all: "تمام اساتذہ", profile: "پروفائل", contactStatus: "رابطہ اور حیثیت",
     email: "ای میل", phone: "فون", joined: "شمولیت", account: "اکاؤنٹ", lastLogin: "آخری لاگ اِن", notAdded: "شامل نہیں", never: "کبھی نہیں",
     attendance: "حاضری", last30: "گزشتہ 30 دن", recorded: "ریکارڈ شدہ", present: "حاضر", absent: "غیر حاضر", late: "تاخیر",
     teachingScope: "تدریسی ذمہ داریاں", assignments: "ذمہ داریاں", programs: "پروگرام", subjects: "مضامین / اجزاء", groups: "کلاس / گروپس", notAssigned: "مقرر نہیں",
@@ -106,7 +106,8 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         </div>
         <div className={styles.heroActions}>
           <span className="status-pill">{text.portal}: {accountLabel(teacher.accountStatus, locale)}</span>
-          <Link className="action-button" href={`/${locale}/portals?tab=teachers`}>{text.access}</Link>
+          <Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link>
+          <Link className="action-button" href={`/${locale}/staff/leave`}>{text.leaveAction}</Link>
           <Link className="action-button" href={`/${locale}/staff`}>{text.all}</Link>
         </div>
       </section>

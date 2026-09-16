@@ -162,7 +162,7 @@ export function TeachersWorkspaceView({ locale, data, search, state }: { locale:
     <section className="professional-card" data-page-section>
       <div className="section-heading">
         <div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div>
-        <div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link><Link className="action-button" href={`/${locale}/portals?tab=teachers`}>{text.accessAction}</Link></div>
+        <div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link></div>
       </div>
       <form className="form-grid" aria-busy={pending || undefined} onSubmit={(event) => {
         event.preventDefault();

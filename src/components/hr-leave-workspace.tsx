@@ -15,6 +15,10 @@ const stateCopy = {
   en: { submitted: "Submitted", approved: "Approved", rejected: "Rejected", cancelled: "Cancelled", withdrawn: "Withdrawn", unknown: "Unknown status" },
   ur: { submitted: "زیرِ التوا", approved: "منظور", rejected: "مسترد", cancelled: "منسوخ", withdrawn: "واپس لی گئی", unknown: "نامعلوم حالت" }
 } as const;
+const filterCopy = {
+  en: { all: "All", pending: "Pending", approveConfirm: "Approve this leave request?", rejectConfirm: "Reject this leave request?" },
+  ur: { all: "سب", pending: "زیرِ التوا", approveConfirm: "کیا اس رخصت کی درخواست کو منظور کرنا ہے؟", rejectConfirm: "کیا اس رخصت کی درخواست کو مسترد کرنا ہے؟" }
+} as const;
 
 function label(labels: Record<string, unknown>, locale: Locale, fallback: string) {
   const value = labels[locale] ?? labels.en;
@@ -40,6 +44,7 @@ export function HrLeaveWorkspace({ locale, data, employees }: { locale: Locale; 
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "submitted" | "approved" | "rejected">("all");
 
   async function post(body: Record<string, unknown>, key: string) {
     setBusy(key);
@@ -65,6 +70,8 @@ export function HrLeaveWorkspace({ locale, data, employees }: { locale: Locale; 
 
   const unavailable = busy !== null;
   const language: UiLocale = locale === "ur" ? "ur" : "en";
+  const filters = filterCopy[language];
+  const visibleRows = filter === "all" ? data.rows : data.rows.filter((row) => row.state === filter);
 
   return <div className="hr-leave-workspace" aria-busy={unavailable || undefined} data-ui-locale={language}>
     {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
@@ -88,20 +95,26 @@ export function HrLeaveWorkspace({ locale, data, employees }: { locale: Locale; 
       <button className="action-button action-button-primary" type="submit" disabled={unavailable} aria-busy={busy === "submit" || undefined}>{busy === "submit" ? <><span className="inline-spinner" aria-hidden="true" />{t.saving}</> : t.submitLeave}</button>
     </form> : null}
 
-    <section className="hr-leave-list">{data.rows.length ? data.rows.map((row) => {
+    <nav className="hr-leave-filters" aria-label={t.leave}>
+      {([['all', filters.all], ['submitted', filters.pending], ['approved', stateCopy[language].approved], ['rejected', stateCopy[language].rejected]] as const).map(([value,label]) => <button key={value} type="button" className={filter===value?"action-button action-button-primary":"action-button"} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}
+    </nav>
+
+    <section className="hr-leave-list">{visibleRows.length ? visibleRows.map((row) => {
       const approveKey = `approve-${row.id}`;
       const rejectKey = `reject-${row.id}`;
       return <article className="panel hr-leave-row" key={row.id} aria-busy={(busy === approveKey || busy === rejectKey) || undefined}>
         <div><p className="state-kicker">{row.employeeNumber}</p><h3>{row.displayName}</h3><p>{label(row.labels, locale, row.leaveTypeKey)} · {row.startsOn} → {row.endsOn} · {row.requestedUnits} {t.requestedUnits}</p>{row.reason ? <small>{row.reason}</small> : null}</div>
         <span className="status-chip">{stateLabel(row.state, locale)}</span>
         {data.canManage && row.state === "submitted" ? <div className="hr-leave-decisions">
-          <button className="action-button action-button-primary" type="button" disabled={unavailable} aria-busy={busy === approveKey || undefined} onClick={() => void post({ action: "decide", leaveRequestId: row.id, decision: "approved", reason: localizedApprovalReason(locale) }, approveKey)}>{busy === approveKey ? <><span className="inline-spinner" aria-hidden="true" />{t.saving}</> : t.approve}</button>
+          <button className="action-button action-button-primary" type="button" disabled={unavailable} aria-busy={busy === approveKey || undefined} onClick={() => { if (window.confirm(filters.approveConfirm)) void post({ action: "decide", leaveRequestId: row.id, decision: "approved", reason: localizedApprovalReason(locale) }, approveKey); }}>{busy === approveKey ? <><span className="inline-spinner" aria-hidden="true" />{t.saving}</> : t.approve}</button>
           <form aria-busy={busy === rejectKey || undefined} onSubmit={(event) => {
             event.preventDefault();
+            if (!window.confirm(filters.rejectConfirm)) return;
             const formData = new FormData(event.currentTarget);
+            if (!window.confirm(filters.rejectConfirm)) return;
             void post({ action: "decide", leaveRequestId: row.id, decision: "rejected", reason: String(formData.get("reason") || "") }, rejectKey);
           }}>
-            <input className="text-field" name="reason" minLength={4} placeholder={t.reason} disabled={unavailable} />
+            <input className="text-field" name="reason" minLength={4} required placeholder={t.reason} disabled={unavailable} />
             <button className="action-button" type="submit" disabled={unavailable} aria-busy={busy === rejectKey || undefined}>{busy === rejectKey ? <><span className="inline-spinner" aria-hidden="true" />{t.saving}</> : t.reject}</button>
           </form>
         </div> : row.decisionReason ? <small>{row.decisionReason}</small> : null}
