@@ -8,6 +8,7 @@ import './attendance.css';
 import './students.css';
 import './portal.css';
 import './teacher-scope.css';
+import './parent-progress.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
