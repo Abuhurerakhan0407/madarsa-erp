@@ -7,6 +7,7 @@ import {
 
 const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
   [/^\/(?:en|ur|ar)\/fees(?:\/|$)/, "fees_accounting"],
+  [/^\/(?:en|ur|ar)\/payroll(?:\/|$)/, "payroll"],
   [/^\/(?:en|ur|ar)\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
   [/^\/(?:en|ur|ar)\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
   [/^\/(?:en|ur|ar)\/hostel(?:\/|$)/, "hostel_mess"],
@@ -20,6 +21,7 @@ const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]
 
 const API_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
   [/^\/api\/fees(?:\/|$)/, "fees_accounting"],
+  [/^\/api\/payroll(?:\/|$)/, "payroll"],
   [/^\/api\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
   [/^\/api\/assistant(?:\/|$)/, "ai_assistant"],
   [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
