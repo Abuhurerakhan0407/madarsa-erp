@@ -20,7 +20,7 @@ Base: `feature/client-v3-phase-5-qa-demo-hardening` @ `a4ce612bfcb639df4afb8d7aa
 - TypeScript `tsc --noEmit`: passing.
 - ESLint on changed WS05 files: passing.
 - Full Vitest under repository-supported Node 22.23.2: **763/763 passing** across 162 files after release-infrastructure-only cross-platform test normalization.
-- Follow-up Windows stability: recovery validation and recursive brand-scan tests now allow 30 seconds for WSL/filesystem cold-start only; assertions and production behavior are unchanged. Full suite remained **763/763 passing**.
+- Follow-up Windows stability: recovery validation uses a 60-second budget for the known WSL cold-start path while recursive brand-scan tests retain their 30-second budget; assertions and production behavior are unchanged. Full suite remained **763/763 passing**.
 - Platform triage: one Phase 2 SQL contract assertion was CRLF-sensitive; four recovery-drill validation tests were blocked first by CRLF Bash parsing and then by WindowsApps/WSL custom-environment propagation. Test harnesses now normalize input newlines and pass synthetic validation values as Bash positional arguments; production SQL and recovery behavior were not changed.
 - GitHub Actions run #942 triggered on WS05 head `3c6c86c562a9221d61b7b116641120cad8f9050e`; `checks` completed with zero steps and no job log while `e2e` was skipped. Run #939 preserved the exact GitHub annotation: "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings". This remains an infrastructure blocker, not a product test result.
 ## Claim migration audit

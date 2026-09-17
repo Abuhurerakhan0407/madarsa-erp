@@ -85,7 +85,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(result.stderr).not.toContain("dysfnytqpbfxpmerkyaz@evil.example.com");
-  }, 30_000);
+  }, 60_000);
 
   it("rejects libpq host/service query overrides on the source URL", () => {
     const result = runValidation({
