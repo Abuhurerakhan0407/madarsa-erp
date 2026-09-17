@@ -16,6 +16,8 @@ const officePrimary: ClientV3NavItem[] = [
 ];
 
 const officeMore: ClientV3NavItem[] = [
+  item("academics", "Academics, Timetable & Homework", "اکیڈمکس، ٹائم ٹیبل و ہوم ورک", (l) => `/${l}/people-academics`),
+  item("lifecycle", "Import, Promotion & Renewal", "امپورٹ، پروموشن و رینیول", (l) => `/${l}/students/lifecycle`),
   item("portals", "Parent & Teacher Access", "والدین و اساتذہ رسائی", (l) => `/${l}/portals`),
   item("teachers", "Teachers & Staff", "اساتذہ و عملہ", (l) => `/${l}/staff`),
   item("exams", "Exams & Results", "امتحانات و نتائج", (l) => `/${l}/exams`),
