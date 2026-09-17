@@ -41,18 +41,14 @@ export const APP_NAV_GROUPS: AppNavGroup[] = [
     key: "office",
     labels: { en: "Office & setup", ur: "دفتر و سیٹ اپ", ar: "المكتب والإعداد" },
     items: [
+      { key: "fees", labels: { en: "Fees & Payments", ur: "فیس و ادائیگیاں", ar: "الرسوم والمدفوعات" }, href: (locale) => `/${locale}/fees` },
+      { key: "donations", labels: { en: "Contributions", ur: "عطیات", ar: "المساهمات" }, href: (locale) => `/${locale}/contributions` },
+      { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/students/lifecycle` },
       { key: "certificates", labels: { en: "IDs & Documents", ur: "ID و دستاویزات", ar: "الهويات والمستندات" }, href: (locale) => `/${locale}/documents` },
       { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و اینالیٹکس", ar: "التقارير والتحليلات" }, href: (locale) => `/${locale}/reports` },
       { key: "configuration", labels: { en: "Institution Configuration", ur: "ادارہ کنفیگریشن", ar: "تهيئة المؤسسة" }, href: (locale) => `/${locale}/settings/configuration` },
-      { key: "fees", labels: { en: "Fees & Accounting · Demo", ur: "فیس و اکاؤنٹنگ · ڈیمو", ar: "الرسوم والمحاسبة · تجريبي" }, href: (locale) => `/${locale}/demo/fees` },
-      { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول", ar: "الاستيراد والترفيع والتجديد" }, href: (locale) => `/${locale}/students/lifecycle` },
-      { key: "donations", labels: { en: "Donations & Sponsorships · Demo", ur: "عطیات و کفالت · ڈیمو", ar: "التبرعات والكفالات · تجريبي" }, href: (locale) => `/${locale}/demo/donations` },
-      { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس", ar: "السكن والإعاشة" }, href: (locale) => `/${locale}/hostel` },
-      { key: "transport", labels: { en: "Transport & Routes", ur: "ٹرانسپورٹ و روٹس", ar: "النقل والمسارات" }, href: (locale) => `/${locale}/transport` },
-      { key: "library", labels: { en: "Library", ur: "لائبریری", ar: "المكتبة" }, href: (locale) => `/${locale}/library` },
-      { key: "whatsapp", labels: { en: "WhatsApp Automation", ur: "واٹس ایپ آٹومیشن", ar: "أتمتة واتساب" }, href: (locale) => `/${locale}/communications/whatsapp` },
-      { key: "ai", labels: { en: "AI Assistant · Preview", ur: "AI معاون · پری ویو", ar: "مساعد الذكاء الاصطناعي · معاينة" }, href: (locale) => `/${locale}/demo/ai` },
-      { key: "branches", labels: { en: "Branches & Roles", ur: "برانچز و رولز", ar: "الفروع والأدوار" }, href: (locale) => `/${locale}/access` }
+      { key: "ai", labels: { en: "AI Assistant", ur: "AI معاون", ar: "مساعد الذكاء الاصطناعي" }, href: (locale) => `/${locale}/demo/ai` },
+      { key: "branches", labels: { en: "Roles & Access", ur: "رولز و رسائی", ar: "الأدوار والوصول" }, href: (locale) => `/${locale}/access` }
     ]
   }
 ];
