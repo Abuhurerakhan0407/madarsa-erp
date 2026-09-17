@@ -1,0 +1,55 @@
+.workspace {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.workspace :global(.reports-table) {
+  min-width: 48rem;
+}
+
+.workspace :global(.reports-table th),
+.workspace :global(.reports-table td) {
+  min-width: 8rem;
+  max-width: 20rem;
+  padding: 0.72rem 0.78rem;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.workspace :global(.reports-table th:first-child),
+.workspace :global(.reports-table td:first-child) {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  min-width: 10rem;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.workspace :global(.report-output > header) {
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.workspace :global(.report-output > header strong) {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .workspace :global(.table-scroll) { overflow: visible; }
+  .workspace :global(.reports-table),
+  .workspace :global(.reports-table tbody),
+  .workspace :global(.reports-table tr),
+  .workspace :global(.reports-table td) { display: block; width: 100%; min-width: 0; }
+  .workspace :global(.reports-table) { min-width: 0; }
+  .workspace :global(.reports-table thead) { display: none; }
+  .workspace :global(.reports-table tbody) { display: grid; gap: 0.75rem; }
+  .workspace :global(.reports-table tr) { overflow: hidden; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface); }
+  .workspace :global(.reports-table td) { display: grid; grid-template-columns: minmax(7rem, .72fr) minmax(0, 1fr); gap: 0.75rem; max-width: none; padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); }
+  .workspace :global(.reports-table td:last-child) { border-bottom: 0; }
+  .workspace :global(.reports-table td::before) { content: attr(data-label); font-size: 0.76rem; font-weight: 650; color: var(--muted-foreground); }
+  .workspace :global(.reports-table th:first-child),
+  .workspace :global(.reports-table td:first-child) { position: static; min-width: 0; box-shadow: none; }
+}
