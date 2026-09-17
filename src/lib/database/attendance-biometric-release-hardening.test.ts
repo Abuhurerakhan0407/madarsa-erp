@@ -49,4 +49,10 @@ describe("commercial biometric attendance release hardening", () => {
     expect(migration).toContain("grant execute on function public.apply_attendance_device_event_v1");
     expect(migration).not.toContain("to authenticated;");
   });
+  it("attaches FILTER to the aggregate, never to round()", () => {
+    expect(migration).toContain("avg(ratio) filter(where attendance_date=p_attendance_date)");
+    expect(migration).toContain("avg(ratio) filter(where attendance_date between p_attendance_date-6 and p_attendance_date)");
+    expect(migration).not.toMatch(/round\([^;\n]*\)\s*filter\s*\(/i);
+  });
+
 });
