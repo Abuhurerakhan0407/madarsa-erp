@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {describe,expect,it} from 'vitest';
 
-const sql=readFileSync(resolve(process.cwd(),'supabase/migrations/20260917060000_rescue04_academic_report_branch_isolation.sql'),'utf8').toLowerCase();
+const sql=readFileSync(resolve(process.cwd(),'supabase/migrations/20260917060001_rescue04_academic_report_branch_isolation.sql'),'utf8').toLowerCase();
 const reviewedSql=readFileSync(resolve(process.cwd(),'supabase/migrations/20260917023000_rescue04_academic_result_reporting_accuracy.sql'),'utf8').toLowerCase();
 type Scope={tenant:number;branch:number;session?:number;program?:number;group?:number;student?:number;from:string;to:string};
 type Assignment={id:number;tenant:number;session:number;program:number;group:number|null;student:number|null;startsOn:string;endsOn:string|null;auditBranch:number|null};
