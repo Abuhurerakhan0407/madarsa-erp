@@ -68,6 +68,7 @@ export async function GET(request: Request) {
   const query = new URL(request.url).searchParams;
   const sessionId = positive(query.get("session"));
   const groupId = positive(query.get("group"));
+  const locale = query.get("locale") === "ur" ? "ur" : "en";
   let studentIds: number[];
   try {
     studentIds = normalizeIdCardStudentIds(query.getAll("student"));
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await getStudentIdCardBatch({ locale: "en", sessionId, groupId, personIds: studentIds });
+    const result = await getStudentIdCardBatch({ locale, sessionId, groupId, personIds: studentIds });
     if (result.students.length !== studentIds.length) {
       return NextResponse.json({ error: "One or more selected students are no longer eligible for this ID-card batch." }, { status: 409 });
     }
@@ -91,7 +92,8 @@ export async function GET(request: Request) {
     const pdf = await createUnicodeStudentIdCardSheetPdf(students, {
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || workspace.branchCode || "—",
-      academicYear
+      academicYear,
+      locale
     });
     const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     const date = new Date().toISOString().slice(0, 10);

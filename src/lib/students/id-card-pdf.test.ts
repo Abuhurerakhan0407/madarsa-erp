@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { createStudentIdCardSheetPdf } from "./id-card-pdf";
+import { createStudentIdCardSheetPdf, createUnicodeStudentIdCardSheetPdf } from "./id-card-pdf";
 
 const students = Array.from({ length: 5 }, (_, index) => ({
   studentNumber: `STU-00${index + 1}`,
@@ -42,6 +42,14 @@ describe("student ID-card sheet PDF", () => {
     expect(route).toContain("normalizeStudentPhoto");
     expect(route).toContain("sharp(");
     expect(route).toContain("photo: await normalizeStudentPhoto");
+  });
+
+  it("supports Urdu copy and native names in Unicode ID-card PDFs", async () => {
+    const pdf = await createUnicodeStudentIdCardSheetPdf([{ ...students[0], nativeName: "\u0637\u0627\u0644\u0628 \u0639\u0644\u0645" }], { institutionName: "\u0627\u062f\u0627\u0631\u06c1 \u0639\u0644\u0645\u06af\u0627\u06c1", branchName: "\u0645\u0631\u06a9\u0632\u06cc \u06a9\u06cc\u0645\u067e\u0633", academicYear: "2026-27", locale: "ur" });
+    expect(new TextDecoder().decode(pdf).startsWith("%PDF-1.4")).toBe(true);
+    expect(pdf.byteLength).toBeGreaterThan(1000);
+    const route = readFileSync(new URL("../../app/api/students/id-cards/pdf/route.ts", import.meta.url), "utf8");
+    expect(route).toContain('query.get("locale") === "ur"');
   });
 
   it("rejects an empty batch", () => {

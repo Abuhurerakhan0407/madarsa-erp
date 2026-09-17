@@ -44,6 +44,7 @@ export default async function BulkIdCardPrintPage({ params, searchParams }: { pa
   const pdfParams = new URLSearchParams();
   pdfParams.set("session", String(sessionId));
   pdfParams.set("group", String(groupId));
+  pdfParams.set("locale", locale === "ur" ? "ur" : "en");
   studentIds.forEach((personId) => pdfParams.append("student", String(personId)));
   const pdfHref = `/api/students/id-cards/pdf?${pdfParams.toString()}`;
 
