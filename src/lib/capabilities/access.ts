@@ -13,6 +13,7 @@ const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]
   [/^\/(?:en|ur|ar)\/transport(?:\/|$)/, "transport"],
   [/^\/(?:en|ur|ar)\/library(?:\/|$)/, "library"],
   [/^\/(?:en|ur|ar)\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"],
+  [/^\/(?:en|ur|ar)\/assistant(?:\/|$)/, "ai_assistant"],
   [/^\/(?:en|ur|ar)\/demo\/ai(?:\/|$)/, "ai_assistant"],
   [/^\/(?:en|ur|ar)\/access(?:\/|$)/, "branches_roles_ui"]
 ];
@@ -20,6 +21,7 @@ const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]
 const API_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
   [/^\/api\/fees(?:\/|$)/, "fees_accounting"],
   [/^\/api\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
+  [/^\/api\/assistant(?:\/|$)/, "ai_assistant"],
   [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
   [/^\/api\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"]
 ];
