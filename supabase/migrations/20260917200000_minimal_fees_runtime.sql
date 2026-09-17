@@ -5,16 +5,13 @@ insert into public.permissions(code,description) values
  ('finance.payment.collect','Record branch fee payments')
 on conflict(code) do nothing;
 
+-- Finance access is intentionally owner-only at launch. Do not inherit money permissions
+-- from generic student read/update permissions; teacher and office delegation must be explicit.
 insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'finance.fees.read'
-from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
-where r.status='active' and rp.permission_code='students.profile.read'
-on conflict do nothing;
-insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,p.code
-from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
-cross join (values('finance.fees.manage'),('finance.payment.collect')) p(code)
-where r.status='active' and rp.permission_code='students.profile.update'
+select r.tenant_id,r.id,p.code
+from public.roles r
+cross join (values('finance.fees.read'),('finance.fees.manage'),('finance.payment.collect')) p(code)
+where r.status='active' and r.key='institution_owner'
 on conflict do nothing;
 
 create table if not exists public.minimal_fee_items(
