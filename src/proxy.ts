@@ -24,6 +24,11 @@ function copySessionState(from: NextResponse, to: NextResponse) {
 export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Marketing homepage stays public and independent from the authenticated ERP runtime.
+  if (pathname === "/") {
+    return NextResponse.next({ request });
+  }
+
   if (!hasSupabasePublicEnv()) {
     return new NextResponse("Application configuration unavailable.", {
       status: 503,

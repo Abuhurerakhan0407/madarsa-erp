@@ -2,11 +2,13 @@ import { expect, test } from "@playwright/test";
 
 const sameOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000").origin;
 
-test("protects the root workspace behind sign in", async ({ page }) => {
-  await page.goto("/");
+test("serves the public marketing homepage without opening a workspace", async ({ page }) => {
+  const response = await page.goto("/");
 
-  await expect(page).toHaveURL(/\/login\?next=%2F$/);
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "Run your institution with less noise." })).toBeVisible();
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
 });
 
 test("protects supported localized institution routes", async ({ page }) => {
