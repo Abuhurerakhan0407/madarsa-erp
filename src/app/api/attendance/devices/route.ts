@@ -1,28 +1,28 @@
 import { NextResponse } from "next/server";
 import { createAttendanceDevice } from "@/lib/attendance/device-bridge";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Cross-origin mutation blocked." }, { status: 403 });
+  if (!isJsonRequest(request)) return NextResponse.json({ error: "JSON request required." }, { status: 415 });
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) return NextResponse.json({ error: "Active institution membership required." }, { status: 403 });
-  if (Number(request.headers.get("content-length") ?? 0) > 8192) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
 
+  const parsed = await readBoundedJson(request, 8192);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+  const body = parsed.value && typeof parsed.value === "object" && !Array.isArray(parsed.value)
+    ? parsed.value as Record<string, unknown>
+    : {};
+  const externalDeviceKey = typeof body.externalDeviceKey === "string" ? body.externalDeviceKey.trim() : "";
+  const label = typeof body.label === "string" ? body.label.trim() : "";
+  if (externalDeviceKey.length < 3 || label.length < 2 || body.modality !== "biometric") {
+    return NextResponse.json({ error: "Device configuration is invalid." }, { status: 400 });
+  }
   try {
-    const body = await request.json() as Record<string, unknown>;
-    const externalDeviceKey = typeof body.externalDeviceKey === "string" ? body.externalDeviceKey.trim() : "";
-    const label = typeof body.label === "string" ? body.label.trim() : "";
-    const modality = body.modality;
-
-    // Current Ilmgaah attendance hardware scope is biometric-only. The database keeps
-    // historical modality values for compatibility, but new active device provisioning
-    // must not re-enable retired modalities through the API.
-    if (externalDeviceKey.length < 3 || label.length < 2 || modality !== "biometric") {
-      return NextResponse.json({ error: "Device configuration is invalid." }, { status: 400 });
-    }
-
     const result = await createAttendanceDevice({
       externalDeviceKey,
       label,
@@ -32,6 +32,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(result, { status: 201, headers: { "cache-control": "no-store" } });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create attendance device." }, { status: 400 });
+    const message = error instanceof Error ? error.message : "Unable to create attendance device.";
+    if (message.toLowerCase().includes("permission denied")) return NextResponse.json({ error: "Attendance device management permission required." }, { status: 403 });
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
