@@ -2,10 +2,17 @@
 insert into public.permissions(code,description) values
  ('payroll.read','Read branch payroll'),('payroll.manage','Manage branch payroll')
 on conflict(code) do nothing;
+-- Payroll is more sensitive than the employee directory. Do not grant
+-- payroll visibility to generic HR readers. Existing HR managers and access
+-- administrators receive the minimal payroll permissions.
 insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'payroll.read' from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id where r.status='active' and rp.permission_code='hr.employee.read' on conflict do nothing;
-insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'payroll.manage' from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id where r.status='active' and rp.permission_code='hr.employee.manage' on conflict do nothing;
+select distinct rp.tenant_id,rp.role_id,p.code
+from public.role_permissions rp
+join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
+cross join (values('payroll.read'),('payroll.manage')) p(code)
+where r.status='active'
+  and rp.permission_code in('settings.roles.manage','hr.employee.manage')
+on conflict do nothing;
 
 create table if not exists public.minimal_salary_setups(
  id bigint generated always as identity primary key,tenant_id bigint not null references public.tenants(id) on delete restrict,branch_id bigint not null,employment_id bigint not null,
