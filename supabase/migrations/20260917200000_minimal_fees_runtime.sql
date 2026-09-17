@@ -92,8 +92,16 @@ language plpgsql security definer set search_path='' as $$ declare v_item public
   if not exists(select 1 from public.enrollments e where e.tenant_id=p_tenant_id and e.branch_id=p_branch_id and e.student_person_id=p_student_person_id and e.status in('active','paused')) then raise exception 'student not active in branch'; end if;
   insert into public.minimal_fee_assignments(tenant_id,branch_id,fee_item_id,student_person_id,group_id,gross_amount,due_date) values(p_tenant_id,p_branch_id,p_fee_item_id,p_student_person_id,null,coalesce(p_amount,v_item.amount),p_due_date) on conflict do nothing; get diagnostics v_count=row_count;
  else
+  if not exists(
+    select 1 from public.academic_groups g
+    where g.tenant_id=p_tenant_id and g.branch_id=p_branch_id and g.id=p_group_id and g.status='active'
+  ) then raise exception 'group not active in branch'; end if;
   insert into public.minimal_fee_assignments(tenant_id,branch_id,fee_item_id,student_person_id,group_id,gross_amount,due_date)
-  select p_tenant_id,p_branch_id,p_fee_item_id,e.student_person_id,p_group_id,coalesce(p_amount,v_item.amount),p_due_date from public.enrollments e where e.tenant_id=p_tenant_id and e.branch_id=p_branch_id and e.group_id=p_group_id and e.status in('active','paused') on conflict do nothing; get diagnostics v_count=row_count;
+  select p_tenant_id,p_branch_id,p_fee_item_id,e.student_person_id,p_group_id,coalesce(p_amount,v_item.amount),p_due_date
+  from public.enrollments e
+  where e.tenant_id=p_tenant_id and e.branch_id=p_branch_id and e.group_id=p_group_id and e.status in('active','paused')
+  on conflict do nothing;
+  get diagnostics v_count=row_count;
  end if;
  return jsonb_build_object('assigned',v_count); end;$$;
 
