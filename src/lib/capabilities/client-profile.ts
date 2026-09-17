@@ -23,22 +23,24 @@ export type ClientProfileConfig = Readonly<{
   clientV2TenantSlugs?: string | null;
 }>;
 
+const retiredCapabilities = [
+  "hostel_mess",
+  "transport",
+  "library",
+  "whatsapp_automation",
+  "internal_demo_suite"
+] as const satisfies readonly ProductCapability[];
+
+// Locked Ilmgaah commercial scope. Retired capabilities stay disabled for every
+// profile so an override cannot resurrect them.
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
-  disabledCapabilities: new Set<ProductCapability>()
+  disabledCapabilities: new Set<ProductCapability>(retiredCapabilities)
 };
 
-// Locked commercial scope: WhatsApp, Hostel, Transport and Library are not product features.
-// Fees, lifecycle operations, contributions, AI and Roles/Access remain launch scope.
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
-  disabledCapabilities: new Set<ProductCapability>([
-    "hostel_mess",
-    "transport",
-    "library",
-    "whatsapp_automation",
-    "internal_demo_suite"
-  ])
+  disabledCapabilities: new Set<ProductCapability>(retiredCapabilities)
 };
 
 export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> = {
