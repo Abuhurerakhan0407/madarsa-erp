@@ -8,12 +8,23 @@ const payroll=root('supabase/migrations/20260917202000_minimal_payroll_runtime.s
 const nav=root('src/lib/navigation/app-navigation.ts');
 const assistant=root('src/lib/assistant/operational.ts');
 const capability=root('src/lib/capabilities/client-profile.ts');
+const aiPermission=root('supabase/migrations/20260917204000_operational_assistant_permission.sql');
 
 describe('locked commercial-core scope',()=>{
  it('removes retired modules from client navigation while keeping required modules',()=>{
   expect(nav).not.toContain('key: "hostel"');expect(nav).not.toContain('key: "transport"');expect(nav).not.toContain('key: "library"');expect(nav).not.toContain('key: "whatsapp"');
   for(const key of ['key: "fees"','key: "donations"','key: "payroll"','key: "portals"','key: "branches"','key: "ai"'])expect(nav).toContain(key);
   for(const capabilityName of ['"hostel_mess"','"transport"','"library"','"whatsapp_automation"'])expect(capability).toContain(capabilityName);
+ });
+
+ it('does not inherit sensitive commercial permissions from generic student-read roles',()=>{
+  expect(fees).not.toContain("rp.permission_code='students.profile.read'");
+  expect(fees).not.toContain("rp.permission_code='students.profile.update'");
+  expect(contributions).not.toContain("rp.permission_code='students.profile.read'");
+  expect(contributions).not.toContain("rp.permission_code='students.profile.update'");
+  expect(payroll).not.toContain("rp.permission_code='hr.employee.read'");
+  expect(aiPermission).not.toContain("rp.permission_code='students.profile.read'");
+  expect(aiPermission).toContain("rp.permission_code='settings.roles.manage'");
  });
 
  it('keeps browser writes closed for new money modules',()=>{
