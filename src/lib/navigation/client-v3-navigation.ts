@@ -4,37 +4,49 @@ export type NavigationAudience = "office" | "teacher" | "neutral";
 export type ClientV3NavItem = { key: string; labels: Record<Locale, string>; href: (locale: Locale) => string };
 export type ClientV3Navigation = { primary: ClientV3NavItem[]; more: ClientV3NavItem[]; mobile: ClientV3NavItem[] };
 
-const item = (key:string,en:string,ur:string,ar:string,path:(locale:Locale)=>string):ClientV3NavItem=>({key,labels:{en,ur,ar},href:path});
+const item = (key: string, en: string, ur: string, ar: string, path: (locale: Locale) => string): ClientV3NavItem => ({ key, labels: { en, ur, ar }, href: path });
 
-const officePrimary:ClientV3NavItem[]=[
- item("home","Home","ہوم","الرئيسية",l=>`/${l}`),
- item("admissions","Admissions","داخلہ","القبول",l=>`/${l}/admissions`),
- item("students","Students","طلبہ","الطلاب",l=>`/${l}/students`),
- item("attendance","Attendance","حاضری","الحضور",l=>`/${l}/attendance`),
- item("quran","Qur'an & Hifz","قرآن و حفظ","القرآن والحفظ",l=>`/${l}/quran`)
-];
-const officeMore:ClientV3NavItem[]=[
- item("portals","Parent & Teacher Access","?????? ? ?????? ?????","???? ???????? ?????????",l=>`/${l}/portals`),
- item("teachers","Teachers","اساتذہ","المعلمون",l=>`/${l}/staff`),
- item("exams","Exams","امتحانات","الاختبارات",l=>`/${l}/exams`),
- item("documents","IDs & Documents","ID و دستاویزات","الهويات والمستندات",l=>`/${l}/documents`),
- item("reports","Reports","رپورٹس","التقارير",l=>`/${l}/reports`),
- item("settings","Settings","سیٹنگز","الإعدادات",l=>`/${l}/settings/configuration`)
-];
-const teacherPrimary:ClientV3NavItem[]=[
- item("home","Home","ہوم","الرئيسية",l=>`/${l}`),
- item("my-students","My Students","میرے طلبہ","طلابي",l=>`/${l}/my-students`),
- item("attendance","Attendance","حاضری","الحضور",l=>`/${l}/attendance`),
- item("quran","Qur'an & Hifz","قرآن و حفظ","القرآن والحفظ",l=>`/${l}/quran`)
+const officePrimary: ClientV3NavItem[] = [
+  item("home", "Home", "ہوم", "الرئيسية", (l) => `/${l}`),
+  item("admissions", "Admissions", "داخلہ", "القبول", (l) => `/${l}/admissions`),
+  item("students", "Students", "طلبہ", "الطلاب", (l) => `/${l}/students`),
+  item("attendance", "Attendance", "حاضری", "الحضور", (l) => `/${l}/attendance`),
+  item("quran", "Qur'an & Hifz", "قرآن و حفظ", "القرآن والحفظ", (l) => `/${l}/quran`),
+  item("programs", "Programs", "پروگرامز", "البرامج", (l) => `/${l}/programs`)
 ];
 
-export function getClientV3Navigation(audience:NavigationAudience):ClientV3Navigation{
- if(audience==="teacher") return {primary:teacherPrimary,more:[],mobile:teacherPrimary};
- if(audience==="neutral") return {primary:[],more:[],mobile:[]};
- return {primary:officePrimary,more:officeMore,mobile:[officePrimary[0],officePrimary[1],officePrimary[2],officePrimary[3]]};
+const officeMore: ClientV3NavItem[] = [
+  item("portals", "Parent & Teacher Access", "والدین و اساتذہ رسائی", "وصول الوالدين والمعلمين", (l) => `/${l}/portals`),
+  item("teachers", "Teachers & Staff", "اساتذہ و عملہ", "المعلمون والموظفون", (l) => `/${l}/staff`),
+  item("exams", "Exams & Results", "امتحانات و نتائج", "الاختبارات والنتائج", (l) => `/${l}/exams`),
+  item("documents", "IDs, Documents & Certificates", "آئی ڈی، دستاویزات و سرٹیفکیٹس", "الهويات والمستندات والشهادات", (l) => `/${l}/documents`),
+  item("reports", "Reports & Analytics", "رپورٹس و تجزیات", "التقارير والتحليلات", (l) => `/${l}/reports`),
+  item("fees", "Fees & Payments", "فیس و ادائیگیاں", "الرسوم والمدفوعات", (l) => `/${l}/fees`),
+  item("contributions", "Donations, Zakat & Sponsorships", "عطیات، زکوٰۃ و کفالت", "التبرعات والزكاة والكفالات", (l) => `/${l}/contributions`),
+  item("payroll", "Payroll", "تنخواہیں", "الرواتب", (l) => `/${l}/payroll`),
+  item("access", "Roles & Access", "کردار و رسائی", "الأدوار والصلاحيات", (l) => `/${l}/access`),
+  item("assistant", "AI Assistant", "اے آئی اسسٹنٹ", "مساعد الذكاء الاصطناعي", (l) => `/${l}/assistant`),
+  item("settings", "Settings", "سیٹنگز", "الإعدادات", (l) => `/${l}/settings/configuration`)
+];
+
+const teacherPrimary: ClientV3NavItem[] = [
+  item("home", "Home", "ہوم", "الرئيسية", (l) => `/${l}`),
+  item("my-students", "My Students", "میرے طلبہ", "طلابي", (l) => `/${l}/my-students`),
+  item("attendance", "Attendance", "حاضری", "الحضور", (l) => `/${l}/attendance`),
+  item("quran", "Qur'an & Hifz", "قرآن و حفظ", "القرآن والحفظ", (l) => `/${l}/quran`)
+];
+
+export function getClientV3Navigation(audience: NavigationAudience): ClientV3Navigation {
+  if (audience === "teacher") return { primary: teacherPrimary, more: [], mobile: teacherPrimary };
+  if (audience === "neutral") return { primary: [], more: [], mobile: [] };
+  return {
+    primary: officePrimary,
+    more: officeMore,
+    mobile: [officePrimary[0], officePrimary[1], officePrimary[2], officePrimary[3]]
+  };
 }
 
-export function getSupplementalMobileNavigation(navigation:ClientV3Navigation):ClientV3NavItem[]{
- const quickKeys=new Set(navigation.mobile.map(item=>item.key));
- return [...navigation.primary,...navigation.more].filter(item=>!quickKeys.has(item.key));
+export function getSupplementalMobileNavigation(navigation: ClientV3Navigation): ClientV3NavItem[] {
+  const quickKeys = new Set(navigation.mobile.map((item) => item.key));
+  return [...navigation.primary, ...navigation.more].filter((item) => !quickKeys.has(item.key));
 }
