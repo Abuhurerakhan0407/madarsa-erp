@@ -4,7 +4,7 @@ export type NavigationAudience = "office" | "teacher" | "neutral";
 export type ClientV3NavItem = { key: string; labels: Record<Locale, string>; href: (locale: Locale) => string };
 export type ClientV3Navigation = { primary: ClientV3NavItem[]; more: ClientV3NavItem[]; mobile: ClientV3NavItem[] };
 
-const item = (key: string, en: string, ur: string, path: (locale: Locale) => string): ClientV3NavItem => ({ key, labels: { en, ur, ar: en }, href: path });
+const item = (key: string, en: string, ur: string, path: (locale: Locale) => string): ClientV3NavItem => ({ key, labels: { en, ur } as Record<Locale, string>, href: path });
 
 const officePrimary: ClientV3NavItem[] = [
   item("home", "Home", "ہوم", (l) => `/${l}`),
