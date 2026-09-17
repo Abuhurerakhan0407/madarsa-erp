@@ -28,7 +28,7 @@ export const APP_NAV_GROUPS: AppNavGroup[] = [
     { key: "certificates", labels: { en: "IDs & Documents", ur: "ID و دستاویزات", ar: "الهويات والمستندات" }, href: (locale) => `/${locale}/documents` },
     { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و اینالیٹکس", ar: "التقارير والتحليلات" }, href: (locale) => `/${locale}/reports` },
     { key: "configuration", labels: { en: "Institution Configuration", ur: "ادارہ کنفیگریشن", ar: "تهيئة المؤسسة" }, href: (locale) => `/${locale}/settings/configuration` },
-    { key: "ai", labels: { en: "AI Assistant", ur: "AI معاون", ar: "مساعد الذكاء الاصطناعي" }, href: (locale) => `/${locale}/demo/ai` },
+    { key: "ai", labels: { en: "AI Assistant", ur: "AI معاون", ar: "مساعد الذكاء الاصطناعي" }, href: (locale) => `/${locale}/assistant` },
     { key: "branches", labels: { en: "Roles & Access", ur: "رولز و رسائی", ar: "الأدوار والوصول" }, href: (locale) => `/${locale}/access` }
   ]}
 ];
