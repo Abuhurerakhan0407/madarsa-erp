@@ -17,7 +17,14 @@ describe("Phase 9 Teachers + Portals UI contracts",()=>{
  it("forces ERP-managed reset safety from app metadata and records credential audit first",()=>{
   const route=read("src/app/api/portals/credentials/route.ts");const change=read("src/app/api/portal/password/change/route.ts");const portal=read("src/app/portal/page.tsx");
   expect(route).toContain("app_metadata?.portal_account!==true");expect(route).toContain("app_metadata:{");expect(route).toContain("must_change_password:true");expect(route).toContain("record_portal_credential_audit_v1");expect(route.indexOf('audit(\"allowed\")')).toBeLessThan(route.indexOf("updateUserById"));expect(route).not.toContain("user_metadata");expect(route).not.toContain("token_digest:password");
-  expect(change).toContain("app_metadata?.portal_account !== true");expect(change).toContain("app_metadata?.must_change_password !== true");expect(change).not.toContain("user_metadata");expect(portal).toContain("app_metadata?.must_change_password===true");
+  expect(change).toContain("app_metadata?.portal_account !== true");expect(change).toContain("app_metadata?.must_change_password !== true");expect(change).not.toContain("user_metadata");expect(portal).toMatch(/app_metadata\?\.must_change_password\s*===\s*true/);
+ });
+ it("keeps claim and mandatory password flows branded, bilingual, and locale-preserving",()=>{
+  const claim=read("src/app/portal/claim/page.tsx");const claimForm=read("src/components/portal-claim-form.tsx");const passwordPage=read("src/app/portal/change-password/page.tsx");const passwordForm=read("src/components/portal-password-change-form.tsx");
+  for(const source of [claim,passwordPage]){expect(source).toContain("Ilmgaah");expect(source).toContain("resolvePortalLocale");expect(source).toContain("getDirection");}
+  expect(claim).toContain("والدین اور اساتذہ پورٹل");expect(claimForm).toContain("پورٹل رسائی فعال کریں");expect(claimForm).toContain("portalHref");
+  expect(passwordPage).toContain("والدین اور اساتذہ پورٹل");expect(passwordForm).toContain("نیا پاس ورڈ");expect(passwordForm).toContain("portalHref");
+  expect(claim).not.toContain("Parent & Staff Portal");expect(passwordPage).not.toContain("Madarsa ERP");
  });
  it("renders parent overview in the handoff priority order",()=>{
   const view=read("src/components/portal-parent-priority-overview.tsx");const priorities=["1-urgent-notices","2-today-schedule","3-attendance","4-homework","5-teaching-progress","6-results","7-events"];let previous=-1;for(const key of priorities){const position=view.indexOf(key);expect(position).toBeGreaterThan(previous);previous=position;}
