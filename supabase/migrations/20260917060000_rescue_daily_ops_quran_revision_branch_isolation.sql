@@ -996,6 +996,7 @@ declare v_student bigint;begin
 end;$$;
 
 revoke all on function public.enforce_quran_revision_source_provenance_v1() from public,anon,authenticated;
+grant execute on function public.enforce_quran_revision_source_provenance_v1() to service_role;
 revoke all on function public.quran_revision_obligation_in_branch_v1(bigint,bigint,bigint,bigint) from public,anon,authenticated;
 grant execute on function public.quran_revision_obligation_in_branch_v1(bigint,bigint,bigint,bigint) to service_role;
 
@@ -1007,7 +1008,11 @@ revoke execute on function public.get_quran_hifz_daily_register_v1(uuid,bigint,b
 revoke execute on function public.get_quran_student_detail_v2(uuid,bigint,bigint,bigint,integer) from service_role;
 revoke execute on function public.correct_quran_recitation_attempt_v1(uuid,bigint,bigint,text,bigint,text,numeric,numeric,numeric,numeric,integer,text,text,text,text) from service_role;
 
--- Reassert scoped application entry-point execution after the forward replacements.
+-- Reassert browser-role denial and scoped application entry-point execution after the forward replacements.
+revoke all on function public.get_quran_revision_queue_v2(uuid,bigint,bigint,text,integer,integer) from public,anon,authenticated;
+revoke all on function public.get_quran_hifz_workspace_v4(uuid,bigint,bigint,text,integer,integer) from public,anon,authenticated;
+revoke all on function public.get_quran_hifz_daily_register_v2(uuid,bigint,bigint,bigint,date) from public,anon,authenticated;
+revoke all on function public.correct_quran_recitation_attempt_scoped_v1(uuid,bigint,bigint,text,bigint,text,numeric,numeric,numeric,numeric,integer,text,text,text,text) from public,anon,authenticated;
 grant execute on function public.get_quran_revision_queue_v2(uuid,bigint,bigint,text,integer,integer) to service_role;
 grant execute on function public.get_quran_hifz_workspace_v4(uuid,bigint,bigint,text,integer,integer) to service_role;
 grant execute on function public.get_quran_hifz_daily_register_v2(uuid,bigint,bigint,bigint,date) to service_role;
