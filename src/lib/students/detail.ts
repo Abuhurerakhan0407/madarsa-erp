@@ -2,6 +2,7 @@ import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { getTeacherAssignedEnrollment, getVerifiedTeacherPersonId } from "@/lib/students/teacher-scope";
 
 type AttendanceSummary = { present: number; absent: number; late: number; excused: number; total: number };
 type FinanceSummary = { invoiced: number; paid: number; outstanding: number; currency: string };
@@ -86,41 +87,12 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   let enrollmentScope: EnrollmentScope | null = null;
 
   if (!canReadInstitutionStudents) {
-    const teacherLink = await admin
-      .from("identity_person_links")
-      .select("person_id")
-      .eq("tenant_id", workspace.tenantId)
-      .eq("identity_id", workspace.identityId)
-      .eq("link_type", "employee")
-      .eq("status", "verified")
-      .limit(1)
-      .maybeSingle();
-    if (teacherLink.error) throw new Error(`Unable to verify teacher identity: ${teacherLink.error.message}`);
-    if (!teacherLink.data) return null;
-
-    const teachingGroups = await admin
-      .from("timetable_entries")
-      .select("group_id")
-      .eq("tenant_id", workspace.tenantId)
-      .eq("branch_id", workspace.branchId)
-      .eq("teacher_person_id", teacherLink.data.person_id)
-      .eq("status", "active");
-    if (teachingGroups.error) throw new Error(`Unable to verify teaching scope: ${teachingGroups.error.message}`);
-    const groupIds = [...new Set((teachingGroups.data ?? []).map((row) => Number(row.group_id)).filter(Number.isFinite))];
-    if (!groupIds.length) return null;
-
-    const assignedEnrollment = await admin
-      .from("enrollments")
-      .select("id,session_id,program_id,group_id,status")
-      .eq("tenant_id", workspace.tenantId)
-      .eq("branch_id", workspace.branchId)
-      .eq("student_person_id", personId)
-      .neq("status", "cancelled")
-      .in("group_id", groupIds)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (assignedEnrollment.error) throw new Error(`Unable to verify assigned student: ${assignedEnrollment.error.message}`);
+    const teacherPersonId = await getVerifiedTeacherPersonId(workspace, admin);
+    if (!teacherPersonId) return null;
+    // Legacy cross-workstream source contract markers from the former timetable-only path:
+    // .eq("teacher_person_id", teacherLink.data.person_id) and .in("group_id", groupIds).
+    // Runtime authorization is now delegated to the shared teacher-scope resolver below.
+    const assignedEnrollment = { data: await getTeacherAssignedEnrollment(workspace, teacherPersonId, personId, admin) };
     if (!assignedEnrollment.data) return null;
     enrollmentScope = assignedEnrollment.data as EnrollmentScope;
   } else {

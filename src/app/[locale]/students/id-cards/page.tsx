@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentIdCardBatch } from "@/lib/students/id-card-batch";
+import { getTenantContext } from "@/lib/tenancy/context";
 import styles from "./id-card-batch.module.css";
 
 const copy = {
@@ -16,6 +19,8 @@ function positive(value: string | undefined): number | null {
 
 export default async function BulkIdCardsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ session?: string; group?: string }> }) {
   const locale = (await params).locale as Locale;
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["document.job.manage"]))) notFound();
   const query = await searchParams;
   const sessionId = positive(query.session);
   const groupId = positive(query.group);

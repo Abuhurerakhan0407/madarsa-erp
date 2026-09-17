@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import type { PdfJpegImage } from "@/lib/documents/layout-pdf";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { createUnicodeStudentIdCardSheetPdf } from "@/lib/students/id-card-pdf";
 import { getStudentIdCardBatch, normalizeIdCardStudentIds, type IdCardBatchStudent } from "@/lib/students/id-card-batch";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -59,6 +60,9 @@ export async function GET(request: Request) {
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) {
     return NextResponse.json({ error: "Active institution membership required." }, { status: 403 });
+  }
+  if (!(await operatorHasPermissions(workspace, ["document.job.manage", "students.profile.read"]))) {
+    return NextResponse.json({ error: "Student ID-card generation permission required." }, { status: 403 });
   }
 
   const query = new URL(request.url).searchParams;

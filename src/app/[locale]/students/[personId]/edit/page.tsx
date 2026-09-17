@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { StudentEditForm } from "@/components/student-edit-form";
 import { StudentGuardianForm } from "@/components/student-guardian-form";
 import { StudentPlacementForm } from "@/components/student-placement-form";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { isLocale, type SupportedLocale } from "@/lib/i18n/config";
 import { getStudentDetail } from "@/lib/students/detail";
 import { getStudentPlacement } from "@/lib/students/placement";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
   en: { kicker: "Student profile · Edit", title: "Edit student", body: "Update identity, class placement, language, health, safeguarding and primary guardian information.", back: "Back to profile", placement: "Academic placement", placementBody: "Move the student between active classes within the current academic session and program. Every change is recorded." },
@@ -18,9 +20,16 @@ export default async function EditStudentPage({ params }: { params: Promise<{ lo
   const locale: SupportedLocale = raw.locale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId) notFound();
+  const [canEditStudent, canManagePlacement] = await Promise.all([
+    operatorHasPermissions(workspace, ["people.person.manage", "students.profile.update"]),
+    operatorHasPermissions(workspace, ["academics.enrollment.manage"])
+  ]);
+  if (!canEditStudent) notFound();
   const [student, placement] = await Promise.all([
     getStudentDetail(personId, locale),
-    getStudentPlacement(personId, locale)
+    canManagePlacement ? getStudentPlacement(personId, locale) : Promise.resolve(null)
   ]);
   if (!student) notFound();
   const text = copy[locale];

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentIdCardBatch, normalizeIdCardStudentIds } from "@/lib/students/id-card-batch";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -29,11 +30,9 @@ export default async function BulkIdCardPrintPage({ params, searchParams }: { pa
   const studentIds = normalizeIdCardStudentIds(query.student);
   if (!sessionId || !groupId || studentIds.length === 0) notFound();
 
-  const [result, workspace] = await Promise.all([
-    getStudentIdCardBatch({ locale, sessionId, groupId, personIds: studentIds }),
-    getTenantContext()
-  ]);
-  if (!workspace) notFound();
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["document.job.manage"]))) notFound();
+  const result = await getStudentIdCardBatch({ locale, sessionId, groupId, personIds: studentIds });
   if (result.students.length !== studentIds.length) throw new Error("One or more selected students are no longer eligible for this ID-card batch.");
 
   const text = copy[locale];

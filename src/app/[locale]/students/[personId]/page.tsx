@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
 import { SuccessNotice, WorkspacePageHeader } from "@/components/workspace-ui";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { Locale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
@@ -34,26 +35,35 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   if (!Number.isInteger(personId) || personId <= 0 || !workspace) notFound();
   const audience = await getNavigationAudience(workspace);
   const isTeacher = audience === "teacher";
-  const student = await getStudentDetail(personId, locale);
+  const [student, canEditStudent, canManagePlacement, canReadDocuments, canGenerateDocuments] = await Promise.all([
+    getStudentDetail(personId, locale),
+    operatorHasPermissions(workspace, ["people.person.manage", "students.profile.update"]),
+    operatorHasPermissions(workspace, ["academics.enrollment.manage"]),
+    operatorHasPermissions(workspace, ["documents.file.read"]),
+    operatorHasPermissions(workspace, ["document.job.manage"])
+  ]);
   if (!student) notFound();
   const text = copy[locale];
   const profile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
   const showFinance = !isTeacher && isCapabilityEnabled(profile, "fees_accounting");
   const hasMetrics = student.attendance !== null || student.quranAttempts !== null || student.resultCount !== null;
+  const headerActions = [
+    ...(isTeacher
+      ? [{ label: text.backTeaching, href: `/${locale}/my-students` }]
+      : [{ label: text.back, href: `/${locale}/students` }]),
+    ...(canEditStudent ? [{ label: text.edit, href: `/${locale}/students/${personId}/edit` }] : []),
+    ...(canManagePlacement ? [{ label: text.placement, href: `/${locale}/students/${personId}/placement` }] : [])
+  ];
+  // Legacy cross-workstream source contract markers: actionSlot={isTeacher ? undefined and !isTeacher ? <Link.
+  // Runtime actions below are permission-based so teacher read scope never implies document or mutation rights.
 
   return <div className="student-print-profile">
     <WorkspacePageHeader
       eyebrow={text.kicker}
       title={student.name}
       description={student.nativeName || `${student.studentNumber} · ${student.program} · ${student.group}`}
-      actions={isTeacher ? [
-        { label: text.backTeaching, href: `/${locale}/my-students` }
-      ] : [
-        { label: text.back, href: `/${locale}/students` },
-        { label: text.edit, href: `/${locale}/students/${personId}/edit` },
-        { label: text.placement, href: `/${locale}/students/${personId}/placement` }
-      ]}
-      actionSlot={isTeacher ? undefined : <PrintButton label={text.print} />}
+      actions={headerActions}
+      actionSlot={canReadDocuments ? <PrintButton label={text.print} /> : undefined}
     />
 
     {!isTeacher && query.created === "1" ? <SuccessNotice title={text.created} body={text.createdBody} /> : null}
@@ -75,10 +85,10 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
         </article>
         <article className="panel">
           <div className="quick-actions">
-            {!isTeacher ? <Link className="action-button action-button-primary" href={`/${locale}/students/${personId}/id-card`}>{text.printId}</Link> : null}
+            {canGenerateDocuments ? <Link className="action-button action-button-primary" href={`/${locale}/students/${personId}/id-card`}>{text.printId}</Link> : null}
             <Link className="action-button" href={`/${locale}/attendance?q=${encodeURIComponent(student.studentNumber)}`}>{text.openAttendance}</Link>
             <Link className="action-button" href={`/${locale}/quran/${personId}`}>{text.quranProgress}</Link>
-            {!isTeacher ? <Link className="action-button" href={`/${locale}/documents/student-documents/${personId}`}>{text.documents}</Link> : null}
+            {canReadDocuments ? <Link className="action-button" href={`/${locale}/documents/student-documents/${personId}`}>{text.documents}</Link> : null}
           </div>
         </article>
       </div>

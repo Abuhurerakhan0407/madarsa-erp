@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentDetail } from "@/lib/students/detail";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -22,8 +23,10 @@ export default async function StudentIdCardPage({ params }: { params: Promise<{ 
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
 
-  const [student, workspace] = await Promise.all([getStudentDetail(personId, locale), getTenantContext()]);
-  if (!student || !workspace) notFound();
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["document.job.manage"]))) notFound();
+  const student = await getStudentDetail(personId, locale);
+  if (!student) notFound();
   const text = copy[locale];
   const branch = workspace.branchName || workspace.branchCode || "—";
   const brandInitial = workspace.tenantName.trim().slice(0, 1).toUpperCase();

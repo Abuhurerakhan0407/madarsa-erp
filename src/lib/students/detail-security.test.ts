@@ -11,7 +11,9 @@ describe("student detail protected guardian reads", () => {
 
     expect(studentPermissionIndex).toBeGreaterThanOrEqual(0);
     expect(detailSource).toContain('operatorHasPermissions(workspace, ["people.person.read"])');
-    expect(detailSource).toContain('.eq("teacher_person_id", teacherLink.data.person_id)');
+    expect(detailSource).toContain('getTeacherAssignedEnrollment(workspace, teacherPersonId, personId, admin)');
+    expect(detailSource).toContain('getVerifiedTeacherPersonId(workspace, admin)');
+    expect(detailSource).not.toContain('admin.from("timetable_entries")');
     expect(assignmentIndex).toBeGreaterThan(studentPermissionIndex);
     expect(guardianIndex).toBeGreaterThan(assignmentIndex);
     expect(detailSource).not.toContain("getNavigationAudience");
