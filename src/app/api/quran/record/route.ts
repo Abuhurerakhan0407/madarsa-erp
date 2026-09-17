@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (!validation.value) return NextResponse.json({ error: validation.errors[0] || "Invalid Qur'an record.", details: validation.errors }, { status: 400 });
   const value = validation.value;
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("record_quran_hifz_attempt_idempotent", {
+  const { data, error } = await admin.rpc("record_quran_hifz_attempt_scoped_v1", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
@@ -44,7 +44,6 @@ export async function POST(request: Request) {
     p_overall_score: value.overallScore ?? null,
     p_prompts: value.prompts ?? null,
     p_outcome: value.outcome,
-    p_teacher_person_id: value.teacherPersonId ?? null,
     p_teacher_remark: value.teacherRemark ?? null,
     p_parent_visible_remark: value.parentVisibleRemark ?? null,
     p_private_note: value.privateNote ?? null,

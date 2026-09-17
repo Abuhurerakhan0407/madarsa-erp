@@ -7,7 +7,7 @@ type Locale = "en" | "ur" | "ar";
 type Props = { locale: Locale; data: AcademicsWorkspace };
 type View = "group" | "teacher" | "student";
 
-const weekdays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const weekdays: Record<Locale,string[]> = { en:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"], ur:["پیر","منگل","بدھ","جمعرات","جمعہ","ہفتہ","اتوار"], ar:["الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"] };
 const copy = {
   en: { title:"Timetable views", body:"Switch between group, teacher and student schedules without changing the underlying timetable.", view:"View by", group:"Group", teacher:"Teacher", student:"Student", choose:"Choose", day:"Day", time:"Time", subject:"Subject", room:"Room", empty:"No active timetable entries match this view." },
   ur: { title:"ٹائم ٹیبل ویوز", body:"اصل ٹائم ٹیبل بدلے بغیر گروپ، استاد اور طالب علم کے شیڈول دیکھیں۔", view:"دیکھیں", group:"گروپ", teacher:"استاد", student:"طالب علم", choose:"منتخب کریں", day:"دن", time:"وقت", subject:"مضمون", room:"کمرہ", empty:"اس انتخاب کے لیے کوئی فعال ٹائم ٹیبل اندراج نہیں۔" },
@@ -45,6 +45,6 @@ export function AcademicTimetableViews({ locale, data }: Props) {
       <label className="workspace-field"><span>{text.view}</span><select value={view} onChange={(event)=>changeView(event.target.value as View)}><option value="group">{text.group}</option><option value="teacher">{text.teacher}</option><option value="student">{text.student}</option></select></label>
       <label className="workspace-field"><span>{text.choose}</span><select value={selectedId} onChange={(event)=>setSelectedId(Number(event.target.value))}>{options.length===0?<option value={0}>{text.choose}</option>:options.map((item)=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
     </div>
-    {entries.length===0 ? <div className="workspace-inline-state"><strong>{text.empty}</strong></div> : <div className="workspace-table-wrap"><table><thead><tr><th>{text.day}</th><th>{text.time}</th><th>{text.group}</th><th>{text.subject}</th><th>{text.teacher}</th><th>{text.room}</th></tr></thead><tbody>{entries.map((entry)=><tr key={entry.id}><td>{weekdays[entry.weekday-1]??entry.weekday}</td><td>{entry.startsAt}–{entry.endsAt}</td><td>{entry.groupLabel}</td><td>{entry.subjectLabel}</td><td>{entry.teacherName}</td><td>{entry.roomKey||"—"}</td></tr>)}</tbody></table></div>}
+    {entries.length===0 ? <div className="workspace-inline-state"><strong>{text.empty}</strong></div> : <div className="workspace-table-wrap"><table><thead><tr><th>{text.day}</th><th>{text.time}</th><th>{text.group}</th><th>{text.subject}</th><th>{text.teacher}</th><th>{text.room}</th></tr></thead><tbody>{entries.map((entry)=><tr key={entry.id}><td data-label={text.day}>{weekdays[locale][entry.weekday-1]??entry.weekday}</td><td data-label={text.time}>{entry.startsAt}–{entry.endsAt}</td><td data-label={text.group}>{entry.groupLabel}</td><td data-label={text.subject}>{entry.subjectLabel}</td><td data-label={text.teacher}>{entry.teacherName}</td><td data-label={text.room}>{entry.roomKey||"—"}</td></tr>)}</tbody></table></div>}
   </section>;
 }

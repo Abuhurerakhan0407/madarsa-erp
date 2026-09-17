@@ -14,7 +14,7 @@ export async function POST(request:Request){
   let body:unknown;try{body=await request.json();}catch{return NextResponse.json({error:"Invalid JSON body."},{status:400});}
   const validation=validateQuranCorrectionInput(body);if(!validation.value)return NextResponse.json({error:validation.errors[0]||"Invalid correction.",details:validation.errors},{status:400});
   const value=validation.value;const admin=createAdminClient();
-  const {data,error}=await admin.rpc("correct_quran_recitation_attempt_v1",{
+  const {data,error}=await admin.rpc("correct_quran_recitation_attempt_scoped_v1",{
     p_identity_id:identity.id,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_request_key:value.requestKey,p_recitation_attempt_id:value.attemptId,p_reason:value.reason,
     p_accuracy_score:value.accuracyScore,p_fluency_score:value.fluencyScore,p_tajweed_score:value.tajweedScore,p_overall_score:value.overallScore,p_prompts:value.prompts,p_outcome:value.outcome,
     p_teacher_remark:value.teacherRemark,p_parent_visible_remark:value.parentVisibleRemark,p_private_note:value.privateNote

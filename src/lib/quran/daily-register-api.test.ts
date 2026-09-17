@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const route = readFileSync(resolve(process.cwd(), "src/app/api/quran/daily/route.ts"), "utf8");
+const scopeMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/20260917024500_rescue_daily_ops_quran_teacher_scope.sql"), "utf8").toLowerCase();
 
 describe("Qur'an daily register API contract", () => {
   it("keeps mutation boundaries ahead of privileged work", () => {
@@ -20,18 +21,16 @@ describe("Qur'an daily register API contract", () => {
     expect(route).not.toContain("parsed.value.branchId");
   });
 
-  it("protects later active targets before a backdated real lesson mutation", () => {
-    expect(route).toContain('.from("quran_student_targets")');
-    expect(route).toContain('.eq("tenant_id", workspace.tenantId)');
-    expect(route).toContain('.eq("branch_id", workspace.branchId)');
-    expect(route).toContain('.eq("student_person_id", value.personId)');
-    expect(route).toContain('.eq("work_category", value.workCategory)');
-    expect(route).toContain('.gt("assigned_on", value.sessionDate)');
+  it("authorizes assignment before checking later active targets", () => {
+    expect(route).not.toContain('.from("quran_student_targets")');
+    expect(scopeMigration).toContain("quran_operator_can_access_student_v1");
+    expect(scopeMigration).toContain("later active quran target exists");
+    expect(scopeMigration.indexOf("quran_operator_can_access_student_v1")).toBeLessThan(scopeMigration.indexOf("later active quran target exists"));
     expect(route).toContain("A later active Qur'an target already exists");
   });
 
   it("uses the governed Phase 4 database RPC", () => {
-    expect(route).toContain('admin.rpc("record_quran_hifz_daily_quick_v1"');
+    expect(route).toContain('admin.rpc("record_quran_hifz_daily_quick_v2"');
     expect(route).toContain('"cache-control": "no-store"');
   });
 });
