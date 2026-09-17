@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { PortalAttendanceV2Section } from "@/components/portal-attendance-v2-section";
 import { PortalNotificationCenter } from "@/components/portal-notification-center";
 import { PortalParentDocuments } from "@/components/portal-parent-documents";
+import { PortalParentFees } from "@/components/portal-parent-fees";
 import { PortalParentPriorityOverview } from "@/components/portal-parent-priority-overview";
 import { PortalTeacherWorkspace } from "@/components/portal-teacher-workspace";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getDirection } from "@/lib/i18n/config";
 import { getPortalNotificationCenter } from "@/lib/notifications/portal";
 import { getPortalGuardianDocuments } from "@/lib/portal/documents";
+import { getPortalGuardianFees } from "@/lib/portal/fees";
 import { formatPortalDateTime, localizedPortalText, portalHref, resolvePortalLocale } from "@/lib/portal/locale";
 import { getPortalHome } from "@/lib/portal/runtime";
 import { getPortalTeacherWorkspace } from "@/lib/portal/teacher-workspace";
@@ -110,12 +112,13 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
   }
   const tenantId = Number.isInteger(requested) && tenantIds.includes(requested) ? requested : tenantIds[0];
 
-  const [{ data: tenants, error: tenantError }, home, notifications, teacherWorkspace, guardianDocuments] = await Promise.all([
+  const [{ data: tenants, error: tenantError }, home, notifications, teacherWorkspace, guardianDocuments, guardianFees] = await Promise.all([
     admin.from("tenants").select("id,name").in("id", tenantIds),
     getPortalHome(tenantId),
     getPortalNotificationCenter(tenantId),
     getPortalTeacherWorkspace(tenantId),
-    getPortalGuardianDocuments(tenantId)
+    getPortalGuardianDocuments(tenantId),
+    getPortalGuardianFees(tenantId)
   ]);
   if (tenantError) throw new Error(`Unable to load institution: ${tenantError.message}`);
 
@@ -162,6 +165,7 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
           linkedChildren={children}
           attendance={<PortalAttendanceV2Section tenantId={tenantId} locale={locale} />}
         />
+        <PortalParentFees tenantId={tenantId} locale={locale} rows={guardianFees} />
         <PortalParentDocuments tenantId={tenantId} locale={locale} students={guardianDocuments} />
       </> : null}
 
