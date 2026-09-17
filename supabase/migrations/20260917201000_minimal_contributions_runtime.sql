@@ -4,15 +4,15 @@ insert into public.permissions(code,description) values
  ('contributions.manage','Manage donors and branch contributions')
 on conflict(code) do nothing;
 
+-- Least-privilege bootstrap: contributions are inherited only by existing
+-- access administrators or roles already trusted to allocate donation funds.
 insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'contributions.read'
-from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
-where r.status='active' and rp.permission_code='students.profile.read'
-on conflict do nothing;
-insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'contributions.manage'
-from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
-where r.status='active' and rp.permission_code='students.profile.update'
+select distinct rp.tenant_id,rp.role_id,p.code
+from public.role_permissions rp
+join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
+cross join (values('contributions.read'),('contributions.manage')) p(code)
+where r.status='active'
+  and rp.permission_code in('settings.roles.manage','donations.fund.allocate')
 on conflict do nothing;
 
 create table if not exists public.minimal_contributors(
