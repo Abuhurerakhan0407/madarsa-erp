@@ -24,6 +24,12 @@ describe('locked commercial-core scope',()=>{
   }
  });
 
+ it('keeps finance permissions owner-only by default',()=>{
+  expect(fees).toContain("r.key='institution_owner'");
+  expect(fees).not.toContain("rp.permission_code='students.profile.read'");
+  expect(fees).not.toContain("rp.permission_code='students.profile.update'");
+ });
+
  it('makes fee collection branch-scoped and prevents overpayment or over-concession',()=>{
   expect(fees).toContain("e.branch_id=p_branch_id");
   expect(fees).toContain("payment exceeds outstanding amount");
