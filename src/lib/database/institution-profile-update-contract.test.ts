@@ -43,6 +43,12 @@ describe("Phase 4 institution profile update contract", () => {
     expect(migration).toContain("primary locale must be included in supported locales");
   });
 
+  it("uses the routed release locale allowlist for institution configuration", () => {
+    expect(route).toContain('import { locales } from "@/lib/i18n/config"');
+    expect(route).toContain("new set<string>(locales)");
+    expect(route).not.toContain('new set(["en", "ur", "ar"])');
+  });
+
   it("updates only the canonical institution and tenant records", () => {
     expect(migration).toContain("update public.institution_profiles");
     expect(migration).toContain("update public.tenants");
