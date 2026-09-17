@@ -39,11 +39,7 @@ const teacherPrimary: ClientV3NavItem[] = [
 export function getClientV3Navigation(audience: NavigationAudience): ClientV3Navigation {
   if (audience === "teacher") return { primary: teacherPrimary, more: [], mobile: teacherPrimary };
   if (audience === "neutral") return { primary: [], more: [], mobile: [] };
-  return {
-    primary: officePrimary,
-    more: officeMore,
-    mobile: [officePrimary[0], officePrimary[1], officePrimary[2], officePrimary[3]]
-  };
+  return { primary: officePrimary, more: officeMore, mobile: [officePrimary[0], officePrimary[1], officePrimary[2], officePrimary[3]] };
 }
 
 export function getSupplementalMobileNavigation(navigation: ClientV3Navigation): ClientV3NavItem[] {
