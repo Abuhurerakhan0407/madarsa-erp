@@ -2,14 +2,14 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const sql = readFileSync(
-  resolve(process.cwd(), "database/contracts/phase2_tenancy.sql"),
-  "utf8"
+const normalizeNewlines = (value: string) => value.replace(/\r\n?/g, "\n");
+
+const sql = normalizeNewlines(
+  readFileSync(resolve(process.cwd(), "database/contracts/phase2_tenancy.sql"), "utf8")
 ).toLowerCase();
 
-const storageSql = readFileSync(
-  resolve(process.cwd(), "database/contracts/phase2_storage.sql"),
-  "utf8"
+const storageSql = normalizeNewlines(
+  readFileSync(resolve(process.cwd(), "database/contracts/phase2_storage.sql"), "utf8")
 ).toLowerCase();
 
 const tenantTables = [

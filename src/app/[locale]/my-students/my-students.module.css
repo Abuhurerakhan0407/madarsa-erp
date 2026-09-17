@@ -1,0 +1,87 @@
+.filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-block-end: 1rem;
+}
+
+.filterActions,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nativeName {
+  display: block;
+  margin-block-start: 0.2rem;
+}
+
+.mobileList {
+  display: none;
+}
+
+.studentCard {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.cardHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cardHeading h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+}
+
+.cardHeading p,
+.cardHeading small {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions > * {
+    flex: 1 1 auto;
+  }
+
+  .desktopTable {
+    display: none;
+  }
+
+  .mobileList {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .cardHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cardHeading :global(.status-pill) {
+    width: fit-content;
+  }
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PortalAdminCenter } from "@/components/portal-admin-center";
 import { getDirection, type SupportedLocale } from "@/lib/i18n/config";
 import { getPortalOperatorCenter } from "@/lib/portal/runtime";
+import "./portal-access.css";
 
 export const metadata: Metadata = { title: "Parent & Teacher Access | Ilmgaah" };
 
@@ -32,7 +33,7 @@ export default async function PortalsPage({
   const t = copy[locale];
 
   return (
-    <div className="flow-stack" lang={locale} dir={getDirection(locale)}>
+    <div className="flow-stack portal-access-page" lang={locale} dir={getDirection(locale)}>
       <header className="page-header professional-page-header">
         <div>
           <p className="state-kicker">{t.kicker}</p>

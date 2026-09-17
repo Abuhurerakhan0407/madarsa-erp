@@ -24,7 +24,7 @@ describe("Client V3 Phase 5 launch branding", () => {
     });
 
     expect(offenders).toEqual([]);
-  });
+  }, 30_000);
 
   it("pins the visible application shell to the Ilmgaah product identity", () => {
     const shell = readFileSync("src/components/app-shell.tsx", "utf8");

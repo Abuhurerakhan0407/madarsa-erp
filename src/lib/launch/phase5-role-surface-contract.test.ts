@@ -47,8 +47,8 @@ describe("Client V3 Phase 5 role-surface hardening", () => {
   });
 
   it("fail-closes role-less or permission-less navigation instead of presenting office controls", () => {
-    expect(audienceSource).toContain('if(!roleIds.length) return "teacher"');
-    expect(audienceSource).toContain('if(!permissions.length) return "teacher"');
+    expect(audienceSource).toContain('if (!roleIds.length) return "restricted"');
+    expect(audienceSource).toContain('if (!permissions.length) return "restricted"');
   });
 
   it("server-gates each office-only route with a domain permission", () => {

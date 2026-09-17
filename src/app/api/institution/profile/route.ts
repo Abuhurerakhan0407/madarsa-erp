@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { locales } from "@/lib/i18n/config";
 import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
-const SUPPORTED_LOCALES = new Set(["en", "ur", "ar"]);
+const SUPPORTED_LOCALES = new Set<string>(locales);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
   }
   if (
     supportedLocales.length < 1 ||
-    supportedLocales.length > 3 ||
+    supportedLocales.length > SUPPORTED_LOCALES.size ||
     new Set(supportedLocales).size !== supportedLocales.length ||
     supportedLocales.some((locale) => !SUPPORTED_LOCALES.has(locale)) ||
     !supportedLocales.includes(primaryLocale)

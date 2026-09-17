@@ -20,6 +20,13 @@ describe("Client V3 guided setup contract", () => {
     expect(wizard).toContain("/api/academics/groups");
   });
 
+  it("exposes only English and Urdu as release configuration choices", () => {
+    expect(wizard).toContain("locales.map((language) =>");
+    expect(wizard).toContain("localelabels[language]");
+    expect(wizard).not.toContain('<option value="ar">');
+    expect(wizard).not.toContain('(["en", "ur", "ar"] as const).map');
+  });
+
   it("derives progress from canonical records instead of setup state", () => {
     expect(readiness).toContain('from("institution_profiles")');
     expect(readiness).toContain('from("academic_sessions")');

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { admissionProgramTypes } from "@/lib/admissions/foundation";
 import type { GuidedSetupSnapshot } from "@/lib/configuration/setup-readiness";
-
-type Locale = "en" | "ur" | "ar";
+import { isLocale, localeLabels, locales, type Locale } from "@/lib/i18n/config";
 type WorkingStep = "institution" | "academic" | "group" | null;
 
 type Copy = {
@@ -203,6 +202,11 @@ export function SetupWizard({ locale, snapshot }: { locale: Locale; snapshot: Gu
   const [working, setWorking] = useState<WorkingStep>(null);
   const [message, setMessage] = useState<string>("");
   const institution = snapshot.institution;
+  const institutionPrimaryLocale = institution?.primaryLocale && isLocale(institution.primaryLocale)
+    ? institution.primaryLocale
+    : locale === "ur" ? "ur" : "en";
+  const configuredReleaseLocales = (institution?.supportedLocales ?? []).filter(isLocale);
+  const supportedLocalesDefault = configuredReleaseLocales.length ? configuredReleaseLocales : locales;
 
   async function submitInstitution(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -309,8 +313,8 @@ export function SetupWizard({ locale, snapshot }: { locale: Locale; snapshot: Gu
             <label className="field-label">{text.institutionName}<input className="text-field" defaultValue={institution?.displayName ?? ""} maxLength={160} name="displayName" required /></label>
             <label className="field-label">{text.legalName}<input className="text-field" defaultValue={institution?.legalName ?? ""} maxLength={160} name="legalName" /></label>
             <label className="field-label">{text.timezone}<input className="text-field" defaultValue={institution?.timezone ?? "Asia/Kolkata"} maxLength={64} name="timezone" required /></label>
-            <label className="field-label">{text.primaryLanguage}<select className="text-field" defaultValue={institution?.primaryLocale ?? locale} name="primaryLocale"><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></label>
-            <fieldset className="configuration-detail-card"><legend>{text.supportedLanguages}</legend>{(["en", "ur", "ar"] as const).map((language) => <label key={language}><input defaultChecked={(institution?.supportedLocales ?? ["en", "ur", "ar"]).includes(language)} name="supportedLocales" type="checkbox" value={language} /> {language === "en" ? "English" : language === "ur" ? "اردو" : "العربية"}</label>)}</fieldset>
+            <label className="field-label">{text.primaryLanguage}<select className="text-field" defaultValue={institutionPrimaryLocale} name="primaryLocale">{locales.map((language) => <option key={language} value={language}>{localeLabels[language]}</option>)}</select></label>
+            <fieldset className="configuration-detail-card"><legend>{text.supportedLanguages}</legend>{locales.map((language) => <label key={language}><input defaultChecked={supportedLocalesDefault.includes(language)} name="supportedLocales" type="checkbox" value={language} /> {localeLabels[language]}</label>)}</fieldset>
             <button className="action-button action-button-primary" disabled={working !== null} type="submit">{working === "institution" ? text.saving : text.saveDetails}</button>
           </form>
         </article>
