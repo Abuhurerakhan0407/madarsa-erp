@@ -10,6 +10,7 @@ const mappedRoutes = [
   ["/en/transport", "transport"],
   ["/en/library", "library"],
   ["/en/communications/whatsapp", "whatsapp_automation"],
+  ["/en/assistant", "ai_assistant"],
   ["/en/demo/ai", "ai_assistant"],
   ["/en/access", "branches_roles_ui"]
 ] as const;
@@ -21,6 +22,7 @@ describe("Client V2 capability access", () => {
   it("maps protected mutation API families", () => {
     expect(capabilityForApiPath("/api/fees")).toBe("fees_accounting");
     expect(capabilityForApiPath("/api/contributions")).toBe("donations_zakat_sponsorships");
+    expect(capabilityForApiPath("/api/assistant")).toBe("ai_assistant");
     expect(capabilityForApiPath("/api/students/lifecycle/import")).toBe("student_lifecycle_import_promotion_renewal");
     expect(capabilityForApiPath("/api/communications/whatsapp/queue")).toBe("whatsapp_automation");
     expect(capabilityForApiPath("/api/students")).toBeUndefined();
