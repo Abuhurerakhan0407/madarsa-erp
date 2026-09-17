@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 import { PortalAttendanceV2Section } from "@/components/portal-attendance-v2-section";
 import { PortalNotificationCenter } from "@/components/portal-notification-center";
 import { PortalParentPriorityOverview } from "@/components/portal-parent-priority-overview";
+import { PortalTeacherWorkspace } from "@/components/portal-teacher-workspace";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getDirection } from "@/lib/i18n/config";
 import { getPortalNotificationCenter } from "@/lib/notifications/portal";
-import { formatPortalDate, formatPortalDateTime, localizedPortalText, portalHref, resolvePortalLocale } from "@/lib/portal/locale";
+import { formatPortalDateTime, localizedPortalText, portalHref, resolvePortalLocale } from "@/lib/portal/locale";
 import { getPortalHome } from "@/lib/portal/runtime";
+import { getPortalTeacherWorkspace } from "@/lib/portal/teacher-workspace";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 
@@ -30,18 +32,12 @@ const copy = {
     language: "Language",
     signOut: "Sign out",
     account: "Portal account",
-    teacherView: "Teacher view",
-    teacher: "Teacher",
-    recentAttendance: "Recent attendance",
-    leaveHistory: "Leave history",
     notices: "Institution notices",
     archive: "Notice archive",
     anotherCode: "Activate another code",
     noNotices: "No published portal notices.",
     audience: { tenant: "Institution", parents: "Parents", employees: "Teachers" },
-    linkType: { guardian: "Guardian", employee: "Teacher" },
-    attendance: { present: "Present", absent: "Absent", late: "Late", leave: "Leave", excused: "Excused", unmarked: "Unmarked" },
-    leave: { pending: "Pending", approved: "Approved", rejected: "Rejected", cancelled: "Cancelled" }
+    linkType: { guardian: "Guardian", employee: "Teacher" }
   },
   ur: {
     portal: "والدین اور اساتذہ پورٹل",
@@ -53,18 +49,12 @@ const copy = {
     language: "زبان",
     signOut: "سائن آؤٹ",
     account: "پورٹل اکاؤنٹ",
-    teacherView: "استاد کا منظر",
-    teacher: "استاد",
-    recentAttendance: "حالیہ حاضری",
-    leaveHistory: "رخصت کی تاریخ",
     notices: "ادارے کی اطلاعات",
     archive: "اطلاعات کا ریکارڈ",
     anotherCode: "دوسرا کوڈ فعال کریں",
     noNotices: "کوئی شائع شدہ پورٹل اطلاع نہیں۔",
     audience: { tenant: "ادارہ", parents: "والدین", employees: "اساتذہ" },
-    linkType: { guardian: "سرپرست", employee: "استاد" },
-    attendance: { present: "حاضر", absent: "غیر حاضر", late: "تاخیر", leave: "رخصت", excused: "اجازت یافتہ", unmarked: "درج نہیں" },
-    leave: { pending: "زیر انتظار", approved: "منظور", rejected: "مسترد", cancelled: "منسوخ" }
+    linkType: { guardian: "سرپرست", employee: "استاد" }
   }
 } as const;
 
@@ -118,10 +108,11 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
   }
   const tenantId = Number.isInteger(requested) && tenantIds.includes(requested) ? requested : tenantIds[0];
 
-  const [{ data: tenants, error: tenantError }, home, notifications] = await Promise.all([
+  const [{ data: tenants, error: tenantError }, home, notifications, teacherWorkspace] = await Promise.all([
     admin.from("tenants").select("id,name").in("id", tenantIds),
     getPortalHome(tenantId),
-    getPortalNotificationCenter(tenantId)
+    getPortalNotificationCenter(tenantId),
+    getPortalTeacherWorkspace(tenantId)
   ]);
   if (tenantError) throw new Error(`Unable to load institution: ${tenantError.message}`);
 
@@ -170,31 +161,9 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
         />
       ) : null}
 
-      <PortalNotificationCenter tenantId={tenantId} initial={notifications} locale={locale} />
+      {teacherWorkspace ? <PortalTeacherWorkspace locale={locale} workspace={teacherWorkspace} employee={employee} /> : null}
 
-      {Object.keys(employee).length > 0 ? (
-        <section className="professional-card">
-          <p className="state-kicker">{t.teacherView}</p>
-          <h2>{text(employee.display_name)}</h2>
-          <p>{text(employee.employee_number)} · {text(employee.designation) || t.teacher}</p>
-          <div className="demo-card-grid">
-            <article className="demo-card">
-              <h3>{t.recentAttendance}</h3>
-              {rows(employee.recent_attendance).map((item) => {
-                const status = text(item.status_category) || text(item.status) || "unmarked";
-                return <p key={text(item.attendance_date)}>{formatPortalDate(item.attendance_date, locale)} · {t.attendance[status as keyof typeof t.attendance] ?? status}</p>;
-              })}
-            </article>
-            <article className="demo-card">
-              <h3>{t.leaveHistory}</h3>
-              {rows(employee.recent_leave).map((item, index) => {
-                const state = text(item.state);
-                return <p key={`${text(item.starts_on)}:${index}`}>{formatPortalDate(item.starts_on, locale)} → {formatPortalDate(item.ends_on, locale)} · {t.leave[state as keyof typeof t.leave] ?? state}</p>;
-              })}
-            </article>
-          </div>
-        </section>
-      ) : null}
+      <PortalNotificationCenter tenantId={tenantId} initial={notifications} locale={locale} />
 
       <section className="professional-card">
         <div className="section-heading">
