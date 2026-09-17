@@ -339,7 +339,7 @@ export async function getPortalTeacherWorkspace(tenantId: number): Promise<Porta
     attendanceMark: await permission(admin, identity.id, tenantId, branchId, "attendance.student.mark"),
     quranRecord: await permission(admin, identity.id, tenantId, branchId, "learning.recitation.record"),
     homeworkManage: await permission(admin, identity.id, tenantId, branchId, "academics.homework.manage"),
-    marksManage: await permission(admin, identity.id, tenantId, branchId, "assessment.mark.manage")
+    marksManage: await permission(admin, identity.id, tenantId, branchId, "assessment.marks.enter")
   })));
   const capabilities: PortalTeacherCapabilities = {
     studentRead: branchCapabilityRows.some((item) => item.studentRead),
