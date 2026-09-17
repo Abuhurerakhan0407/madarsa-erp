@@ -1,5 +1,6 @@
 export type ProductCapability =
   | "fees_accounting"
+  | "payroll"
   | "student_lifecycle_import_promotion_renewal"
   | "donations_zakat_sponsorships"
   | "hostel_mess"
@@ -29,7 +30,7 @@ const fullProductProfile: ClientCapabilityProfile = {
 };
 
 // Locked commercial scope: WhatsApp, Hostel, Transport and Library are not product features.
-// Fees, lifecycle operations, contributions, AI and Roles/Access remain launch scope.
+// Fees, Payroll, lifecycle operations, contributions, AI and Roles/Access remain launch scope.
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
   disabledCapabilities: new Set<ProductCapability>([
@@ -48,6 +49,7 @@ export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> 
 
 export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | undefined>> = {
   fees: "fees_accounting",
+  payroll: "payroll",
   operations: "student_lifecycle_import_promotion_renewal",
   donations: "donations_zakat_sponsorships",
   hostel: "hostel_mess",
