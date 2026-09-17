@@ -28,18 +28,15 @@ const fullProductProfile: ClientCapabilityProfile = {
   disabledCapabilities: new Set<ProductCapability>()
 };
 
+// Locked commercial scope: WhatsApp, Hostel, Transport and Library are not product features.
+// Fees, lifecycle operations, contributions, AI and Roles/Access remain launch scope.
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
   disabledCapabilities: new Set<ProductCapability>([
-    "fees_accounting",
-    "student_lifecycle_import_promotion_renewal",
-    "donations_zakat_sponsorships",
     "hostel_mess",
     "transport",
     "library",
     "whatsapp_automation",
-    "ai_assistant",
-    "branches_roles_ui",
     "internal_demo_suite"
   ])
 };
@@ -81,26 +78,17 @@ export function resolveClientProfileFromConfig(
   config: ClientProfileConfig
 ): ClientCapabilityProfile {
   const override = normalizeProfileValue(config.profileOverride ?? "");
-
   if (override === "client-v2") return clientV2Profile;
   if (override === "full-product") return fullProductProfile;
-
   const tenantProfile = normalizeProfileValue(config.tenantProfile ?? "");
   if (tenantProfile === "client-v2") return clientV2Profile;
   if (tenantProfile === "full-product") return fullProductProfile;
-
   const normalizedTenantSlug = normalizeProfileValue(tenantSlug);
-  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) {
-    return clientV2Profile;
-  }
-
+  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) return clientV2Profile;
   return fullProductProfile;
 }
 
-export function resolveClientProfile(
-  tenantSlug: string,
-  tenantProfile?: string | null
-): ClientCapabilityProfile {
+export function resolveClientProfile(tenantSlug: string, tenantProfile?: string | null): ClientCapabilityProfile {
   return resolveClientProfileFromConfig(tenantSlug, {
     profileOverride: process.env.MADARSA_CLIENT_PROFILE,
     tenantProfile,
@@ -108,10 +96,7 @@ export function resolveClientProfile(
   });
 }
 
-export function isCapabilityEnabled(
-  profile: ClientCapabilityProfile,
-  capability: ProductCapability | undefined
-): boolean {
+export function isCapabilityEnabled(profile: ClientCapabilityProfile, capability: ProductCapability | undefined): boolean {
   return !capability || !profile.disabledCapabilities.has(capability);
 }
 
