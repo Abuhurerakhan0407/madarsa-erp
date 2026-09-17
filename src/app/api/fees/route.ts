@@ -3,12 +3,17 @@ import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/secur
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { disabledCapabilityResponse } from "@/lib/capabilities/server";
 import { getMinimalFeesWorkspace } from "@/lib/fees/workspace";
 
 const asNumber = (v: unknown) => Number.isFinite(Number(v)) ? Number(v) : null;
 const asText = (v: unknown) => typeof v === "string" ? v.trim() : "";
 
 export async function GET() {
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId) return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
+  const disabled = disabledCapabilityResponse(workspace, "fees_accounting");
+  if (disabled) return disabled;
   try {
     return NextResponse.json({ workspace: await getMinimalFeesWorkspace() }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
@@ -26,6 +31,8 @@ export async function POST(request: Request) {
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
+  const disabled = disabledCapabilityResponse(workspace, "fees_accounting");
+  if (disabled) return disabled;
   const admin = createAdminClient();
   const action = asText(body.action);
   let rpc = "";
