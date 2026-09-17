@@ -41,6 +41,13 @@ describe("teacher portal completion contract", () => {
     expect(component).toContain("workspace.capabilities.marksManage ?");
   });
 
+  it("limits exam context to the linked evaluator and active employment branches", () => {
+    expect(service).toContain('admin.from("exam_subjects")');
+    expect(service).toContain('.eq("evaluator_person_id", teacherPersonId)');
+    expect(service).toContain('.in("branch_id", branchIds)');
+    expect(component).toContain("workspace.exams.length");
+  });
+
   it("wires the self-service teacher workspace without introducing a student portal", () => {
     expect(page).toContain("getPortalTeacherWorkspace(tenantId)");
     expect(page).toContain("<PortalTeacherWorkspace");

@@ -73,6 +73,19 @@ export type PortalTeacherQuranAttempt = {
   occurredAt: string;
 };
 
+export type PortalTeacherExamAssignment = {
+  examSubjectId: number;
+  branchId: number;
+  examSeriesId: number;
+  examLabels: Raw;
+  subjectId: number;
+  subjectLabels: Raw;
+  state: string;
+  startsOn: string;
+  endsOn: string;
+  maximumMarks: number;
+};
+
 export type PortalTeacherCapabilities = {
   studentRead: boolean;
   attendanceMark: boolean;
@@ -88,6 +101,7 @@ export type PortalTeacherWorkspace = {
   schedule: PortalTeacherScheduleItem[];
   homework: PortalTeacherHomework[];
   quran: PortalTeacherQuranAttempt[];
+  exams: PortalTeacherExamAssignment[];
   capabilities: PortalTeacherCapabilities;
 };
 
@@ -334,6 +348,39 @@ export async function getPortalTeacherWorkspace(tenantId: number): Promise<Porta
     quran = [...latestByStudent.values()].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
   }
 
+  const examSubjectResult = await admin.from("exam_subjects")
+    .select("id,exam_series_id,subject_id,maximum_marks,evaluator_person_id")
+    .eq("tenant_id", tenantId)
+    .eq("evaluator_person_id", teacherPersonId);
+  if (examSubjectResult.error) throw new Error(`Unable to load teacher exam assignments: ${examSubjectResult.error.message}`);
+  const examSubjectRows = examSubjectResult.data ?? [];
+  const examSeriesIds = ids(examSubjectRows.map((item) => item.exam_series_id));
+  const examSubjectIds = ids(examSubjectRows.map((item) => item.subject_id));
+  const [examSeriesResult, examSubjectsResult] = await Promise.all([
+    examSeriesIds.length
+      ? admin.from("exam_series").select("id,branch_id,labels,state,starts_on,ends_on").eq("tenant_id", tenantId).in("id", examSeriesIds).in("branch_id", branchIds)
+      : Promise.resolve({ data: [], error: null }),
+    examSubjectIds.length
+      ? admin.from("subjects").select("id,labels").eq("tenant_id", tenantId).in("id", examSubjectIds)
+      : Promise.resolve({ data: [], error: null })
+  ]);
+  if (examSeriesResult.error || examSubjectsResult.error) throw new Error("Unable to resolve teacher exam assignments.");
+  const examSeriesById = new Map((examSeriesResult.data ?? []).map((item) => [Number(item.id), item]));
+  const examSubjectById = new Map((examSubjectsResult.data ?? []).map((item) => [Number(item.id), item]));
+  const exams: PortalTeacherExamAssignment[] = examSubjectRows.flatMap((item) => {
+    const examSubjectId = num(item.id), examSeriesId = num(item.exam_series_id), subjectId = num(item.subject_id);
+    if (!examSubjectId || !examSeriesId || !subjectId) return [];
+    const series = examSeriesById.get(examSeriesId), subject = examSubjectById.get(subjectId);
+    const branchId = num(series?.branch_id);
+    if (!series || !subject || !branchId || !branchIds.includes(branchId)) return [];
+    return [{
+      examSubjectId, branchId, examSeriesId, examLabels: raw(series.labels), subjectId,
+      subjectLabels: raw(subject.labels), state: text(series.state) ?? "draft",
+      startsOn: text(series.starts_on) ?? "", endsOn: text(series.ends_on) ?? "",
+      maximumMarks: Number(item.maximum_marks) || 0
+    }];
+  }).sort((a, b) => b.startsOn.localeCompare(a.startsOn) || a.examSeriesId - b.examSeriesId);
+
   const branchCapabilityRows = await Promise.all(branchIds.map(async (branchId) => ({
     studentRead: await permission(admin, identity.id, tenantId, branchId, "students.profile.read"),
     attendanceMark: await permission(admin, identity.id, tenantId, branchId, "attendance.student.mark"),
@@ -349,5 +396,5 @@ export async function getPortalTeacherWorkspace(tenantId: number): Promise<Porta
     marksManage: branchCapabilityRows.some((item) => item.marksManage)
   };
 
-  return { teacherPersonId, employments, students, schedule, homework, quran, capabilities };
+  return { teacherPersonId, employments, students, schedule, homework, quran, exams, capabilities };
 }

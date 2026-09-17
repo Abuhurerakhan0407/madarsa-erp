@@ -21,6 +21,9 @@ const copy = {
     due: "Due",
     quran: "Qur'an / Hifz progress",
     noQuran: "No recent assigned-student recitations recorded by this teacher.",
+    academic: "Assigned exams & marks",
+    noExams: "No exam subjects are currently assigned to this teacher.",
+    maximum: "Maximum marks",
     ownAttendance: "My attendance",
     leave: "My leave",
     noAttendance: "No recent attendance records.",
@@ -55,6 +58,9 @@ const copy = {
     due: "آخری وقت",
     quran: "قرآن / حفظ پیش رفت",
     noQuran: "اس استاد کی جانب سے مقرر طلبہ کی کوئی حالیہ قرأت درج نہیں۔",
+    academic: "مقرر امتحانات اور نمبر",
+    noExams: "اس استاد کے لیے فی الحال کوئی امتحانی مضمون مقرر نہیں۔",
+    maximum: "زیادہ سے زیادہ نمبر",
     ownAttendance: "میری حاضری",
     leave: "میری رخصت",
     noAttendance: "حالیہ حاضری کا کوئی ریکارڈ نہیں۔",
@@ -160,6 +166,16 @@ export function PortalTeacherWorkspace({
         {item.teacherRemark ? <p>{item.teacherRemark}</p> : null}
         <small>{formatPortalDateTime(item.occurredAt, locale)}</small>
       </article>)}</div> : <p>{t.noQuran}</p>}
+    </section>
+
+    <section className="professional-card">
+      <div className="section-heading"><div><h2>{t.academic}</h2></div>{workspace.capabilities.marksManage ? <Link className="action-button" href={`/${locale}/exams`}>{t.enterMarks}</Link> : null}</div>
+      {workspace.exams.length ? <div className="demo-card-grid">{workspace.exams.map((item) => <article className="demo-card" key={`${item.branchId}:${item.examSubjectId}`}>
+        <p className="state-kicker">{localized(item.examLabels, locale)}</p>
+        <h3>{localized(item.subjectLabels, locale)}</h3>
+        <p>{t.maximum}: {item.maximumMarks} · {t.state[item.state as keyof typeof t.state] ?? item.state}</p>
+        <small>{formatPortalDate(item.startsOn, locale)} → {formatPortalDate(item.endsOn, locale)}</small>
+      </article>)}</div> : <p>{t.noExams}</p>}
     </section>
 
     <div className="demo-card-grid">
