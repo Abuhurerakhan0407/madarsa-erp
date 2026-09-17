@@ -6,13 +6,14 @@ describe("client capability profiles", () => {
     const profile = resolveClientProfileFromConfig("default-madarsa", {});
     expect(profile.key).toBe("full-product");
     expect(isNavItemEnabled(profile, "fees")).toBe(true);
+    expect(isNavItemEnabled(profile, "payroll")).toBe(true);
     expect(isNavItemEnabled(profile, "branches")).toBe(true);
   });
 
   it("keeps required commercial modules enabled in client-v2", () => {
     const profile = resolveClientProfileFromConfig("abu-school", { tenantProfile: "client-v2" });
     expect(profile.key).toBe("client-v2");
-    for (const key of ["fees","operations","donations","ai","branches","students","attendance","configuration"])
+    for (const key of ["fees","payroll","operations","donations","ai","branches","students","attendance","configuration"])
       expect(isNavItemEnabled(profile, key)).toBe(true);
   });
 
@@ -29,6 +30,7 @@ describe("client capability profiles", () => {
     const profile = resolveClientProfileFromConfig("any-tenant", { profileOverride: "client-v2" });
     expect(profile.key).toBe("client-v2");
     expect(isNavItemEnabled(profile, "fees")).toBe(true);
+    expect(isNavItemEnabled(profile, "payroll")).toBe(true);
     expect(isNavItemEnabled(profile, "students")).toBe(true);
   });
 
@@ -36,6 +38,7 @@ describe("client capability profiles", () => {
     const profile = resolveClientProfileFromConfig("client-madarsa", { profileOverride: "full-product", tenantProfile: "client-v2", clientV2TenantSlugs: "client-madarsa" });
     expect(profile.key).toBe("full-product");
     expect(isCapabilityEnabled(profile, "fees_accounting")).toBe(true);
+    expect(isCapabilityEnabled(profile, "payroll")).toBe(true);
   });
 
   it("coerces unknown database values to the safe full-product default", () => {
