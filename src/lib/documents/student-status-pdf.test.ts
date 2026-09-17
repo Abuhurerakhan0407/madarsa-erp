@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createStudentStatusCertificatePdf } from "./student-status-pdf";
+import { createStudentStatusCertificatePdf, createUnicodeStudentStatusCertificatePdf } from "./student-status-pdf";
 import type { StudentStatusCertificate } from "./student-status";
 
 const certificate: StudentStatusCertificate = {
@@ -37,4 +37,11 @@ describe("student status certificate PDF", () => {
     expect(text).toContain("SSC-ABCDEF1234567890");
     expect(text).toContain("not a graduation or academic-award certificate");
   });
+  it("renders Urdu certificate copy and native student name through Unicode PDF", async () => {
+    const urduCertificate = { ...certificate, snapshot: { ...certificate.snapshot, studentNameNative: "Ù…ÛŒÚ©Ø§Ø¦ÛŒÙ„ Ø§Ù†ØµØ§Ø±ÛŒ" } };
+    const pdf = await createUnicodeStudentStatusCertificatePdf(urduCertificate, "ur");
+    expect(new TextDecoder().decode(pdf).startsWith("%PDF-1.4")).toBe(true);
+    expect(pdf.byteLength).toBeGreaterThan(1000);
+  });
+
 });

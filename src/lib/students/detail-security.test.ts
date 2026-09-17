@@ -4,13 +4,19 @@ import { describe, expect, it } from "vitest";
 const detailSource = readFileSync(new URL("./detail.ts", import.meta.url), "utf8");
 
 describe("student detail protected guardian reads", () => {
-  it("verifies branch association before creating a privileged client", () => {
-    const associationIndex = detailSource.indexOf('const association = await supabase.from("enrollments")');
-    const adminIndex = detailSource.indexOf("const admin = createAdminClient();");
+  it("checks authoritative permissions and teacher assignment before privileged guardian reads", () => {
+    const studentPermissionIndex = detailSource.indexOf('operatorHasPermissions(workspace, ["students.profile.read"])');
+    const assignmentIndex = detailSource.indexOf("if (!assignedEnrollment.data) return null;");
+    const guardianIndex = detailSource.indexOf('admin.from("person_relationships")');
 
-    expect(associationIndex).toBeGreaterThanOrEqual(0);
-    expect(detailSource).toContain("if (!association.data) return null;");
-    expect(adminIndex).toBeGreaterThan(associationIndex);
+    expect(studentPermissionIndex).toBeGreaterThanOrEqual(0);
+    expect(detailSource).toContain('operatorHasPermissions(workspace, ["people.person.read"])');
+    expect(detailSource).toContain('getTeacherAssignedEnrollment(workspace, teacherPersonId, personId, admin)');
+    expect(detailSource).toContain('getVerifiedTeacherPersonId(workspace, admin)');
+    expect(detailSource).not.toContain('admin.from("timetable_entries")');
+    expect(assignmentIndex).toBeGreaterThan(studentPermissionIndex);
+    expect(guardianIndex).toBeGreaterThan(assignmentIndex);
+    expect(detailSource).not.toContain("getNavigationAudience");
   });
 
   it("uses the server-only admin client for tables intentionally unavailable to authenticated users", () => {
@@ -20,8 +26,8 @@ describe("student detail protected guardian reads", () => {
     expect(detailSource).not.toContain('supabase.from("person_contacts")');
   });
 
-  it("keeps ordinary student and guardian identity reads on the scoped authenticated client", () => {
+  it("keeps ordinary student identity reads on the scoped authenticated client", () => {
     expect(detailSource).toContain('supabase.from("persons")');
-    expect(detailSource).toContain('supabase.from("guardian_profiles")');
+    expect(detailSource).toContain('supabase.from("student_profiles")');
   });
 });

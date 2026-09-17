@@ -277,3 +277,4 @@
     padding: 0 4mm 3mm;
   }
 }
+img.avatar{object-fit:cover;color:transparent}

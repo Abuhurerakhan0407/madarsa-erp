@@ -1,8 +1,11 @@
+import {escapePdfLiteralText} from './pdf-text';
+
 export type PdfTextLine = {
   text: string;
   size?: number;
   bold?: boolean;
   gapAfter?: number;
+  pageBreakBefore?: boolean;
 };
 
 type PdfOptions = {
@@ -11,15 +14,6 @@ type PdfOptions = {
 };
 
 const encoder = new TextEncoder();
-
-function ascii(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]/g, "?")
-    .replace(/\\/g, "\\\\")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
-}
 
 function chunks(value: string, width = 84): string[] {
   const words = value.trim().split(/\s+/).filter(Boolean);
@@ -46,7 +40,7 @@ function pageContent(lines: PdfTextLine[]): string {
     const size = Math.min(Math.max(line.size ?? 10, 7), 24);
     const font = line.bold ? "F2" : "F1";
     for (const part of chunks(line.text, size >= 16 ? 60 : 84)) {
-      output.push(`BT /${font} ${size} Tf 48 ${y} Td (${ascii(part)}) Tj ET`);
+      output.push(`BT /${font} ${size} Tf 48 ${y} Td (${escapePdfLiteralText(part)}) Tj ET`);
       y -= Math.max(size + 5, 14);
     }
     y -= line.gapAfter ?? 0;
@@ -59,6 +53,7 @@ function splitPages(lines: PdfTextLine[]): PdfTextLine[][] {
   let page: PdfTextLine[] = [];
   let used = 0;
   for (const line of lines) {
+    if (line.pageBreakBefore && page.length) { pages.push(page); page = []; used = 0; }
     const size = Math.min(Math.max(line.size ?? 10, 7), 24);
     const wrapped = chunks(line.text, size >= 16 ? 60 : 84).length;
     const height = wrapped * Math.max(size + 5, 14) + (line.gapAfter ?? 0);
@@ -97,7 +92,7 @@ export function createSimplePdf(options: PdfOptions): Uint8Array {
   objects.set(2, `<< /Type /Pages /Kids [${pageRefs.map((ref) => `${ref} 0 R`).join(" ")}] /Count ${pageRefs.length} >>`);
 
   const maxObject = Math.max(...objects.keys());
-  let body = "%PDF-1.4\n%MADRASA-ERP\n";
+  let body = "%PDF-1.4\n%ILMGAAH\n";
   const offsets: number[] = [0];
   for (let objectNumber = 1; objectNumber <= maxObject; objectNumber += 1) {
     const value = objects.get(objectNumber);

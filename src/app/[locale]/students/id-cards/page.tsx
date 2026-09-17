@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentIdCardBatch } from "@/lib/students/id-card-batch";
+import { getTenantContext } from "@/lib/tenancy/context";
 import styles from "./id-card-batch.module.css";
 
 const copy = {
@@ -16,12 +19,14 @@ function positive(value: string | undefined): number | null {
 
 export default async function BulkIdCardsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ session?: string; group?: string }> }) {
   const locale = (await params).locale as Locale;
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["document.job.manage"]))) notFound();
   const query = await searchParams;
   const sessionId = positive(query.session);
   const groupId = positive(query.group);
   const result = await getStudentIdCardBatch({ locale, sessionId, groupId });
   const text = copy[locale];
-  const groups = sessionId ? result.groups.filter((group) => group.sessionId === sessionId) : result.groups;
+  const groups = sessionId ? result.groups.filter((group) => group.sessionId === sessionId) : [];
 
   return <>
     <section className="page-heading" data-page-section>
@@ -31,8 +36,8 @@ export default async function BulkIdCardsPage({ params, searchParams }: { params
 
     <section className="panel" data-page-section>
       <form className={styles.filterGrid} method="get">
-        <label className="field-label">{text.session}<select className="text-field" name="session" defaultValue={sessionId ?? ""}><option value="">{text.chooseSession}</option>{result.sessions.map((session) => <option value={session.id} key={session.id}>{session.label}</option>)}</select></label>
-        <label className="field-label">{text.group}<select className="text-field" name="group" defaultValue={groupId ?? ""}><option value="">{text.chooseGroup}</option>{groups.map((group) => <option value={group.id} key={group.id}>{group.label}</option>)}</select></label>
+        <label className="field-label">{text.session}<select className="text-field" name="session" defaultValue={sessionId ?? ""} required><option value="">{text.chooseSession}</option>{result.sessions.map((session) => <option value={session.id} key={session.id}>{session.label}</option>)}</select></label>
+        <label className="field-label">{text.group}<select className="text-field" name="group" defaultValue={groupId ?? ""} required disabled={!sessionId}><option value="">{text.chooseGroup}</option>{groups.map((group) => <option value={group.id} key={group.id}>{group.label}</option>)}</select></label>
         <button className="action-button" type="submit">{text.load}</button>
       </form>
     </section>
