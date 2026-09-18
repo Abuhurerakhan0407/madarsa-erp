@@ -13,7 +13,9 @@ const capability=root('src/lib/capabilities/client-profile.ts');
 describe('locked commercial-core scope',()=>{
  it('removes retired modules from navigation and capability definitions while keeping required modules',()=>{
   for(const value of ['hostel','transport','library','whatsapp','student portal'])expect(nav.toLowerCase()).not.toContain(value);
-  for(const capabilityName of ['"hostel_mess"','"transport"','"library"','"whatsapp_automation"','"internal_demo_suite"'])expect(capability).not.toContain(capabilityName);
+  const capabilityDefinitions=capability.slice(capability.indexOf("export type ProductCapability"),capability.indexOf("export type ClientProfileKey"));
+  for(const capabilityName of ['"hostel_mess"','"transport"','"library"','"whatsapp_automation"','"internal_demo_suite"'])expect(capabilityDefinitions).not.toContain(capabilityName);
+  for(const retiredNavKey of ['"hostel"','"transport"','"library"','"whatsapp"','"demo"'])expect(capability).toContain(retiredNavKey);
   for(const key of ['fees','contributions','payroll','portals','access','assistant'])expect(nav).toContain(`item("${key}"`);
  });
 
