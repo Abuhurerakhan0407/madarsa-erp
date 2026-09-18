@@ -14,7 +14,7 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: Supabase security advisor still reports leaked-password protection disabled. RLS-with-no-policy findings are INFO/fail-closed and require explicit review, not blind policy creation."
+      "reason": "Blocked: Supabase security advisor WARN = leaked-password protection disabled. Supabase documents this control as Pro-plan-and-above. The 36 RLS/no-policy INFO findings were read-only verified fail-closed: anon/authenticated have no SELECT/INSERT/UPDATE/DELETE privileges on those tables. Enable leaked-password protection or explicitly revise the launch security policy; do not mark green silently."
     },
     {
       "key": "production_build_green",
