@@ -1,7 +1,7 @@
 import { ProgramsSyllabusManager } from "@/components/programs-syllabus-manager";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAcademicFoundationSummary } from "@/lib/academics/live-summary";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getProgramsSyllabusWorkspace } from "@/lib/programs-syllabus/runtime";
 
 type ProgramsPageProps = { params: Promise<{ locale: string }> };
@@ -13,7 +13,7 @@ type ProgramsCopy = {
   meta: (programs: number, levels: number, components: number, assignments: number) => string;
 };
 
-const copy: Record<Locale, ProgramsCopy> = {
+const copy: Record<SupportedLocale, ProgramsCopy> = {
   en: {
     eyebrow: "Teaching setup",
     title: "Programs & Syllabus",
@@ -25,18 +25,12 @@ const copy: Record<Locale, ProgramsCopy> = {
     title: "پروگرامز و نصاب",
     description: "پروگرام، مراحل، مضامین اور یونٹس سے ادارے کا حقیقی تدریسی ماڈل بنائیں۔ ورژن شدہ نصاب شائع کریں، اساتذہ اور طلبہ کو مقرر کریں، اور تاریخی اکیڈمک ریکارڈ بدلے بغیر پیش رفت درج کریں۔",
     meta: (programs, levels, components, assignments) => `${programs} پروگرام · ${levels} لیول · ${components} اجزاء · ${assignments} تدریسی اسائنمنٹس`
-  },
-  ar: {
-    eyebrow: "إعداد التدريس",
-    title: "البرامج والمنهج",
-    description: "أنشئ نموذج التدريس الفعلي للمؤسسة من البرامج والمراحل والمواد والوحدات. انشر مناهج بإصدارات، وعيّنها للمعلمين والطلاب، وسجّل التقدم دون تغيير السجلات الأكاديمية التاريخية.",
-    meta: (programs, levels, components, assignments) => `${programs} برامج · ${levels} مستويات · ${components} مكونات · ${assignments} مهام تدريس`
   }
 };
 
 export default async function ProgramsPage({ params }: ProgramsPageProps) {
   const { locale: rawLocale } = await params;
-  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const text = copy[locale];
   const [summary, workspace] = await Promise.all([
     getAcademicFoundationSummary(locale),
