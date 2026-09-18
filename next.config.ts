@@ -6,6 +6,9 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    globalNotFound: true
+  },
   async rewrites() {
     return [
       {
