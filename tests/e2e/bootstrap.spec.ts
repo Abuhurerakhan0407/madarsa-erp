@@ -55,7 +55,7 @@ test("health endpoint remains public", async ({ request }) => {
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toMatchObject({
     status: "ok",
-    service: "madarsa-erp"
+    service: "ilmgaah"
   });
 });
 
