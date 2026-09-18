@@ -9,8 +9,11 @@ describe("commercial launch gates", () => {
     const result = evaluateLaunch(readiness.gates);
     expect(result.ready).toBe(false);
     expect(result.blocking).toEqual([
+      { key: "database_migrations_applied", owner: "engineering" },
       { key: "security_advisors_clear", owner: "engineering" },
-      { key: "payment_webhooks_verified", owner: "engineering" },
+      { key: "production_build_green", owner: "engineering" },
+      { key: "critical_e2e_green", owner: "engineering" },
+      { key: "production_deployment_current", owner: "engineering" },
       { key: "pilot_institution_signed_off", owner: "product" }
     ]);
   });
