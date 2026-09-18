@@ -2,7 +2,8 @@ import Link from "next/link";
 import { InlineState, WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAdmissionsInbox } from "@/lib/admissions/inbox";
 import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 const labels = {
@@ -37,32 +38,15 @@ const labels = {
     reference: "حوالہ",
     review: "درخواست کا جائزہ لیں",
     enquiries: "استفسارات اور رابطے"
-  },
-  ar: {
-    kicker: "عمليات القبول",
-    title: "صندوق طلبات القبول",
-    subtitle: "راجع الطلبات المقدمة من خلال نموذج القبول المنشور للمؤسسة.",
-    publicTitle: "نموذج القبول المنشور",
-    publicBody: "شارك النموذج العام مع المتقدمين. تصل الطلبات الجديدة تلقائيًا إلى صندوق القبول.",
-    openForm: "فتح النموذج العام",
-    applications: "الطلبات المقدمة",
-    count: "طلبات",
-    empty: "لا توجد طلبات حتى الآن",
-    emptyBody: "ستظهر الطلبات الجديدة هنا تلقائيًا.",
-    submitted: "مسار القبول",
-    reference: "المرجع",
-    review: "مراجعة الطلب",
-    enquiries: "الاستفسارات والمتابعة"
   }
 } as const;
 
-const dateLocales: Record<Locale, string> = {
+const dateLocales: Record<SupportedLocale, string> = {
   en: "en-IN",
-  ur: "ur-IN",
-  ar: "ar-SA"
+  ur: "ur-IN"
 };
 
-function localized(value: Record<string, string> | null, locale: Locale): string {
+function localized(value: Record<string, string> | null, locale: SupportedLocale): string {
   return value?.[locale] || value?.en || "—";
 }
 
@@ -72,7 +56,8 @@ type AdmissionsPageProps = {
 
 export default async function AdmissionsPage({ params }: AdmissionsPageProps) {
   const { locale: rawLocale } = await params;
-  const locale = rawLocale as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const text = labels[locale];
   const workspace = await getTenantContext();
   if (!workspace) return null;
