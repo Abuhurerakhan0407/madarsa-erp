@@ -22,11 +22,11 @@ export function StudentLifecycleCenter({data,copy}:{data:StudentLifecycleCenter;
  const toggle=(id:number)=>setSelectedStudents(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id]);
  return <div className="documents-shell">
   {message?<p className="panel empty-state">{message}</p>:null}
-  <section className="panel"><h2>{copy.nextSession}</h2><p>{copy.guardrail}</p>{activeSession&&defaults?<form action={(form)=>run("session",()=>postJson("/api/students/lifecycle/session",{sourceSessionId:activeSession.id,key:form.get("key"),label:form.get("label"),labelUr:form.get("labelUr"),labelAr:form.get("labelAr"),startsOn:form.get("startsOn"),endsOn:form.get("endsOn")}))} className="detail-grid">
+  <section className="panel"><h2>{copy.nextSession}</h2><p>{copy.guardrail}</p>{activeSession&&defaults?<form action={(form)=>run("session",()=>postJson("/api/students/lifecycle/session",{sourceSessionId:activeSession.id,key:form.get("key"),label:form.get("label"),labelUr:form.get("labelUr"),startsOn:form.get("startsOn"),endsOn:form.get("endsOn")}))} className="detail-grid">
    <label className="field-label">{copy.sourceSession}<input className="text-field" value={`${activeSession.label} · ${activeSession.startsOn} → ${activeSession.endsOn}`} readOnly/></label>
    <label className="field-label">{copy.sessionKey}<input className="text-field" name="key" defaultValue={defaults.key} required/></label>
    <label className="field-label">{copy.sessionLabel}<input className="text-field" name="label" defaultValue={defaults.label} required/></label>
-   <label className="field-label">Urdu label<input className="text-field" name="labelUr"/></label><label className="field-label">Arabic label<input className="text-field" name="labelAr"/></label>
+   <label className="field-label">Urdu label<input className="text-field" name="labelUr"/></label>
    <label className="field-label">{copy.startsOn}<input className="text-field" type="date" name="startsOn" defaultValue={defaults.startsOn} required/></label><label className="field-label">{copy.endsOn}<input className="text-field" type="date" name="endsOn" defaultValue={defaults.endsOn} required/></label>
    <div><button className="action-button" disabled={busy!==null} type="submit">{copy.prepare}</button></div>
   </form>:<p className="empty-state">{copy.none}</p>}</section>
