@@ -11,6 +11,7 @@ const deviceRoute = readFileSync(resolve(process.cwd(), "src/app/api/attendance/
 const mappingRoute = readFileSync(resolve(process.cwd(), "src/app/api/attendance/device-mappings/route.ts"), "utf8").toLowerCase();
 const applyRoute = readFileSync(resolve(process.cwd(), "src/app/api/attendance/device-events/[eventId]/apply/route.ts"), "utf8").toLowerCase();
 const rotateRoute = readFileSync(resolve(process.cwd(), "src/app/api/attendance/devices/[deviceId]/rotate/route.ts"), "utf8").toLowerCase();
+const ingestRoute = readFileSync(resolve(process.cwd(), "src/app/api/attendance/device-ingest/route.ts"), "utf8").toLowerCase();
 
 describe("commercial biometric attendance release hardening", () => {
   it("retires non-biometric operational paths without deleting history", () => {
@@ -40,6 +41,15 @@ describe("commercial biometric attendance release hardening", () => {
       expect(route).toContain("getverifiedidentity()");
       expect(route).toContain("gettenantcontext()");
     }
+  });
+
+  it("keeps external ingest biometric-only and stream bounded without requiring browser same-origin", () => {
+    expect(ingestRoute).toContain("isjsonrequest(request)");
+    expect(ingestRoute).toContain("readboundedjson(request, 16_384)");
+    expect(ingestRoute).toContain('body.modality !== "biometric"');
+    expect(ingestRoute).toContain('modality: "biometric"');
+    expect(ingestRoute).not.toContain('modality !== "nfc"');
+    expect(ingestRoute).not.toContain("issameoriginrequest(request)");
   });
 
   it("keeps database functions service-role only", () => {
