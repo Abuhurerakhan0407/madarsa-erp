@@ -2,13 +2,8 @@ export type ProductCapability =
   | "fees_accounting"
   | "student_lifecycle_import_promotion_renewal"
   | "donations_zakat_sponsorships"
-  | "hostel_mess"
-  | "transport"
-  | "library"
-  | "whatsapp_automation"
   | "ai_assistant"
-  | "branches_roles_ui"
-  | "internal_demo_suite";
+  | "branches_roles_ui";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -23,22 +18,17 @@ export type ClientProfileConfig = Readonly<{
   clientV2TenantSlugs?: string | null;
 }>;
 
+// Retired product areas (WhatsApp, Hostel, Transport, Library, internal demo suite)
+// are intentionally absent from ProductCapability. They cannot be re-enabled by
+// changing a tenant profile or environment variable.
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
   disabledCapabilities: new Set<ProductCapability>()
 };
 
-// Locked commercial scope: WhatsApp, Hostel, Transport and Library are not product features.
-// Fees, lifecycle operations, contributions, AI and Roles/Access remain launch scope.
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
-  disabledCapabilities: new Set<ProductCapability>([
-    "hostel_mess",
-    "transport",
-    "library",
-    "whatsapp_automation",
-    "internal_demo_suite"
-  ])
+  disabledCapabilities: new Set<ProductCapability>()
 };
 
 export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> = {
@@ -50,10 +40,6 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   fees: "fees_accounting",
   operations: "student_lifecycle_import_promotion_renewal",
   donations: "donations_zakat_sponsorships",
-  hostel: "hostel_mess",
-  transport: "transport",
-  library: "library",
-  whatsapp: "whatsapp_automation",
   ai: "ai_assistant",
   branches: "branches_roles_ui"
 };
