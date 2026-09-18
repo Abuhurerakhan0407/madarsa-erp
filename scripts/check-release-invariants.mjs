@@ -12,6 +12,67 @@ async function requireMissing(path) {
     failures.push(path + ": retired release surface still exists");
   } catch {}
 }
+async function requireExists(path) {
+  try {
+    await access(new URL(path, root));
+  } catch {
+    failures.push(path + ": required release surface is missing");
+  }
+}
+
+
+for (const path of [
+  "src/app/[locale]/admissions/page.tsx",
+  "src/app/[locale]/students/page.tsx",
+  "src/app/[locale]/programs/page.tsx",
+  "src/app/[locale]/people-academics/page.tsx",
+  "src/app/[locale]/attendance/page.tsx",
+  "src/app/[locale]/staff/attendance/page.tsx",
+  "src/app/[locale]/attendance/devices/page.tsx",
+  "src/app/[locale]/quran/page.tsx",
+  "src/app/[locale]/staff/page.tsx",
+  "src/app/[locale]/portals/page.tsx",
+  "src/app/[locale]/my-students/page.tsx",
+  "src/app/[locale]/exams/page.tsx",
+  "src/app/[locale]/reports/page.tsx",
+  "src/app/[locale]/documents/page.tsx",
+  "src/app/[locale]/access/page.tsx",
+  "src/app/[locale]/settings/configuration/page.tsx",
+  "src/app/[locale]/students/lifecycle/page.tsx",
+  "src/app/[locale]/fees/page.tsx",
+  "src/app/[locale]/contributions/page.tsx",
+  "src/app/[locale]/payroll/page.tsx",
+  "src/app/[locale]/assistant/page.tsx",
+  "src/app/api/documents/pdf/route.ts",
+  "src/app/api/documents/student-status-certificate/[personId]/pdf/route.ts",
+  "src/app/api/exams/report-card/[personId]/pdf/route.ts",
+  "src/app/api/students/id-cards/pdf/route.ts",
+  "src/app/[locale]/fees/receipt/[paymentId]/page.tsx",
+  "src/app/[locale]/contributions/receipt/[contributionId]/page.tsx",
+  "src/app/[locale]/payroll/payslip/[lineId]/page.tsx"
+]) await requireExists(path);
+
+for (const path of [
+  "supabase/migrations/20260917023000_rescue04_academic_result_reporting_accuracy.sql",
+  "supabase/migrations/20260917024500_rescue_daily_ops_quran_teacher_scope.sql",
+  "supabase/migrations/20260917043000_rescue_daily_ops_quran_privacy_hardening.sql",
+  "supabase/migrations/20260917060000_rescue_daily_ops_quran_revision_branch_isolation.sql",
+  "supabase/migrations/20260917060001_rescue04_academic_report_branch_isolation.sql",
+  "supabase/migrations/20260917113000_portal_guardian_report_card_read.sql",
+  "supabase/migrations/20260917114500_portal_guardian_documents.sql",
+  "supabase/migrations/20260917174200_attendance_biometric_release_hardening.sql",
+  "supabase/migrations/20260917181000_academic_domain_provenance_reconciliation.sql",
+  "supabase/migrations/20260917200000_minimal_fees_runtime.sql",
+  "supabase/migrations/20260917200001_minimal_fees_integrity_hardening.sql",
+  "supabase/migrations/20260917201000_minimal_contributions_runtime.sql",
+  "supabase/migrations/20260917202000_minimal_payroll_runtime.sql",
+  "supabase/migrations/20260917202001_minimal_payroll_integrity_hardening.sql",
+  "supabase/migrations/20260917203000_access_admin_identity_labels.sql",
+  "supabase/migrations/20260917204000_operational_assistant_permission.sql",
+  "supabase/migrations/20260917205000_commercial_permission_scope_hardening.sql",
+  "supabase/migrations/20260918100000_retire_whatsapp_runtime.sql",
+  "supabase/migrations/20260918101500_lock_release_locales_en_ur.sql"
+]) await requireExists(path);
 
 const i18n = await source("src/lib/i18n/config.ts");
 requireMatch("src/lib/i18n/config.ts", i18n, /locales\s*=\s*\["en",\s*"ur"\]/, "release locales must be EN/UR only");
@@ -58,5 +119,5 @@ if (failures.length) {
   failures.forEach((failure) => console.error("- " + failure));
   process.exitCode = 1;
 } else {
-  console.log("Release invariants passed: EN/UR, claim-only portals, retired commercial modules.");
+  console.log("Release invariants passed: required modules/PDFs/migrations present; EN/UR, claim-only portals, biometric-only attendance, retired commercial modules enforced.");
 }
