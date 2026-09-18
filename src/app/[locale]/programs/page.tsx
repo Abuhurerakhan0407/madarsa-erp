@@ -3,6 +3,7 @@ import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAcademicFoundationSummary } from "@/lib/academics/live-summary";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { getProgramsSyllabusWorkspace } from "@/lib/programs-syllabus/runtime";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 type ProgramsPageProps = { params: Promise<{ locale: string }> };
 
@@ -31,6 +32,7 @@ const copy: Record<SupportedLocale, ProgramsCopy> = {
 export default async function ProgramsPage({ params }: ProgramsPageProps) {
   const { locale: rawLocale } = await params;
   const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const text = copy[locale];
   const [summary, workspace] = await Promise.all([
     getAcademicFoundationSummary(locale),
