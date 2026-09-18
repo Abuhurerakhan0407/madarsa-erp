@@ -28,7 +28,7 @@ export async function getStudentLifecycleCenter():Promise<StudentLifecycleCenter
  };
 }
 
-export async function prepareNextAcademicSession(input:{sourceSessionId:number;key:string;labels:{en:string;ur?:string;ar?:string};startsOn:string;endsOn:string}){
+export async function prepareNextAcademicSession(input:{sourceSessionId:number;key:string;labels:{en:string;ur?:string};startsOn:string;endsOn:string}){
  const w=await workspace();const admin=createAdminClient();const{data,error}=await admin.rpc("prepare_next_academic_session_v1",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_source_session_id:input.sourceSessionId,p_key:input.key,p_labels:input.labels,p_starts_on:input.startsOn,p_ends_on:input.endsOn});if(error)throw new Error(error.message);return object(data);
 }
 
