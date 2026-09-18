@@ -27,6 +27,13 @@ describe('locked commercial-core scope',()=>{
   expect(retiredRuntime).not.toMatch(/drop table/i);
  });
 
+ it('uses valid domain.resource.action permission codes for commercial modules',()=>{
+  for(const code of ['contributions.record.read','contributions.record.manage'])expect(contributions).toContain(`'${code}'`);
+  for(const code of ['payroll.run.read','payroll.run.manage'])expect(payroll).toContain(`'${code}'`);
+  expect(contributions).not.toMatch(/'contributions\.(?:read|manage)'/);
+  expect(payroll).not.toMatch(/'payroll\.(?:read|manage)'/);
+ });
+
  it('keeps browser writes closed for new money modules',()=>{
   for(const sql of [fees,contributions,payroll]){
    expect(sql).toMatch(/force row level security/i);
