@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { isSameOriginRequest } from "@/lib/security/request";
 import { rotateAttendanceDeviceToken } from "@/lib/attendance/device-bridge";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
-export async function POST(_request: Request, { params }: { params: Promise<{ deviceId: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ deviceId: string }> }) {
+  if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Cross-origin mutation blocked." }, { status: 403 });
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
