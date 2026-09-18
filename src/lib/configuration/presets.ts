@@ -55,7 +55,7 @@ export const configurationPresets: readonly ConfigurationPreset[] = [
       label("Sanah", "سنہ", "سنة"),
       label("Sanawat", "سنوات", "سنوات")
     ),
-    enabledDomains: ["admissions", "attendance", "dars_e_nizami", "exams", "library", "fees"],
+    enabledDomains: ["admissions", "attendance", "dars_e_nizami", "exams", "fees"],
     defaultAttendanceStatuses: ["present", "absent", "late", "leave"]
   },
   {
@@ -69,7 +69,7 @@ export const configurationPresets: readonly ConfigurationPreset[] = [
       label("Class", "کلاس", "صف"),
       label("Classes", "کلاسیں", "صفوف")
     ),
-    enabledDomains: ["admissions", "attendance", "academics", "homework", "exams", "fees", "transport"],
+    enabledDomains: ["admissions", "attendance", "academics", "homework", "exams", "fees"],
     defaultAttendanceStatuses: ["present", "absent", "late", "leave", "half_day"]
   },
   {
