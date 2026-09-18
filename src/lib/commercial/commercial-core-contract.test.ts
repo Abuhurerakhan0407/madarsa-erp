@@ -6,15 +6,15 @@ const fees=root('supabase/migrations/20260917200000_minimal_fees_runtime.sql')+r
 const contributions=root('supabase/migrations/20260917201000_minimal_contributions_runtime.sql');
 const payroll=root('supabase/migrations/20260917202000_minimal_payroll_runtime.sql')+root('supabase/migrations/20260917202001_minimal_payroll_integrity_hardening.sql');
 const retiredRuntime=root('supabase/migrations/20260918100000_retire_whatsapp_runtime.sql');
-const nav=root('src/lib/navigation/app-navigation.ts');
+const nav=root('src/lib/navigation/client-v3-navigation.ts');
 const assistant=root('src/lib/assistant/operational.ts');
 const capability=root('src/lib/capabilities/client-profile.ts');
 
 describe('locked commercial-core scope',()=>{
  it('removes retired modules from navigation and capability definitions while keeping required modules',()=>{
-  for(const key of ['key: "hostel"','key: "transport"','key: "library"','key: "whatsapp"'])expect(nav).not.toContain(key);
+  for(const value of ['hostel','transport','library','whatsapp','student portal'])expect(nav.toLowerCase()).not.toContain(value);
   for(const capabilityName of ['"hostel_mess"','"transport"','"library"','"whatsapp_automation"','"internal_demo_suite"'])expect(capability).not.toContain(capabilityName);
-  for(const key of ['key: "fees"','key: "donations"','key: "payroll"','key: "portals"','key: "branches"','key: "ai"'])expect(nav).toContain(key);
+  for(const key of ['fees','contributions','payroll','portals','access','assistant'])expect(nav).toContain(`item("${key}"`);
  });
 
  it('retires WhatsApp runtime without deleting generic notification history tables',()=>{
