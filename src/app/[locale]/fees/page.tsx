@@ -1,5 +1,6 @@
 import { getMinimalFeesWorkspace } from "@/lib/fees/workspace";
 import { MinimalFeesWorkspaceView } from "@/components/minimal-fees-workspace";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 const copy = {
   en: { kicker: "Finance", title: "Fees & payments", body: "Create simple fees, assign them to a student or class, apply concessions, record payments and track outstanding balances." },
@@ -9,6 +10,7 @@ const copy = {
 export default async function FeesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
   const locale = raw === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const data = await getMinimalFeesWorkspace();
   const t = copy[locale];
   return <>
