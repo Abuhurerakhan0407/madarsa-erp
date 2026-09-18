@@ -7,11 +7,10 @@ type Locale = "en" | "ur";
 type Props = { locale: Locale; data: AcademicsWorkspace };
 type View = "group" | "teacher" | "student";
 
-const weekdays: Record<Locale,string[]> = { en:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"], ur:["پیر","منگل","بدھ","جمعرات","جمعہ","ہفتہ","اتوار"], ar:["الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"] };
+const weekdays: Record<Locale,string[]> = { en:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"], ur:["پیر","منگل","بدھ","جمعرات","جمعہ","ہفتہ","اتوار"] };
 const copy = {
   en: { title:"Timetable views", body:"Switch between group, teacher and student schedules without changing the underlying timetable.", view:"View by", group:"Group", teacher:"Teacher", student:"Student", choose:"Choose", day:"Day", time:"Time", subject:"Subject", room:"Room", empty:"No active timetable entries match this view." },
-  ur: { title:"ٹائم ٹیبل ویوز", body:"اصل ٹائم ٹیبل بدلے بغیر گروپ، استاد اور طالب علم کے شیڈول دیکھیں۔", view:"دیکھیں", group:"گروپ", teacher:"استاد", student:"طالب علم", choose:"منتخب کریں", day:"دن", time:"وقت", subject:"مضمون", room:"کمرہ", empty:"اس انتخاب کے لیے کوئی فعال ٹائم ٹیبل اندراج نہیں۔" },
-  ar: { title:"طرق عرض الجدول", body:"بدّل بين جدول المجموعة والمعلم والطالب دون تغيير الجدول الأساسي.", view:"عرض حسب", group:"المجموعة", teacher:"المعلم", student:"الطالب", choose:"اختر", day:"اليوم", time:"الوقت", subject:"المادة", room:"الغرفة", empty:"لا توجد حصص نشطة مطابقة لهذا العرض." }
+  ur: { title:"ٹائم ٹیبل ویوز", body:"اصل ٹائم ٹیبل بدلے بغیر گروپ، استاد اور طالب علم کے شیڈول دیکھیں۔", view:"دیکھیں", group:"گروپ", teacher:"استاد", student:"طالب علم", choose:"منتخب کریں", day:"دن", time:"وقت", subject:"مضمون", room:"کمرہ", empty:"اس انتخاب کے لیے کوئی فعال ٹائم ٹیبل اندراج نہیں۔" }
 } as const;
 
 export function AcademicTimetableViews({ locale, data }: Props) {
