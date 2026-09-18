@@ -22,10 +22,10 @@ import "../academics-v2.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Madarsa ERP",
-    template: "%s | Madarsa ERP"
+    default: "Ilmgaah",
+    template: "%s | Ilmgaah"
   },
-  description: "Multi-tenant operating system for Madrasas and Islamic institutions.",
+  description: "Ilmgaah institution operations platform for madrasas and Islamic education.",
   other: {
     google: "notranslate"
   }
