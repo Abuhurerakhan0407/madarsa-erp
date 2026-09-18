@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AcademicsWorkspace } from "@/lib/academics/workspace";
 
-type Locale = "en" | "ur" | "ar";
+type Locale = "en" | "ur";
 type Props = { locale: Locale; data: AcademicsWorkspace };
 type Tab = "day" | "timetable" | "homework" | "calendar";
 
@@ -37,7 +37,7 @@ const enumLabel=(value:string,locale:Locale)=>enumLabels[locale][value]??value.r
 export function AcademicsTimetableManager({ locale, data }: Props) {
   const router = useRouter();
   const text = copy[locale];
-  const dateLocale = locale === "ur" ? "ur-PK" : locale === "ar" ? "ar-SA" : "en-IN";
+  const dateLocale = locale === "ur" ? "ur-PK" : "en-IN";
   const formatDateTime = (value: string) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(dateLocale,{dateStyle:"medium",timeStyle:"short",timeZone:data.timezone}).format(date); };
   const [tab, setTab] = useState<Tab>("day");
   const [busy, setBusy] = useState(false);
