@@ -7,35 +7,35 @@
       "owner": "engineering",
       "required": true,
       "complete": true,
-      "reason": "GREEN on isolated Supabase staging project loihcxyblzdfiogrdihm: production schema baseline was reconstructed schema-only, production RLS policies/browser grants/private helper ACLs mirrored, and all 19 Sep 17-18 rescue migrations applied successfully in order. Live P0 checks passed for Qur'an source-branch provenance, immutable/mismatched provenance rejection, SECURITY DEFINER/browser/service ACLs, academic provenance/report source-branch enforcement, WhatsApp retirement, money-table browser denial, and authenticated tenant/branch RLS isolation. Production remains untouched."
+      "reason": "GREEN on isolated Supabase staging project loihcxyblzdfiogrdihm: production schema baseline was reconstructed schema-only with all 250 production tables, both views, all 217 production RLS policies, every non-WhatsApp production function, and foreign keys restored. All 19 Sep 17-18 rescue migrations then applied cleanly in release order. Staging runtime probes also passed for EN/UR-only institution configuration, biometric-only device writes, fail-closed Qur'an/guardian access, claim-only portal issue/claim/replay protection, and end-to-end Fees, Contributions, and Payroll workflows. All synthetic QA writes were wrapped in rollback transactions. Production remains untouched."
     },
     {
       "key": "security_advisors_clear",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked on production Auth configuration only: production Security Advisor reports 36 INFO rls_enabled_no_policy findings (previously verified fail-closed) plus 1 WARN auth_leaked_password_protection. Production is on Free. Isolated staging after rescue has 44 INFO rls_enabled_no_policy findings (36 baseline + 8 intentionally policyless minimal money tables with anon/auth direct CRUD revoked) and 0 WARN. Do not mark production security green until its Auth warning is resolved or the launch security policy is explicitly revised."
+      "reason": "Blocked on production Auth configuration only. Production Security Advisor currently reports 36 INFO rls_enabled_no_policy findings plus 1 WARN auth_leaked_password_protection. The 36 INFO tables were previously verified fail-closed to anon/authenticated. The production Supabase organization is verified on the Free plan, while Supabase leaked-password protection is a paid-plan Auth feature. Isolated staging after rescue reports 44 INFO rls_enabled_no_policy findings and 0 WARN; all 44 policyless staging tables were verified with anon/authenticated CRUD exposure = 0. Do not mark production security green unless the Auth warning is resolved or the launch security policy explicitly accepts this Free-plan limitation."
     },
     {
       "key": "production_build_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked only on exact-head execution. Preview commit 56908f2827164591d19b71fafec6d65ee62afb1e is READY and passed release invariants, lint with 0 errors, typecheck, all 157 unit-test files / 794 tests, environment-key check, production compilation, TypeScript, and static generation of 142 pages. The current RC adds E2E/release guards plus global 404/placeholder-route cleanup and is Vercel build-rate-limited, so exact-current-SHA build proof is still required."
+      "reason": "Blocked only on exact-head execution. Preview commit 56908f2827164591d19b71fafec6d65ee62afb1e is READY and passed release invariants, lint with 0 errors, typecheck, all 157 unit-test files / 794 tests, environment-key check, production compilation, TypeScript, and static generation of 142 pages. Current exact RC SHA e53687e01d5b8b23e7036a99f232563dcc05b509 has no executable build proof: its Vercel preview dpl_v65pQ4hWcAkHxfyzLhtgWV9KKJ3x is BLOCKED before build with Vercel project-collaboration configuration and has no build logs; GitHub Actions run 35387508156 also failed before any check step executed."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked externally: Playwright E2E has not executed on the current RC because GitHub Actions receives no runner steps and skips the e2e job. Static E2E contracts were cleaned for EN/UR-only scope and retired routes, but static review is not a substitute for browser execution."
+      "reason": "Blocked externally on exact current RC. GitHub Actions run 35387508156 for SHA e53687e01d5b8b23e7036a99f232563dcc05b509 shows the checks job completed failure with no steps and no logs, while the e2e job was skipped. Playwright therefore has not executed on the exact integrated head. Static E2E/authorization contracts exist and staging DB role/privacy probes are green, but neither substitutes for browser execution."
     },
     {
       "key": "production_deployment_current",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: Vercel preview 56908f2827164591d19b71fafec6d65ee62afb1e is READY, but no deployment exists for the exact current RC because Vercel reports a build-rate limit. Production deployment remains prohibited until all required gates pass and explicit approval is given."
+      "reason": "Blocked: exact-current-SHA Vercel preview dpl_v65pQ4hWcAkHxfyzLhtgWV9KKJ3x for e53687e01d5b8b23e7036a99f232563dcc05b509 is BLOCKED before build by Vercel project-collaboration/team configuration; no build logs were produced. The last known READY preview remains 56908f2827164591d19b71fafec6d65ee62afb1e. Production deployment remains prohibited until all required gates pass and explicit approval is given."
     },
     {
       "key": "pricing_approved",
