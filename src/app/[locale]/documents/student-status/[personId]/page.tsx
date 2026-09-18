@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StudentStatusCertificateAction } from "@/components/student-status-certificate-action";
 import { routing } from "@/i18n/routing";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import { getStudentStatusCertificate } from "@/lib/documents/student-status";
 import { getStudentDetail } from "@/lib/students/detail";
 
@@ -14,8 +15,9 @@ const copy = {
 
 export default async function StudentStatusCertificatePage({ params }: { params: Promise<{ locale: string; personId: string }> }) {
   const { locale: rawLocale, personId: rawPersonId } = await params;
-  if (!routing.locales.includes(rawLocale as Locale)) notFound();
-  const locale = rawLocale as Locale;
+  if (!routing.locales.includes(rawLocale as SupportedLocale)) notFound();
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const personId = Number(rawPersonId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
   const [certificate, student] = await Promise.all([getStudentStatusCertificate(personId), getStudentDetail(personId, locale)]);
