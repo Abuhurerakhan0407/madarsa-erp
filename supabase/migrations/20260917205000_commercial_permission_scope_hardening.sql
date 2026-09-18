@@ -9,10 +9,10 @@ with commercial_permissions(code) as (
     ('finance.fees.read'::text),
     ('finance.fees.manage'),
     ('finance.payment.collect'),
-    ('contributions.read'),
-    ('contributions.manage'),
-    ('payroll.read'),
-    ('payroll.manage'),
+    ('contributions.record.read'),
+    ('contributions.record.manage'),
+    ('payroll.run.read'),
+    ('payroll.run.manage'),
     ('ai.assistant.use')
 )
 delete from public.role_permissions rp
@@ -38,10 +38,10 @@ cross join (
     ('finance.fees.read'::text),
     ('finance.fees.manage'),
     ('finance.payment.collect'),
-    ('contributions.read'),
-    ('contributions.manage'),
-    ('payroll.read'),
-    ('payroll.manage'),
+    ('contributions.record.read'),
+    ('contributions.record.manage'),
+    ('payroll.run.read'),
+    ('payroll.run.manage'),
     ('ai.assistant.use')
 ) p(code)
 where r.status='active'
@@ -62,10 +62,10 @@ cross join (
     ('finance.fees.read'::text),
     ('finance.fees.manage'),
     ('finance.payment.collect'),
-    ('contributions.read'),
-    ('contributions.manage'),
-    ('payroll.read'),
-    ('payroll.manage'),
+    ('contributions.record.read'),
+    ('contributions.record.manage'),
+    ('payroll.run.read'),
+    ('payroll.run.manage'),
     ('ai.assistant.use')
 ) p(code)
 where r.status='active'
