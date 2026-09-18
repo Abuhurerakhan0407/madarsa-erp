@@ -7,8 +7,7 @@ import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
   en: { kicker: "Admissions · Enquiries", title: "Enquiry follow-up", body: "Capture interest, assign the next action and preserve the path into admission.", add: "New enquiry", back: "Applications", count: "enquiries", empty: "No enquiries yet", next: "Next follow-up", source: "Source", open: "Open enquiry" },
-  ur: { kicker: "داخلہ · استفسارات", title: "استفسار اور رابطہ", body: "دلچسپی، اگلی کارروائی اور داخلہ درخواست تک مکمل ریکارڈ محفوظ کریں۔", add: "نیا استفسار", back: "درخواستیں", count: "استفسارات", empty: "ابھی کوئی استفسار نہیں", next: "اگلا رابطہ", source: "ذریعہ", open: "استفسار کھولیں" },
-  ar: { kicker: "القبول · الاستفسارات", title: "متابعة الاستفسارات", body: "سجل الاهتمام والإجراء التالي والمسار الكامل إلى طلب القبول.", add: "استفسار جديد", back: "الطلبات", count: "استفسارات", empty: "لا توجد استفسارات", next: "المتابعة التالية", source: "المصدر", open: "فتح الاستفسار" }
+  ur: { kicker: "داخلہ · استفسارات", title: "استفسار اور رابطہ", body: "دلچسپی، اگلی کارروائی اور داخلہ درخواست تک مکمل ریکارڈ محفوظ کریں۔", add: "نیا استفسار", back: "درخواستیں", count: "استفسارات", empty: "ابھی کوئی استفسار نہیں", next: "اگلا رابطہ", source: "ذریعہ", open: "استفسار کھولیں" }
 } as const;
 const dateLocales: Record<SupportedLocale,string> = { en: "en-IN", ur: "ur-IN" };
 const localized = (labels: Record<string,string> | null, locale: SupportedLocale) => labels?.[locale] || labels?.en || "—";
