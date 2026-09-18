@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { createCustomRole,getAccessAdministrationCenter,setCustomRolePermissions,setMembershipBranchScope,setMembershipCustomRole } from "@/lib/access/administration";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 const copy={
  en:{kicker:"Administration",title:"Roles & Access",description:"Manage staff roles, permissions and branch access. System roles stay protected while custom roles can be tailored to your institution.",newRole:"Create custom role",key:"Role key",name:"Role name",create:"Create role",roles:"Roles",permissions:"Permissions",savePermissions:"Save permissions",members:"Accounts & access",identity:"Account",scope:"Branch scope",roleAssignment:"Custom role assignment",assign:"Assign",remove:"Remove",allBranches:"All branches",selectedBranches:"Selected branches",saveScope:"Save branch access",system:"System",custom:"Custom",locked:"Current administrator access is protected",none:"No records yet.",branches:"Branches",activeAccess:"active memberships"},
@@ -8,7 +9,7 @@ const copy={
 } as const;
 
 export default async function AccessPage({params}:{params:Promise<{locale:string}>}){
- const{locale:raw}=await params;const locale:SupportedLocale=raw==="ur"?"ur":"en",t=copy[locale],data=await getAccessAdministrationCenter();const customRoles=data.roles.filter(r=>!r.isSystem&&r.status==="active");
+ const{locale:raw}=await params;const locale:SupportedLocale=raw==="ur"?"ur":"en";await requireOfficeAudience(locale);const t=copy[locale],data=await getAccessAdministrationCenter();const customRoles=data.roles.filter(r=>!r.isSystem&&r.status==="active");
  async function createRoleAction(formData:FormData){"use server";const key=String(formData.get("key")??"").trim(),name=String(formData.get("name")??"").trim();if(key&&name)await createCustomRole({key,name});revalidatePath(`/${locale}/access`);}
  async function permissionsAction(formData:FormData){"use server";const roleId=Number(formData.get("roleId")),permissionCodes=formData.getAll("permissions").map(String);if(roleId)await setCustomRolePermissions({roleId,permissionCodes});revalidatePath(`/${locale}/access`);}
  async function membershipRoleAction(formData:FormData){"use server";const membershipId=Number(formData.get("membershipId")),roleId=Number(formData.get("roleId")),assigned=String(formData.get("operation"))==="assign";if(membershipId&&roleId)await setMembershipCustomRole({membershipId,roleId,assigned});revalidatePath(`/${locale}/access`);}
