@@ -9,22 +9,30 @@ import { RoutePendingFeedback } from "@/components/route-pending-feedback";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ErrorState } from "@/components/workspace-ui";
 import { getCurrentAcademicSessionLabel } from "@/lib/academics/current-session";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getClientV3Navigation, getSupplementalMobileNavigation } from "@/lib/navigation/client-v3-navigation";
 import type { TenantContext } from "@/lib/tenancy/context";
 
-type AppShellProps = { children: ReactNode; locale: Locale; workspace: TenantContext };
-const shellCopy = {
+type AppShellProps = { children: ReactNode; locale: SupportedLocale; workspace: TenantContext };
+const shellCopy: Record<SupportedLocale, {
+  productLine: string;
+  year: string;
+  navigation: string;
+  menu: string;
+  close: string;
+  workspace: string;
+  more: string;
+  newAdmission: string;
+  mainBranch: string;
+}> = {
   en: { productLine: "Institution operations", year: "Academic year", navigation: "Workspace navigation", menu: "Menu", close: "Close menu", workspace: "Workspace", more: "More", newAdmission: "+ New Admission", mainBranch: "Main Branch" },
-  ur: { productLine: "ادارہ آپریشنز", year: "تعلیمی سال", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس", more: "مزید", newAdmission: "+ نیا داخلہ", mainBranch: "مرکزی برانچ" },
-  ar: { productLine: "عمليات المؤسسة", year: "العام الدراسي", navigation: "تنقل مساحة العمل", menu: "القائمة", close: "إغلاق القائمة", workspace: "مساحة العمل", more: "المزيد", newAdmission: "+ قبول جديد", mainBranch: "الفرع الرئيسي" }
-} as const;
-const accessDeniedCopy = {
+  ur: { productLine: "ادارہ آپریشنز", year: "تعلیمی سال", navigation: "ورک اسپیس نیویگیشن", menu: "مینو", close: "مینو بند کریں", workspace: "ورک اسپیس", more: "مزید", newAdmission: "+ نیا داخلہ", mainBranch: "مرکزی برانچ" }
+};
+const accessDeniedCopy: Record<SupportedLocale, { title: string; body: string }> = {
   en: { title: "Workspace access unavailable", body: "Your account does not have a verified workspace role. Ask an administrator to review your access before continuing." },
-  ur: { title: "ورک اسپیس تک رسائی دستیاب نہیں", body: "آپ کے اکاؤنٹ کے لیے تصدیق شدہ ورک اسپیس کردار موجود نہیں ہے۔ جاری رکھنے سے پہلے منتظم سے اپنی رسائی چیک کروائیں۔" },
-  ar: { title: "الوصول إلى مساحة العمل غير متاح", body: "لا يملك حسابك دورًا موثقًا لمساحة العمل. اطلب من المسؤول مراجعة صلاحياتك قبل المتابعة." }
-} as const;
+  ur: { title: "ورک اسپیس تک رسائی دستیاب نہیں", body: "آپ کے اکاؤنٹ کے لیے تصدیق شدہ ورک اسپیس کردار موجود نہیں ہے۔ جاری رکھنے سے پہلے منتظم سے اپنی رسائی چیک کروائیں۔" }
+};
 
 function initials(name: string) {
   return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "ME";
@@ -42,7 +50,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
         <ErrorState code="403" title={denied.title} body={denied.body} />
         <div className="topbar-actions">
           <LocaleSwitcher currentLocale={locale} label={app("changeLanguage")} />
-          <SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale === "ur" ? "ur" : "en"} />
+          <SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale} />
         </div>
       </main>
     </div>;
@@ -72,7 +80,7 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
       <header className="topbar professional-topbar client-v2-topbar" style={{ gap: ".75rem", flexWrap: "wrap" }}>
         <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {academicSessionLabel}</p></div>
         {audience === "office" ? <GlobalStudentSearch locale={locale} /> : null}
-        <div className="topbar-actions">{audience === "office" ? <AppNavLink className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</AppNavLink> : null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale === "ur" ? "ur" : "en"} /></div>
+        <div className="topbar-actions">{audience === "office" ? <AppNavLink className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</AppNavLink> : null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale} /></div>
       </header>
       <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion />{children}</main>
     </div>
