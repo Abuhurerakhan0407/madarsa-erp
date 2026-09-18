@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ProgramsSyllabusWorkspace } from "@/lib/programs-syllabus/runtime";
 import { progressMethods, programTemplateKeys, programTypes, subjectTypes, unitStructures } from "@/lib/programs-syllabus/model";
 
-type Locale = "en" | "ur" | "ar";
+type Locale = "en" | "ur";
 
 type Props = { locale: Locale; data: ProgramsSyllabusWorkspace };
 
@@ -19,7 +19,7 @@ type Copy = {
 };
 
 const copy: Record<Locale, Copy> = {
-  en: { program:"Program",createProgram:"Create teaching program",programName:"Program name",nativeName:"Urdu / Arabic name",description:"Description",key:"Key",type:"Program type",template:"Starting template",levels:"Stages / levels",addLevel:"Add level",levelName:"Level name",sequence:"Sequence",components:"Components / subjects",addComponent:"Add component",subjectName:"Subject / component name",level:"Level",subjectType:"Subject type",progressMethod:"Progress method",unitStructure:"Unit structure",units:"Units / lessons",addUnit:"Add unit",component:"Component",parentUnit:"Parent unit",unitName:"Unit / lesson name",expectedPeriods:"Expected periods",publish:"Publish syllabus",publishHelp:"Publishing freezes this version for assignments and historical assessment references.",published:"Published",draft:"Draft",assignments:"Teaching assignments",assign:"Assign teaching",session:"Academic session",target:"Target",group:"Group",student:"Student",teacher:"Teacher",startDate:"Start date",endDate:"End date",progress:"Student progress",recordProgress:"Record progress",state:"State",score:"Score",maximum:"Maximum",percent:"Percent",rating:"Rating 1–5",notes:"Notes",none:"None",choose:"Choose",saving:"Saving…",success:"Saved successfully.",error:"Unable to save this change." },
+  en: { program:"Program",createProgram:"Create teaching program",programName:"Program name",nativeName:"Urdu name",description:"Description",key:"Key",type:"Program type",template:"Starting template",levels:"Stages / levels",addLevel:"Add level",levelName:"Level name",sequence:"Sequence",components:"Components / subjects",addComponent:"Add component",subjectName:"Subject / component name",level:"Level",subjectType:"Subject type",progressMethod:"Progress method",unitStructure:"Unit structure",units:"Units / lessons",addUnit:"Add unit",component:"Component",parentUnit:"Parent unit",unitName:"Unit / lesson name",expectedPeriods:"Expected periods",publish:"Publish syllabus",publishHelp:"Publishing freezes this version for assignments and historical assessment references.",published:"Published",draft:"Draft",assignments:"Teaching assignments",assign:"Assign teaching",session:"Academic session",target:"Target",group:"Group",student:"Student",teacher:"Teacher",startDate:"Start date",endDate:"End date",progress:"Student progress",recordProgress:"Record progress",state:"State",score:"Score",maximum:"Maximum",percent:"Percent",rating:"Rating 1–5",notes:"Notes",none:"None",choose:"Choose",saving:"Saving…",success:"Saved successfully.",error:"Unable to save this change." },
   ur: { program:"پروگرام",createProgram:"تدریسی پروگرام بنائیں",programName:"پروگرام نام",nativeName:"اردو / عربی نام",description:"تفصیل",key:"کلید",type:"پروگرام قسم",template:"ابتدائی ٹیمپلیٹ",levels:"مراحل / لیول",addLevel:"لیول شامل کریں",levelName:"لیول نام",sequence:"ترتیب",components:"اجزاء / مضامین",addComponent:"جزو شامل کریں",subjectName:"مضمون / جزو نام",level:"لیول",subjectType:"مضمون قسم",progressMethod:"پیش رفت طریقہ",unitStructure:"یونٹ ساخت",units:"یونٹس / اسباق",addUnit:"یونٹ شامل کریں",component:"جزو",parentUnit:"والد یونٹ",unitName:"یونٹ / سبق نام",expectedPeriods:"متوقع پیریڈز",publish:"نصاب شائع کریں",publishHelp:"شائع شدہ ورژن اسائنمنٹس اور تاریخی امتحانی حوالوں کے لیے محفوظ رہتا ہے۔",published:"شائع شدہ",draft:"مسودہ",assignments:"تدریسی اسائنمنٹس",assign:"تدریس مقرر کریں",session:"تعلیمی سال",target:"ہدف",group:"گروپ",student:"طالب علم",teacher:"استاد",startDate:"شروع تاریخ",endDate:"اختتامی تاریخ",progress:"طالب علم پیش رفت",recordProgress:"پیش رفت درج کریں",state:"حالت",score:"نمبر",maximum:"کل نمبر",percent:"فیصد",rating:"ریٹنگ 1–5",notes:"نوٹس",none:"کوئی نہیں",choose:"منتخب کریں",saving:"محفوظ ہو رہا ہے…",success:"کامیابی سے محفوظ ہوا۔",error:"تبدیلی محفوظ نہیں ہو سکی۔" },
   ar: { program:"البرنامج",createProgram:"إنشاء برنامج تعليمي",programName:"اسم البرنامج",nativeName:"الاسم بالأردية / العربية",description:"الوصف",key:"المفتاح",type:"نوع البرنامج",template:"القالب المبدئي",levels:"المراحل / المستويات",addLevel:"إضافة مستوى",levelName:"اسم المستوى",sequence:"الترتيب",components:"المكونات / المواد",addComponent:"إضافة مكون",subjectName:"اسم المادة / المكون",level:"المستوى",subjectType:"نوع المادة",progressMethod:"طريقة التقدم",unitStructure:"بنية الوحدة",units:"الوحدات / الدروس",addUnit:"إضافة وحدة",component:"المكون",parentUnit:"الوحدة الأم",unitName:"اسم الوحدة / الدرس",expectedPeriods:"الحصص المتوقعة",publish:"نشر المنهج",publishHelp:"يُحفظ الإصدار المنشور للمهام والمراجع التاريخية للتقييم.",published:"منشور",draft:"مسودة",assignments:"مهام التدريس",assign:"تعيين التدريس",session:"العام الدراسي",target:"الهدف",group:"المجموعة",student:"الطالب",teacher:"المعلم",startDate:"تاريخ البدء",endDate:"تاريخ الانتهاء",progress:"تقدم الطالب",recordProgress:"تسجيل التقدم",state:"الحالة",score:"الدرجة",maximum:"الحد الأقصى",percent:"النسبة",rating:"التقييم 1–5",notes:"ملاحظات",none:"لا يوجد",choose:"اختر",saving:"جارٍ الحفظ…",success:"تم الحفظ بنجاح.",error:"تعذر حفظ التغيير." }
 };
@@ -73,7 +73,7 @@ export function ProgramsSyllabusManager({ locale, data }: Props) {
   }
 
   function labelsFrom(form: FormData, prefix: string) {
-    return { en: String(form.get(`${prefix}En`) ?? ""), ur: String(form.get(`${prefix}Ur`) ?? ""), ar: String(form.get(`${prefix}Ar`) ?? "") };
+    return { en: String(form.get(`${prefix}En`) ?? ""), ur: String(form.get(`${prefix}Ur`) ?? "") };
   }
 
   async function submitProgram(event: FormEvent<HTMLFormElement>) {
@@ -127,7 +127,7 @@ export function ProgramsSyllabusManager({ locale, data }: Props) {
             <label className="workspace-field"><span>{text.key}</span><input name="key" required pattern="[a-z][a-z0-9_]{1,63}" /></label>
             <label className="workspace-field"><span>{text.programName} (EN)</span><input name="nameEn" required maxLength={120}/></label>
             <label className="workspace-field"><span>{text.nativeName} (UR)</span><input name="nameUr" maxLength={120}/></label>
-            <label className="workspace-field"><span>{text.nativeName} (AR)</span><input name="nameAr" maxLength={120}/></label>
+            
             <label className="workspace-field"><span>{text.description}</span><input name="description" required maxLength={1000}/></label>
             <label className="workspace-field"><span>{text.type}</span><select name="programType">{programTypes.map((value)=><option key={value} value={value}>{titleize(value)}</option>)}</select></label>
             <label className="workspace-field"><span>{text.template}</span><select name="templateKey">{programTemplateKeys.map((value)=><option key={value} value={value}>{titleize(value)}</option>)}</select></label>
