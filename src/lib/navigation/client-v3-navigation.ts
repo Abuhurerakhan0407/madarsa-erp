@@ -1,10 +1,10 @@
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 export type NavigationAudience = "office" | "teacher" | "neutral";
-export type ClientV3NavItem = { key: string; labels: Record<Locale, string>; href: (locale: Locale) => string };
+export type ClientV3NavItem = { key: string; labels: Record<SupportedLocale, string>; href: (locale: SupportedLocale) => string };
 export type ClientV3Navigation = { primary: ClientV3NavItem[]; more: ClientV3NavItem[]; mobile: ClientV3NavItem[] };
 
-const item = (key: string, en: string, ur: string, path: (locale: Locale) => string): ClientV3NavItem => ({ key, labels: { en, ur } as Record<Locale, string>, href: path });
+const item = (key: string, en: string, ur: string, path: (locale: SupportedLocale) => string): ClientV3NavItem => ({ key, labels: { en, ur }, href: path });
 
 const officePrimary: ClientV3NavItem[] = [
   item("home", "Home", "ہوم", (l) => `/${l}`),
@@ -12,10 +12,12 @@ const officePrimary: ClientV3NavItem[] = [
   item("students", "Students", "طلبہ", (l) => `/${l}/students`),
   item("attendance", "Attendance", "حاضری", (l) => `/${l}/attendance`),
   item("quran", "Qur'an & Hifz", "قرآن و حفظ", (l) => `/${l}/quran`),
-  item("programs", "Programs", "پروگرامز", (l) => `/${l}/programs`)
+  item("programs", "Programs & Syllabus", "پروگرامز و نصاب", (l) => `/${l}/programs`)
 ];
 
 const officeMore: ClientV3NavItem[] = [
+  item("academics", "Academics, Timetable & Homework", "اکیڈمکس، ٹائم ٹیبل و ہوم ورک", (l) => `/${l}/people-academics`),
+  item("lifecycle", "Import, Promotion & Renewal", "امپورٹ، پروموشن و رینیول", (l) => `/${l}/students/lifecycle`),
   item("portals", "Parent & Teacher Access", "والدین و اساتذہ رسائی", (l) => `/${l}/portals`),
   item("teachers", "Teachers & Staff", "اساتذہ و عملہ", (l) => `/${l}/staff`),
   item("exams", "Exams & Results", "امتحانات و نتائج", (l) => `/${l}/exams`),
@@ -26,7 +28,7 @@ const officeMore: ClientV3NavItem[] = [
   item("payroll", "Payroll", "تنخواہیں", (l) => `/${l}/payroll`),
   item("access", "Roles & Access", "کردار و رسائی", (l) => `/${l}/access`),
   item("assistant", "AI Assistant", "اے آئی اسسٹنٹ", (l) => `/${l}/assistant`),
-  item("settings", "Settings", "سیٹنگز", (l) => `/${l}/settings/configuration`)
+  item("settings", "Institution Settings", "ادارہ سیٹنگز", (l) => `/${l}/settings/configuration`)
 ];
 
 const teacherPrimary: ClientV3NavItem[] = [
