@@ -40,12 +40,12 @@ describe("configuration validation", () => {
 
   it("requires safe selection options", () => {
     const validation = validateCustomFieldDraft({
-      key: "transport_mode",
+      key: "study_mode",
       entity: "student",
       type: "dropdown",
-      labels: labels("Transport", "ٹرانسپورٹ", "النقل"),
+      labels: labels("Study mode", "مطالعہ طریقہ", "نمط الدراسة"),
       required: false,
-      options: ["Bus", "bus"]
+      options: ["Day", "day"]
     });
 
     expect(validation.valid).toBe(false);
