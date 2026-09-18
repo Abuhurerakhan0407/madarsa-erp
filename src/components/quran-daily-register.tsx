@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import type { QuranDailyAction, QuranDailyTarget } from "@/lib/quran/daily-register-model";
 import type { QuranDailyRegister as Register, QuranDailyRow, QuranDailyTargetView } from "@/lib/quran/daily-register";
 import { quranCopy, quranWorkLabel } from "@/lib/quran/copy";
 
-type Props = { locale: Locale; data: Register };
+type Props = { locale: SupportedLocale; data: Register };
 type TargetDraft = {
   workCategory: string;
   mode: "juz" | "ayah" | "page";
@@ -43,21 +43,10 @@ const extraCopy = {
     setNext: "اگلا ہدف مقرر کریں", parentSummary: "والدین کے لیے خلاصہ", progressWall: "30 پارہ پیش رفت",
     scoreHint: "0–100", targetHelp: "تیز اندراج کے لیے پچھلا ہدف خودکار طور پر دوبارہ استعمال ہوتا ہے۔", noGroup: "کلاس رجسٹر کے لیے گروپ اور تاریخ منتخب کریں۔",
     history: "تاریخ", student: "طالب علم", revisionQueue: "نظر ثانی قطار"
-  },
-  ar: {
-    group: "الحلقة / المجموعة", date: "تاريخ الدرس", chooseGroup: "اختر حلقة أو مجموعة", roster: "السجل اليومي",
-    recorded: "مسجل", support: "يحتاج دعماً", month: "إدخالات الشهر", monthAverage: "متوسط الشهر",
-    quality: "الجودة", mistakes: "الأخطاء", nextTarget: "الهدف التالي", actions: "إجراءات سريعة", pass: "اجتاز", repeat: "إعادة",
-    needsSupport: "يحتاج دعماً", absent: "غائب", noLesson: "لا درس", details: "التفاصيل", hideDetails: "إخفاء التفاصيل",
-    useLast: "الهدف السابق", noTarget: "حدد هدفاً قبل التسجيل", todayStatus: "اليوم", saveError: "تعذر تحديث سجل الطالب.",
-    saved: "تم الحفظ", target: "الهدف", teacherNote: "ملاحظة المعلم", revisionDate: "موعد المراجعة", optional: "اختياري",
-    setNext: "تحديد الهدف التالي", parentSummary: "ملخص لولي الأمر", progressWall: "تقدم 30 جزءاً",
-    scoreHint: "0–100", targetHelp: "يعاد استخدام الهدف السابق تلقائياً لتسريع الإدخال.", noGroup: "اختر المجموعة والتاريخ لعرض سجل الفصل.",
-    history: "السجل", student: "الطالب", revisionQueue: "قائمة المراجعة"
   }
 } as const;
 
-type ExtraCopy = (typeof extraCopy)[Locale];
+type ExtraCopy = (typeof extraCopy)[SupportedLocale];
 
 function draftFromTarget(target: QuranDailyTargetView | null): TargetDraft {
   return {
@@ -110,7 +99,7 @@ function statusLabel(status: string | null, text: ExtraCopy) {
   return null;
 }
 
-function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: Locale; includeWork?: boolean }) {
+function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: SupportedLocale; includeWork?: boolean }) {
   const t = quranCopy[locale];
   return <div className="quran-daily-target-fields">
     {includeWork ? <label className="field-label">{t.latest}<select className="text-field" value={draft.workCategory} onChange={(event)=>setDraft({...draft,workCategory:event.target.value})}>{["sabaq","sabqi","manzil","nazra","qaida","tajweed"].map((key)=><option value={key} key={key}>{quranWorkLabel(key,t)}</option>)}</select></label> : null}
@@ -129,7 +118,7 @@ function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft:
   </div>;
 }
 
-function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: { locale: Locale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean }) {
+function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: { locale: SupportedLocale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean }) {
   const t = quranCopy[locale]; const x = extraCopy[locale]; const router = useRouter();
   const baseTarget = row.nextTarget ?? row.repeatTarget;
   const [expanded,setExpanded] = useState(!baseTarget);
