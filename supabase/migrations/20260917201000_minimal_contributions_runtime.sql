@@ -1,16 +1,16 @@
 -- Minimal commercial contributions runtime: donor registry, Donation/Zakat/Sponsorship entries, receipts and totals.
 insert into public.permissions(code,description) values
- ('contributions.read','Read branch contributions'),
- ('contributions.manage','Manage donors and branch contributions')
+ ('contributions.record.read','Read branch contributions'),
+ ('contributions.record.manage','Manage donors and branch contributions')
 on conflict(code) do nothing;
 
 insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'contributions.read'
+select distinct rp.tenant_id,rp.role_id,'contributions.record.read'
 from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
 where r.status='active' and rp.permission_code='students.profile.read'
 on conflict do nothing;
 insert into public.role_permissions(tenant_id,role_id,permission_code)
-select distinct rp.tenant_id,rp.role_id,'contributions.manage'
+select distinct rp.tenant_id,rp.role_id,'contributions.record.manage'
 from public.role_permissions rp join public.roles r on r.tenant_id=rp.tenant_id and r.id=rp.role_id
 where r.status='active' and rp.permission_code='students.profile.update'
 on conflict do nothing;
@@ -59,7 +59,7 @@ create or replace function public.get_minimal_contributions_workspace_v1(p_ident
 language plpgsql stable security definer set search_path='' as $$
 declare v_donors jsonb;v_rows jsonb;v_students jsonb;v_summary jsonb;
 begin
- if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.read') then raise exception 'contribution read permission denied'; end if;
+ if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.record.read') then raise exception 'contribution read permission denied'; end if;
  select coalesce(jsonb_agg(to_jsonb(x) order by x.name),'[]'::jsonb) into v_donors from (
   select id,name,phone,email,note,state from public.minimal_contributors where tenant_id=p_tenant_id and branch_id=p_branch_id and state='active') x;
  select coalesce(jsonb_agg(to_jsonb(x) order by x.contribution_date desc,x.id desc),'[]'::jsonb) into v_rows from (
@@ -86,14 +86,14 @@ end;$$;
 
 create or replace function public.create_minimal_contributor_v1(p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint,p_name text,p_phone text default null,p_email text default null,p_note text default null) returns jsonb
 language plpgsql security definer set search_path='' as $$ declare v_id bigint; begin
- if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.manage') then raise exception 'contribution management permission denied'; end if;
+ if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.record.manage') then raise exception 'contribution management permission denied'; end if;
  if length(btrim(coalesce(p_name,''))) not between 2 and 120 then raise exception 'invalid contributor name'; end if;
  insert into public.minimal_contributors(tenant_id,branch_id,name,phone,email,note) values(p_tenant_id,p_branch_id,btrim(p_name),nullif(btrim(coalesce(p_phone,'')),''),nullif(btrim(coalesce(p_email,'')),''),nullif(btrim(coalesce(p_note,'')),'')) returning id into v_id;
  return jsonb_build_object('contributor_id',v_id); end;$$;
 
 create or replace function public.record_minimal_contribution_v1(p_identity_id uuid,p_tenant_id bigint,p_branch_id bigint,p_contributor_id bigint,p_type text,p_amount numeric,p_date date,p_method text,p_fund_label text default null,p_student_person_id bigint default null,p_note text default null) returns jsonb
 language plpgsql security definer set search_path='' as $$ declare v_membership bigint;v_id bigint;v_receipt text;begin
- if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.manage') then raise exception 'contribution management permission denied'; end if;
+ if not public.operator_has_permission_v1(p_identity_id,p_tenant_id,p_branch_id,'contributions.record.manage') then raise exception 'contribution management permission denied'; end if;
  if not exists(select 1 from public.minimal_contributors d where d.tenant_id=p_tenant_id and d.branch_id=p_branch_id and d.id=p_contributor_id and d.state='active') then raise exception 'contributor not found'; end if;
  if p_type not in('donation','zakat','sponsorship') or p_amount is null or p_amount<=0 or p_method not in('cash','bank_transfer','upi','cheque','other') then raise exception 'invalid contribution'; end if;
  if p_student_person_id is not null and not exists(select 1 from public.enrollments e where e.tenant_id=p_tenant_id and e.branch_id=p_branch_id and e.student_person_id=p_student_person_id and e.status in('active','paused')) then raise exception 'beneficiary student not active in branch'; end if;
