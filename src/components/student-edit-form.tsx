@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Student = {
   personId: number;
@@ -10,19 +10,18 @@ type Student = {
   nativeName: string | null;
   dateOfBirth: string | null;
   gender: string | null;
-  preferredLocale: Locale;
+  preferredLocale: SupportedLocale;
   medicalSummary: string | null;
   accessibilityNeeds: string | null;
   pickupRestrictions: string | null;
 };
 
 const copy = {
-  en: { name: "Student name", native: "Name in Urdu / Arabic", dob: "Date of birth", gender: "Gender", language: "Preferred language", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Save changes", saving: "Saving…", error: "Unable to save changes." },
-  ur: { name: "طالب علم کا نام", native: "اردو / عربی نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "تبدیلیاں محفوظ کریں", saving: "محفوظ ہو رہا ہے…", error: "تبدیلیاں محفوظ نہیں ہو سکیں۔" },
-  ar: { name: "اسم الطالب", native: "الاسم بالأردية / العربية", dob: "تاريخ الميلاد", gender: "الجنس", language: "اللغة المفضلة", medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", save: "حفظ التغييرات", saving: "جارٍ الحفظ…", error: "تعذر حفظ التغييرات." }
+  en: { name: "Student name", native: "Name in Urdu", dob: "Date of birth", gender: "Gender", language: "Preferred language", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Save changes", saving: "Saving…", error: "Unable to save changes." },
+  ur: { name: "طالب علم کا نام", native: "اردو نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "تبدیلیاں محفوظ کریں", saving: "محفوظ ہو رہا ہے…", error: "تبدیلیاں محفوظ نہیں ہو سکیں۔" }
 } as const;
 
-export function StudentEditForm({ locale, student }: { locale: Locale; student: Student }) {
+export function StudentEditForm({ locale, student }: { locale: SupportedLocale; student: Student }) {
   const text = copy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -70,7 +69,7 @@ export function StudentEditForm({ locale, student }: { locale: Locale; student: 
       <label className="field-label">{text.native}<input className="text-field" name="nameNative" defaultValue={student.nativeName || ""} dir="auto" maxLength={160} /></label>
       <label className="field-label">{text.dob}<input className="text-field" name="dateOfBirth" type="date" defaultValue={student.dateOfBirth || ""} /></label>
       <label className="field-label">{text.gender}<select className="text-field" name="gender" defaultValue={student.gender || ""}><option value="">—</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="undisclosed">Undisclosed</option></select></label>
-      <label className="field-label">{text.language}<select className="text-field" name="preferredLocale" defaultValue={student.preferredLocale}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></label>
+      <label className="field-label">{text.language}<select className="text-field" name="preferredLocale" defaultValue={student.preferredLocale}><option value="en">English</option><option value="ur">اردو</option></select></label>
     </div></section>
     <section className="panel"><div className="configuration-form-grid">
       <label className="field-label">{text.medical}<textarea className="text-field" name="medicalSummary" defaultValue={student.medicalSummary || ""} rows={3} maxLength={1000} /></label>
