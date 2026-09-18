@@ -230,7 +230,7 @@ describe("My Students / Student Detail integration contract", () => {
   });
 
   it("F: My Students links use resolved numeric person IDs, never literal dynamic placeholders", () => {
-    expect(pageSource).toContain('`/${locale}/students/${s.personId}`');
+    expect(pageSource).toContain('`/${locale}/students/${student.personId}`');
     expect(pageSource).not.toContain("/students/[personId]");
     expect(pageSource).not.toContain("/students/{personId}");
   });
