@@ -6,24 +6,18 @@ import {
 } from "./client-profile";
 
 const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
-  [/^\/(?:en|ur|ar)\/fees(?:\/|$)/, "fees_accounting"],
-  [/^\/(?:en|ur|ar)\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
-  [/^\/(?:en|ur|ar)\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
-  [/^\/(?:en|ur|ar)\/hostel(?:\/|$)/, "hostel_mess"],
-  [/^\/(?:en|ur|ar)\/transport(?:\/|$)/, "transport"],
-  [/^\/(?:en|ur|ar)\/library(?:\/|$)/, "library"],
-  [/^\/(?:en|ur|ar)\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"],
-  [/^\/(?:en|ur|ar)\/assistant(?:\/|$)/, "ai_assistant"],
-  [/^\/(?:en|ur|ar)\/demo\/ai(?:\/|$)/, "ai_assistant"],
-  [/^\/(?:en|ur|ar)\/access(?:\/|$)/, "branches_roles_ui"]
+  [/^\/(?:en|ur)\/fees(?:\/|$)/, "fees_accounting"],
+  [/^\/(?:en|ur)\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
+  [/^\/(?:en|ur)\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
+  [/^\/(?:en|ur)\/assistant(?:\/|$)/, "ai_assistant"],
+  [/^\/(?:en|ur)\/access(?:\/|$)/, "branches_roles_ui"]
 ];
 
 const API_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
   [/^\/api\/fees(?:\/|$)/, "fees_accounting"],
   [/^\/api\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
   [/^\/api\/assistant(?:\/|$)/, "ai_assistant"],
-  [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
-  [/^\/api\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"]
+  [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"]
 ];
 
 export function canAccessCapability(profile: ClientCapabilityProfile, capability: ProductCapability | undefined, permissionAllowed = true): boolean {
