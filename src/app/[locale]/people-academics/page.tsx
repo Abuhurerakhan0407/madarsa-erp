@@ -3,6 +3,7 @@ import { AcademicsTimetableManager } from "@/components/academics-timetable-mana
 import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAcademicsWorkspace } from "@/lib/academics/workspace";
 import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 const copy: Record<SupportedLocale, {
   eyebrow: string;
@@ -37,6 +38,7 @@ export default async function PeopleAcademicsPage({ params, searchParams }: Prop
   const { locale: rawLocale } = await params;
   const query = await searchParams;
   const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const data = await getAcademicsWorkspace(locale, validDate(query.date));
   const text = copy[locale];
 
