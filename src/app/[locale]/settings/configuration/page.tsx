@@ -7,12 +7,14 @@ import { presetActionLabels } from "@/lib/configuration/preset-action-labels";
 import { configurationPresets } from "@/lib/configuration/presets";
 import { configurationModuleKeys, getConfigurationReadiness } from "@/lib/configuration/readiness";
 import type { ConfigurationLocale } from "@/lib/configuration/model";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 type ConfigurationPageProps = { params: Promise<{ locale: string }> };
 
 export default async function ConfigurationPage({ params }: ConfigurationPageProps) {
   const [{ locale }, t, dashboard, readiness] = await Promise.all([params,getTranslations("Configuration"),getTranslations("Dashboard"),getConfigurationReadiness()]);
   const selectedLocale = (locale === "ur" ? "ur" : "en") as ConfigurationLocale;
+  await requireOfficeAudience(selectedLocale);
   const presets = configurationPresets.map((preset) => ({key:preset.key,name:preset.name[selectedLocale],description:t(`presets.${preset.key}`),domains:preset.enabledDomains.map((domain)=>t(`domains.${domain}`)),terms:preset.terminology.map((entry)=>({concept:t(`concepts.${entry.conceptKey}`),singular:entry.singular[selectedLocale],plural:entry.plural[selectedLocale]}))}));
   const deviceCopy=selectedLocale==="ur"?{kicker:"حاضری انضمام",title:"حاضری اور بایومیٹرک ڈیوائسز",body:"ڈیوائس رجسٹریشن، میپنگ، ٹوکن روٹیشن اور ان جیسٹ ڈائیگناسٹکس یہاں رکھے گئے ہیں۔",action:"ڈیوائسز کھولیں"}:{kicker:"Attendance integration",title:"Attendance & Biometric Devices",body:"Device registration, mappings, credential rotation and ingest diagnostics live in Institution Configuration—not in daily attendance.",action:"Open device configuration"};
   return <>
