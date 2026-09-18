@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type ConvertedStudent = {
   personId: number;
@@ -14,7 +14,7 @@ type ConvertedStudent = {
 type AdmissionConversionPanelProps = {
   applicationId: number;
   state: string;
-  locale: Locale;
+  locale: SupportedLocale;
   duplicateReviewStatus: string;
   convertedStudent: ConvertedStudent;
 };
@@ -84,29 +84,6 @@ const copy = {
     copyCredentials: "اسناد کاپی کریں",
     copied: "کاپی ہو گیا",
     done: "مکمل — اسناد چھپائیں"
-  },
-  ar: {
-    title: "تسجيل الطالب",
-    body: "حوّل طلب القبول المقبول إلى ملف طالب دائم وتسجيل نشط. يلزم وجود تسلسل منشور لأرقام الطلاب.",
-    enroll: "تسجيل كطالب",
-    confirm: "إنشاء طالب منفصل رغم ذلك",
-    working: "جارٍ التسجيل…",
-    success: "تم تسجيل الطالب بنجاح.",
-    duplicate: "قد يكون هناك شخص مطابق موجود بالفعل. راجع التحذير قبل إنشاء طالب منفصل.",
-    existing: "سجل الطالب الدائم",
-    studentNumber: "رقم الطالب",
-    enrollment: "التسجيل",
-    openStudents: "فتح الطلاب والهيكل الأكاديمي",
-    unavailable: "يصبح التسجيل متاحًا فقط بعد عرض القبول أو حالة انتظار الدفع.",
-    error: "تعذر تسجيل هذا المتقدم.",
-    credentialsTitle: "بيانات دخول ولي الأمر",
-    credentialsBody: "انسخ بيانات الدخول وأرسلها الآن. ستختفي كلمة المرور المؤقتة نهائيًا عند إغلاق هذا العرض.",
-    loginEmail: "بريد تسجيل الدخول",
-    temporaryPassword: "كلمة المرور المؤقتة",
-    existingAccount: "لدى ولي الأمر حساب بوابة موجود بالفعل. لم يتم تغيير كلمة المرور الحالية.",
-    copyCredentials: "نسخ بيانات الدخول",
-    copied: "تم النسخ",
-    done: "تم — إخفاء بيانات الدخول"
   }
 } as const;
 
