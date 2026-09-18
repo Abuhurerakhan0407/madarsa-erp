@@ -6,31 +6,36 @@
       "key": "database_migrations_applied",
       "owner": "engineering",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: Supabase has no development branch; 2026-09-17/18 rescue migrations remain unapplied. Do not apply them to production before isolated fresh-apply validation."
     },
     {
       "key": "security_advisors_clear",
       "owner": "engineering",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: Supabase security advisor still reports leaked-password protection disabled. RLS-with-no-policy findings are INFO/fail-closed and require explicit review, not blind policy creation."
     },
     {
       "key": "production_build_green",
       "owner": "engineering",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: exact current RC has no successful build evidence. Vercel is deployment-rate-limited and GitHub Actions is failing before runner allocation."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: GitHub Actions e2e is skipped because prerequisite checks never receive a runner; no exact-head critical Playwright evidence exists."
     },
     {
       "key": "production_deployment_current",
       "owner": "engineering",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: no exact-current-SHA deployment exists. Vercel status reports deployment rate limited; production deployment also requires explicit approval."
     },
     {
       "key": "pricing_approved",
@@ -73,7 +78,8 @@
       "key": "pilot_institution_signed_off",
       "owner": "product",
       "required": true,
-      "complete": false
+      "complete": false,
+      "reason": "Blocked: no recorded pilot institution sign-off evidence."
     },
     {
       "key": "support_runbook_ready",
