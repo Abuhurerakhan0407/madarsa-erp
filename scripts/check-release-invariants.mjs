@@ -43,6 +43,7 @@ for (const path of [
   "src/app/[locale]/contributions/page.tsx",
   "src/app/[locale]/payroll/page.tsx",
   "src/app/[locale]/assistant/page.tsx",
+  "src/app/global-not-found.tsx",
   "src/app/api/documents/pdf/route.ts",
   "src/app/api/documents/student-status-certificate/[personId]/pdf/route.ts",
   "src/app/api/exams/report-card/[personId]/pdf/route.ts",
@@ -116,7 +117,8 @@ for (const path of [
   "src/app/[locale]/hostel/page.tsx",
   "src/app/[locale]/transport/page.tsx",
   "src/app/[locale]/library/page.tsx",
-  "src/app/[locale]/student-portal/page.tsx"
+  "src/app/[locale]/student-portal/page.tsx",
+  "src/app/[locale]/empty/page.tsx"
 ]) await requireMissing(path);
 
 if (failures.length) {
