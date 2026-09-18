@@ -15,8 +15,9 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(detail).toContain("assignedPrograms");
     expect(detail).toContain("assignedSubjects");
     expect(detail).toContain("assignedGroups");
-    expect(detail).toContain("t.timetable");
-    expect(detail).toContain("t.attendance");
+    expect(detail).toContain("teacher.timetable");
+    expect(detail).toContain("teacher.attendance");
+    expect(detail).toContain('data-testid="teacher-detail-timetable"');
     expect(detail).toContain("/api/teachers/photo/");
   });
 
