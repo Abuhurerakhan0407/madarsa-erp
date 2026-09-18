@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { StudentPhotoPicker } from "@/components/student-photo-picker";
 import { FieldGroup } from "@/components/workspace-ui";
-import type { Locale, SupportedLocale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Option = { id: number; label: string };
 type GroupOption = Option & { sessionId: number; programId: number };
@@ -59,25 +59,13 @@ const copy = {
     progress: "نیا داخلہ", step: "مرحلہ", of: "از", student: "طالب علم", guardian: "سرپرست", placement: "تعلیمی تعیناتی", review: "جائزہ",
     studentHelp: "وہ بنیادی معلومات درج کریں جو عام طور پر داخلے کے وقت پوچھی جاتی ہیں۔", guardianHelp: "بنیادی سرپرست یا رابطہ شخص شامل کریں۔", placementHelp: "طالب علم کے پروگرام اور کلاس کا انتخاب کریں۔", reviewHelp: "مستقل ریکارڈ بنانے سے پہلے داخلے کی تفصیلات چیک کریں۔",
     name: "طالب علم کا نام", native: "نام اردو میں", dob: "تاریخ پیدائش", age: "عمر (اگر تاریخ پیدائش معلوم نہ ہو)", gender: "جنس", language: "ترجیحی زبان", more: "مزید تفصیلات",
-    session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "تاریخ شمولیت", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "موبائل / واٹس ایپ",
+    session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "تاریخ شمولیت", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "موبائل",
     medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", continue: "جاری رکھیں", back: "واپس", confirmAdmission: "داخلہ کی تصدیق کریں", creating: "داخلہ کیا جا رہا ہے…",
     duplicateTitle: "ممکنہ ڈپلیکیٹ ملا", duplicate: "ممکن ہے یہی طالب علم پہلے سے موجود ہو۔ الگ مستقل ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", duplicateCount: "ممکنہ ملتے جلتے ریکارڈ", createSeparate: "الگ طالب علم ریکارڈ بنائیں", changeDetails: "تفصیلات تبدیل کریں",
-    error: "طالب علم کا داخلہ نہیں ہو سکا۔", studentError: "طالب علم کا نام اور تاریخ پیدائش یا عمر درج کریں۔", guardianError: "سرپرست کا نام اور موبائل / واٹس ایپ نمبر درج کریں۔", placementError: "تعلیمی سال، پروگرام، کلاس / گروپ اور شمولیت کی تاریخ منتخب کریں۔", select: "منتخب کریں",
+    error: "طالب علم کا داخلہ نہیں ہو سکا۔", studentError: "طالب علم کا نام اور تاریخ پیدائش یا عمر درج کریں۔", guardianError: "سرپرست کا نام اور موبائل نمبر درج کریں۔", placementError: "تعلیمی سال، پروگرام، کلاس / گروپ اور شمولیت کی تاریخ منتخب کریں۔", select: "منتخب کریں",
     photoRequired: "آگے بڑھنے سے پہلے طالب علم کی تصویر لیں یا اپ لوڈ کریں۔", photoUploadError: "طالب علم کا داخلہ ہو گیا، لیکن تصویر منسلک نہیں ہو سکی۔ نیا طالب علم بنائے بغیر تصویر دوبارہ اپ لوڈ کریں۔", photoPendingTitle: "طالب علم داخل ہو گیا — تصویر مکمل کریں", photoPendingBody: "مستقل طالب علم ریکارڈ پہلے ہی بن چکا ہے۔ مطلوبہ تصویر ابھی منسلک کریں؛ دوبارہ کوشش سے نیا ڈپلیکیٹ طالب علم نہیں بنے گا۔", retryPhoto: "تصویر دوبارہ اپ لوڈ کریں", uploadingPhoto: "تصویر منسلک ہو رہی ہے…", photoReady: "تصویر تیار ہے",
     male: "مرد", female: "خاتون", other: "دیگر", undisclosed: "درج نہیں", father: "والد", mother: "والدہ", guardianRole: "سرپرست",
     successTitle: "طالب علم کا داخلہ کامیابی سے ہو گیا", studentNumber: "طالب علم نمبر", openProfile: "طالب علم پروفائل کھولیں", printId: "ID کارڈ پرنٹ کریں", addAnother: "ایک اور طالب علم شامل کریں"
-  },
-  ar: {
-    progress: "قبول جديد", step: "الخطوة", of: "من", student: "الطالب", guardian: "ولي الأمر", placement: "التوزيع الدراسي", review: "المراجعة",
-    studentHelp: "ابدأ بالمعلومات الأساسية التي تُطلب عادة عند مكتب القبول.", guardianHelp: "أضف ولي الأمر أو جهة الاتصال الأساسية.", placementHelp: "اختر البرنامج والفصل المناسبين للطالب.", reviewHelp: "راجع بيانات القبول قبل إنشاء السجل الدائم للطالب.",
-    name: "اسم الطالب", native: "الاسم بالأردية", dob: "تاريخ الميلاد", age: "العمر (إذا لم يُعرف تاريخ الميلاد)", gender: "الجنس", language: "اللغة المفضلة", more: "تفاصيل إضافية",
-    session: "العام الدراسي", program: "البرنامج", group: "الفصل / المجموعة", joined: "تاريخ الالتحاق", guardianName: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "الجوال / واتساب",
-    medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", continue: "متابعة", back: "رجوع", confirmAdmission: "تأكيد القبول", creating: "جارٍ قبول الطالب…",
-    duplicateTitle: "تم العثور على تطابق محتمل", duplicate: "قد يكون هذا الطالب موجودًا بالفعل. راجع البيانات قبل إنشاء سجل دائم منفصل.", duplicateCount: "سجل/سجلات محتملة المطابقة", createSeparate: "إنشاء طالب منفصل", changeDetails: "تعديل البيانات",
-    error: "تعذر قبول الطالب.", studentError: "أدخل اسم الطالب وتاريخ الميلاد أو العمر.", guardianError: "أدخل اسم ولي الأمر ورقم الجوال / واتساب.", placementError: "اختر العام الدراسي والبرنامج والفصل / المجموعة وتاريخ الالتحاق.", select: "اختر",
-    photoRequired: "التقط صورة الطالب أو ارفعها قبل المتابعة.", photoUploadError: "تم قبول الطالب، لكن تعذر إرفاق الصورة. أعد رفع الصورة من دون إنشاء طالب جديد.", photoPendingTitle: "تم قبول الطالب — أكمل الصورة", photoPendingBody: "تم إنشاء السجل الدائم بالفعل. أرفق الصورة المطلوبة الآن؛ إعادة المحاولة هنا لن تنشئ طالبًا مكررًا.", retryPhoto: "إعادة رفع الصورة", uploadingPhoto: "جارٍ إرفاق الصورة…", photoReady: "الصورة جاهزة",
-    male: "ذكر", female: "أنثى", other: "أخرى", undisclosed: "غير مذكور", father: "الأب", mother: "الأم", guardianRole: "ولي أمر",
-    successTitle: "تم قبول الطالب بنجاح", studentNumber: "رقم الطالب", openProfile: "فتح ملف الطالب", printId: "طباعة بطاقة الهوية", addAnother: "إضافة طالب آخر"
   }
 } as const;
 
@@ -94,7 +82,7 @@ function browserToday(): string {
   return `${year}-${month}-${day}`;
 }
 
-export function StudentCreateForm({ locale, sessions, programs, groups }: { locale: Locale; sessions: Option[]; programs: Option[]; groups: GroupOption[] }) {
+export function StudentCreateForm({ locale, sessions, programs, groups }: { locale: SupportedLocale; sessions: Option[]; programs: Option[]; groups: GroupOption[] }) {
   const text = copy[locale];
   const defaultPreferredLocale: SupportedLocale = locale === "ur" ? "ur" : "en";
   const [step, setStep] = useState(1);
