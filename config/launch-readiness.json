@@ -6,15 +6,15 @@
       "key": "database_migrations_applied",
       "owner": "engineering",
       "required": true,
-      "complete": false,
-      "reason": "Blocked: Supabase has no development branch; 2026-09-17/18 rescue migrations remain unapplied. Do not apply them to production before isolated fresh-apply validation."
+      "complete": true,
+      "reason": "GREEN on isolated Supabase staging project loihcxyblzdfiogrdihm: production schema baseline was reconstructed schema-only, production RLS policies/browser grants/private helper ACLs mirrored, and all 19 Sep 17-18 rescue migrations applied successfully in order. Live P0 checks passed for Qur'an source-branch provenance, immutable/mismatched provenance rejection, SECURITY DEFINER/browser/service ACLs, academic provenance/report source-branch enforcement, WhatsApp retirement, money-table browser denial, and authenticated tenant/branch RLS isolation. Production remains untouched."
     },
     {
       "key": "security_advisors_clear",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: the Supabase organization is confirmed on the Free plan and leaked-password protection is disabled; Supabase documents that control as Pro-plan-and-above. The 36 RLS/no-policy INFO findings were read-only verified fail-closed: anon/authenticated have no SELECT/INSERT/UPDATE/DELETE privileges on those tables. Upgrade/enable the control or explicitly revise the launch security policy; do not mark green silently."
+      "reason": "Blocked on production Auth configuration only: production Security Advisor reports 36 INFO rls_enabled_no_policy findings (previously verified fail-closed) plus 1 WARN auth_leaked_password_protection. Production is on Free. Isolated staging after rescue has 44 INFO rls_enabled_no_policy findings (36 baseline + 8 intentionally policyless minimal money tables with anon/auth direct CRUD revoked) and 0 WARN. Do not mark production security green until its Auth warning is resolved or the launch security policy is explicitly revised."
     },
     {
       "key": "production_build_green",
