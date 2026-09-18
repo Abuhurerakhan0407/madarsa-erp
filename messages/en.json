@@ -1,6 +1,6 @@
 {
   "App": {
-    "productName": "Madarsa ERP",
+    "productName": "Ilmgaah",
     "sampleData": "Sample data",
     "skipToContent": "Skip to content",
     "institution": "Jamia Noor-ul-Uloom",
@@ -48,7 +48,7 @@
     "emptyBody": "New tasks and approvals will appear here.",
     "documentPreview": "Document typography",
     "documentTitle": "Student progress summary",
-    "documentBody": "This print preview validates English, Urdu, and Arabic typography before document templates are connected to live records.",
+    "documentBody": "This print preview validates English and Urdu typography before document templates are connected to live records.",
     "forbiddenTitle": "Access restricted",
     "forbiddenBody": "Your role does not include this area. Request access from an institution administrator.",
     "requestAccess": "Request access",
@@ -108,7 +108,7 @@
       },
       "languages": {
         "title": "Languages",
-        "body": "English, Urdu and Arabic display priorities."
+        "body": "English and Urdu display priorities."
       },
       "terminology": {
         "title": "Terminology",
@@ -152,10 +152,8 @@
       "parent_portal": "Parent portal",
       "dars_e_nizami": "Dars-e-Nizami",
       "exams": "Exams",
-      "library": "Library",
       "academics": "Academics",
-      "homework": "Homework",
-      "transport": "Transport"
+      "homework": "Homework"
     }
   },
   "PeopleAcademics": {
