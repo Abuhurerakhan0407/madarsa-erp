@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getQuranStudentDetail } from "@/lib/quran/detail";
 import { quranOutcomeLabel, quranWorkLabel, quranCopy } from "@/lib/quran/copy";
 import { PrintAction } from "@/components/print-action";
@@ -8,12 +8,11 @@ import { QuranCorrectionControl } from "@/components/quran-correction-control";
 
 const extra={
   en:{back:"Qur'an register",student:"Student profile",print:"Print progress report",wall:"30-Juz Hifz wall",history:"Recitation history",mistakes:"Mistake patterns",revisions:"Revision obligations",attempts:"Attempts",average:"Average score",passed:"Passed",repeat:"Repeat",openRevision:"Open revision",remarks:"Remarks",parent:"Parent note",private:"Private staff note",none:"None",notStarted:"Not started",sessions:"sessions",due:"Due",corrected:"Corrected",correctionReason:"Correction reason"},
-  ur:{back:"قرآن رجسٹر",student:"طالب علم پروفائل",print:"پیش رفت رپورٹ پرنٹ کریں",wall:"30 پارہ حفظ وال",history:"تلاوت کی تاریخ",mistakes:"غلطیوں کے رجحانات",revisions:"نظرِ ثانی ذمہ داریاں",attempts:"کوششیں",average:"اوسط اسکور",passed:"پاس",repeat:"اعادہ",openRevision:"کھلی نظرِ ثانی",remarks:"نوٹس",parent:"والدین نوٹ",private:"نجی عملہ نوٹ",none:"کوئی نہیں",notStarted:"شروع نہیں",sessions:"سیشن",due:"واجب",corrected:"اصلاح شدہ",correctionReason:"اصلاح کی وجہ"},
-  ar:{back:"سجل القرآن",student:"ملف الطالب",print:"طباعة تقرير التقدم",wall:"جدار الحفظ 30 جزءًا",history:"سجل التلاوة",mistakes:"أنماط الأخطاء",revisions:"مهام المراجعة",attempts:"المحاولات",average:"متوسط الدرجة",passed:"ناجح",repeat:"إعادة",openRevision:"مراجعات مفتوحة",remarks:"الملاحظات",parent:"ملاحظة ولي الأمر",private:"ملاحظة خاصة للموظف",none:"لا يوجد",notStarted:"لم يبدأ",sessions:"جلسات",due:"مستحق",corrected:"مصحح",correctionReason:"سبب التصحيح"}
+  ur:{back:"قرآن رجسٹر",student:"طالب علم پروفائل",print:"پیش رفت رپورٹ پرنٹ کریں",wall:"30 پارہ حفظ وال",history:"تلاوت کی تاریخ",mistakes:"غلطیوں کے رجحانات",revisions:"نظرِ ثانی ذمہ داریاں",attempts:"کوششیں",average:"اوسط اسکور",passed:"پاس",repeat:"اعادہ",openRevision:"کھلی نظرِ ثانی",remarks:"نوٹس",parent:"والدین نوٹ",private:"نجی عملہ نوٹ",none:"کوئی نہیں",notStarted:"شروع نہیں",sessions:"سیشن",due:"واجب",corrected:"اصلاح شدہ",correctionReason:"اصلاح کی وجہ"}
 } as const;
 
 export default async function QuranStudentPage({params}:{params:Promise<{locale:string;personId:string}>}){
-  const {locale:raw,personId:rawId}=await params;const locale=(raw==="ur"||raw==="ar"?raw:"en") as Locale;const personId=Number(rawId);if(!Number.isInteger(personId)||personId<1)notFound();
+  const {locale:raw,personId:rawId}=await params;const locale:SupportedLocale=raw==="ur"?"ur":"en";const personId=Number(rawId);if(!Number.isInteger(personId)||personId<1)notFound();
   let data;try{data=await getQuranStudentDetail(personId);}catch{notFound();}
   const t=extra[locale],qt=quranCopy[locale];
   return <div className="quran-detail-report">
