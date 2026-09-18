@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { SupportedLocale } from "@/lib/i18n/config";
+import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
 
@@ -153,6 +155,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const text = copy[locale];
   const workspace = await getTenantContext();
   if (!workspace) return null;
+
+  const audience = await getNavigationAudience(workspace);
+  if (audience === "teacher") redirect(`/${locale}/my-students`);
+  if (audience === "neutral") return null;
+
   const dashboard = await getOperationalDashboard(locale);
   const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
   const operationalRoutes = [
