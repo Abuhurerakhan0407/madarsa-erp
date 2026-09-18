@@ -70,7 +70,9 @@ export async function getPortalReportCard(
       labels: labels(exam.labels),
       state: text(exam.state) ?? "published",
       startsOn: text(exam.starts_on) ?? "",
-      endsOn: text(exam.ends_on) ?? ""
+      endsOn: text(exam.ends_on) ?? "",
+      sessionId: number(exam.session_id) ?? 0,
+      sessionLabel: text(exam.session_label) ?? "Session"
     },
     result: {
       snapshotId,

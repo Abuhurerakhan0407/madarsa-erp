@@ -76,7 +76,10 @@ begin
       'labels',es.labels,
       'state',es.state,
       'starts_on',es.starts_on,
-      'ends_on',es.ends_on
+      'ends_on',es.ends_on,
+      'session_id',sess.id,
+      'session_labels',sess.labels,
+      'session_label',coalesce(sess.labels->>'en',sess.key)
     ),
     'result',jsonb_build_object(
       'snapshot_id',rs.id,
@@ -125,6 +128,8 @@ begin
     on rr.tenant_id=rs.tenant_id and rr.id=rs.result_run_id
   join public.exam_series es
     on es.tenant_id=rr.tenant_id and es.id=rr.exam_series_id
+  join public.academic_sessions sess
+    on sess.tenant_id=es.tenant_id and sess.id=es.session_id
   join public.persons p
     on p.tenant_id=rs.tenant_id and p.id=rs.student_person_id
   join public.student_profiles sp
