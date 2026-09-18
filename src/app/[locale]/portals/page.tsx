@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PortalAdminCenter } from "@/components/portal-admin-center";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { getPortalOperatorCenter } from "@/lib/portal/runtime";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 
 const copy: Record<SupportedLocale, {
   title: string;
@@ -39,6 +40,7 @@ export default async function PortalsPage({
   const [{ locale: rawLocale }, query] = await Promise.all([params, searchParams]);
   const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const initialTab = query.tab === "teachers" ? "teachers" : "parents";
+  await requireOfficeAudience(locale);
   const center = await getPortalOperatorCenter();
   const t = copy[locale];
 
