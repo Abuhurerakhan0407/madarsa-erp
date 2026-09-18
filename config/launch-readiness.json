@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "product": "Madarsa ERP",
+  "product": "Ilmgaah",
   "gates": [
-    { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": true },
+    { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": false },
     { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": false },
-    { "key": "production_build_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "production_deployment_current", "owner": "engineering", "required": true, "complete": true },
+    { "key": "production_build_green", "owner": "engineering", "required": true, "complete": false },
+    { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": false },
+    { "key": "production_deployment_current", "owner": "engineering", "required": true, "complete": false },
     { "key": "pricing_approved", "owner": "commercial", "required": true, "complete": true },
     { "key": "tax_boundary_approved", "owner": "finance_legal", "required": true, "complete": true },
     { "key": "retention_schedule_approved", "owner": "privacy_legal", "required": true, "complete": true },
