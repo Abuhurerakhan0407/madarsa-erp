@@ -18,7 +18,7 @@
       "key": "production_build_green",
       "owner": "engineering",
       "required": true,
-      "complete": true
+      "complete": false
     },
     {
       "key": "critical_e2e_green",
