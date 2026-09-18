@@ -31,9 +31,7 @@ export const customFieldEntities = [
   "enrollment",
   "donor",
   "donation",
-  "sponsorship",
-  "hostel_resident",
-  "hostel_allocation"
+  "sponsorship"
 ] as const;
 
 export type CustomFieldEntity = (typeof customFieldEntities)[number];
