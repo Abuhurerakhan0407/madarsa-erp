@@ -12,7 +12,8 @@ const officePrimary: ClientV3NavItem[] = [
   item("students", "Students", "طلبہ", (l) => `/${l}/students`),
   item("attendance", "Attendance", "حاضری", (l) => `/${l}/attendance`),
   item("quran", "Qur'an & Hifz", "قرآن و حفظ", (l) => `/${l}/quran`),
-  item("programs", "Programs", "پروگرامز", (l) => `/${l}/programs`)
+  item("programs", "Programs", "پروگرامز", (l) => `/${l}/programs`),
+  item("academics", "Academics & Timetable", "اکیڈمکس و ٹائم ٹیبل", (l) => `/${l}/people-academics`)
 ];
 
 const officeMore: ClientV3NavItem[] = [
@@ -26,6 +27,7 @@ const officeMore: ClientV3NavItem[] = [
   item("payroll", "Payroll", "تنخواہیں", (l) => `/${l}/payroll`),
   item("access", "Roles & Access", "کردار و رسائی", (l) => `/${l}/access`),
   item("assistant", "AI Assistant", "اے آئی اسسٹنٹ", (l) => `/${l}/assistant`),
+  item("lifecycle", "Import, Promotion & Renewal", "امپورٹ، پروموشن و رینیول", (l) => `/${l}/students/lifecycle`),
   item("settings", "Settings", "سیٹنگز", (l) => `/${l}/settings/configuration`)
 ];
 
