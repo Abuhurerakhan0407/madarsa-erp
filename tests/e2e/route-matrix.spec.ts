@@ -9,7 +9,9 @@ const PROTECTED_ROUTES = [
   "/en/students/1",
   "/en/students/lifecycle",
   "/en/students/id-cards",
+  "/en/programs",
   "/en/people-academics",
+  "/en/my-students",
   "/en/attendance",
   "/en/attendance/devices",
   "/en/quran",
@@ -21,6 +23,10 @@ const PROTECTED_ROUTES = [
   "/en/staff/leave",
   "/en/documents",
   "/en/reports",
+  "/en/fees",
+  "/en/contributions",
+  "/en/payroll",
+  "/en/assistant",
   "/en/access",
   "/en/settings/configuration"
 ] as const;
