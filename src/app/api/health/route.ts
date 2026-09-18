@@ -2,7 +2,7 @@ export function GET() {
   return Response.json(
     {
       status: "ok",
-      service: "madarsa-erp",
+      service: "ilmgaah",
       timestamp: new Date().toISOString()
     },
     {
