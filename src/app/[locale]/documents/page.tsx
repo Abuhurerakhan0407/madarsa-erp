@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {routing} from '@/i18n/routing';
-import type {Locale} from '@/lib/i18n/config';
+import type {SupportedLocale} from '@/lib/i18n/config';
+import {requireOfficeAudience} from '@/lib/navigation/office-gate';
 import {DocumentCenterV2} from '@/components/document-center-v2';
 import {GetFilterForm,GetFilterSubmitButton} from '@/components/get-filter-form';
 import {InlineState} from '@/components/workspace-ui';
@@ -9,16 +10,15 @@ import {documentsCopy} from '@/lib/documents/copy';
 import {clientDocumentTypes,getDocumentCenter,isClientDocumentType} from '@/lib/documents/workspace';
 type SearchParams={type?:string;q?:string;page?:string;session?:string;program?:string;group?:string;student?:string};
 const positive=(value:unknown)=>{const number=Number(value);return Number.isInteger(number)&&number>0?number:null;};
-const localized=(labels:Record<string,unknown>,locale:Locale,fallback:string)=>typeof labels[locale]==='string'?String(labels[locale]):typeof labels.en==='string'?String(labels.en):fallback;
-const previewPath=(locale:Locale,type:string,personId:number)=>type==='student_id_card'?`/${locale}/students/${personId}/id-card`:type==='student_profile'?`/${locale}/students/${personId}`:type==='status_certificate'?`/${locale}/documents/student-status/${personId}`:type==='exam_report_card'?`/${locale}/exams/report-card/${personId}`:type==='quran_progress_report'?`/${locale}/quran/${personId}`:null;
-const studentDocumentCopy={en:'View student document status',ur:'طالب علم کی دستاویزات کی حالت دیکھیں',ar:'عرض حالة مستندات الطالب'} as const;
+const localized=(labels:Record<string,unknown>,locale:SupportedLocale,fallback:string)=>typeof labels[locale]==='string'?String(labels[locale]):typeof labels.en==='string'?String(labels.en):fallback;
+const previewPath=(locale:SupportedLocale,type:string,personId:number)=>type==='student_id_card'?`/${locale}/students/${personId}/id-card`:type==='student_profile'?`/${locale}/students/${personId}`:type==='status_certificate'?`/${locale}/documents/student-status/${personId}`:type==='exam_report_card'?`/${locale}/exams/report-card/${personId}`:type==='quran_progress_report'?`/${locale}/quran/${personId}`:null;
+const studentDocumentCopy={en:'View student document status',ur:'طالب علم کی دستاویزات کی حالت دیکھیں'} as const;
 const emptyCopy={
  en:{none:'No students are available for documents yet.',noneBody:'Add the first student after institution and academic setup. Their ID card and other governed documents will then appear here.',add:'Add first student',filtered:'No students match these document filters.',filteredBody:'Clear the filters or choose a broader academic year, program or class.',clear:'Clear filters'},
- ur:{none:'دستاویزات کے لیے ابھی کوئی طالب علم دستیاب نہیں۔',noneBody:'ادارہ اور اکیڈمک سیٹ اپ کے بعد پہلا طالب علم شامل کریں۔ اس کا ID کارڈ اور دیگر دستاویزات پھر یہاں نظر آئیں گی۔',add:'پہلا طالب علم شامل کریں',filtered:'ان دستاویزی فلٹرز کے مطابق کوئی طالب علم نہیں ملا۔',filteredBody:'فلٹر صاف کریں یا وسیع تعلیمی سال، پروگرام یا کلاس منتخب کریں۔',clear:'فلٹر صاف کریں'},
- ar:{none:'لا يوجد طلاب متاحون للمستندات بعد.',noneBody:'أضف أول طالب بعد إكمال إعداد المؤسسة والدراسة. ستظهر بطاقة الهوية والمستندات المحكومة هنا.',add:'إضافة أول طالب',filtered:'لا يوجد طلاب مطابقون لمرشحات المستندات.',filteredBody:'امسح المرشحات أو اختر عاماً أو برنامجاً أو فصلاً أوسع.',clear:'مسح المرشحات'}
+ ur:{none:'دستاویزات کے لیے ابھی کوئی طالب علم دستیاب نہیں۔',noneBody:'ادارہ اور اکیڈمک سیٹ اپ کے بعد پہلا طالب علم شامل کریں۔ اس کا ID کارڈ اور دیگر دستاویزات پھر یہاں نظر آئیں گی۔',add:'پہلا طالب علم شامل کریں',filtered:'ان دستاویزی فلٹرز کے مطابق کوئی طالب علم نہیں ملا۔',filteredBody:'فلٹر صاف کریں یا وسیع تعلیمی سال، پروگرام یا کلاس منتخب کریں۔',clear:'فلٹر صاف کریں'}
 } as const;
 export default async function DocumentsPage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<SearchParams>}){
- const [{locale:rawLocale},query]=await Promise.all([params,searchParams]);if(!routing.locales.includes(rawLocale as Locale))notFound();const locale=rawLocale as Locale;const t=documentsCopy[locale];const e=emptyCopy[locale];const type=isClientDocumentType(query.type)?query.type:'student_id_card';const search=typeof query.q==='string'&&query.q.trim()?query.q.trim().slice(0,160):null;const page=Math.max(Number(query.page)||1,1);const sessionId=positive(query.session),programId=positive(query.program),groupId=positive(query.group),studentPersonId=positive(query.student);const data=await getDocumentCenter({search,page,pageSize:40,sessionId,programId,groupId,studentPersonId});const pageCount=Math.max(Math.ceil(data.total/data.pageSize),1);const filtered=Boolean(search||sessionId||programId||groupId||studentPersonId);
+ const [{locale:rawLocale},query]=await Promise.all([params,searchParams]);if(!routing.locales.includes(rawLocale as SupportedLocale))notFound();const locale:SupportedLocale=rawLocale==="ur"?"ur":"en";await requireOfficeAudience(locale);const t=documentsCopy[locale];const e=emptyCopy[locale];const type=isClientDocumentType(query.type)?query.type:'student_id_card';const search=typeof query.q==='string'&&query.q.trim()?query.q.trim().slice(0,160):null;const page=Math.max(Number(query.page)||1,1);const sessionId=positive(query.session),programId=positive(query.program),groupId=positive(query.group),studentPersonId=positive(query.student);const data=await getDocumentCenter({search,page,pageSize:40,sessionId,programId,groupId,studentPersonId});const pageCount=Math.max(Math.ceil(data.total/data.pageSize),1);const filtered=Boolean(search||sessionId||programId||groupId||studentPersonId);
  const formBase:Record<string,string>={type:String(type),...(search?{q:search}:{}),...(sessionId?{session:String(sessionId)}:{}),...(programId?{program:String(programId)}:{}),...(groupId?{group:String(groupId)}:{}),...(studentPersonId?{student:String(studentPersonId)}:{})};
  return <div className="documents-shell">
   <section className="documents-hero"><div><p className="eyebrow">{t.documents}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div><div className="documents-count"><strong>{data.total}</strong><span>{t.showing}</span></div></section>
