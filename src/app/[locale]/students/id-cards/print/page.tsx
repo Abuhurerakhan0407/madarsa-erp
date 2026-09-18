@@ -2,15 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
 import { operatorHasPermissions } from "@/lib/access/operator-permission";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getStudentIdCardBatch, normalizeIdCardStudentIds } from "@/lib/students/id-card-batch";
 import { getTenantContext } from "@/lib/tenancy/context";
 import styles from "../id-card-batch.module.css";
 
 const copy = {
   en: { kicker: "Print sheet", title: "Bulk student ID cards", back: "Change selection", print: "Print A4 sheet", pdf: "Download PDF", id: "Student ID", program: "Program", group: "Class / group", dob: "Date of birth", guardian: "Guardian", branch: "Campus", validity: "Academic session", institutionCard: "Institution identity card", reverse: "Student information", instruction: "If found, please return this card to the institution administration office." },
-  ur: { kicker: "پرنٹ شیٹ", title: "بلک طالب علم ID کارڈز", back: "انتخاب تبدیل کریں", print: "A4 شیٹ پرنٹ کریں", pdf: "PDF ڈاؤن لوڈ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سیشن", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" },
-  ar: { kicker: "ورقة الطباعة", title: "بطاقات هوية الطلاب", back: "تغيير الاختيار", print: "طباعة ورقة A4", pdf: "تنزيل PDF", id: "رقم الطالب", program: "البرنامج", group: "الفصل / المجموعة", dob: "تاريخ الميلاد", guardian: "ولي الأمر", branch: "الحرم", validity: "العام الدراسي", institutionCard: "بطاقة هوية المؤسسة", reverse: "معلومات الطالب", instruction: "في حال العثور على البطاقة يرجى إعادتها إلى إدارة المؤسسة." }
+  ur: { kicker: "پرنٹ شیٹ", title: "بلک طالب علم ID کارڈز", back: "انتخاب تبدیل کریں", print: "A4 شیٹ پرنٹ کریں", pdf: "PDF ڈاؤن لوڈ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سیشن", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" }
 } as const;
 
 function positive(value: string | undefined): number | null {
