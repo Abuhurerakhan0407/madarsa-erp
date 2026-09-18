@@ -2,15 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
 import { operatorHasPermissions } from "@/lib/access/operator-permission";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getStudentDetail } from "@/lib/students/detail";
 import { getTenantContext } from "@/lib/tenancy/context";
 import styles from "./student-id-card.module.css";
 
 const copy = {
   en: { kicker: "Student document", title: "Student ID card", back: "Back to profile", print: "Print ID card", id: "Student ID", program: "Program", group: "Class / group", dob: "Date of birth", guardian: "Guardian", branch: "Campus", validity: "Academic session", institutionCard: "Institution identity card", reverse: "Student information", instruction: "If found, please return this card to the institution administration office." },
-  ur: { kicker: "طالب علم دستاویز", title: "طالب علم ID کارڈ", back: "پروفائل پر واپس", print: "ID کارڈ پرنٹ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سیشن", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" },
-  ar: { kicker: "وثيقة الطالب", title: "بطاقة هوية الطالب", back: "العودة للملف", print: "طباعة البطاقة", id: "رقم الطالب", program: "البرنامج", group: "الفصل / المجموعة", dob: "تاريخ الميلاد", guardian: "ولي الأمر", branch: "الحرم", validity: "العام الدراسي", institutionCard: "بطاقة هوية المؤسسة", reverse: "معلومات الطالب", instruction: "في حال العثور على البطاقة يرجى إعادتها إلى إدارة المؤسسة." }
+  ur: { kicker: "طالب علم دستاویز", title: "طالب علم ID کارڈ", back: "پروفائل پر واپس", print: "ID کارڈ پرنٹ کریں", id: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", dob: "تاریخ پیدائش", guardian: "سرپرست", branch: "کیمپس", validity: "تعلیمی سیشن", institutionCard: "ادارہ شناختی کارڈ", reverse: "طالب علم معلومات", instruction: "اگر یہ کارڈ ملے تو ادارہ انتظامیہ کو واپس کریں۔" }
 } as const;
 
 function initials(name: string): string {
