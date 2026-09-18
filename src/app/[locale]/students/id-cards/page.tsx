@@ -17,7 +17,7 @@ function positive(value: string | undefined): number | null {
 }
 
 export default async function BulkIdCardsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ session?: string; group?: string }> }) {
-  const locale = (await params).locale as Locale;
+  const locale = (await params).locale as SupportedLocale;
   const workspace = await getTenantContext();
   if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["document.job.manage"]))) notFound();
   const query = await searchParams;

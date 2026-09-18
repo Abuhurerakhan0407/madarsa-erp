@@ -29,7 +29,7 @@ type StudentProfilePageProps = {
 
 export default async function StudentProfilePage({ params, searchParams }: StudentProfilePageProps) {
   const [raw, query, workspace] = await Promise.all([params, searchParams, getTenantContext()]);
-  const locale = raw.locale as Locale;
+  const locale = raw.locale as SupportedLocale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0 || !workspace) notFound();
   const audience = await getNavigationAudience(workspace);

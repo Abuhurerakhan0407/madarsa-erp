@@ -14,7 +14,7 @@ const copy = {
 
 export default async function StudentPlacementPage({ params }: { params: Promise<{ locale: string; personId: string }> }) {
   const raw = await params;
-  const locale = raw.locale as Locale;
+  const locale = raw.locale as SupportedLocale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
   const workspace = await getTenantContext();

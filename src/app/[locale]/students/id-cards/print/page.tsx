@@ -22,7 +22,7 @@ function initials(name: string): string {
 }
 
 export default async function BulkIdCardPrintPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ session?: string; group?: string; student?: string | string[] }> }) {
-  const locale = (await params).locale as Locale;
+  const locale = (await params).locale as SupportedLocale;
   const query = await searchParams;
   const sessionId = positive(query.session);
   const groupId = positive(query.group);

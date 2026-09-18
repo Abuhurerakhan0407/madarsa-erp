@@ -18,7 +18,7 @@ function initials(name: string): string {
 
 export default async function StudentIdCardPage({ params }: { params: Promise<{ locale: string; personId: string }> }) {
   const raw = await params;
-  const locale = raw.locale as Locale;
+  const locale = raw.locale as SupportedLocale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
 
