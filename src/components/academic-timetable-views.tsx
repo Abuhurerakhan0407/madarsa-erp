@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { AcademicsWorkspace } from "@/lib/academics/workspace";
 
-type Locale = "en" | "ur" | "ar";
+type Locale = "en" | "ur";
 type Props = { locale: Locale; data: AcademicsWorkspace };
 type View = "group" | "teacher" | "student";
 
