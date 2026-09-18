@@ -1,7 +1,7 @@
 import { ProgramsSyllabusManager } from "@/components/programs-syllabus-manager";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
 import { getAcademicFoundationSummary } from "@/lib/academics/live-summary";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getProgramsSyllabusWorkspace } from "@/lib/programs-syllabus/runtime";
 
 type ProgramsPageProps = { params: Promise<{ locale: string }> };
@@ -13,7 +13,7 @@ type ProgramsCopy = {
   meta: (programs: number, levels: number, components: number, assignments: number) => string;
 };
 
-const copy: Record<Locale, ProgramsCopy> = {
+const copy = {
   en: {
     eyebrow: "Teaching setup",
     title: "Programs & Syllabus",
@@ -36,7 +36,7 @@ const copy: Record<Locale, ProgramsCopy> = {
 
 export default async function ProgramsPage({ params }: ProgramsPageProps) {
   const { locale: rawLocale } = await params;
-  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const text = copy[locale];
   const [summary, workspace] = await Promise.all([
     getAcademicFoundationSummary(locale),
