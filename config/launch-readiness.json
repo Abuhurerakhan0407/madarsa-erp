@@ -21,14 +21,14 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: exact current RC has no successful build evidence. The last Vercel build that executed tests exposed a Qur'an quick-action selected-state regression; that regression is now fixed on the RC, but exact-head Vercel validation is blocked by the build-rate limit. GitHub Actions checks also fail before runner execution and e2e is skipped."
+      "reason": "Blocked: exact current RC has no successful executable build evidence. Every failure exposed by the last Vercel test run has now been addressed on the RC (missing migration source files restored, Vitest @ alias fixed, Unicode operational report PDFs added, stale EN/UR/claim-only/notification/attendance/commercial launch contracts updated, and Qur'an selected-state regression fixed). Current-head static preflight passes the known failure conditions, but Vercel is build-rate-limited and GitHub Actions still fails before runner steps execute."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: GitHub Actions e2e is skipped because prerequisite checks never receive a runner; no exact-head critical Playwright evidence exists."
+      "reason": "Blocked: the exact current RC cannot execute CI yet. GitHub Actions allocates no steps for the checks job and therefore skips e2e; Vercel has not produced an exact-head deployment after the fixes because of the build-rate limit. Do not infer E2E success from static preflight."
     },
     {
       "key": "production_deployment_current",
