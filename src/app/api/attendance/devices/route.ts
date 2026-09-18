@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const externalDeviceKey = typeof body.externalDeviceKey === "string" ? body.externalDeviceKey.trim() : "";
     const label = typeof body.label === "string" ? body.label.trim() : "";
     const modality = body.modality;
-    if (externalDeviceKey.length < 3 || label.length < 2 || (modality !== "biometric" && modality !== "nfc" && modality !== "hybrid")) return NextResponse.json({ error: "Device configuration is invalid." }, { status: 400 });
+    if (externalDeviceKey.length < 3 || label.length < 2 || modality !== "biometric") return NextResponse.json({ error: "Device configuration is invalid." }, { status: 400 });
     const result = await createAttendanceDevice({ externalDeviceKey, label, modality, vendor: typeof body.vendor === "string" ? body.vendor.trim().slice(0, 120) : null, model: typeof body.model === "string" ? body.model.trim().slice(0, 120) : null });
     return NextResponse.json(result, { status: 201, headers: { "cache-control": "no-store" } });
   } catch (error) {
