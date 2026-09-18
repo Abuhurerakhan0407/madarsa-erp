@@ -53,6 +53,8 @@ for (const path of [
 ]) await requireExists(path);
 
 for (const path of [
+  "supabase/migrations/20260903203000_phase10_documents_reports.sql",
+  "supabase/migrations/20260915142500_phase5_student_photo_update_runtime.sql",
   "supabase/migrations/20260917023000_rescue04_academic_result_reporting_accuracy.sql",
   "supabase/migrations/20260917024500_rescue_daily_ops_quran_teacher_scope.sql",
   "supabase/migrations/20260917043000_rescue_daily_ops_quran_privacy_hardening.sql",
