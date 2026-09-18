@@ -2,16 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { quranCopy, quranOutcomeLabel } from "@/lib/quran/copy";
 
 type Attempt={id:number;outcome:string;accuracy:number|null;fluency:number|null;tajweed:number|null;overall:number|null;prompts:number|null;teacherRemark:string|null;parentRemark:string|null;privateNote:string|null;targetLabel:string};
-type Props={locale:Locale;attempt:Attempt};
+type Props={locale:SupportedLocale;attempt:Attempt};
 
 const extra={
   en:{open:"Correct record",title:"Correct recitation record",reason:"Correction reason",reasonHint:"Explain what was wrong and what was verified.",save:"Save correction",saving:"Saving…",cancel:"Cancel",notice:"The original record stays unchanged. This correction becomes the effective evaluation and is added to the audit trail.",failed:"Unable to save correction."},
-  ur:{open:"ریکارڈ درست کریں",title:"تلاوت ریکارڈ کی اصلاح",reason:"اصلاح کی وجہ",reasonHint:"بتائیں کیا غلط تھا اور کس بنیاد پر تصدیق ہوئی۔",save:"اصلاح محفوظ کریں",saving:"محفوظ ہو رہا ہے…",cancel:"منسوخ",notice:"اصل ریکارڈ تبدیل نہیں ہوگا۔ یہ اصلاح مؤثر تشخیص بنے گی اور آڈٹ ٹریل میں محفوظ ہوگی۔",failed:"اصلاح محفوظ نہیں ہو سکی۔"},
-  ar:{open:"تصحيح السجل",title:"تصحيح سجل التلاوة",reason:"سبب التصحيح",reasonHint:"اشرح ما كان غير صحيح وكيف تم التحقق.",save:"حفظ التصحيح",saving:"جارٍ الحفظ…",cancel:"إلغاء",notice:"يبقى السجل الأصلي دون تغيير. يصبح هذا التصحيح التقييم الفعلي ويُحفظ في سجل التدقيق.",failed:"تعذر حفظ التصحيح."}
+  ur:{open:"ریکارڈ درست کریں",title:"تلاوت ریکارڈ کی اصلاح",reason:"اصلاح کی وجہ",reasonHint:"بتائیں کیا غلط تھا اور کس بنیاد پر تصدیق ہوئی۔",save:"اصلاح محفوظ کریں",saving:"محفوظ ہو رہا ہے…",cancel:"منسوخ",notice:"اصل ریکارڈ تبدیل نہیں ہوگا۔ یہ اصلاح مؤثر تشخیص بنے گی اور آڈٹ ٹریل میں محفوظ ہوگی۔",failed:"اصلاح محفوظ نہیں ہو سکی۔"}
 } as const;
 
 export function QuranCorrectionControl({locale,attempt}:Props){
