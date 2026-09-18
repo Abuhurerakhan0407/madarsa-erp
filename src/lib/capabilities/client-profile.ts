@@ -18,9 +18,11 @@ export type ClientProfileConfig = Readonly<{
   clientV2TenantSlugs?: string | null;
 }>;
 
-// Retired product areas (WhatsApp, Hostel, Transport, Library, internal demo suite)
-// are intentionally absent from ProductCapability. They cannot be re-enabled by
-// changing a tenant profile or environment variable.
+// Retired product areas are deliberately not capabilities. Keeping the retired
+// navigation keys here makes older navigation callers fail closed instead of
+// accidentally treating an unknown key as enabled.
+const RETIRED_NAV_KEYS = new Set(["hostel", "transport", "library", "whatsapp", "demo"]);
+
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
   disabledCapabilities: new Set<ProductCapability>()
@@ -87,5 +89,6 @@ export function isCapabilityEnabled(profile: ClientCapabilityProfile, capability
 }
 
 export function isNavItemEnabled(profile: ClientCapabilityProfile, navKey: string): boolean {
+  if (RETIRED_NAV_KEYS.has(navKey)) return false;
   return isCapabilityEnabled(profile, NAV_CAPABILITY_BY_KEY[navKey]);
 }
