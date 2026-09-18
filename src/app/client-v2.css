@@ -583,3 +583,92 @@
   .workspace-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace-sticky-actions > * { flex: 1 1 8rem; }
 }
+
+
+/* Commercial workspace primitives */
+.stack-sm,
+.stack-md,
+.stack-lg {
+  display: grid;
+  min-width: 0;
+}
+
+.stack-sm { gap: 0.45rem; }
+.stack-md { gap: 0.75rem; }
+.stack-lg { gap: 1.25rem; }
+
+.workspace-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
+.row-between {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.row-between > * {
+  min-width: 0;
+}
+
+.metric-card {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow-wrap: anywhere;
+}
+
+.metric-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.metric-card strong {
+  font-size: clamp(1.15rem, 4vw, 1.7rem);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.form-message {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.form-error {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+}
+
+@media (max-width: 620px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .row-between {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .row-between > * {
+    width: 100%;
+  }
+}
