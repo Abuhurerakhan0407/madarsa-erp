@@ -1,24 +1,52 @@
-# Commercial core implementation checkpoint
+# Ilmgaah commercial release-candidate checkpoint
 
-Branch: `rescue/11-commercial-core`
+Branch: `rescue/13-commercial-release-candidate`
 
-This branch is a non-production integration/work branch. It is not approved for production deployment.
+This branch is the current non-production release candidate. It is not approved for production deployment and must not update the installed app/APK yet.
 
-Implemented in this branch:
+Integrated on this release candidate:
 
-- Minimal Fees & Payments runtime with fee definitions, assignment, concessions, payment recording, receipts and branch-scoped read model.
-- Minimal Contributions runtime for Donation / Zakat / Sponsorship with contributor records, optional beneficiary, receipts and summary totals.
-- Minimal Payroll runtime with salary setup, monthly draft run, line calculation, finalize, mark-paid and payslip output.
-- Roles & Access remains an exposed required launch surface.
-- Operational AI Assistant uses aggregate operational context and a deterministic fallback; it is not allowed to fabricate student/person records.
-- Client release navigation removes WhatsApp, Hostel, Transport and Library.
-- English and Urdu are the only routable release locales. Arabic resources may remain dormant for migration/history compatibility.
+- Parent Portal and Teacher Portal, including teacher-scoped workspace and guardian-facing documents/results.
+- Admissions and Student Information System rescue work.
+- Student documents, IDs, certificates, report-card PDFs and portal document access.
+- Student and staff attendance plus biometric bridge/reconciliation work.
+- Qur'an/Hifz rescue hardening and branch/privacy protections.
+- Exams, results, reports and academic provenance reconciliation.
+- Programs & Syllabus.
+- Academics, timetable, homework and calendar workspace.
+- Student import, promotion and renewal lifecycle.
+- Roles & Access.
+- Institution configuration.
+- Minimal Fees & Payments runtime.
+- Minimal Contributions runtime for Donation / Zakat / Sponsorship.
+- Minimal Payroll runtime.
+- Operational AI Assistant using aggregate authorized context.
+- English and Urdu as the only routable release locales.
 
-Still blocked before launch:
+Removed from the commercial product:
 
-- Parent/Teacher portal completion must be integrated into the release candidate.
-- Qur'an/report academic provenance P0 must be independently re-verified and integrated.
-- Remaining rescue workstreams must be reconciled into one release candidate.
-- Combined migrations must be applied to an isolated/staging database.
-- Full typecheck, tests, build, authenticated role matrix, mobile/RTL QA and document/PDF QA must pass on the integrated head.
-- Production merge/deploy requires explicit approval.
+- Student Portal.
+- WhatsApp Automation.
+- Hostel & Mess.
+- Transport / Routes.
+- Library.
+- Internal scripted demo suite.
+
+WhatsApp-specific application/API/runtime code has been removed. Historical migration history is retained for database consistency, followed by a retirement migration that disables WhatsApp configuration/templates and drops WhatsApp RPC entrypoints.
+
+Current launch blockers:
+
+- Apply the complete integrated migration stack to an isolated/staging database.
+- Re-run the academic/Qur'an provenance adversarial database matrix on the integrated head.
+- Run full TypeScript, lint, unit/contract tests, production build and Playwright on the integrated head.
+- Run authenticated role QA for owner/admin/office, teacher and parent.
+- Run mobile QA at 360/390/430 widths plus desktop.
+- Run English and Urdu/RTL visual/workflow QA.
+- Run document/PDF/print QA on representative real staging records.
+- Verify biometric device-event-to-attendance flow against the selected real device/provider if hardware delivery is in the client handoff.
+- Close security advisor findings.
+- Resolve the payment-webhook gate according to the intentionally-small Fees scope.
+- Obtain pilot/client acceptance.
+- Only after those gates: production backup, migration, deploy, smoke test and rollback confirmation.
+
+Production merge/deployment and APK/PWA release update remain blocked until explicit approval.
