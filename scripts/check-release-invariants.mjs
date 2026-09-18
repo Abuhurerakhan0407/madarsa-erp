@@ -19,6 +19,13 @@ requireMatch("src/lib/i18n/config.ts", i18n, /locales\s*=\s*\["en",\s*"ur"\]/, "
 const nav = await source("src/lib/navigation/client-v3-navigation.ts");
 forbidMatch("src/lib/navigation/client-v3-navigation.ts", nav, /whatsapp|hostel|transport|library|student\s+portal/i, "retired module leaked into release navigation");
 
+const ingest = await source("src/app/api/attendance/device-ingest/route.ts");
+if (!ingest.includes('body.modality !== "biometric"')) failures.push("src/app/api/attendance/device-ingest/route.ts: device ingest must reject non-biometric modalities");
+if (ingest.includes('modality !== "nfc"') || ingest.includes('modality === "nfc"')) failures.push("src/app/api/attendance/device-ingest/route.ts: NFC ingest handling returned");
+
+const deviceUi = await source("src/components/attendance-device-center.tsx");
+if (deviceUi.includes('value="nfc"') || deviceUi.includes('value="hybrid"')) failures.push("src/components/attendance-device-center.tsx: retired NFC/hybrid device option returned");
+
 const credentials = await source("src/app/api/portals/credentials/route.ts");
 requireMatch("src/app/api/portals/credentials/route.ts", credentials, /PORTAL_CREDENTIALS_RETIRED/, "temporary-password credential API must stay retired");
 forbidMatch("src/app/api/portals/credentials/route.ts", credentials, /createUser|updateUserById|temporaryPassword|randomBytes/i, "staff password provisioning/reset logic returned");
