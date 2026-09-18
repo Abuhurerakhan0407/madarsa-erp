@@ -14,14 +14,14 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: Supabase security advisor WARN = leaked-password protection disabled. Supabase documents this control as Pro-plan-and-above. The 36 RLS/no-policy INFO findings were read-only verified fail-closed: anon/authenticated have no SELECT/INSERT/UPDATE/DELETE privileges on those tables. Enable leaked-password protection or explicitly revise the launch security policy; do not mark green silently."
+      "reason": "Blocked: the Supabase organization is confirmed on the Free plan and leaked-password protection is disabled; Supabase documents that control as Pro-plan-and-above. The 36 RLS/no-policy INFO findings were read-only verified fail-closed: anon/authenticated have no SELECT/INSERT/UPDATE/DELETE privileges on those tables. Upgrade/enable the control or explicitly revise the launch security policy; do not mark green silently."
     },
     {
       "key": "production_build_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: exact current RC has no successful build evidence. Vercel is deployment-rate-limited and GitHub Actions is failing before runner allocation."
+      "reason": "Blocked: exact current RC has no successful build evidence. The last Vercel build that executed tests exposed a Qur'an quick-action selected-state regression; that regression is now fixed on the RC, but exact-head Vercel validation is blocked by the build-rate limit. GitHub Actions checks also fail before runner execution and e2e is skipped."
     },
     {
       "key": "critical_e2e_green",
