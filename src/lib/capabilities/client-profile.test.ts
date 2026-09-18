@@ -18,13 +18,15 @@ describe("client capability profiles", () => {
     }
   });
 
-  it("cannot re-enable retired features through a profile key", () => {
-    const profile = resolveClientProfileFromConfig("CLIENT-MADARSA", { clientV2TenantSlugs: "client-madarsa, another-client" });
-    expect(profile.key).toBe("client-v2");
-    expect(isNavItemEnabled(profile, "hostel")).toBe(true);
-    expect(isNavItemEnabled(profile, "transport")).toBe(true);
-    expect(isNavItemEnabled(profile, "library")).toBe(true);
-    expect(isNavItemEnabled(profile, "whatsapp")).toBe(true);
+  it("fails closed for retired navigation keys under every profile", () => {
+    for (const profile of [
+      resolveClientProfileFromConfig("default-madarsa", {}),
+      resolveClientProfileFromConfig("client-madarsa", { tenantProfile: "client-v2" })
+    ]) {
+      for (const key of ["hostel", "transport", "library", "whatsapp", "demo"]) {
+        expect(isNavItemEnabled(profile, key)).toBe(false);
+      }
+    }
   });
 
   it("supports a deployment-wide client-v2 profile without disabling launch modules", () => {
