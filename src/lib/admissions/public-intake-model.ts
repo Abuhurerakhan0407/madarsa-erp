@@ -1,4 +1,4 @@
-export const publicAdmissionLocales = ["en", "ur", "ar"] as const;
+export const publicAdmissionLocales = ["en", "ur"] as const;
 
 export type PublicAdmissionLocale = (typeof publicAdmissionLocales)[number];
 
