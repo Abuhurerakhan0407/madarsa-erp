@@ -1,5 +1,5 @@
 {
-  "name": "madarsa-erp",
+  "name": "ilmgaah",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.19.0",
@@ -10,9 +10,6 @@
     "dev": "next dev",
     "build": "node scripts/check-env.mjs && next build",
     "start": "next start",
-    "demo:check": "node scripts/check-demo-env.mjs",
-    "demo:build": "node scripts/check-demo-env.mjs && next build",
-    "demo:start": "node scripts/check-demo-env.mjs && next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
