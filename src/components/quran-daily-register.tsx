@@ -99,6 +99,15 @@ function statusLabel(status: string | null, text: ExtraCopy) {
   return null;
 }
 
+function actionFromDayStatus(status: string | null): QuranDailyAction | null {
+  if (status === "passed") return "pass";
+  if (status === "repeat") return "repeat";
+  if (status === "partial") return "needs_support";
+  if (status === "absent") return "absent";
+  if (status === "no_lesson") return "no_lesson";
+  return null;
+}
+
 function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft: TargetDraft; setDraft: (next: TargetDraft) => void; locale: SupportedLocale; includeWork?: boolean }) {
   const t = quranCopy[locale];
   return <div className="quran-daily-target-fields">
@@ -121,6 +130,7 @@ function TargetFields({ draft, setDraft, locale, includeWork = false }: { draft:
 function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: { locale: SupportedLocale; row: QuranDailyRow; groupId: number; sessionDate: string; canRecord: boolean }) {
   const t = quranCopy[locale]; const x = extraCopy[locale]; const router = useRouter();
   const baseTarget = row.nextTarget ?? row.repeatTarget;
+  const persistedAction = actionFromDayStatus(row.dayStatus);
   const [expanded,setExpanded] = useState(!baseTarget);
   const [targetDraft,setTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(baseTarget));
   const [nextTargetDraft,setNextTargetDraft] = useState<TargetDraft>(()=>draftFromTarget(null));
@@ -128,9 +138,12 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
   const [quality,setQuality] = useState(row.qualityScore === null ? "" : String(row.qualityScore));
   const [tajweed,setTajweed] = useState(""); const [fluency,setFluency] = useState(""); const [mistakes,setMistakes] = useState(String(row.mistakeCount || 0));
   const [teacherNote,setTeacherNote] = useState(""); const [revisionDate,setRevisionDate] = useState(row.revisionDueOn ?? "");
+  const [detailedAction,setDetailedAction] = useState<QuranDailyAction>(()=>persistedAction ?? "pass");
+  const [savedAction,setSavedAction] = useState<QuranDailyAction|null>(null);
   const [busy,setBusy] = useState(false); const [error,setError] = useState<string|null>(null); const [saved,setSaved] = useState(false);
   const currentTarget = targetPayload(targetDraft) ?? targetViewPayload(baseTarget);
   const parentSummary = `${row.memorizedJuz}/30 · ${x.quality}: ${row.qualityScore ?? "—"} · ${t.revision}: ${row.revisionDue}`;
+  const selectedAction = savedAction ?? persistedAction;
 
   async function submit(action: QuranDailyAction, detailed = false) {
     if (action !== "absent" && action !== "no_lesson" && !currentTarget) { setExpanded(true); setError(x.noTarget); return; }
@@ -158,6 +171,8 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
       const response = await fetch("/api/quran/daily", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body) });
       const payload = await response.json().catch(()=>({})) as { error?: string };
       if (!response.ok) { setError(payload.error ?? x.saveError); return; }
+      setSavedAction(action);
+      setDetailedAction(action);
       setSaved(true); router.refresh();
     } catch { setError(x.saveError); } finally { setBusy(false); }
   }
@@ -175,12 +190,12 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
     <div className="quran-daily-cell quran-daily-target"><span>{x.nextTarget}</span><strong>{row.nextTarget?.label ?? (row.repeatTarget ? `${x.useLast}: ${row.repeatTarget.label}` : "—")}</strong>{row.revisionDue>0?<small>{t.revisionFlag}: {row.revisionDue}</small>:null}</div>
     <div className="quran-daily-actions">
       {row.dayStatus ? <span className="quran-daily-status">{x.todayStatus}: {statusLabel(row.dayStatus,x)}</span> : null}
-      {canRecord ? <div className="quran-quick-buttons">
-        <button type="button" disabled={busy} onClick={()=>submit("pass")}>{x.pass}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("repeat")}>{x.repeat}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("needs_support")}>{x.needsSupport}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("absent")}>{x.absent}</button>
-        <button type="button" disabled={busy} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
+      {canRecord ? <div className="quran-quick-buttons" role="group" aria-label={x.actions}>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="pass"} onClick={()=>submit("pass")}>{x.pass}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="repeat"} onClick={()=>submit("repeat")}>{x.repeat}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="needs_support"} onClick={()=>submit("needs_support")}>{x.needsSupport}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="absent"} onClick={()=>submit("absent")}>{x.absent}</button>
+        <button type="button" disabled={busy} aria-pressed={selectedAction==="no_lesson"} onClick={()=>submit("no_lesson")}>{x.noLesson}</button>
       </div> : null}
       <button className="quiet-link quran-details-toggle" type="button" onClick={()=>setExpanded((value)=>!value)}>{expanded?x.hideDetails:x.details}</button>
     </div>
@@ -199,7 +214,7 @@ function QuranDailyStudentRow({ locale, row, groupId, sessionDate, canRecord }: 
       {useNextTarget ? <TargetFields draft={nextTargetDraft} setDraft={setNextTargetDraft} locale={locale} includeWork /> : null}
       <div className="quran-progress-summary"><div><span>{x.progressWall}</span><div className="quran-juz-wall" aria-label={`${row.memorizedJuz} of 30 Juz passed`}>{Array.from({length:30},(_,index)=><i key={index} data-complete={index<row.memorizedJuz?"true":"false"}>{index+1}</i>)}</div></div><div><span>{x.parentSummary}</span><strong>{parentSummary}</strong></div></div>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}{saved ? <p className="form-message form-success" role="status">{x.saved}</p> : null}
-      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} onClick={()=>submit("pass",true)}>{x.pass}</button><button className="action-button" type="button" disabled={busy} onClick={()=>submit("repeat",true)}>{x.repeat}</button><button className="action-button" type="button" disabled={busy} onClick={()=>submit("needs_support",true)}>{x.needsSupport}</button></div> : null}
+      {canRecord ? <div className="quran-detailed-actions"><button className="action-button action-button-primary" type="button" disabled={busy} aria-pressed={detailedAction==="pass"} onClick={()=>submit("pass",true)}>{x.pass}</button><button className="action-button" type="button" disabled={busy} aria-pressed={detailedAction==="repeat"} onClick={()=>submit("repeat",true)}>{x.repeat}</button><button className="action-button" type="button" disabled={busy} aria-pressed={detailedAction==="needs_support"} onClick={()=>submit("needs_support",true)}>{x.needsSupport}</button></div> : null}
     </div> : null}
   </article>;
 }
@@ -231,7 +246,7 @@ export function QuranDailyRegister({ locale, data }: Props) {
       <section className="quran-daily-roster" data-page-section>
         <header><div><p className="state-kicker">{x.roster}</p><h2>{selectedGroup.label}</h2></div><time dateTime={data.selectedDate}>{data.selectedDate}</time></header>
         <div className="quran-daily-head" aria-hidden="true"><span>{x.student}</span><span>{t.sabaq}</span><span>{t.sabqi}</span><span>{t.manzil}</span><span>{x.quality}</span><span>{x.mistakes}</span><span>{x.nextTarget}</span><span>{x.actions}</span></div>
-        {data.rows.length ? data.rows.map((row)=><QuranDailyStudentRow key={row.personId} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
+        {data.rows.length ? data.rows.map((row)=><QuranDailyStudentRow key={`${data.selectedDate}:${row.personId}`} locale={locale} row={row} groupId={selectedGroup.id} sessionDate={data.selectedDate} canRecord={data.canRecord}/>) : <div className="workspace-inline-state"><strong>{t.noStudents}</strong></div>}
       </section>
     </> : <section className="workspace-inline-state" data-page-section><strong>{x.noGroup}</strong><span>{x.targetHelp}</span></section>}
   </div>;
