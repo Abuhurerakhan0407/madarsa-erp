@@ -106,49 +106,17 @@ const ui = {
     photoUploading: "طالب علم کی تصویر اپ لوڈ ہو رہی ہے…",
     groupUnavailable: "اس تعلیمی سال اور پروگرام کے لیے کوئی کلاس / گروپ دستیاب نہیں۔",
     select: "منتخب کریں"
-  },
-  ar: {
-    admissions: "القبول",
-    branch: "الفرع",
-    session: "العام الدراسي",
-    program: "البرنامج",
-    required: "مطلوب",
-    consent: "أؤكد صحة المعلومات وأوافق على استخدامها لغرض طلب الالتحاق.",
-    submit: "إرسال الطلب",
-    submitting: "جارٍ الإرسال بأمان…",
-    successTitle: "تم إرسال الطلب",
-    successBody: "احتفظ بمعلومات التتبع الخاصة هذه. ستُطلب لتتبع الطلب والتحديثات المستقبلية.",
-    reference: "مرجع التتبع",
-    secret: "مفتاح التتبع الخاص",
-    trackApplication: "تتبع هذا الطلب",
-    newApplication: "إرسال طلب آخر",
-    error: "تعذر إرسال الطلب. تحقق من المعلومات وحاول مرة أخرى.",
-    language: "اللغة",
-    photoTitle: "صورة الطالب",
-    photoHelp: "يلزم التقاط صورة واضحة من الأمام وستصبح الصورة الخاصة الأساسية لملف الطالب.",
-    takePhoto: "التقاط صورة",
-    uploadPhoto: "رفع صورة",
-    retake: "إعادة الالتقاط",
-    replace: "استبدال",
-    remove: "إزالة",
-    photoRequired: "التقط أو اختر صورة للطالب قبل إرسال الطلب.",
-    photoInvalid: "استخدم صورة JPEG أو PNG أو WebP بحجم لا يتجاوز 5 MB.",
-    photoUploading: "جارٍ رفع صورة الطالب…",
-    groupUnavailable: "لا توجد مجموعة / فصل متاح لهذا العام والبرنامج.",
-    select: "اختر"
   }
 } as const;
 
 const genderOptions = {
   en: [["male", "Male"], ["female", "Female"], ["other", "Other"], ["undisclosed", "Prefer not to say"]],
-  ur: [["male", "مرد"], ["female", "خاتون"], ["other", "دیگر"], ["undisclosed", "بتانا نہیں چاہتے"]],
-  ar: [["male", "ذكر"], ["female", "أنثى"], ["other", "آخر"], ["undisclosed", "أفضل عدم الإفصاح"]]
+  ur: [["male", "مرد"], ["female", "خاتون"], ["other", "دیگر"], ["undisclosed", "بتانا نہیں چاہتے"]]
 } as const;
 
 const relationshipOptions = {
   en: [["father", "Father"], ["mother", "Mother"], ["guardian", "Guardian"], ["other", "Other"]],
-  ur: [["father", "والد"], ["mother", "والدہ"], ["guardian", "سرپرست"], ["other", "دیگر"]],
-  ar: [["father", "الأب"], ["mother", "الأم"], ["guardian", "ولي الأمر"], ["other", "أخرى"]]
+  ur: [["father", "والد"], ["mother", "والدہ"], ["guardian", "سرپرست"], ["other", "دیگر"]]
 } as const;
 
 function label(labels: LocalizedLabels, locale: PublicAdmissionLocale): string {
@@ -378,7 +346,6 @@ export function PublicAdmissionForm({
           <div className="public-language-switcher" aria-label={text.language}>
             <a aria-current={locale === "en" ? "page" : undefined} href="?lang=en">EN</a>
             <a aria-current={locale === "ur" ? "page" : undefined} href="?lang=ur">اردو</a>
-            <a aria-current={locale === "ar" ? "page" : undefined} href="?lang=ar">العربية</a>
           </div>
         </header>
 
