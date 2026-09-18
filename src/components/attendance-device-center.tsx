@@ -58,7 +58,7 @@ export function AttendanceDeviceCenterView({ data, copy }: { data: AttendanceDev
     <section className="panel"><h2>{copy.register}</h2><form action={createDevice} className="detail-grid">
       <label className="field-label">{copy.deviceKey}<input className="text-field" name="externalDeviceKey" required minLength={3} maxLength={120} placeholder="gate-01" /></label>
       <label className="field-label">{copy.deviceLabel}<input className="text-field" name="label" required minLength={2} maxLength={120} placeholder="Main gate biometric" /></label>
-      <label className="field-label">{copy.modality}<select className="text-field" name="modality" defaultValue="biometric"><option value="biometric">Biometric</option><option value="nfc">NFC</option><option value="hybrid">Hybrid</option></select></label>
+      <label className="field-label">{copy.modality}<select className="text-field" name="modality" defaultValue="biometric" disabled><option value="biometric">Biometric</option></select><input type="hidden" name="modality" value="biometric" /></label>
       <label className="field-label">{copy.vendor}<input className="text-field" name="vendor" maxLength={120} /></label>
       <label className="field-label">{copy.model}<input className="text-field" name="model" maxLength={120} /></label>
       <div><button className="action-button" type="submit" disabled={busy}>{copy.create}</button></div>
