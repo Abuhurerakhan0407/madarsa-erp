@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const externalSubjectKey = typeof body.externalSubjectKey === "string" ? body.externalSubjectKey.trim() : "";
     const modality = body.modality, eventType = body.eventType;
     const occurredAt = typeof body.occurredAt === "string" ? body.occurredAt : "";
-    if (externalDeviceKey.length < 3 || externalEventId.length < 4 || !externalSubjectKey || (modality !== "biometric" && modality !== "nfc") || (eventType !== "presence" && eventType !== "check_in" && eventType !== "check_out") || !Number.isFinite(Date.parse(occurredAt))) return NextResponse.json({ error: "Device event is invalid." }, { status: 400 });
+    if (externalDeviceKey.length < 3 || externalEventId.length < 4 || !externalSubjectKey || modality !== "biometric" || (eventType !== "presence" && eventType !== "check_in" && eventType !== "check_out") || !Number.isFinite(Date.parse(occurredAt))) return NextResponse.json({ error: "Device event is invalid." }, { status: 400 });
     const sourceMetadata = body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata) ? body.metadata as Record<string, unknown> : {};
     for (const key of Object.keys(sourceMetadata)) if (forbiddenMetadataKeys.has(key.toLowerCase())) return NextResponse.json({ error: "Raw biometric material must not be sent to ERP." }, { status: 400 });
     const metadata: Record<string, string | number | boolean | null> = {};
