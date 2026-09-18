@@ -59,8 +59,9 @@
     {
       "key": "payment_webhooks_verified",
       "owner": "engineering",
-      "required": true,
-      "complete": false
+      "required": false,
+      "complete": false,
+      "reason": "Launch Fees scope records payments manually; Razorpay subscription webhook belongs to platform subscription billing, not institution fee collection."
     },
     {
       "key": "messaging_packaging_approved",
