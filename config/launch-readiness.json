@@ -21,21 +21,21 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked pending one fresh executable exact-head build. The last Vercel run passed release invariants, lint (0 errors), typecheck, and 792/794 unit tests. Its only two failures were stale source-string assertions in My Students and Teacher detail contracts; both are corrected on the current RC. A fresh build must still prove all tests plus next build complete."
+      "reason": "Blocked only on exact-head execution. Preview commit 56908f2827164591d19b71fafec6d65ee62afb1e is READY and passed release invariants, lint with 0 errors, typecheck, all 157 unit-test files / 794 tests, environment-key check, production compilation, TypeScript, and static generation of 142 pages. The current RC adds E2E/release guards plus global 404/placeholder-route cleanup and is Vercel build-rate-limited, so exact-current-SHA build proof is still required."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: Playwright E2E has not run on the current RC. GitHub Actions still fails before runner steps execute; Vercel validates invariants/lint/typecheck/unit/build but does not replace the critical E2E suite."
+      "reason": "Blocked externally: Playwright E2E has not executed on the current RC because GitHub Actions receives no runner steps and skips the e2e job. Static E2E contracts were cleaned for EN/UR-only scope and retired routes, but static review is not a substitute for browser execution."
     },
     {
       "key": "production_deployment_current",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked: no exact-current-SHA deployment exists. Vercel status reports deployment rate limited; production deployment also requires explicit approval."
+      "reason": "Blocked: Vercel preview 56908f2827164591d19b71fafec6d65ee62afb1e is READY, but no deployment exists for the exact current RC because Vercel reports a build-rate limit. Production deployment remains prohibited until all required gates pass and explicit approval is given."
     },
     {
       "key": "pricing_approved",
