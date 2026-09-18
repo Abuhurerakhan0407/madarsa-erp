@@ -1,3 +1,4 @@
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +26,7 @@ export type StudentDetail = {
   photoStoragePath: string | null;
   dateOfBirth: string | null;
   gender: string | null;
-  preferredLocale: "en" | "ur" | "ar";
+  preferredLocale: SupportedLocale;
   status: string;
   joinedOn: string | null;
   medicalSummary: string | null;
@@ -48,8 +49,8 @@ function label(labels: unknown, locale: string, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function supportedLocale(value: string): "en" | "ur" | "ar" {
-  return value === "ur" || value === "ar" ? value : "en";
+function supportedLocale(value: string): SupportedLocale {
+  return value === "ur" ? "ur" : "en";
 }
 
 function attendanceSummary(value: unknown): AttendanceSummary | null {
