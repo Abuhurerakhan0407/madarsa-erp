@@ -8,8 +8,8 @@ test("renders the public Ilmgaah homepage", async ({ page }) => {
     page.getByRole("heading", { name: "Run the institution. Keep the calm." })
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Book a Free Demo on WhatsApp" }).first()
-  ).toHaveAttribute("href", /^https:\/\/wa\.me\/919833001193\?text=/);
+    page.getByRole("link", { name: "Request a Free Demo by email" }).first()
+  ).toHaveAttribute("href", /^mailto:shalconintelligence@gmail\.com\?subject=Ilmgaah%20Free%20Demo%20Request/);
 });
 
 test("protects localized institution routes", async ({ page }) => {
