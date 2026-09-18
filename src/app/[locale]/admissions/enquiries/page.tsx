@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getEnquiries } from "@/lib/admissions/enquiries";
 import { enquiryStatusLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
@@ -9,11 +10,11 @@ const copy = {
   ur: { kicker: "داخلہ · استفسارات", title: "استفسار اور رابطہ", body: "دلچسپی، اگلی کارروائی اور داخلہ درخواست تک مکمل ریکارڈ محفوظ کریں۔", add: "نیا استفسار", back: "درخواستیں", count: "استفسارات", empty: "ابھی کوئی استفسار نہیں", next: "اگلا رابطہ", source: "ذریعہ", open: "استفسار کھولیں" },
   ar: { kicker: "القبول · الاستفسارات", title: "متابعة الاستفسارات", body: "سجل الاهتمام والإجراء التالي والمسار الكامل إلى طلب القبول.", add: "استفسار جديد", back: "الطلبات", count: "استفسارات", empty: "لا توجد استفسارات", next: "المتابعة التالية", source: "المصدر", open: "فتح الاستفسار" }
 } as const;
-const dateLocales: Record<Locale,string> = { en: "en-IN", ur: "ur-IN", ar: "ar-SA" };
-const localized = (labels: Record<string,string> | null, locale: Locale) => labels?.[locale] || labels?.en || "—";
+const dateLocales: Record<SupportedLocale,string> = { en: "en-IN", ur: "ur-IN" };
+const localized = (labels: Record<string,string> | null, locale: SupportedLocale) => labels?.[locale] || labels?.en || "—";
 
 export default async function EnquiriesPage({ params }: { params: Promise<{ locale: string }> }) {
-  const locale = (await params).locale as Locale; const text = copy[locale]; const workspace = await getTenantContext(); if (!workspace) return null;
+  const raw=(await params).locale; const locale:SupportedLocale=raw==="ur"?"ur":"en"; await requireOfficeAudience(locale); const text = copy[locale]; const workspace = await getTenantContext(); if (!workspace) return null;
   const items = await getEnquiries(workspace);
   return <><section className="page-heading"><div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div><div className="quick-actions"><Link className="action-button" href={`/${locale}/admissions`}>{text.back}</Link><Link className="action-button action-button-primary" href={`/${locale}/admissions/enquiries/new`}>{text.add}</Link></div></section>
     <section className="configuration-section" aria-labelledby="enquiries-title"><header className="section-heading"><div><p>{items.length} {text.count}</p><h2 id="enquiries-title">{text.title}</h2></div></header>
