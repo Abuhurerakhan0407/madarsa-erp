@@ -1,6 +1,6 @@
 import { StudentCreateForm } from "@/components/student-create-form";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getStudentCreateOptions } from "@/lib/students/register";
 
 const copy = {
@@ -17,18 +17,11 @@ const copy = {
     body: "چار آسان مراحل میں طالب علم کا داخلہ کریں: طالب علم، سرپرست، تعلیمی تعیناتی اور جائزہ۔",
     back: "داخلہ پر واپس",
     warning: "مستقل طالب علم ریکارڈ صرف جائزہ اور تصدیق کے بعد بنایا جاتا ہے۔"
-  },
-  ar: {
-    kicker: "القبول",
-    title: "قبول جديد",
-    body: "اقبل طالبًا حضوريًا في أربع خطوات بسيطة: الطالب، ولي الأمر، التوزيع الدراسي، والمراجعة.",
-    back: "العودة إلى القبول",
-    warning: "لا يتم إنشاء سجل الطالب الدائم إلا بعد مراجعة القبول وتأكيده."
   }
 } as const;
 
 export default async function NewStudentPage({ params }: { params: Promise<{ locale: string }> }) {
-  const locale = (await params).locale as Locale;
+  const locale = (await params).locale === "ur" ? "ur" : "en" as SupportedLocale;
   const text = copy[locale];
   const options = await getStudentCreateOptions(locale);
   return <>
