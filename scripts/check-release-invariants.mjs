@@ -82,6 +82,9 @@ requireMatch("src/lib/i18n/config.ts", i18n, /locales\s*=\s*\["en",\s*"ur"\]/, "
 const nav = await source("src/lib/navigation/client-v3-navigation.ts");
 forbidMatch("src/lib/navigation/client-v3-navigation.ts", nav, /whatsapp|hostel|transport|library|student\s+portal/i, "retired module leaked into release navigation");
 
+const publicHome = await source("public/ilmgaah-home.html");
+forbidMatch("public/ilmgaah-home.html", publicHome, /whatsapp|wa\.me/i, "retired WhatsApp dependency leaked into public release UI");
+
 const ingest = await source("src/app/api/attendance/device-ingest/route.ts");
 if (!ingest.includes('body.modality !== "biometric"')) failures.push("src/app/api/attendance/device-ingest/route.ts: device ingest must reject non-biometric modalities");
 if (ingest.includes('modality !== "nfc"') || ingest.includes('modality === "nfc"')) failures.push("src/app/api/attendance/device-ingest/route.ts: NFC ingest handling returned");
