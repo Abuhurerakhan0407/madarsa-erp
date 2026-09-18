@@ -3,7 +3,8 @@ import { AdmissionActionPanel } from "@/components/admission-action-panel";
 import { AdmissionConversionPanel } from "@/components/admission-conversion-panel";
 import { getAdmissionDetail } from "@/lib/admissions/detail";
 import { admissionDecisionOutcomeLabel, admissionReviewOutcomeLabel, admissionReviewTypeLabel, admissionStateLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
@@ -40,42 +41,25 @@ const copy = {
     decision: "فیصلہ",
     reason: "وجہ",
     notes: "نوٹ"
-  },
-  ar: {
-    kicker: "القبول · الطلب",
-    title: "مراجعة الطلب",
-    back: "العودة إلى طلبات القبول",
-    reference: "مرجع التتبع",
-    revision: "نسخة الطلب",
-    submitted: "مُقدّم",
-    applicant: "بيانات المتقدم",
-    program: "البرنامج",
-    session: "العام الدراسي",
-    history: "سجل المراجعات والقرارات",
-    noHistory: "لم يتم تسجيل مراجعة من الموظفين بعد.",
-    review: "مراجعة",
-    decision: "قرار",
-    reason: "السبب",
-    notes: "ملاحظات"
   }
 } as const;
 
-const fieldLabels: Record<string, Record<Locale, string>> = {
-  applicant_name: { en: "Applicant name", ur: "درخواست گزار کا نام", ar: "اسم المتقدم" },
-  date_of_birth: { en: "Date of birth", ur: "تاریخ پیدائش", ar: "تاريخ الميلاد" },
-  guardian_name: { en: "Guardian name", ur: "سرپرست کا نام", ar: "اسم ولي الأمر" },
-  guardian_phone: { en: "Guardian phone", ur: "سرپرست کا فون", ar: "هاتف ولي الأمر" },
-  guardian_email: { en: "Guardian email", ur: "سرپرست کا ای میل", ar: "بريد ولي الأمر" },
-  address: { en: "Address", ur: "پتہ", ar: "العنوان" }
+const fieldLabels: Record<string, Record<SupportedLocale, string>> = {
+  applicant_name: { en: "Applicant name", ur: "درخواست گزار کا نام" },
+  date_of_birth: { en: "Date of birth", ur: "تاریخ پیدائش" },
+  guardian_name: { en: "Guardian name", ur: "سرپرست کا نام" },
+  guardian_phone: { en: "Guardian phone", ur: "سرپرست کا فون" },
+  guardian_email: { en: "Guardian email", ur: "سرپرست کا ای میل" },
+  address: { en: "Address", ur: "پتہ" }
 };
 
-const dateLocales: Record<Locale, string> = { en: "en-IN", ur: "ur-IN", ar: "ar-SA" };
+const dateLocales: Record<SupportedLocale, string> = { en: "en-IN", ur: "ur-IN" };
 
-function localized(value: Record<string, string> | null, locale: Locale): string {
+function localized(value: Record<string, string> | null, locale: SupportedLocale): string {
   return value?.[locale] || value?.en || "—";
 }
 
-function fieldLabel(key: string, locale: Locale): string {
+function fieldLabel(key: string, locale: SupportedLocale): string {
   return fieldLabels[key]?.[locale] || key.replaceAll("_", " ");
 }
 
@@ -85,7 +69,8 @@ type AdmissionDetailPageProps = {
 
 export default async function AdmissionDetailPage({ params }: AdmissionDetailPageProps) {
   const { locale: rawLocale, applicationId: rawApplicationId } = await params;
-  const locale = rawLocale as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
   const applicationId = Number(rawApplicationId);
   const workspace = await getTenantContext();
   if (!workspace || !Number.isSafeInteger(applicationId) || applicationId <= 0) notFound();
