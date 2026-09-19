@@ -25,6 +25,7 @@ Apply rescue migrations only after an isolated development-branch fresh-apply su
 18. `20260918100000_retire_whatsapp_runtime.sql`
 19. `20260918101500_lock_release_locales_en_ur.sql`
 20. `20260918102000_lock_preferred_locales_en_ur.sql`
+21. `20260918102500_explicit_fail_closed_rls_policies.sql`
 
 ## Required staging evidence
 
