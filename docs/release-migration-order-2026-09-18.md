@@ -24,6 +24,7 @@ Apply rescue migrations only after an isolated development-branch fresh-apply su
 17. `20260917205000_commercial_permission_scope_hardening.sql`
 18. `20260918100000_retire_whatsapp_runtime.sql`
 19. `20260918101500_lock_release_locales_en_ur.sql`
+20. `20260918102000_lock_preferred_locales_en_ur.sql`
 
 ## Required staging evidence
 
