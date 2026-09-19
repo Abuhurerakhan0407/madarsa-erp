@@ -3,7 +3,7 @@
 Production baseline already applied through:
 - `20260916124501_phase5_claim_only_portal_lifecycle`
 
-Apply rescue migrations only after an isolated development-branch fresh-apply succeeds:
+Apply release migrations only after an isolated staging rehearsal succeeds against a schema-only copy of the current production baseline (a Supabase development branch or a separate $0 staging project are both acceptable):
 
 1. `20260917023000_rescue04_academic_result_reporting_accuracy.sql`
 2. `20260917024500_rescue_daily_ops_quran_teacher_scope.sql`
@@ -31,7 +31,7 @@ Apply rescue migrations only after an isolated development-branch fresh-apply su
 
 Do not mark `database_migrations_applied` complete until all are true:
 
-- fresh branch created from current production baseline
+- isolated staging environment created from the current production schema baseline, with no production tenant rows copied
 - migrations apply in filename order without collision
 - all P0 database/contract tests pass
 - security advisors reviewed after apply
