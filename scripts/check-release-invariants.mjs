@@ -64,6 +64,7 @@ for (const path of [
   "supabase/migrations/20260917113000_portal_guardian_report_card_read.sql",
   "supabase/migrations/20260917114500_portal_guardian_documents.sql",
   "supabase/migrations/20260917174200_attendance_biometric_release_hardening.sql",
+  "supabase/migrations/20260920230000_attendance_biometric_auto_apply_arrival.sql",
   "supabase/migrations/20260917181000_academic_domain_provenance_reconciliation.sql",
   "supabase/migrations/20260917200000_minimal_fees_runtime.sql",
   "supabase/migrations/20260917200001_minimal_fees_integrity_hardening.sql",
