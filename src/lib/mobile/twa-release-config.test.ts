@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -38,9 +38,12 @@ describe("Android TWA release configuration", () => {
     });
   });
 
-  it("uses production-hosted install artwork", () => {
+  it("uses production-hosted install artwork backed by committed files", () => {
     expect(config.iconUrl).toBe("https://ilmgaah.in/icons/icon-512.png");
     expect(config.maskableIconUrl).toBe("https://ilmgaah.in/icons/maskable-512.png");
+    expect(existsSync(resolve(process.cwd(), "public/icons/icon-192.png"))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), "public/icons/icon-512.png"))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), "public/icons/maskable-512.png"))).toBe(true);
   });
 
   it("keeps release signing material outside source control", () => {
