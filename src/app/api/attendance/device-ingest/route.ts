@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { receiveAttendanceDeviceEvent } from "@/lib/attendance/device-bridge";
 import { isJsonRequest, readBoundedJson } from "@/lib/security/request";
+import { deliverBiometricArrivalPush } from "@/lib/notifications/web-push-delivery";
 
 const forbiddenMetadataKeys = new Set([
   "template",
@@ -75,6 +76,15 @@ export async function POST(request: Request) {
       occurredAt,
       metadata
     });
+    const eventId = Number(result.event_id);
+    if (result.auto_applied === true && Number.isInteger(eventId) && eventId > 0 && (eventType === "presence" || eventType === "check_in")) {
+      try {
+        await deliverBiometricArrivalPush(eventId);
+      } catch (pushError) {
+        console.error("Biometric arrival push delivery failed.", pushError instanceof Error ? pushError.message : "unknown_error");
+      }
+    }
+
     return NextResponse.json(result, {
       status: 202,
       headers: { "cache-control": "no-store" }
