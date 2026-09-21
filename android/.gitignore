@@ -7,3 +7,4 @@ app-release-unsigned-aligned.apk
 local.properties
 build/
 app/build/
+.twa-manifest.local.json
