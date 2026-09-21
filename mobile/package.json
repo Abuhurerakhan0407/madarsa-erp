@@ -1,0 +1,41 @@
+{
+  "name": "@ilmgaah/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "privacy:check": "node ./scripts/privacy-release-gate.mjs",
+    "privacy:check:generated": "node ./scripts/privacy-release-gate.mjs --generated",
+    "build": "npm run privacy:check && tsc -b && vite build",
+    "preview": "vite preview",
+    "cap:sync": "cap sync android",
+    "android:add": "cap add android",
+    "assets:android": "capacitor-assets generate --android --iconBackgroundColor '#F4F0E7' --iconBackgroundColorDark '#194D3D' --splashBackgroundColor '#F4F0E7' --splashBackgroundColorDark '#0F3329'"
+  },
+  "dependencies": {
+    "@aparajita/capacitor-secure-storage": "8.0.0",
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/haptics": "8.0.0",
+    "@capacitor/network": "8.0.1",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.3",
+    "@supabase/supabase-js": "2.112.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.2",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "5.9.2",
+    "vite": "8.2.2"
+  }
+}
