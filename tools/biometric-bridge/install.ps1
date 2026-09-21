@@ -1,11 +1,29 @@
 param(
   [Parameter(Mandatory=$true)]
   [string]$ConfigPath,
-  [string]$InstallRoot = "$env:ProgramData\Ilmgaah\BiometricBridge"
+  [string]$InstanceName = "default",
+  [string]$InstallRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
-$TaskName = "Ilmgaah Biometric Bridge"
+
+$InstanceName = $InstanceName.Trim()
+if ([string]::IsNullOrWhiteSpace($InstanceName)) { throw "InstanceName cannot be empty." }
+$SafeInstanceName = $InstanceName -replace '[^A-Za-z0-9._-]', '-'
+if ($SafeInstanceName.Length -gt 48) { throw "InstanceName must be 48 characters or fewer." }
+
+if ([string]::IsNullOrWhiteSpace($InstallRoot)) {
+  $InstallRoot = if ($SafeInstanceName -eq "default") {
+    "$env:ProgramData\Ilmgaah\BiometricBridge"
+  } else {
+    "$env:ProgramData\Ilmgaah\BiometricBridge\$SafeInstanceName"
+  }
+}
+$TaskName = if ($SafeInstanceName -eq "default") {
+  "Ilmgaah Biometric Bridge"
+} else {
+  "Ilmgaah Biometric Bridge - $SafeInstanceName"
+}
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
@@ -67,6 +85,7 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Pr
 Start-ScheduledTask -TaskName $TaskName
 
 Write-Host "Ilmgaah Biometric Bridge installed." -ForegroundColor Green
+Write-Host "Instance: $SafeInstanceName"
 Write-Host "Task: $TaskName"
 Write-Host "Install root: $InstallRoot"
 Write-Host "No inbound firewall port is required. The bridge only makes outbound HTTPS requests."

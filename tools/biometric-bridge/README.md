@@ -68,6 +68,23 @@ Remove it with:
 .\uninstall.ps1
 ```
 
+## Multiple biometric terminals on one Windows desktop
+
+Use one named bridge instance per physical terminal only when the vendor software can produce a distinct export source for each terminal.
+
+Example:
+
+```powershell
+.\install.ps1 -InstanceName "BIO-01" -ConfigPath "C:\Ilmgaah\BIO-01.json"
+.\install.ps1 -InstanceName "BIO-02" -ConfigPath "C:\Ilmgaah\BIO-02.json"
+.\install.ps1 -InstanceName "BIO-03" -ConfigPath "C:\Ilmgaah\BIO-03.json"
+.\install.ps1 -InstanceName "BIO-04" -ConfigPath "C:\Ilmgaah\BIO-04.json"
+```
+
+Each named instance gets its own scheduled task, protected config, queue, health file and logs. Use the same `-InstanceName` with `status.ps1` and `uninstall.ps1`.
+
+Do not point several instances at the same combined export unless the vendor export is first separated by physical device. Otherwise the same rows could be attributed to the wrong Ilmgaah device. If the vendor only produces one combined multi-device file, use a verified device-routing adapter or configure the vendor software to export each device separately before client acceptance.
+
 ## Client-site acceptance test
 1. Device and client desktop are on the same LAN.
 2. Vendor attendance software can communicate with the mBio over TCP/IP.
