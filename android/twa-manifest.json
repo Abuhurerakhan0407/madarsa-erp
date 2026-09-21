@@ -1,6 +1,6 @@
 {
   "packageId": "in.ilmgaah.app",
-  "host": "ilmgaah.in",
+  "host": "www.ilmgaah.in",
   "name": "Ilmgaah",
   "launcherName": "Ilmgaah",
   "display": "standalone",
@@ -13,8 +13,8 @@
   "backgroundColor": "#f8f6ef",
   "enableNotifications": true,
   "startUrl": "/login?source=app",
-  "iconUrl": "https://ilmgaah.in/icons/icon-512.png",
-  "maskableIconUrl": "https://ilmgaah.in/icons/maskable-512.png",
+  "iconUrl": "https://www.ilmgaah.in/icons/icon-512.png",
+  "maskableIconUrl": "https://www.ilmgaah.in/icons/maskable-512.png",
   "splashScreenFadeOutDuration": 250,
   "signingKey": {
     "path": "./signing/ilmgaah-release.jks",
@@ -24,7 +24,7 @@
   "appVersionCode": 1,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://ilmgaah.in/manifest.webmanifest",
+  "webManifestUrl": "https://www.ilmgaah.in/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {},
   "alphaDependencies": {
