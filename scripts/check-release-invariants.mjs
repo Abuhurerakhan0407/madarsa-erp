@@ -50,7 +50,18 @@ for (const path of [
   "src/app/api/students/id-cards/pdf/route.ts",
   "src/app/[locale]/fees/receipt/[paymentId]/page.tsx",
   "src/app/[locale]/contributions/receipt/[contributionId]/page.tsx",
-  "src/app/[locale]/payroll/payslip/[lineId]/page.tsx"
+  "src/app/[locale]/payroll/payslip/[lineId]/page.tsx",
+  "src/lib/attendance/biometric-bridge-agent.test.ts",
+  "tools/biometric-bridge/src/core.mjs",
+  "tools/biometric-bridge/src/reader.mjs",
+  "tools/biometric-bridge/src/agent.mjs",
+  "tools/biometric-bridge/build.mjs",
+  "tools/biometric-bridge/smoke-test.mjs",
+  "tools/biometric-bridge/config.example.json",
+  "tools/biometric-bridge/install.ps1",
+  "tools/biometric-bridge/status.ps1",
+  "tools/biometric-bridge/uninstall.ps1",
+  "tools/biometric-bridge/README.md"
 ]) await requireExists(path);
 
 for (const path of [

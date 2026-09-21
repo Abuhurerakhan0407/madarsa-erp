@@ -1,0 +1,33 @@
+{
+  "baseUrl": "https://YOUR-ILMGAAH-APP.example",
+  "externalDeviceKey": "mbio-main-gate-01",
+  "ingestToken": "mdev_REPLACE_WITH_TOKEN_FROM_ILMGAH",
+  "watchFolder": "C:\\MBio\\Exports",
+  "fileExtensions": [".csv", ".xlsx"],
+  "pollIntervalSeconds": 5,
+  "settleSeconds": 3,
+  "requestTimeoutSeconds": 20,
+  "maxSendPerCycle": 100,
+  "retryBaseSeconds": 10,
+  "retryMaxSeconds": 300,
+  "format": {
+    "subjectColumn": "User ID",
+    "timestampColumn": "Punch Time",
+    "dateColumn": null,
+    "timeColumn": null,
+    "timezoneOffset": "+05:30",
+    "dateOrder": "DMY",
+    "sheetName": null,
+    "headerRow": 1,
+    "csvDelimiter": ",",
+    "eventTypeColumn": "State",
+    "eventTypeMap": {
+      "in": "check_in",
+      "out": "check_out",
+      "0": "check_in",
+      "1": "check_out"
+    },
+    "defaultEventType": "presence",
+    "metadataColumns": ["Verify Mode", "Device Name"]
+  }
+}
