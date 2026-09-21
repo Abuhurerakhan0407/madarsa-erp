@@ -27,7 +27,7 @@ describe("Android TWA release configuration", () => {
   it("locks the Ilmgaah Android identity and trusted origin", () => {
     expect(config).toMatchObject({
       packageId: "in.ilmgaah.app",
-      host: "ilmgaah.in",
+      host: "www.ilmgaah.in",
       name: "Ilmgaah",
       launcherName: "Ilmgaah",
       startUrl: "/login?source=app",
@@ -39,8 +39,8 @@ describe("Android TWA release configuration", () => {
   });
 
   it("uses production-hosted install artwork backed by committed files", () => {
-    expect(config.iconUrl).toBe("https://ilmgaah.in/icons/icon-512.png");
-    expect(config.maskableIconUrl).toBe("https://ilmgaah.in/icons/maskable-512.png");
+    expect(config.iconUrl).toBe("https://www.ilmgaah.in/icons/icon-512.png");
+    expect(config.maskableIconUrl).toBe("https://www.ilmgaah.in/icons/maskable-512.png");
     expect(existsSync(resolve(process.cwd(), "public/icons/icon-192.png"))).toBe(true);
     expect(existsSync(resolve(process.cwd(), "public/icons/icon-512.png"))).toBe(true);
     expect(existsSync(resolve(process.cwd(), "public/icons/maskable-512.png"))).toBe(true);
