@@ -116,3 +116,50 @@
     min-height: 5.1rem;
   }
 }
+
+
+/* Client-delivery exam workspace polish */
+.contextCard {
+  gap: 1rem;
+  border-radius: 0.9rem;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.contextActions {
+  gap: 0.6rem;
+}
+
+.shell :global(.exam-v2-action) {
+  min-height: 6rem;
+  padding: 0.82rem;
+  border-radius: 0.8rem;
+}
+
+.shell :global(.exam-v2-action h2) {
+  font-size: 0.9rem;
+}
+
+.shell :global(.exam-v2-action p) {
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+[lang="ur"] .shell :global(.exam-v2-action h2) {
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+[lang="ur"] .shell :global(.exam-v2-action p) {
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 760px) {
+  .contextActions > :global(.action-button) {
+    min-height: 2.85rem;
+  }
+
+  .shell :global(.exam-v2-action) {
+    min-height: 5.6rem;
+  }
+}
