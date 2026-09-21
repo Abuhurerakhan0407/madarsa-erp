@@ -1,0 +1,9 @@
+signing/
+twa-manifest.build.json
+app-release-signed.apk
+app-release-bundle.aab
+app-release-unsigned-aligned.apk
+.gradle/
+local.properties
+build/
+app/build/
