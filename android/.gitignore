@@ -8,3 +8,4 @@ local.properties
 build/
 app/build/
 .twa-manifest.local.json
+app-release-signed.apk.idsig
