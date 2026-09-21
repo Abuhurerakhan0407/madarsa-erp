@@ -14,3 +14,61 @@
   .student-print-profile .quick-actions{width:100%}
   .student-print-profile .quick-actions>.action-button{flex:1 1 100%;justify-content:center}
 }
+
+
+/* Client-delivery student register polish */
+.status-pill {
+  min-height: 1.9rem;
+  padding-inline: 0.6rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+}
+
+.student-detail-grid > div {
+  padding: 0.85rem;
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.student-detail-grid span,
+.student-notes dt {
+  font-size: 0.78rem;
+}
+
+[lang="ur"] .status-pill,
+[lang="ur"] .student-detail-grid span,
+[lang="ur"] .student-notes dt {
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 620px) {
+  .student-register-section .workspace-table-frame {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .student-register-table tbody {
+    gap: 0.65rem;
+  }
+
+  .student-register-table tbody tr {
+    padding: 0.9rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+  }
+
+  .student-register-table tbody td {
+    grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1.3fr);
+    gap: 0.65rem;
+    padding-block: 0.42rem;
+  }
+
+  .student-register-table tbody td::before {
+    font-size: 0.76rem;
+  }
+}
