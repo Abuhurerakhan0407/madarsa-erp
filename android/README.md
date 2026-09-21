@@ -5,7 +5,7 @@ This directory contains the Trusted Web Activity (TWA) release configuration for
 ## Release identity
 
 - Android package: `in.ilmgaah.app`
-- Trusted origin: `https://ilmgaah.in`
+- Trusted origin: `https://www.ilmgaah.in`
 - App name: `Ilmgaah`
 - Current version: `1.0.0`
 - Version code: `1`
@@ -56,9 +56,9 @@ pnpm build
 
 The live site must serve:
 
-- `https://ilmgaah.in/manifest.webmanifest`
-- `https://ilmgaah.in/icons/icon-512.png`
-- `https://ilmgaah.in/icons/maskable-512.png`
+- `https://www.ilmgaah.in/manifest.webmanifest`
+- `https://www.ilmgaah.in/icons/icon-512.png`
+- `https://www.ilmgaah.in/icons/maskable-512.png`
 
 Do not proceed with final TWA validation if these URLs are missing or return non-2xx responses.
 
@@ -130,7 +130,7 @@ Then deploy the matching website commit.
 
 Verify:
 
-`https://ilmgaah.in/.well-known/assetlinks.json`
+`https://www.ilmgaah.in/.well-known/assetlinks.json`
 
 The published file must reference:
 
