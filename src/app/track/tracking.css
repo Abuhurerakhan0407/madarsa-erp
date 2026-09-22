@@ -286,3 +286,22 @@
     justify-self: stretch;
   }
 }
+
+
+/* Client-delivery tracking accessibility polish */
+.tracking-languages a {
+  min-height: 2.75rem;
+}
+
+.tracking-languages a:focus-visible,
+.tracking-form button:focus-visible,
+.tracking-result button:focus-visible {
+  outline: 2px solid #9aefbd;
+  outline-offset: 3px;
+}
+
+.tracking-form input:focus-visible {
+  border-color: #69d79f;
+  box-shadow: 0 0 0 4px rgba(105, 215, 159, 0.14);
+  outline: none;
+}

@@ -265,3 +265,54 @@
     grid-column: auto;
   }
 }
+
+
+/* Client-delivery public intake accessibility polish */
+.public-language-switcher a {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.public-language-switcher a:focus-visible,
+.public-submit:focus-visible {
+  outline: 2px solid #9aefbd;
+  outline-offset: 3px;
+}
+
+.public-intake-grid input:focus-visible,
+.public-intake-grid select:focus-visible,
+.public-intake-grid textarea:focus-visible {
+  border-color: #69d79f;
+  box-shadow: 0 0 0 4px rgba(105, 215, 159, 0.14);
+  outline: none;
+}
+
+@media (max-width: 700px) {
+  .public-intake-shell {
+    min-height: 100dvh;
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(20px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  .public-intake-card {
+    padding: 20px;
+  }
+
+  .public-language-switcher {
+    width: 100%;
+  }
+
+  .public-language-switcher a {
+    flex: 1;
+  }
+
+  .public-submit {
+    width: 100%;
+    min-height: 3rem;
+  }
+}
