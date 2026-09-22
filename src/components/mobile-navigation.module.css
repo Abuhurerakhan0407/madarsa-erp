@@ -333,3 +333,14 @@
     font-size: 0.76rem;
   }
 }
+
+
+/* Keep app chrome out of printable institutional documents. */
+@media print {
+  .bottomNav,
+  .drawerLayer,
+  .backdrop,
+  .drawer {
+    display: none !important;
+  }
+}
