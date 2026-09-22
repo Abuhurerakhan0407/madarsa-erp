@@ -102,7 +102,7 @@ export function PublicAdmissionTracker({ locale, initialReference = "" }: Public
       <section className="tracking-card">
         <header className="tracking-header">
           <div>
-            <div className="tracking-brand">M</div>
+            <div className="tracking-brand">I</div>
             <p className="tracking-kicker">{text.kicker}</p>
             <h1>{text.title}</h1>
             <p>{text.body}</p>

@@ -4,7 +4,7 @@ import { PortalPasswordChangeForm } from "@/components/portal-password-change-fo
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 
-export const metadata: Metadata = { title: "Change password | Madarsa ERP" };
+export const metadata: Metadata = { title: "Change password | Ilmgaah" };
 
 export default async function PortalChangePasswordPage() {
   const identity = await getVerifiedIdentity();
