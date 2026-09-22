@@ -20,21 +20,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-
+import com.google.androidbrowserhelper.trusted.TwaLauncher;
 
 public class LauncherActivity
         extends com.google.androidbrowserhelper.trusted.LauncherActivity {
 
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Setting an orientation crashes the app due to the transparent background on Android 8.0
-        // Oreo and below. We only set the orientation on Oreo and above. This only affects the
-        // splash screen and Chrome will still respect the orientation.
-        // See https://github.com/GoogleChromeLabs/bubblewrap/issues/496 for details.
+        // Keep the generated portrait behavior while the trusted shell launches.
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         } else {
@@ -43,12 +37,14 @@ public class LauncherActivity
     }
 
     @Override
+    protected TwaLauncher createTwaLauncher() {
+        // Never hand Ilmgaah to the user's arbitrary default browser.
+        // Chrome is the verified trusted provider on the supported Android path.
+        return new TwaLauncher(this, "com.android.chrome");
+    }
+
+    @Override
     protected Uri getLaunchingUrl() {
-        // Get the original launch Url.
-        Uri uri = super.getLaunchingUrl();
-
-
-
-        return uri;
+        return super.getLaunchingUrl();
     }
 }
