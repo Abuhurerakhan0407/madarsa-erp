@@ -612,3 +612,248 @@
     transition: none;
   }
 }
+
+
+/* Authenticated workspace final consistency pass */
+[data-client-v3] .client-v2-main .metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.75rem;
+  margin-block: 1.15rem;
+}
+
+[data-client-v3] .client-v2-main .metric-card {
+  min-height: 6.5rem;
+  align-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.85rem;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+[data-client-v3] .client-v2-main .metric-card span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+[data-client-v3] .client-v2-main .metric-card strong {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.05;
+}
+
+[data-client-v3] .client-v2-main .panel,
+[data-client-v3] .client-v2-main .professional-card {
+  border-radius: 0.9rem;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+[data-client-v3] .client-v2-main .panel h2,
+[data-client-v3] .client-v2-main .panel h3,
+[data-client-v3] .client-v2-main .professional-card h2,
+[data-client-v3] .client-v2-main .professional-card h3 {
+  line-height: 1.3;
+}
+
+[data-client-v3] .client-v2-main .field-label {
+  gap: 0.42rem;
+  margin-block: 0.15rem;
+  color: color-mix(in srgb, var(--foreground) 78%, var(--muted));
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+[data-client-v3] .client-v2-main .text-field {
+  min-height: 2.9rem;
+  padding: 0.68rem 0.78rem;
+  border-radius: 0.68rem;
+  background: #fbfcfb;
+  font-size: 0.86rem;
+  transition: border-color 130ms ease, box-shadow 130ms ease, background 130ms ease;
+}
+
+[data-client-v3] .client-v2-main .text-field:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+[data-client-v3] .client-v2-main .text-field:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--surface);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 10%, transparent);
+  outline: none;
+}
+
+[data-client-v3] .client-v2-main .status-chip,
+[data-client-v3] .client-v2-main .status-pill,
+[data-client-v3] .client-v2-main .module-state {
+  min-height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 0.62rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+[data-client-v3] .client-v2-main .row-between p {
+  margin-block: 0.3rem 0;
+  line-height: 1.5;
+}
+
+[data-client-v3] .client-v2-main .row-between small {
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+[data-client-v3] .client-v2-main details > summary {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+[data-client-v3] .client-v2-main .data-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-client-v3] .client-v2-main .data-table th {
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+[data-client-v3] .client-v2-main .data-table td {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Reports */
+[data-client-v3] .reports-hero,
+[data-client-v3] .documents-hero {
+  padding: clamp(1.15rem, 2.6vw, 1.75rem);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+[data-client-v3] .reports-hero-count,
+[data-client-v3] .documents-count {
+  border-radius: 0.85rem;
+}
+
+[data-client-v3] .reports-hero-count span,
+[data-client-v3] .documents-count span,
+[data-client-v3] .report-card span,
+[data-client-v3] .report-card small,
+[data-client-v3] .documents-recent small,
+[data-client-v3] .document-student header span,
+[data-client-v3] .document-student header small {
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+[data-client-v3] .report-card {
+  min-height: 6.25rem;
+  padding: 1rem;
+  border-radius: 0.85rem;
+}
+
+[data-client-v3] .report-card strong {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+[data-client-v3] .report-controls,
+[data-client-v3] .documents-search {
+  border-radius: 0.85rem;
+}
+
+[data-client-v3] .reports-run-list article,
+[data-client-v3] .documents-recent > div > article {
+  min-height: 4.2rem;
+}
+
+[data-client-v3] .document-student {
+  border-radius: 0.9rem;
+}
+
+[data-client-v3] .document-student > header {
+  padding: 1rem;
+}
+
+[data-client-v3] .document-actions > div {
+  padding: 0.95rem;
+}
+
+[data-client-v3] .document-actions small,
+[data-client-v3] .documents-pagination span {
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+[data-client-v3] .documents-pagination .secondary-button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+[data-client-v3] .eyebrow {
+  font-size: 0.7rem !important;
+  line-height: 1.4;
+}
+
+[lang="ur"] [data-client-v3] .eyebrow,
+[lang="ur"] [data-client-v3] .state-kicker,
+[lang="ur"] [data-client-v3] .sample-label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[lang="ur"] [data-client-v3] .client-v2-main .field-label,
+[lang="ur"] [data-client-v3] .client-v2-main .text-field,
+[lang="ur"] [data-client-v3] .client-v2-main .status-chip,
+[lang="ur"] [data-client-v3] .client-v2-main .status-pill,
+[lang="ur"] [data-client-v3] .report-card span,
+[lang="ur"] [data-client-v3] .report-card small,
+[lang="ur"] [data-client-v3] .document-actions small,
+[lang="ur"] [data-client-v3] .documents-recent small {
+  font-size: 0.84rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 760px) {
+  [data-client-v3] .client-v2-main .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-client-v3] .report-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  [data-client-v3] .report-actions > * {
+    width: 100%;
+  }
+
+  [data-client-v3] .reports-run-list article,
+  [data-client-v3] .documents-recent > div > article {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  [data-client-v3] .client-v2-main .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  [data-client-v3] .client-v2-main .panel,
+  [data-client-v3] .client-v2-main .professional-card {
+    padding: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-client-v3] .client-v2-main .text-field {
+    transition: none;
+  }
+}
