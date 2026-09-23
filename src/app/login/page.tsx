@@ -23,8 +23,11 @@ export default function LoginPage() {
   }
 
   function requestedDestination() {
-    const requested = new URLSearchParams(window.location.search).get("next");
-    return requested ? safeAuthRedirect(requested) : mode === "signup" ? "/onboarding" : "/en";
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("next");
+    if (requested) return safeAuthRedirect(requested);
+    if (params.get("source") === "app") return "/app-entry";
+    return mode === "signup" ? "/onboarding" : "/en";
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
