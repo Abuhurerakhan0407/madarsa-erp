@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   function continueTo(path: string) {
-    router.push(path);
+    router.replace(path);
     router.refresh();
   }
 
