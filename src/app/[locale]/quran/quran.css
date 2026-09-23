@@ -3,8 +3,16 @@
 
 /* Client-delivery Qur'an detail readability */
 .quran-juz span,
-.quran-juz small,
-.quran-juz em,
+.quran-juz small {
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.quran-juz em {
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .quran-score-strip span,
 .quran-revision-row span,
 .quran-revision-row small,
