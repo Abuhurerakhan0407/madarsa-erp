@@ -469,3 +469,152 @@ html[lang="ur"] .professional-institution-card small {
     transition: none;
   }
 }
+
+
+/* Parent/teacher portal runs outside the locale route, so Urdu styling keys off
+   the localized portal container instead of the document root. */
+.auth-screen [lang="ur"],
+.auth-screen [lang="ur"] input,
+.auth-screen [lang="ur"] button,
+.auth-screen [lang="ur"] select,
+.auth-screen [lang="ur"] textarea {
+  font-family: var(--font-naskh-arabic), "Noto Naskh Arabic", serif !important;
+}
+
+.auth-screen [lang="ur"] :where(h1, h2, h3, h4, p, span, strong, small, label, a, button, input, select, textarea, td, th) {
+  line-height: 1.72;
+  letter-spacing: 0 !important;
+}
+
+.auth-screen [lang="ur"] :where(.state-kicker, .sample-label) {
+  font-size: 0.82rem !important;
+  text-transform: none;
+}
+
+.auth-screen [lang="ur"] .demo-card small {
+  font-size: 0.82rem;
+}
+
+.auth-screen [lang="en"] .state-kicker {
+  font-size: 0.72rem !important;
+}
+
+.auth-screen [lang="en"] .demo-card small {
+  font-size: 0.76rem;
+}
+
+@media (max-width: 620px) {
+  .auth-screen > main {
+    width: min(100%, 100vw) !important;
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      max(0.9rem, env(safe-area-inset-right))
+      max(1.25rem, env(safe-area-inset-bottom))
+      max(0.9rem, env(safe-area-inset-left)) !important;
+  }
+
+  .auth-screen [lang] .professional-card {
+    border-radius: 0.8rem;
+  }
+
+  .auth-screen [lang] .quick-actions {
+    width: 100%;
+  }
+
+  .auth-screen [lang] .quick-actions > * {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* Parent portal table containment: schedule/results stay usable on phones. */
+.auth-screen [lang] .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-screen [lang] .table-wrap table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+
+.auth-screen [lang] .table-wrap th,
+.auth-screen [lang] .table-wrap td {
+  padding: 0.72rem 0.75rem;
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.auth-screen [lang] .table-wrap th {
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.auth-screen [lang] .table-wrap td {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang="ur"] .table-wrap th,
+.auth-screen [lang="ur"] .table-wrap td {
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .table-wrap {
+    margin-inline: -0.1rem;
+  }
+
+  .auth-screen [lang] .table-wrap table {
+    min-width: 38rem;
+  }
+}
+
+
+/* Portal activation/password/error states. */
+.auth-screen [lang] .flow-form {
+  display: grid;
+  gap: 0.85rem;
+  margin-block-start: 1rem;
+}
+
+.auth-screen [lang] .flow-form > .action-button {
+  width: fit-content;
+}
+
+.auth-screen [lang] .form-message {
+  margin: 0;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang] .form-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+}
+
+.auth-screen [lang="ur"] .form-message {
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .flow-form > .action-button {
+    width: 100%;
+  }
+}

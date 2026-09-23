@@ -255,3 +255,92 @@
     transition: none;
   }
 }
+
+
+/* Client-delivery mobile navigation polish */
+@media (max-width: 900px) {
+  .bottomNav {
+    min-height: 4.6rem;
+    padding-block-start: 0.42rem;
+    box-shadow: 0 -12px 34px rgb(15 35 27 / 10%);
+  }
+
+  .bottomNav a,
+  .menuTab {
+    min-height: 3.5rem;
+    border-radius: 0.72rem;
+    font-size: 0.74rem;
+    font-weight: 680;
+    line-height: 1.18;
+  }
+
+  .bottomNav a[aria-current="page"],
+  .menuTab[aria-expanded="true"] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .drawer {
+    width: min(90vw, 25rem);
+    border-inline-end-color: color-mix(in srgb, var(--border) 84%, transparent);
+  }
+
+  .drawerHeader {
+    padding-inline: 1.05rem;
+  }
+
+  .drawerNav {
+    padding-inline: 0.95rem;
+  }
+
+  .drawerGroup > p {
+    font-size: 0.72rem;
+  }
+
+  .drawerLink {
+    min-height: 3.4rem;
+    padding: 0.72rem 0.8rem;
+    border-radius: 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  [lang="ur"] .bottomNav a,
+  [lang="ur"] .menuTab {
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+
+  [lang="ur"] .drawerGroup > p {
+    font-size: 0.8rem;
+    letter-spacing: 0;
+    line-height: 1.8;
+    text-transform: none;
+  }
+
+  [lang="ur"] .drawerLink {
+    font-size: 0.88rem;
+    line-height: 1.8;
+  }
+}
+
+@media (max-width: 390px) {
+  .bottomNav a,
+  .menuTab {
+    font-size: 0.7rem;
+  }
+
+  [lang="ur"] .bottomNav a,
+  [lang="ur"] .menuTab {
+    font-size: 0.76rem;
+  }
+}
+
+
+/* Keep app chrome out of printable institutional documents. */
+@media print {
+  .bottomNav,
+  .drawerLayer,
+  .backdrop,
+  .drawer {
+    display: none !important;
+  }
+}

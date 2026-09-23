@@ -306,7 +306,7 @@ export function PublicAdmissionForm({
     return (
       <main className="public-intake-shell" dir={locale === "en" ? "ltr" : "rtl"} lang={locale}>
         <section className="public-intake-card public-intake-success" aria-live="polite">
-          <div className="public-intake-brand">M</div>
+          <div className="public-intake-brand">I</div>
           <p className="public-intake-kicker">{tenantName} · {text.admissions}</p>
           <h1>{text.successTitle}</h1>
           <p>{text.successBody}</p>
@@ -338,7 +338,7 @@ export function PublicAdmissionForm({
       <section className="public-intake-card">
         <header className="public-intake-header">
           <div>
-            <div className="public-intake-brand">M</div>
+            <div className="public-intake-brand">I</div>
             <p className="public-intake-kicker">{tenantName}</p>
             <h1>{label(formLabels, locale)}</h1>
             <p>{text.branch}: {branchName}</p>
