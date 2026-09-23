@@ -26,8 +26,9 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("next");
     if (requested) return safeAuthRedirect(requested);
+    if (mode === "signup") return "/onboarding";
     if (params.get("source") === "app") return "/app-entry";
-    return mode === "signup" ? "/onboarding" : "/en";
+    return "/en";
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
