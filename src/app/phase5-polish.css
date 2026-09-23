@@ -525,3 +525,57 @@ html[lang="ur"] .professional-institution-card small {
     flex: 1 1 auto;
   }
 }
+
+
+/* Parent portal table containment: schedule/results stay usable on phones. */
+.auth-screen [lang] .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-screen [lang] .table-wrap table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+
+.auth-screen [lang] .table-wrap th,
+.auth-screen [lang] .table-wrap td {
+  padding: 0.72rem 0.75rem;
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.auth-screen [lang] .table-wrap th {
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.auth-screen [lang] .table-wrap td {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang="ur"] .table-wrap th,
+.auth-screen [lang="ur"] .table-wrap td {
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .table-wrap {
+    margin-inline: -0.1rem;
+  }
+
+  .auth-screen [lang] .table-wrap table {
+    min-width: 38rem;
+  }
+}
