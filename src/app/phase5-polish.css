@@ -469,3 +469,59 @@ html[lang="ur"] .professional-institution-card small {
     transition: none;
   }
 }
+
+
+/* Parent/teacher portal runs outside the locale route, so Urdu styling keys off
+   the localized portal container instead of the document root. */
+.auth-screen [lang="ur"],
+.auth-screen [lang="ur"] input,
+.auth-screen [lang="ur"] button,
+.auth-screen [lang="ur"] select,
+.auth-screen [lang="ur"] textarea {
+  font-family: var(--font-naskh-arabic), "Noto Naskh Arabic", serif !important;
+}
+
+.auth-screen [lang="ur"] :where(h1, h2, h3, h4, p, span, strong, small, label, a, button, input, select, textarea, td, th) {
+  line-height: 1.72;
+  letter-spacing: 0 !important;
+}
+
+.auth-screen [lang="ur"] :where(.state-kicker, .sample-label) {
+  font-size: 0.82rem !important;
+  text-transform: none;
+}
+
+.auth-screen [lang="ur"] .demo-card small {
+  font-size: 0.82rem;
+}
+
+.auth-screen [lang="en"] .state-kicker {
+  font-size: 0.72rem !important;
+}
+
+.auth-screen [lang="en"] .demo-card small {
+  font-size: 0.76rem;
+}
+
+@media (max-width: 620px) {
+  .auth-screen > main {
+    width: min(100%, 100vw) !important;
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      max(0.9rem, env(safe-area-inset-right))
+      max(1.25rem, env(safe-area-inset-bottom))
+      max(0.9rem, env(safe-area-inset-left)) !important;
+  }
+
+  .auth-screen [lang] .professional-card {
+    border-radius: 0.8rem;
+  }
+
+  .auth-screen [lang] .quick-actions {
+    width: 100%;
+  }
+
+  .auth-screen [lang] .quick-actions > * {
+    flex: 1 1 auto;
+  }
+}
