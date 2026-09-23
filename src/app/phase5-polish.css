@@ -579,3 +579,42 @@ html[lang="ur"] .professional-institution-card small {
     min-width: 38rem;
   }
 }
+
+
+/* Portal activation/password/error states. */
+.auth-screen [lang] .flow-form {
+  display: grid;
+  gap: 0.85rem;
+  margin-block-start: 1rem;
+}
+
+.auth-screen [lang] .flow-form > .action-button {
+  width: fit-content;
+}
+
+.auth-screen [lang] .form-message {
+  margin: 0;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang] .form-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+}
+
+.auth-screen [lang="ur"] .form-message {
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .flow-form > .action-button {
+    width: 100%;
+  }
+}
