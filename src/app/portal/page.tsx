@@ -6,6 +6,7 @@ import { PortalNotificationCenter } from "@/components/portal-notification-cente
 import { PortalParentDocuments } from "@/components/portal-parent-documents";
 import { PortalParentPriorityOverview } from "@/components/portal-parent-priority-overview";
 import { PortalTeacherWorkspace } from "@/components/portal-teacher-workspace";
+import { PortalExitButton } from "@/components/portal-exit-button";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getDirection } from "@/lib/i18n/config";
 import { getPortalNotificationCenter } from "@/lib/notifications/portal";
@@ -15,6 +16,7 @@ import { getPortalHome } from "@/lib/portal/runtime";
 import { getPortalTeacherWorkspace } from "@/lib/portal/teacher-workspace";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 export const metadata: Metadata = { title: "Parent & Teacher Portal | Ilmgaah" };
 type Raw = Record<string, unknown>;
@@ -29,6 +31,9 @@ const copy = {
     noAccess: "No portal access linked yet",
     noAccessBody: "Sign in is working, but this account has not been linked to a verified guardian or teacher record.",
     activate: "Activate an access code",
+    returnHome: "Back to home",
+    returnLogin: "Back to login",
+    returnError: "Unable to leave this page. Please try again.",
     secure: "Secure self-service portal",
     institutions: "Portal institutions",
     language: "Language",
@@ -46,6 +51,9 @@ const copy = {
     noAccess: "ابھی کوئی پورٹل رسائی منسلک نہیں",
     noAccessBody: "سائن اِن درست کام کر رہا ہے، لیکن یہ اکاؤنٹ ابھی کسی تصدیق شدہ سرپرست یا استاد کے ریکارڈ سے منسلک نہیں ہے۔",
     activate: "رسائی کوڈ فعال کریں",
+    returnHome: "ہوم پر واپس جائیں",
+    returnLogin: "لاگ اِن پر واپس جائیں",
+    returnError: "اس صفحے سے واپس نہیں جا سکے۔ دوبارہ کوشش کریں۔",
     secure: "محفوظ سیلف سروس پورٹل",
     institutions: "پورٹل ادارے",
     language: "زبان",
@@ -93,13 +101,23 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
   );
 
   if (tenantIds.length === 0) {
+    const workspace = await getTenantContext();
     return (
       <section className="professional-card" lang={locale} dir={getDirection(locale)} style={{ maxWidth: 720, margin: "8vh auto 0" }}>
         {localeNav}
         <p className="state-kicker">{t.portal}</p>
         <h1>{t.noAccess}</h1>
         <p>{t.noAccessBody}</p>
-        <Link className="action-button action-button-primary" href={portalHref("/portal/claim", locale)}>{t.activate}</Link>
+        <div className="quick-actions">
+          <Link className="action-button action-button-primary" href={portalHref("/portal/claim", locale)}>{t.activate}</Link>
+          <PortalExitButton
+            homeHref={workspace ? `/${locale}` : null}
+            loginHref="/login?source=app"
+            homeLabel={t.returnHome}
+            loginLabel={t.returnLogin}
+            errorLabel={t.returnError}
+          />
+        </div>
       </section>
     );
   }
