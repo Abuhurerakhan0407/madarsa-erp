@@ -563,3 +563,26 @@
     font-size: 0.64rem;
   }
 }
+
+
+/* Client-delivery Qur'an progress-wall legibility */
+.quran-juz-wall i {
+  min-height: 1.8rem;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+[lang="ur"] .quran-juz-wall i {
+  font-size: 0.74rem;
+}
+
+@media (max-width: 620px) {
+  .quran-juz-wall i {
+    min-height: 2rem;
+    font-size: 0.72rem;
+  }
+
+  [lang="ur"] .quran-juz-wall i {
+    font-size: 0.78rem;
+  }
+}
