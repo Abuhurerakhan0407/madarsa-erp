@@ -79,3 +79,45 @@
     flex: 1 1 6rem;
   }
 }
+
+
+/* Final pre-handover attendance mobile safety */
+.attendance-toolbar,
+.attendance-search,
+.attendance-row,
+.attendance-current,
+.attendance-actions{min-width:0}
+.attendance-toolbar>*,
+.attendance-search>*{min-width:0}
+.attendance-search .text-field{width:100%;min-width:0}
+.attendance-row{overflow:hidden}
+.attendance-current,
+.attendance-student{overflow-wrap:anywhere}
+@media(max-width:760px){
+  .attendance-search{width:100%}
+  .attendance-search .action-button,
+  .attendance-search .secondary-button{min-height:44px;justify-content:center}
+  .attendance-actions .secondary-button,
+  .attendance-actions .action-button{min-height:44px}
+}
+@media(max-width:480px){
+  .attendance-toolbar{gap:.75rem}
+  .attendance-search{grid-template-columns:1fr}
+  .attendance-search .field-label,
+  .attendance-search .action-button,
+  .attendance-search .secondary-button{grid-column:auto;width:100%}
+  .attendance-metrics{gap:.55rem}
+  .attendance-metric{min-width:0}
+  .attendance-metric span{overflow-wrap:anywhere}
+}
+
+/* Attendance export/action bar mobile layout */
+.attendance-page-actions{align-items:stretch}
+.attendance-page-actions>*{min-height:44px;justify-content:center;text-align:center}
+@media(max-width:760px){
+  .attendance-page-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:.55rem}
+  .attendance-page-actions>*{width:100%;min-width:0;margin:0}
+}
+@media(max-width:420px){
+  .attendance-page-actions{grid-template-columns:1fr}
+}

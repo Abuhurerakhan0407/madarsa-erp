@@ -1,3 +1,7 @@
+export const STUDENT_IMPORT_TEMPLATE_CSV = [
+  "display_name,name_native,date_of_birth,gender,preferred_locale,guardian_name,guardian_relationship,guardian_phone",
+  "Ahmed Khan,,2014-01-15,male,en,Parent Name,father,9000000000"
+].join("\r\n");
 export type StudentImportRow = {
   display_name: string;
   name_native?: string;

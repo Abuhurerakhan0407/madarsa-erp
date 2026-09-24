@@ -72,3 +72,17 @@
     font-size: 0.76rem;
   }
 }
+
+
+/* Final handover: student import/lifecycle mobile safety */
+.student-import-tools{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin:.65rem 0 1rem}
+.student-import-tools small{color:var(--muted);line-height:1.45}
+.documents-shell input[type="file"].text-field{display:block;width:100%;max-width:100%;min-width:0;overflow:hidden}
+.documents-shell .detail-grid>*{min-width:0}
+@media(max-width:620px){
+ .student-import-tools{display:grid;grid-template-columns:1fr;align-items:stretch}
+ .student-import-tools .secondary-button{width:100%;justify-content:center}
+ .documents-shell .detail-grid{grid-template-columns:1fr!important}
+ .documents-shell .detail-grid .action-button,.documents-shell .detail-grid .secondary-button{width:100%;justify-content:center}
+ .documents-shell .documents-recent>div>article{align-items:flex-start;flex-direction:column}
+}

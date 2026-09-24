@@ -17,7 +17,8 @@ const label=(labels:Raw,locale:Locale,fallback:string)=>typeof labels[locale]===
 const titleize=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());
 const cell=(v:unknown)=>v===null||v===undefined||v===''?'—':typeof v==='object'?JSON.stringify(v):String(v);
 function safeCsvCell(v:unknown){let s=cell(v);if(/^[=+\-@]/.test(s))s=`'${s}`;return `"${s.replaceAll('"','""')}"`;}
-function downloadCsv(result:Result){const header=result.columns.map(safeCsvCell).join(',');const rows=result.rows.map(row=>result.columns.map(c=>safeCsvCell(row[c])).join(',')).join('\r\n');const blob=new Blob(['\ufeff',header,'\r\n',rows],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${result.report_key}-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+function triggerDownload(blob:Blob,filename:string){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();window.setTimeout(()=>{a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1500);},2000);}
+function downloadCsv(result:Result){const header=result.columns.map(safeCsvCell).join(',');const rows=result.rows.map(row=>result.columns.map(c=>safeCsvCell(row[c])).join(',')).join('\r\n');const blob=new Blob(['\ufeff',header,'\r\n',rows],{type:'text/csv;charset=utf-8'});triggerDownload(blob,`${result.report_key}-${new Date().toISOString().slice(0,10)}.csv`);}
 function minusDays(date:string,days:number){const d=new Date(`${date}T00:00:00Z`);if(Number.isNaN(d.valueOf()))return date;d.setUTCDate(d.getUTCDate()-days);return d.toISOString().slice(0,10);}
 const idValue=(value:string)=>value?Number(value):null;
 const uiLocale=(locale:Locale):UiLocale=>locale==='ur'?'ur':'en';
@@ -93,7 +94,7 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
    if(!response.ok){const payload=await response.json().catch(()=>({})) as {error?:string};setError(locale==='ur'?t.error:(payload.error||t.error));return;}
    const blob=await response.blob();
    if(requestId!==requestVersion.current)return;
-   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${submittedReport.replaceAll('_','-')}-${dateTo}.pdf`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+   triggerDownload(blob,`${submittedReport.replaceAll('_','-')}-${dateTo}.pdf`);
   }catch{
    if(requestId===requestVersion.current)setError(t.error);
   }finally{
