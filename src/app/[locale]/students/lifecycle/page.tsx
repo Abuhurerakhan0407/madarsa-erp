@@ -6,14 +6,114 @@ import type { SupportedLocale } from "@/lib/i18n/config";
 import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import { getStudentLifecycleCenter } from "@/lib/students/lifecycle";
 
-const copy={
- en:{kicker:"Student lifecycle operations",title:"Import, Promotion & Renewal",body:"Run governed student imports and next-session planning without rewriting current-year history. Duplicate imports are held for review, and promotion or renewal creates planned future enrollments only.",back:"Back to students",nextSession:"Prepare next academic session",sourceSession:"Source session",sessionKey:"Session key",sessionLabel:"English label",startsOn:"Starts on",endsOn:"Ends on",prepare:"Prepare session",importTitle:"CSV student import",csvFile:"CSV file",template:"Download CSV template",templateHint:"Use the template headers exactly. Up to 100 students per file.",placement:"Class / group",joinedOn:"Joining date",preview:"Preview",importAction:"Import students",rolloverTitle:"Promotion & renewal planning",mode:"Mode",targetSession:"Target session",targetGroup:"Target class / group",students:"Select",selectAll:"Select / clear all",promotion:"Promotion",renewal:"Renewal",plan:"Plan rollover",jobs:"Recent lifecycle jobs",none:"Nothing to show yet.",error:"Unable to update student lifecycle operations.",guardrail:"The next session is created as draft and current classes are cloned. Current enrollments are not closed by this step.",rows:"rows",created:"created",blocked:"blocked",failed:"failed",planned:"planned"},
- ur:{kicker:"طلبہ لائف سائیکل آپریشنز",title:"امپورٹ، پروموشن و رینیول",body:"موجودہ تعلیمی سال کی تاریخ بدلے بغیر طلبہ امپورٹ اور اگلے سیشن کی منصوبہ بندی کریں۔ مشتبہ ڈپلیکیٹس ریویو کے لیے روکے جاتے ہیں اور پروموشن/رینیول صرف مستقبل کی planned enrollment بناتی ہے۔",back:"طلبہ پر واپس",nextSession:"اگلا تعلیمی سیشن تیار کریں",sourceSession:"موجودہ سیشن",sessionKey:"سیشن کلید",sessionLabel:"انگریزی نام",startsOn:"شروع",endsOn:"اختتام",prepare:"سیشن تیار کریں",importTitle:"CSV طالب علم امپورٹ",csvFile:"CSV فائل",template:"CSV ٹیمپلیٹ ڈاؤن لوڈ کریں",templateHint:"ٹیمپلیٹ کے ہیڈرز استعمال کریں۔ ایک فائل میں زیادہ سے زیادہ 100 طلبہ۔",placement:"کلاس / گروپ",joinedOn:"داخلہ تاریخ",preview:"پری ویو",importAction:"طلبہ امپورٹ کریں",rolloverTitle:"پروموشن و رینیول پلان",mode:"موڈ",targetSession:"اگلا سیشن",targetGroup:"اگلی کلاس / گروپ",students:"منتخب کریں",selectAll:"سب منتخب / صاف",promotion:"پروموشن",renewal:"رینیول",plan:"رول اوور پلان کریں",jobs:"حالیہ لائف سائیکل جابز",none:"ابھی کوئی ریکارڈ نہیں۔",error:"طلبہ لائف سائیکل آپریشن اپ ڈیٹ نہیں ہو سکا۔",guardrail:"اگلا سیشن draft بنتا ہے اور موجودہ کلاسیں clone ہوتی ہیں۔ اس مرحلے پر موجودہ enrollment بند نہیں کی جاتی۔",rows:"قطاریں",created:"بنائے گئے",blocked:"روکے گئے",failed:"ناکام",planned:"پلان"}
+const copy = {
+  en: {
+    kicker: "Students",
+    title: "Import Students",
+    body: "Upload a validated CSV to create students, guardians, and class links in one controlled import.",
+    back: "Back to students",
+    csvFile: "CSV file",
+    template: "Download sample CSV",
+    templateHint: "Required: student name. Optional: Urdu name, DOB, gender, locale, guardian name, relationship, phone, and email. Class placement is selected below.",
+    placement: "Class / group",
+    joinedOn: "Admission date",
+    preview: "Import preview",
+    importAction: "Import students",
+    importing: "Importing students…",
+    valid: "Valid",
+    warnings: "Warnings",
+    invalid: "Invalid",
+    duplicates: "Duplicates",
+    rows: "rows",
+    row: "Row",
+    student: "Student",
+    guardian: "Guardian",
+    issue: "Issue",
+    status: "Status",
+    validRow: "Ready",
+    warningRow: "Warning",
+    invalidRow: "Invalid",
+    noGuardian: "No guardian",
+    reviewConfirm: "I reviewed this preview and want to import all valid rows.",
+    downloadErrors: "Download error CSV",
+    summary: "Import result",
+    created: "Created",
+    linked: "Guardians linked",
+    skipped: "Skipped / review",
+    failed: "Failed",
+    recent: "Recent imports",
+    none: "No import jobs yet.",
+    chooseCsv: "Choose a CSV file to preview records before importing.",
+    csvError: "Unable to read this CSV.",
+    importError: "Unable to import students.",
+    placementRequired: "Choose a class or group.",
+    invalidRowsBlock: "Fix invalid or duplicate rows before importing.",
+    success: "Import completed."
+  },
+  ur: {
+    kicker: "طلبہ",
+    title: "طلبہ امپورٹ کریں",
+    body: "تصدیق شدہ CSV کے ذریعے طلبہ، سرپرست اور کلاس لنکس ایک محفوظ امپورٹ میں بنائیں۔",
+    back: "طلبہ پر واپس",
+    csvFile: "CSV فائل",
+    template: "نمونہ CSV ڈاؤن لوڈ کریں",
+    templateHint: "لازمی: طالب علم کا نام۔ اختیاری: اردو نام، تاریخ پیدائش، جنس، زبان، سرپرست نام، رشتہ، فون اور ای میل۔ کلاس نیچے منتخب کریں۔",
+    placement: "کلاس / گروپ",
+    joinedOn: "داخلہ تاریخ",
+    preview: "امپورٹ پری ویو",
+    importAction: "طلبہ امپورٹ کریں",
+    importing: "طلبہ امپورٹ ہو رہے ہیں…",
+    valid: "درست",
+    warnings: "تنبیہات",
+    invalid: "غلط",
+    duplicates: "ڈپلیکیٹس",
+    rows: "قطاریں",
+    row: "قطار",
+    student: "طالب علم",
+    guardian: "سرپرست",
+    issue: "مسئلہ",
+    status: "حالت",
+    validRow: "تیار",
+    warningRow: "تنبیہ",
+    invalidRow: "غلط",
+    noGuardian: "سرپرست نہیں",
+    reviewConfirm: "میں نے پری ویو دیکھ لیا ہے اور تمام درست قطاریں امپورٹ کرنا چاہتا ہوں۔",
+    downloadErrors: "غلطیوں کی CSV ڈاؤن لوڈ کریں",
+    summary: "امپورٹ نتیجہ",
+    created: "بنائے گئے",
+    linked: "سرپرست لنک ہوئے",
+    skipped: "روکے گئے / ریویو",
+    failed: "ناکام",
+    recent: "حالیہ امپورٹس",
+    none: "ابھی کوئی امپورٹ جاب نہیں۔",
+    chooseCsv: "امپورٹ سے پہلے ریکارڈ دیکھنے کے لیے CSV فائل منتخب کریں۔",
+    csvError: "CSV فائل نہیں پڑھی جا سکی۔",
+    importError: "طلبہ امپورٹ نہیں ہو سکے۔",
+    placementRequired: "کلاس یا گروپ منتخب کریں۔",
+    invalidRowsBlock: "امپورٹ سے پہلے غلط یا ڈپلیکیٹ قطاریں درست کریں۔",
+    success: "امپورٹ مکمل ہوا۔"
+  }
 } as const;
 
-type PageProps={params:Promise<{locale:string}>};
+type PageProps = { params: Promise<{ locale: string }> };
 
-export default async function StudentLifecyclePage({params}:PageProps){
- const{locale:rawLocale}=await params;if(!routing.locales.includes(rawLocale as SupportedLocale))notFound();const locale:SupportedLocale=rawLocale==="ur"?"ur":"en";await requireOfficeAudience(locale);const data=await getStudentLifecycleCenter();const t=copy[locale];
- return <><WorkspacePageHeader eyebrow={t.kicker} title={t.title} description={t.body} meta={`${data.students.length} students`} actions={[{label:t.back,href:`/${locale}/students`}]}/><StudentLifecycleCenter data={data} copy={t}/></>;
+export default async function StudentLifecyclePage({ params }: PageProps) {
+  const { locale: rawLocale } = await params;
+  if (!routing.locales.includes(rawLocale as SupportedLocale)) notFound();
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale);
+  const data = await getStudentLifecycleCenter();
+  const t = copy[locale];
+  return (
+    <>
+      <WorkspacePageHeader
+        eyebrow={t.kicker}
+        title={t.title}
+        description={t.body}
+        meta={`${data.students.length} students`}
+        actions={[{ label: t.back, href: `/${locale}/students` }]}
+      />
+      <StudentLifecycleCenter data={data} copy={t} />
+    </>
+  );
 }

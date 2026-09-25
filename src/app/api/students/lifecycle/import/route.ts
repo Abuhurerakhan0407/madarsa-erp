@@ -53,13 +53,16 @@ function sanitizeRow(value: unknown, index: number): StudentImportRow {
     const name = text(rawGuardian.name);
     const relationship = text(rawGuardian.relationship).toLowerCase() || "guardian";
     const phone = text(rawGuardian.phone);
+    const email = text(rawGuardian.email).toLowerCase();
     if (name.length < 2 || name.length > 160) throw new Error(`Import row ${index + 1} guardian name is invalid.`);
     if (!["father", "mother", "guardian"].includes(relationship)) throw new Error(`Import row ${index + 1} guardian relationship is invalid.`);
     if (phone.length > 40) throw new Error(`Import row ${index + 1} guardian phone is too long.`);
+    if (email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)) throw new Error(`Import row ${index + 1} guardian email is invalid.`);
     guardian = {
       name,
       relationship: relationship as "father" | "mother" | "guardian",
-      ...(phone ? { phone } : {})
+      ...(phone ? { phone } : {}),
+      ...(email ? { email } : {})
     };
   }
 

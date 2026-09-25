@@ -1,50 +1,439 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { StudentLifecycleCenter } from "@/lib/students/lifecycle";
-import { parseStudentImportCsv, STUDENT_IMPORT_TEMPLATE_CSV, type StudentImportRow } from "@/lib/students/csv-import";
+import {
+  analyzeStudentImportCsv,
+  STUDENT_IMPORT_TEMPLATE_CSV,
+  type StudentImportAnalysis,
+  type StudentImportIssue
+} from "@/lib/students/csv-import";
 
-type Copy={nextSession:string;sourceSession:string;sessionKey:string;sessionLabel:string;startsOn:string;endsOn:string;prepare:string;importTitle:string;csvFile:string;template:string;templateHint:string;placement:string;joinedOn:string;preview:string;importAction:string;rolloverTitle:string;mode:string;targetSession:string;targetGroup:string;students:string;selectAll:string;promotion:string;renewal:string;plan:string;jobs:string;none:string;error:string;guardrail:string;rows:string;created:string;blocked:string;failed:string;planned:string};
+type Copy = {
+  csvFile: string;
+  template: string;
+  templateHint: string;
+  placement: string;
+  joinedOn: string;
+  preview: string;
+  importAction: string;
+  importing: string;
+  valid: string;
+  warnings: string;
+  invalid: string;
+  duplicates: string;
+  rows: string;
+  row: string;
+  student: string;
+  guardian: string;
+  issue: string;
+  status: string;
+  validRow: string;
+  warningRow: string;
+  invalidRow: string;
+  noGuardian: string;
+  reviewConfirm: string;
+  downloadErrors: string;
+  summary: string;
+  created: string;
+  linked: string;
+  skipped: string;
+  failed: string;
+  recent: string;
+  none: string;
+  chooseCsv: string;
+  csvError: string;
+  importError: string;
+  placementRequired: string;
+  invalidRowsBlock: string;
+  success: string;
+};
 
-async function postJson(url:string,body:unknown){const response=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});const payload=await response.json().catch(()=>({})) as Record<string,unknown>;if(!response.ok)throw new Error(typeof payload.error==="string"?payload.error:"Request failed.");return payload;}
-function addOneDay(value:string){const d=new Date(`${value}T00:00:00Z`);d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);}
-function addOneYearMinusDay(value:string){const d=new Date(`${value}T00:00:00Z`);d.setUTCFullYear(d.getUTCFullYear()+1);d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);}
-function nextSessionDefaults(endsOn:string){const start=addOneDay(endsOn);const y=Number(start.slice(0,4));return{key:`${y}_${String(y+1).slice(-2)}`,label:`${y}-${String(y+1).slice(-2)}`,startsOn:start,endsOn:addOneYearMinusDay(start)};}
+type ImportResult = {
+  created: number;
+  linked: number;
+  skipped: number;
+  failed: number;
+  state: string;
+};
 
-export function StudentLifecycleCenter({data,copy}:{data:StudentLifecycleCenter;copy:Copy}){
- const router=useRouter();const[busy,setBusy]=useState<string|null>(null);const[message,setMessage]=useState<string|null>(null);const[csvRows,setCsvRows]=useState<StudentImportRow[]>([]);const[selectedStudents,setSelectedStudents]=useState<number[]>([]);
- const activeSession=data.sessions.find(s=>s.status==="active")??data.sessions[0];const defaults=activeSession?nextSessionDefaults(activeSession.endsOn):null;
- const currentGroups=useMemo(()=>data.groups.filter(g=>g.sessionId===activeSession?.id),[data.groups,activeSession?.id]);const futureSessions=useMemo(()=>data.sessions.filter(s=>s.id!==activeSession?.id&&(s.status==="draft"||s.status==="active")),[data.sessions,activeSession?.id]);
- const defaultImportGroup=currentGroups[0];const[importGroupId,setImportGroupId]=useState(defaultImportGroup?.id??0);const[rolloverSessionId,setRolloverSessionId]=useState(futureSessions[0]?.id??0);const targetGroups=useMemo(()=>data.groups.filter(g=>g.sessionId===rolloverSessionId),[data.groups,rolloverSessionId]);
- async function run(key:string,action:()=>Promise<Record<string,unknown>>){setBusy(key);setMessage(null);try{const result=await action();const state=typeof result.state==="string"?result.state:"saved";const success=Number(result.succeeded_items??result.groups_cloned??0);const blocked=Number(result.blocked_items??0);const failed=Number(result.failed_items??0);setMessage(`${state}${success||blocked||failed?` · ${copy.created}/${copy.planned}: ${success} · ${copy.blocked}: ${blocked} · ${copy.failed}: ${failed}`:""}`);router.refresh();}catch(error){setMessage(error instanceof Error?error.message:copy.error);}finally{setBusy(null);}}
- function downloadTemplate(){const csv=STUDENT_IMPORT_TEMPLATE_CSV;const blob=new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="ilmgaah-student-import-template.csv";a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();window.setTimeout(()=>{a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1500);},2000);} async function readCsv(file:File|null){setMessage(null);if(!file){setCsvRows([]);return;}try{setCsvRows(parseStudentImportCsv(await file.text()));}catch(error){setCsvRows([]);setMessage(error instanceof Error?error.message:copy.error);}}
- const toggle=(id:number)=>setSelectedStudents(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id]);
- return <div className="documents-shell">
-  {message?<p className="panel empty-state">{message}</p>:null}
-  <section className="panel"><h2>{copy.nextSession}</h2><p>{copy.guardrail}</p>{activeSession&&defaults?<form action={(form)=>run("session",()=>postJson("/api/students/lifecycle/session",{sourceSessionId:activeSession.id,key:form.get("key"),label:form.get("label"),labelUr:form.get("labelUr"),startsOn:form.get("startsOn"),endsOn:form.get("endsOn")}))} className="detail-grid">
-   <label className="field-label">{copy.sourceSession}<input className="text-field" value={`${activeSession.label} · ${activeSession.startsOn} → ${activeSession.endsOn}`} readOnly/></label>
-   <label className="field-label">{copy.sessionKey}<input className="text-field" name="key" defaultValue={defaults.key} required/></label>
-   <label className="field-label">{copy.sessionLabel}<input className="text-field" name="label" defaultValue={defaults.label} required/></label>
-   <label className="field-label">Urdu label<input className="text-field" name="labelUr"/></label>
-   <label className="field-label">{copy.startsOn}<input className="text-field" type="date" name="startsOn" defaultValue={defaults.startsOn} required/></label><label className="field-label">{copy.endsOn}<input className="text-field" type="date" name="endsOn" defaultValue={defaults.endsOn} required/></label>
-   <div><button className="action-button" disabled={busy!==null} type="submit">{copy.prepare}</button></div>
-  </form>:<p className="empty-state">{copy.none}</p>}</section>
+const csvCell = (value: unknown) => {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
 
-  <section className="panel"><h2>{copy.importTitle}</h2><div className="student-import-tools"><button className="secondary-button" type="button" onClick={downloadTemplate}>{copy.template}</button><small>{copy.templateHint}</small></div><form action={(form)=>run("import",async()=>{const group=data.groups.find(g=>g.id===Number(form.get("groupId")));if(!group)throw new Error("Choose a valid class or group.");if(!csvRows.length)throw new Error("Choose a CSV file with at least one student.");return postJson("/api/students/lifecycle/import",{sessionId:group.sessionId,programId:group.programId,groupId:group.id,joinedOn:form.get("joinedOn"),rows:csvRows});})} className="detail-grid">
-   <label className="field-label">{copy.csvFile}<input className="text-field" type="file" accept=".csv,text/csv" onChange={e=>readCsv(e.target.files?.[0]??null)}/></label>
-   <label className="field-label">{copy.placement}<select className="text-field" name="groupId" value={importGroupId} onChange={e=>setImportGroupId(Number(e.target.value))}>{currentGroups.map(g=><option value={g.id} key={g.id}>{g.programLabel} · {g.label}</option>)}</select></label>
-   <label className="field-label">{copy.joinedOn}<input className="text-field" type="date" name="joinedOn" defaultValue={activeSession?.startsOn}/></label>
-   <div><button className="action-button" disabled={busy!==null||!csvRows.length||!importGroupId} type="submit">{copy.importAction}</button></div>
-  </form>{csvRows.length?<div className="documents-recent"><p><strong>{copy.preview}: {csvRows.length} {copy.rows}</strong></p><div>{csvRows.slice(0,5).map((row,index)=><article key={`${row.display_name}-${index}`}><div><strong>{row.display_name}</strong><small>{row.guardian?.name??"No guardian in CSV"}</small></div><span>{row.preferred_locale??"en"}</span></article>)}</div></div>:null}</section>
+function triggerCsv(content: string, filename: string) {
+  const blob = new Blob(["\ufeff", content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  window.setTimeout(() => {
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }, 1200);
+}
 
-  <section className="panel"><h2>{copy.rolloverTitle}</h2><form action={(form)=>run("rollover",()=>postJson("/api/students/lifecycle/rollover",{studentPersonIds:selectedStudents,targetSessionId:Number(form.get("targetSessionId")),targetGroupId:Number(form.get("targetGroupId")),mode:form.get("mode")}))} className="detail-grid">
-   <label className="field-label">{copy.mode}<select className="text-field" name="mode" defaultValue="promotion"><option value="promotion">{copy.promotion}</option><option value="renewal">{copy.renewal}</option></select></label>
-   <label className="field-label">{copy.targetSession}<select className="text-field" name="targetSessionId" value={rolloverSessionId} onChange={e=>setRolloverSessionId(Number(e.target.value))}><option value={0}>—</option>{futureSessions.map(s=><option value={s.id} key={s.id}>{s.label} · {s.status}</option>)}</select></label>
-   <label className="field-label">{copy.targetGroup}<select className="text-field" name="targetGroupId" defaultValue={targetGroups[0]?.id??0} key={rolloverSessionId}><option value={0}>—</option>{targetGroups.map(g=><option value={g.id} key={g.id}>{g.programLabel} · {g.label}</option>)}</select></label>
-   <div><button className="action-button" disabled={busy!==null||!selectedStudents.length||!rolloverSessionId||!targetGroups.length} type="submit">{copy.plan}</button></div>
-  </form><div className="documents-recent"><p><button className="secondary-button" type="button" onClick={()=>setSelectedStudents(selectedStudents.length===data.students.length?[]:data.students.map(s=>s.personId))}>{copy.selectAll}</button> · {selectedStudents.length} / {data.students.length}</p><div>{data.students.map(student=><article key={student.personId}><div><strong>{student.studentNumber} · {student.name}</strong><small>{data.groups.find(g=>g.id===student.groupId)?.label??"No group"}</small></div><label><input type="checkbox" checked={selectedStudents.includes(student.personId)} onChange={()=>toggle(student.personId)}/> {copy.students}</label></article>)}</div></div></section>
+async function postJson(url: string, body: unknown) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const payload = await response.json().catch(() => ({})) as Record<string, unknown>;
+  if (!response.ok) {
+    throw new Error(typeof payload.error === "string" ? payload.error : "Request failed.");
+  }
+  return payload;
+}
 
-  <section className="panel"><h2>{copy.jobs}</h2>{data.jobs.length?<div className="documents-recent"><div>{data.jobs.map(job=><article key={job.id}><div><strong>#{job.id} · {job.operationType} · {job.state}</strong><small>{new Date(job.createdAt).toLocaleString()} · {copy.rows}: {job.totalItems}</small></div><span>{copy.created}/{copy.planned}: {job.succeededItems} · {copy.blocked}: {job.blockedItems} · {copy.failed}: {job.failedItems}</span></article>)}</div></div>:<p className="empty-state">{copy.none}</p>}</section>
- </div>;
+function issueText(issues: StudentImportIssue[]) {
+  return issues.map((item) => item.message).join(" · ");
+}
+
+export function StudentLifecycleCenter({
+  data,
+  copy
+}: {
+  data: StudentLifecycleCenter;
+  copy: Copy;
+}) {
+  const router = useRouter();
+  const lock = useRef(false);
+  const readVersion = useRef(0);
+  const activeSession = data.sessions.find((session) => session.status === "active") ?? data.sessions[0] ?? null;
+  const currentGroups = useMemo(
+    () => data.groups.filter((group) => group.status === "active" && (!activeSession || group.sessionId === activeSession.id)),
+    [data.groups, activeSession]
+  );
+  const importJobs = useMemo(
+    () => data.jobs.filter((job) => job.operationType === "import").slice(0, 8),
+    [data.jobs]
+  );
+
+  const [analysis, setAnalysis] = useState<StudentImportAnalysis | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [groupId, setGroupId] = useState(currentGroups[0]?.id ?? 0);
+  const [joinedOn, setJoinedOn] = useState(activeSession?.startsOn ?? new Date().toISOString().slice(0, 10));
+  const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+
+  const invalidRows = analysis?.rows.filter((preview) => preview.issues.some((item) => item.severity === "error")).length ?? 0;
+  const warningCount = analysis?.issues.filter((item) => item.severity === "warning").length ?? 0;
+  const duplicateCount = analysis?.issues.filter((item) => item.code === "duplicate_in_file").length ?? 0;
+  const canImport = Boolean(
+    analysis
+    && analysis.validRows.length > 0
+    && invalidRows === 0
+    && groupId
+    && joinedOn
+    && confirmed
+    && !busy
+  );
+
+  function downloadTemplate() {
+    triggerCsv(STUDENT_IMPORT_TEMPLATE_CSV, "ilmgaah-student-import-template.csv");
+  }
+
+  function downloadErrors() {
+    if (!analysis) return;
+    const issues: StudentImportIssue[] = [
+      ...analysis.headerWarnings.map((message) => ({
+        rowNumber: 1,
+        severity: "warning" as const,
+        code: "header_warning",
+        message
+      })),
+      ...analysis.issues
+    ];
+    if (!issues.length) return;
+    const rows = [
+      ["row_number", "severity", "code", "explanation"].join(","),
+      ...issues.map((item) => [
+        csvCell(item.rowNumber),
+        csvCell(item.severity),
+        csvCell(item.code),
+        csvCell(item.message)
+      ].join(","))
+    ];
+    triggerCsv(rows.join("\r\n"), "ilmgaah-student-import-errors.csv");
+  }
+
+  async function readCsv(file: File | null) {
+    const version = ++readVersion.current;
+    setMessage(null);
+    setResult(null);
+    setConfirmed(false);
+
+    if (!file) {
+      setFileName("");
+      setAnalysis(null);
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setFileName(file.name);
+      setAnalysis(null);
+      setMessage({ tone: "error", text: copy.csvError });
+      return;
+    }
+
+    setFileName(file.name);
+    try {
+      const text = await file.text();
+      if (version !== readVersion.current) return;
+      const next = analyzeStudentImportCsv(text);
+      setAnalysis(next);
+      if (next.issues.some((item) => item.severity === "error")) {
+        setMessage({ tone: "error", text: copy.invalidRowsBlock });
+      }
+    } catch (error) {
+      if (version !== readVersion.current) return;
+      setAnalysis(null);
+      setMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : copy.csvError
+      });
+    }
+  }
+
+  async function runImport() {
+    if (!analysis || lock.current || !canImport) return;
+    const group = currentGroups.find((item) => item.id === groupId);
+    if (!group) {
+      setMessage({ tone: "error", text: copy.placementRequired });
+      return;
+    }
+
+    lock.current = true;
+    setBusy(true);
+    setMessage(null);
+    setResult(null);
+    const requestKey = `student-import:${crypto.randomUUID()}`;
+
+    try {
+      const payload = await postJson("/api/students/lifecycle/import", {
+        sessionId: group.sessionId,
+        programId: group.programId,
+        groupId: group.id,
+        joinedOn,
+        rows: analysis.validRows,
+        requestKey
+      });
+      const nextResult: ImportResult = {
+        created: Number(payload.succeeded_items ?? 0),
+        linked: Number(payload.guardian_linked_items ?? 0),
+        skipped: Number(payload.blocked_items ?? 0),
+        failed: Number(payload.failed_items ?? 0),
+        state: typeof payload.state === "string" ? payload.state : "completed"
+      };
+      setResult(nextResult);
+      setMessage({ tone: "success", text: copy.success });
+      setConfirmed(false);
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : copy.importError
+      });
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="student-import-shell">
+      {message ? (
+        <div
+          className={message.tone === "success" ? "form-message form-success" : "form-message form-error"}
+          role={message.tone === "error" ? "alert" : "status"}
+        >
+          {message.text}
+        </div>
+      ) : null}
+
+      <section className="panel student-import-setup">
+        <div className="student-import-heading">
+          <div>
+            <h2>{copy.csvFile}</h2>
+            <p>{copy.templateHint}</p>
+          </div>
+          <button className="secondary-button" type="button" onClick={downloadTemplate} disabled={busy}>
+            {copy.template}
+          </button>
+        </div>
+
+        <label
+          className="student-import-dropzone"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            event.preventDefault();
+            if (busy) return;
+            void readCsv(event.dataTransfer.files?.[0] ?? null);
+          }}
+        >
+          <span>{fileName || copy.chooseCsv}</span>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            disabled={busy}
+            onChange={(event) => void readCsv(event.target.files?.[0] ?? null)}
+          />
+        </label>
+
+        <div className="student-import-placement">
+          <label className="field-label">
+            {copy.placement}
+            <select
+              className="text-field"
+              value={groupId}
+              disabled={busy}
+              onChange={(event) => {
+                setGroupId(Number(event.target.value));
+                setConfirmed(false);
+              }}
+            >
+              <option value={0}>—</option>
+              {currentGroups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.programLabel} · {group.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field-label">
+            {copy.joinedOn}
+            <input
+              className="text-field"
+              type="date"
+              value={joinedOn}
+              disabled={busy}
+              onChange={(event) => {
+                setJoinedOn(event.target.value);
+                setConfirmed(false);
+              }}
+            />
+          </label>
+        </div>
+      </section>
+
+      {analysis ? (
+        <section className="panel student-import-preview" aria-live="polite">
+          <div className="student-import-heading">
+            <div>
+              <h2>{copy.preview}</h2>
+              <p>{analysis.rows.length} {copy.rows}</p>
+            </div>
+            {(analysis.issues.length || analysis.headerWarnings.length) ? (
+              <button className="secondary-button" type="button" onClick={downloadErrors} disabled={busy}>
+                {copy.downloadErrors}
+              </button>
+            ) : null}
+          </div>
+
+          <div className="student-import-metrics">
+            <div><span>{copy.valid}</span><strong>{analysis.validRows.length}</strong></div>
+            <div><span>{copy.warnings}</span><strong>{warningCount + analysis.headerWarnings.length}</strong></div>
+            <div><span>{copy.invalid}</span><strong>{invalidRows}</strong></div>
+            <div><span>{copy.duplicates}</span><strong>{duplicateCount}</strong></div>
+          </div>
+
+          {analysis.headerWarnings.length ? (
+            <div className="student-import-header-warnings">
+              {analysis.headerWarnings.map((warning) => <p key={warning}>{warning}</p>)}
+            </div>
+          ) : null}
+
+          <div className="student-import-row-list">
+            {analysis.rows.map((preview) => {
+              const hasError = preview.issues.some((item) => item.severity === "error");
+              const hasWarning = preview.issues.some((item) => item.severity === "warning");
+              const status = hasError ? copy.invalidRow : hasWarning ? copy.warningRow : copy.validRow;
+              return (
+                <article
+                  className={`student-import-row ${hasError ? "is-error" : hasWarning ? "is-warning" : "is-valid"}`}
+                  key={preview.rowNumber}
+                >
+                  <div className="student-import-row-number">{copy.row} {preview.rowNumber}</div>
+                  <div className="student-import-row-main">
+                    <strong>{preview.row?.display_name || "—"}</strong>
+                    <span>{copy.guardian}: {preview.row?.guardian?.name || copy.noGuardian}</span>
+                    {preview.issues.length ? <small>{copy.issue}: {issueText(preview.issues)}</small> : null}
+                  </div>
+                  <span className="status-pill">{status}</span>
+                </article>
+              );
+            })}
+          </div>
+
+          <label className="student-import-confirm">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              disabled={busy || invalidRows > 0 || analysis.validRows.length === 0}
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />
+            <span>{copy.reviewConfirm}</span>
+          </label>
+
+          {busy ? (
+            <div className="student-import-progress" role="status">
+              <progress />
+              <span>{copy.importing}</span>
+            </div>
+          ) : null}
+
+          <button
+            className="action-button action-button-primary student-import-primary"
+            type="button"
+            disabled={!canImport}
+            aria-busy={busy || undefined}
+            onClick={() => void runImport()}
+          >
+            {busy ? copy.importing : copy.importAction}
+          </button>
+        </section>
+      ) : null}
+
+      {result ? (
+        <section className="panel student-import-result" aria-live="polite">
+          <h2>{copy.summary}</h2>
+          <div className="student-import-metrics">
+            <div><span>{copy.created}</span><strong>{result.created}</strong></div>
+            <div><span>{copy.linked}</span><strong>{result.linked}</strong></div>
+            <div><span>{copy.skipped}</span><strong>{result.skipped}</strong></div>
+            <div><span>{copy.failed}</span><strong>{result.failed}</strong></div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="panel student-import-history">
+        <h2>{copy.recent}</h2>
+        {importJobs.length ? (
+          <div className="student-import-row-list">
+            {importJobs.map((job) => (
+              <article className="student-import-row" key={job.id}>
+                <div className="student-import-row-number">#{job.id}</div>
+                <div className="student-import-row-main">
+                  <strong>{job.state}</strong>
+                  <span>{new Date(job.createdAt).toLocaleString()}</span>
+                </div>
+                <span className="status-pill">
+                  {job.succeededItems}/{job.totalItems}
+                </span>
+              </article>
+            ))}
+          </div>
+        ) : <p className="empty-state">{copy.none}</p>}
+      </section>
+    </div>
+  );
 }
