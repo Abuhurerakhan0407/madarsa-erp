@@ -14,5 +14,5 @@ const emptyCopy={
 
 export default async function ReportsPage({params}:{params:Promise<{locale:string}>}){
  const {locale}=await params;if(!routing.locales.includes(locale as SupportedLocale))notFound();const typedLocale:SupportedLocale=locale==='ur'?'ur':'en';await requireOfficeAudience(typedLocale);const data=await getReportsHub();const t=emptyCopy[typedLocale];
- return <div className={styles.workspace}>{data.recentRuns.length===0?<InlineState title={t.title} body={t.body} action={<a className="action-button action-button-primary" href="#reports-workspace">{t.action}</a>}/>:null}<div id="reports-workspace"><ReportsHub locale={typedLocale} definitions={data.reports} recentRuns={data.recentRuns} localDate={data.localDate} filters={data.filters}/></div></div>;
+ return <div className={styles.workspace}>{data.recentRuns.length===0?<InlineState title={t.title} body={t.body} action={<a className="action-button action-button-primary" href="#reports-workspace">{t.action}</a>}/>:null}<div id="reports-workspace"><ReportsHub locale={typedLocale} definitions={data.reports} recentRuns={data.recentRuns} localDate={data.localDate} filters={data.filters} institutionName={data.institutionName}/></div></div>;
 }

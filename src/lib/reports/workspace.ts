@@ -10,7 +10,8 @@ export type ReportDefinition={id:number;key:string;labels:Raw;domain:string;para
 export type ReportFilterOption={id:number;key:string;labels:Raw;sessionId:number|null;programId:number|null};
 export type ReportPersonFilter={personId:number;reference:string;name:string;designation:string|null};
 function option(r:Raw):ReportFilterOption|null{const id=n(r.id),key=s(r.key);if(!id||!key)return null;return{id,key,labels:obj(r.labels),sessionId:n(r.session_id),programId:n(r.program_id)};}
-export async function getReportsHub(){const raw=obj(await rpc('get_operational_reports_hub_v1'));const filters=obj(raw.filters);return{
+export async function getReportsHub(){const workspace=await getTenantContext();if(!workspace)throw new Error('Active workspace is required.');const raw=obj(await rpc('get_operational_reports_hub_v1'));const filters=obj(raw.filters);return{
+ institutionName:workspace.tenantName,
  localDate:s(raw.local_date)??'',
  reports:arr(raw.reports).flatMap(r=>{const id=n(r.id),key=s(r.key);if(!id||!key)return[];return[{id,key,labels:obj(r.labels),domain:s(r.domain)??'operations',parameterSchema:obj(r.parameter_schema),allowedColumns:Array.isArray(r.allowed_columns)?r.allowed_columns.filter((x):x is string=>typeof x==='string'):[]}];}) as ReportDefinition[],
  recentRuns:arr(raw.recent_runs).map(r=>({id:n(r.id)??0,reportKey:s(r.report_key)??'',labels:obj(r.labels),parameters:obj(r.parameters),outputFormat:s(r.output_format)??'screen',state:s(r.state)??'completed',rowCount:n(r.row_count)??0,createdAt:s(r.created_at)??'',completedAt:s(r.completed_at)})),

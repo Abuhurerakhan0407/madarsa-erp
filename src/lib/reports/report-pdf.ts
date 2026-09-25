@@ -10,7 +10,7 @@ const PAGE_WIDTH = 842;
 const PAGE_HEIGHT = 595;
 const LEFT = 28;
 const TABLE_WIDTH = 786;
-const TOP = 548;
+const TOP = 518;
 const ROW_HEIGHT = 20;
 const HEADER_HEIGHT = 24;
 const ROWS_PER_PAGE = 23;
@@ -44,6 +44,11 @@ function reportTitle(result:ReportResult){
  const english=result.labels?.en;
  return typeof english==="string"&&english.trim()?english:titleize(result.reportKey);
 }
+function reportMeta(result:ReportResult,generatedOn:string):string{
+ const labels:Record<string,string>={date_from:"From",date_to:"To",program_id:"Program",group_id:"Group",student_person_id:"Student",teacher_person_id:"Teacher"};
+ const filters=Object.entries(result.parameters).filter(([,value])=>value!==null&&value!==undefined&&value!=="").map(([key,value])=>`${labels[key]??titleize(key)}: ${String(value)}`);
+ return [...filters,`Generated: ${generatedOn}`].join(" · ");
+}
 function configFor(result:ReportResult):{title:string;columns:ColumnConfig[]}{
  if(!supported.has(result.reportKey)) throw new Error("PDF output is not supported for this report.");
  const keys=result.columns.length?result.columns:Object.keys(result.rows[0]??{});
@@ -55,10 +60,11 @@ function configFor(result:ReportResult):{title:string;columns:ColumnConfig[]}{
   columns:keys.map(key=>({key,label:columnLabels[key]??titleize(key),width,maxChars}))
  };
 }
-function pageHeader(config: { title: string; columns: ColumnConfig[] }, context: ReportPdfContext, result: ReportResult, page: number, totalPages: number): PdfLayoutCommand[] {
+function pageHeader(config: { title: string; columns: ColumnConfig[] }, context: ReportPdfContext, result: ReportResult, page: number, totalPages: number, generatedOn:string): PdfLayoutCommand[] {
  const commands: PdfLayoutCommand[] = [
   text(LEFT, 570, context.institutionName, 12, true),
   text(LEFT, 556, `${config.title} · ${context.branchName}`, 9, true),
+  text(LEFT, 540, fit(reportMeta(result,generatedOn),118), 6.5),
   text(690, 570, `Run #${result.runId}`, 7),
   text(690, 556, `Page ${page}/${totalPages}`, 7),
   { type: "rect", x: LEFT, y: TOP - HEADER_HEIGHT + 2, width: TABLE_WIDTH, height: HEADER_HEIGHT, lineWidth: 0.8 }
@@ -73,10 +79,11 @@ function pageHeader(config: { title: string; columns: ColumnConfig[] }, context:
 function operationalReportPages(result: ReportResult, context: ReportPdfContext): PdfLayoutCommand[][] {
  const config=configFor(result);
  const rows = result.rows;
+ const generatedOn=new Date().toISOString().slice(0,10);
  const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
  const pages: PdfLayoutCommand[][] = [];
  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
-  const commands = pageHeader(config, context, result, pageIndex + 1, totalPages);
+  const commands = pageHeader(config, context, result, pageIndex + 1, totalPages,generatedOn);
   const pageRows = rows.slice(pageIndex * ROWS_PER_PAGE, (pageIndex + 1) * ROWS_PER_PAGE);
   pageRows.forEach((row, rowIndex) => {
    const y = TOP - HEADER_HEIGHT - (rowIndex + 1) * ROW_HEIGHT + 5;

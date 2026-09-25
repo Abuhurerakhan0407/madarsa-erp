@@ -3,6 +3,7 @@
 import {useMemo,useRef,useState} from 'react';
 import type {Locale} from '@/lib/i18n/config';
 import {reportsCopy} from '@/lib/reports/copy';
+import {reportSupportsParameter,type ReportParameterKey} from '@/lib/reports/model';
 import {formatReportCell} from '@/lib/reports/presentation';
 import type {ReportFilterOption,ReportPersonFilter} from '@/lib/reports/workspace';
 
@@ -18,7 +19,8 @@ const titleize=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,m=>m.to
 const cell=(v:unknown)=>v===null||v===undefined||v===''?'—':typeof v==='object'?JSON.stringify(v):String(v);
 function safeCsvCell(v:unknown){let s=cell(v);if(/^[=+\-@]/.test(s))s=`'${s}`;return `"${s.replaceAll('"','""')}"`;}
 function triggerDownload(blob:Blob,filename:string){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();window.setTimeout(()=>{a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1500);},2000);}
-function downloadCsv(result:Result){const header=result.columns.map(safeCsvCell).join(',');const rows=result.rows.map(row=>result.columns.map(c=>safeCsvCell(row[c])).join(',')).join('\r\n');const blob=new Blob(['\ufeff',header,'\r\n',rows],{type:'text/csv;charset=utf-8'});triggerDownload(blob,`${result.report_key}-${new Date().toISOString().slice(0,10)}.csv`);}
+function filenamePart(value:string){const safe=value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');return safe||'ilmgaah';}
+function downloadCsv(result:Result,institutionName:string,dateSuffix:string){const header=result.columns.map(safeCsvCell).join(',');const rows=result.rows.map(row=>result.columns.map(c=>safeCsvCell(row[c])).join(',')).join('\r\n');const blob=new Blob(['\ufeff',header,'\r\n',rows],{type:'text/csv;charset=utf-8'});triggerDownload(blob,`${filenamePart(institutionName)}-${filenamePart(result.report_key)}-${dateSuffix}.csv`);}
 function minusDays(date:string,days:number){const d=new Date(`${date}T00:00:00Z`);if(Number.isNaN(d.valueOf()))return date;d.setUTCDate(d.getUTCDate()-days);return d.toISOString().slice(0,10);}
 const idValue=(value:string)=>value?Number(value):null;
 const uiLocale=(locale:Locale):UiLocale=>locale==='ur'?'ur':'en';
@@ -31,7 +33,7 @@ const columnCopy:Record<UiLocale,Record<string,string>>={
 function columnLabel(column:string,locale:Locale){const language=uiLocale(locale);return columnCopy[language][column]??(language==='ur'?`فیلڈ: ${column}`:titleize(column));}
 function outputFormatLabel(format:string,locale:Locale){if(format==='screen')return reportsCopy[locale].screen;if(format==='csv')return 'CSV';if(format==='pdf')return 'PDF';return format.toUpperCase();}
 
-export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{locale:Locale;definitions:Definition[];recentRuns:Recent[];localDate:string;filters:Filters}){
+export function ReportsHub({locale,definitions,recentRuns,localDate,filters,institutionName}:{locale:Locale;definitions:Definition[];recentRuns:Recent[];localDate:string;filters:Filters;institutionName:string}){
  const t=reportsCopy[locale];
  const [selected,setSelected]=useState(definitions[0]?.key??'');
  const [dateFrom,setDateFrom]=useState(minusDays(localDate,29));
@@ -43,9 +45,9 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState<string|null>(null);
  const requestVersion=useRef(0);
+ const actionLock=useRef(false);
  const active=useMemo(()=>definitions.find(d=>d.key===selected)??null,[definitions,selected]);
- const schema=active?.parameterSchema??{};
- const supports=(key:string)=>Object.prototype.hasOwnProperty.call(schema,key);
+ const supports=(key:ReportParameterKey)=>reportSupportsParameter(selected,key);
  const isTeacher=selected==='teacher_attendance';
  const people=isTeacher?filters.teachers:filters.students;
  const groups=useMemo(()=>filters.groups.filter(item=>!program||item.programId===Number(program)),[filters.groups,program]);
@@ -53,6 +55,8 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
  const activeTitle=active?label(active.labels,locale,t[active.key]??titleize(active.key)):'';
  const activeDescription=active?t[`${active.key}_description`]??'':'';
  const activeDomain=active?t[`domain_${active.domain}`]??t.report:'';
+ const exportDateSuffix=supports('date_from')&&supports('date_to')?`${dateFrom}-to-${dateTo}`:localDate;
+ const canExport=Boolean(result&&result.report_key===selected);
 
  function resetOutput(){requestVersion.current+=1;setResult(null);setError(null);}
  function selectReport(key:string){if(busy)return;resetOutput();setSelected(key);setPerson('');setProgram('');setGroup('');}
@@ -63,7 +67,8 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
  function changeDateTo(value:string){resetOutput();setDateTo(value);}
 
  async function run(output:'screen'|'csv'='screen'){
-  if(!selected||busy)return;
+  if(!selected||actionLock.current||(output==='csv'&&!canExport))return;
+  actionLock.current=true;
   const requestId=++requestVersion.current;
   const submittedReport=selected;
   const submittedParameters=parameters();
@@ -74,16 +79,18 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
    if(requestId!==requestVersion.current)return;
    if(!response.ok||!payload.result){setError(locale==='ur'?t.error:(payload.error||t.error));return;}
    setResult(payload.result);
-   if(output==='csv')downloadCsv(payload.result);
+   if(output==='csv')downloadCsv(payload.result,institutionName,exportDateSuffix);
   }catch{
    if(requestId===requestVersion.current)setError(t.error);
   }finally{
+   actionLock.current=false;
    if(requestId===requestVersion.current)setBusy(false);
   }
  }
 
  async function downloadPdf(){
-  if(!selected||busy)return;
+  if(!selected||!canExport||actionLock.current)return;
+  actionLock.current=true;
   const requestId=++requestVersion.current;
   const submittedReport=selected;
   const submittedParameters=parameters();
@@ -94,10 +101,11 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
    if(!response.ok){const payload=await response.json().catch(()=>({})) as {error?:string};setError(locale==='ur'?t.error:(payload.error||t.error));return;}
    const blob=await response.blob();
    if(requestId!==requestVersion.current)return;
-   triggerDownload(blob,`${submittedReport.replaceAll('_','-')}-${dateTo}.pdf`);
+   triggerDownload(blob,`${filenamePart(institutionName)}-${filenamePart(submittedReport)}-${exportDateSuffix}.pdf`);
   }catch{
    if(requestId===requestVersion.current)setError(t.error);
   }finally{
+   actionLock.current=false;
    if(requestId===requestVersion.current)setBusy(false);
   }
  }
@@ -115,7 +123,7 @@ export function ReportsHub({locale,definitions,recentRuns,localDate,filters}:{lo
     {supports('group_id')?<label className="field-label">{t.group}<select className="text-field" value={group} disabled={busy} onChange={e=>changeGroup(e.target.value)}><option value="">{t.allGroups}</option>{groups.map(item=><option key={item.id} value={item.id}>{label(item.labels,locale,item.key)}</option>)}</select></label>:null}
     {(supports('student_person_id')||supports('teacher_person_id'))?<label className="field-label">{t.studentTeacher}<select className="text-field" value={person} disabled={busy} onChange={e=>changePerson(e.target.value)}><option value="">{isTeacher?t.teachers:t.students} · {t.allPeople}</option>{people.map(item=><option key={item.personId} value={item.personId}>{item.name}{item.reference?` · ${item.reference}`:''}</option>)}</select></label>:null}
    </div>
-   <div className="report-actions"><button type="button" className="action-button" disabled={busy||!active} aria-busy={busy||undefined} onClick={()=>void run('screen')}>{busy?<><span className="inline-spinner" aria-hidden="true"/>{t.loading}</>:t.generate}</button><button type="button" className="secondary-button" disabled={busy||!active} onClick={()=>void run('csv')}>{t.exportCsv}</button><button type="button" className="secondary-button" disabled={busy||!active} onClick={()=>void downloadPdf()}>{t.exportPdf}</button>{result?<button type="button" className="secondary-button" disabled={busy} onClick={()=>window.print()}>{t.print}</button>:null}</div>
+   <div className="report-actions"><button type="button" className="action-button" disabled={busy||!active} aria-busy={busy||undefined} onClick={()=>void run('screen')}>{busy?<><span className="inline-spinner" aria-hidden="true"/>{t.loading}</>:t.generate}</button><button type="button" className="secondary-button" disabled={busy||!active||!canExport} onClick={()=>void run('csv')}>{t.exportCsv}</button><button type="button" className="secondary-button" disabled={busy||!active||!canExport} onClick={()=>void downloadPdf()}>{t.exportPdf}</button>{result?<button type="button" className="secondary-button" disabled={busy} onClick={()=>window.print()}>{t.print}</button>:null}</div>
   </section>
   {result?<section className="panel report-output" aria-live="polite"><header><div><p className="eyebrow">#{result.run_id}</p><h2>{label(result.labels,locale,t[result.report_key]??titleize(result.report_key))}</h2></div><strong>{result.row_count} {t.rows}</strong></header>{result.rows.length?<div className="table-scroll"><table className="data-table reports-table"><thead><tr>{result.columns.map(c=><th key={c}>{columnLabel(c,locale)}</th>)}</tr></thead><tbody>{result.rows.map((row,i)=><tr key={i}>{result.columns.map(c=><td key={c} data-label={columnLabel(c,locale)}>{formatReportCell(c,row[c],locale)}</td>)}</tr>)}</tbody></table></div>:<p className="empty-state">{t.noRows}</p>}</section>:null}
   <section className="panel reports-recent"><header><h2>{t.recent}</h2></header>{recentRuns.length?<div className="reports-run-list">{recentRuns.map(r=><article key={r.id}><div><strong>{label(r.labels,locale,t[r.reportKey]??titleize(r.reportKey))}</strong><small>#{r.id} · {outputFormatLabel(r.outputFormat,locale)}</small></div><span>{r.rowCount} {t.rows}</span></article>)}</div>:<p className="empty-state">{t.noRuns}</p>}</section>

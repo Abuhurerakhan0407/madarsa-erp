@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runAppOperationalReport, supportsAppOperationalReport } from "@/lib/reports/app-runtime";
+import { isOperationalReportKey, validateReportParameters } from "@/lib/reports/model";
 import { createUnicodeOperationalReportPdf, supportsOperationalReportPdf } from "@/lib/reports/report-pdf";
 import { parseReportResult } from "@/lib/reports/workspace";
 import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
@@ -9,27 +10,10 @@ import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
 type Raw = Record<string, unknown>;
-const dateKeys=new Set(["attendance_date","date_from","date_to"]);
-const idKeys=new Set(["session_id","program_id","group_id","student_person_id","teacher_person_id"]);
-const allowedKeys=new Set([...dateKeys,...idKeys]);
 
-function parametersFor(raw: unknown): Raw | null {
- const input = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Raw : {};
- const parameters:Raw={};
- for(const [key,value] of Object.entries(input)){
-  if(!allowedKeys.has(key)) continue;
-  if(value===undefined||value===null||value==="") continue;
-  if(dateKeys.has(key)){
-   if(typeof value!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-   parameters[key]=value;
-   continue;
-  }
-  const numeric=Number(value);
-  if(!Number.isInteger(numeric)||numeric<=0) return null;
-  parameters[key]=numeric;
- }
- if(typeof parameters.date_from==="string"&&typeof parameters.date_to==="string"&&parameters.date_from>parameters.date_to)return null;
- return parameters;
+function safeFilenamePart(value:string):string{
+ const safe=value.trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+ return safe||"ilmgaah";
 }
 
 export async function POST(request: Request) {
@@ -47,9 +31,10 @@ export async function POST(request: Request) {
 
  const value = body.value && typeof body.value === "object" && !Array.isArray(body.value) ? body.value as Raw : {};
  const reportKey = typeof value.reportKey === "string" ? value.reportKey : "";
- if (!supportsOperationalReportPdf(reportKey)) return NextResponse.json({ error: "PDF output is not supported for this report." }, { status: 400 });
- const parameters = parametersFor(value.parameters);
- if (!parameters) return NextResponse.json({ error: "Valid report parameters are required." }, { status: 400 });
+ if (!isOperationalReportKey(reportKey) || !supportsOperationalReportPdf(reportKey)) return NextResponse.json({ error: "PDF output is not supported for this report." }, { status: 400 });
+ const checkedParameters = validateReportParameters(reportKey,value.parameters);
+ if (!checkedParameters.value) return NextResponse.json({ error: checkedParameters.errors[0] || "Valid report parameters are required.", details: checkedParameters.errors }, { status: 400 });
+ const parameters=checkedParameters.value;
 
  try {
   let rawResult: unknown;
@@ -88,12 +73,15 @@ export async function POST(request: Request) {
    branchName: workspace.branchName || "Main Branch"
   });
   const buffer = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
-  const suffixDate = typeof parameters.attendance_date==="string"?parameters.attendance_date:typeof parameters.date_to==="string"?parameters.date_to:new Date().toISOString().slice(0,10);
+  const suffixDate = typeof parameters.date_from==="string"&&typeof parameters.date_to==="string"
+   ?`${parameters.date_from}-to-${parameters.date_to}`
+   :typeof parameters.date_to==="string"?parameters.date_to:new Date().toISOString().slice(0,10);
+  const filename=`${safeFilenamePart(workspace.tenantName)}-${safeFilenamePart(reportKey)}-${suffixDate}.pdf`;
   return new Response(buffer, {
    status: 200,
    headers: {
     "content-type": "application/pdf",
-    "content-disposition": `attachment; filename="${reportKey.replaceAll("_", "-")}-${suffixDate}.pdf"`,
+    "content-disposition": `attachment; filename="${filename}"`,
     "cache-control": "private, no-store",
     "x-content-type-options": "nosniff"
    }

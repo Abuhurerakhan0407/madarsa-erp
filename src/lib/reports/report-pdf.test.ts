@@ -3,8 +3,8 @@ import { supportedOperationalReports } from "./model";
 import { createOperationalReportPdf, supportsOperationalReportPdf } from "./report-pdf";
 import type { ReportResult } from "./workspace";
 
-function result(reportKey: string, columns:string[], rows: Record<string, unknown>[]): ReportResult {
- return { runId: 42, reportKey, labels: { en: reportKey.replaceAll("_"," ") }, columns, rows, rowCount: rows.length, parameters: {}, outputFormat: "json" };
+function result(reportKey: string, columns:string[], rows: Record<string, unknown>[], parameters:Record<string,unknown>={}): ReportResult {
+ return { runId: 42, reportKey, labels: { en: reportKey.replaceAll("_"," ") }, columns, rows, rowCount: rows.length, parameters, outputFormat: "json" };
 }
 
 describe("operational report PDF", () => {
@@ -25,6 +25,14 @@ describe("operational report PDF", () => {
   expect(text).toContain("/MediaBox [0 0 842 595]");
   expect(text).toContain("/Count 2");
   expect(text).toContain("Student 25");
+ });
+
+ it("prints applied filters and generation metadata", () => {
+  const pdf=createOperationalReportPdf(result("new_admissions",["student_name"],[{student_name:"Amina"}],{date_from:"2026-09-01",date_to:"2026-09-25",program_id:2}),{institutionName:"Ilmgaah Test",branchName:"Main"});
+  const text=new TextDecoder().decode(pdf);
+  expect(text).toContain("From: 2026-09-01");
+  expect(text).toContain("To: 2026-09-25");
+  expect(text).toContain("Generated:");
  });
 
  it("supports the same report set as the runtime contract", () => {
