@@ -32,28 +32,30 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(form).not.toContain("contractType");
   });
 
-  it("provides Parents and Teachers claim-code access without staff-issued passwords", () => {
+  it("provides simple Parent and Teacher credential administration without claim-code UI", () => {
     const center = read("src/components/portal-admin-center.tsx");
-    expect(center).toContain("Parents");
-    expect(center).toContain("Teachers");
-    expect(center).toContain("lastLogin");
-    expect(center).toContain("/api/portals/access");
-    expect(center).toContain("/api/portals/access-state");
-    expect(center).toContain("body.code");
-    expect(center).toContain("claimPath");
-    expect(center).not.toContain("/api/portals/credentials");
-    expect(center).not.toContain("temporaryPassword");
+    const manager = read("src/components/portal-credential-manager.tsx");
+    expect(center).toContain("PortalCredentialManager");
+    expect(manager).toContain("Parent");
+    expect(manager).toContain("Teacher / Staff");
+    expect(manager).toContain("/api/portals/credentials");
+    expect(manager).toContain("/api/portals/access-state");
+    expect(manager).toContain("temporaryPassword");
+    expect(manager).toContain("confirmPassword");
+    expect(manager).toContain("confirmEmail");
+    expect(manager).not.toContain('fetch("/api/portals/access",');
+    expect(manager).not.toContain("claimPath");
   });
 
-  it("retires staff credential provisioning while keeping legacy self-service password change guarded", () => {
+  it("keeps privileged provisioning audited and first-login password change guarded", () => {
     const route = read("src/app/api/portals/credentials/route.ts");
     const change = read("src/app/api/portal/password/change/route.ts");
     const portal = read("src/app/portal/page.tsx");
-    expect(route).toContain("PORTAL_CREDENTIALS_RETIRED");
-    expect(route).toContain("status: 410");
-    expect(route).not.toContain("createUser");
-    expect(route).not.toContain("updateUserById");
-    expect(route).not.toContain("temporaryPassword");
+    expect(route).toContain("portal.credentials.create");
+    expect(route).toContain("record_portal_credential_audit_v1");
+    expect(route).toContain("createUser");
+    expect(route).toContain("updateUserById");
+    expect(route).toContain("must_change_password: true");
     expect(change).toContain("isSameOriginRequest(request)");
     expect(change).toContain("getVerifiedIdentity()");
     expect(change).toContain("app_metadata?.portal_account !== true");
@@ -61,6 +63,7 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(change).toContain("updateUserById(identity.id");
     expect(change).not.toContain("user_metadata");
     expect(portal).toContain("app_metadata?.must_change_password === true");
+    expect(portal).not.toContain('portalHref("/portal/claim"');
   });
 
   it("renders parent overview in the handoff priority order", () => {

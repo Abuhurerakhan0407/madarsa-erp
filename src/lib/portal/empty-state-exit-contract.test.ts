@@ -6,9 +6,10 @@ const portalPage = readFileSync(resolve(process.cwd(), "src/app/portal/page.tsx"
 const exitButton = readFileSync(resolve(process.cwd(), "src/components/portal-exit-button.tsx"), "utf8");
 
 describe("portal empty-state exit contract", () => {
-  it("renders an explicit escape action beside access-code activation", () => {
+  it("renders explicit escape actions without exposing legacy claim-code activation", () => {
     expect(portalPage).toContain("<PortalExitButton");
-    expect(portalPage).toContain("Activate an access code");
+    expect(portalPage).not.toContain("Activate an access code");
+    expect(portalPage).not.toContain('portalHref("/portal/claim"');
     expect(portalPage).toContain("Back to home");
     expect(portalPage).toContain("Back to login");
   });

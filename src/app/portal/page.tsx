@@ -30,7 +30,6 @@ const copy = {
     portal: "Parent & Teacher Portal",
     noAccess: "No portal access linked yet",
     noAccessBody: "Sign in is working, but this account has not been linked to a verified guardian or teacher record.",
-    activate: "Activate an access code",
     returnHome: "Back to home",
     returnLogin: "Back to login",
     returnError: "Unable to leave this page. Please try again.",
@@ -41,7 +40,6 @@ const copy = {
     account: "Portal account",
     notices: "Institution notices",
     archive: "Notice archive",
-    anotherCode: "Activate another code",
     noNotices: "No published portal notices.",
     audience: { tenant: "Institution", parents: "Parents", employees: "Teachers" },
     linkType: { guardian: "Guardian", employee: "Teacher" }
@@ -50,7 +48,6 @@ const copy = {
     portal: "والدین اور اساتذہ پورٹل",
     noAccess: "ابھی کوئی پورٹل رسائی منسلک نہیں",
     noAccessBody: "سائن اِن درست کام کر رہا ہے، لیکن یہ اکاؤنٹ ابھی کسی تصدیق شدہ سرپرست یا استاد کے ریکارڈ سے منسلک نہیں ہے۔",
-    activate: "رسائی کوڈ فعال کریں",
     returnHome: "ہوم پر واپس جائیں",
     returnLogin: "لاگ اِن پر واپس جائیں",
     returnError: "اس صفحے سے واپس نہیں جا سکے۔ دوبارہ کوشش کریں۔",
@@ -61,7 +58,6 @@ const copy = {
     account: "پورٹل اکاؤنٹ",
     notices: "ادارے کی اطلاعات",
     archive: "اطلاعات کا ریکارڈ",
-    anotherCode: "دوسرا کوڈ فعال کریں",
     noNotices: "کوئی شائع شدہ پورٹل اطلاع نہیں۔",
     audience: { tenant: "ادارہ", parents: "والدین", employees: "اساتذہ" },
     linkType: { guardian: "سرپرست", employee: "استاد" }
@@ -109,7 +105,6 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
         <h1>{t.noAccess}</h1>
         <p>{t.noAccessBody}</p>
         <div className="quick-actions">
-          <Link className="action-button action-button-primary" href={portalHref("/portal/claim", locale)}>{t.activate}</Link>
           <PortalExitButton
             homeHref={workspace ? `/${locale}` : null}
             loginHref="/login?source=app"
@@ -190,7 +185,6 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
       <section className="professional-card">
         <div className="section-heading">
           <div><p className="state-kicker">{t.notices}</p><h2>{t.archive}</h2></div>
-          <Link className="action-button" href={portalHref("/portal/claim", locale)}>{t.anotherCode}</Link>
         </div>
         {notices.length === 0 ? <p>{t.noNotices}</p> : (
           <div className="flow-stack">
