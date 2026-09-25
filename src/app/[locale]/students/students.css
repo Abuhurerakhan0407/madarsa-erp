@@ -86,3 +86,188 @@
  .documents-shell .detail-grid .action-button,.documents-shell .detail-grid .secondary-button{width:100%;justify-content:center}
  .documents-shell .documents-recent>div>article{align-items:flex-start;flex-direction:column}
 }
+
+
+/* Phase B: client mobile student register */
+.student-register-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.student-register-section .filter-bar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 20rem) auto;
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.student-register-section .filter-bar .field-label {
+  margin: 0;
+}
+
+.student-register-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.student-register-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.82rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.78rem;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.student-register-card:hover,
+.student-register-card:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+  outline: none;
+}
+
+.student-register-card:active {
+  transform: scale(0.995);
+}
+
+.student-register-avatar {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.student-register-main {
+  display: grid;
+  min-width: 0;
+  gap: 0.16rem;
+}
+
+.student-register-main > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-register-main > small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.77rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-register-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  margin-block-start: 0.15rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.student-register-meta > span {
+  min-width: 0;
+}
+
+.student-register-meta > span:not([aria-hidden="true"]) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-register-side {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.student-register-chevron {
+  color: var(--muted);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+[lang="ur"] .student-register-main > strong {
+  font-size: 0.98rem;
+}
+
+[lang="ur"] .student-register-main > small,
+[lang="ur"] .student-register-meta {
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+@media (max-width: 620px) {
+  .student-register-section .filter-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .student-register-section .filter-bar .action-button {
+    min-height: 2.9rem;
+    padding-inline: 0.85rem;
+  }
+
+  .student-register-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    padding: 0.78rem;
+  }
+
+  .student-register-avatar {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .student-register-side .status-pill {
+    display: none;
+  }
+
+  .student-register-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.35rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .student-register-section .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .student-register-section .filter-bar .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .student-register-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.58rem;
+  }
+}

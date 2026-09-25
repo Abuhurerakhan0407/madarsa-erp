@@ -1,67 +1,229 @@
 import Link from "next/link";
 import { GetFilterForm, GetFilterSubmitButton } from "@/components/get-filter-form";
-import { FieldGroup, FilterBar, InlineState, TableFrame, WorkspacePageHeader } from "@/components/workspace-ui";
+import { FieldGroup, FilterBar, InlineState, WorkspacePageHeader } from "@/components/workspace-ui";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { requireOfficeSurface } from "@/lib/navigation/office-surface";
-import { getStudentRegister } from "@/lib/students/register";
+import {
+  getStudentRegisterByGroup,
+  getStudentRegisterGroupOptions
+} from "@/lib/students/register";
 
 const copy = {
-  en: { kicker: "Students", title: "Student register", body: "Search, review and open permanent student records across the institution.", add: "Add student", export: "Export CSV", import: "Import / Promote", bulkIds: "Bulk ID cards", total: "Total students", active: "Active", other: "Not active", otherStatus: "Other status", matching: "Matching records", search: "Search name or student number", filter: "Apply filters", filtering: "Filtering…", all: "All statuses", name: "Student", number: "Student ID", program: "Program", group: "Class / group", joined: "Joined", status: "Status", open: "Open", empty: "No students match this view.", emptyFirst: "No students yet", emptyBody: "Add the first student after the academic year, program and class are ready.", emptyAction: "Add first student", clear: "Clear filters", previous: "Previous", next: "Next" },
-  ur: { kicker: "طلبہ", title: "طلبہ رجسٹر", body: "ادارے کے مستقل طالب علم ریکارڈ تلاش کریں، دیکھیں اور کھولیں۔", add: "طالب علم شامل کریں", export: "CSV ایکسپورٹ", import: "امپورٹ / پروموشن", bulkIds: "بلک ID کارڈز", total: "کل طلبہ", active: "فعال", other: "غیر فعال حالت", otherStatus: "دیگر حالت", matching: "ملنے والے ریکارڈ", search: "نام یا طالب علم نمبر تلاش کریں", filter: "فلٹر لگائیں", filtering: "فلٹر لگ رہے ہیں…", all: "تمام حالتیں", name: "طالب علم", number: "طالب علم ID", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت", status: "حالت", open: "کھولیں", empty: "اس منظر میں کوئی طالب علم نہیں ملا۔", emptyFirst: "ابھی کوئی طالب علم نہیں", emptyBody: "تعلیمی سال، پروگرام اور کلاس تیار ہونے کے بعد پہلا طالب علم شامل کریں۔", emptyAction: "پہلا طالب علم شامل کریں", clear: "فلٹر ختم کریں", previous: "پچھلا", next: "اگلا" }
+  en: {
+    kicker: "Students",
+    title: "Students",
+    body: "Open permanent student records by class or group.",
+    create: "Create Admission",
+    export: "Export CSV",
+    import: "Import Students",
+    bulkIds: "Bulk ID cards",
+    group: "Class / group",
+    allGroups: "All classes / groups",
+    apply: "Apply",
+    applying: "Loading…",
+    emptyGroup: "No students are enrolled in this class or group.",
+    emptyGroupBody: "Choose another class/group or clear the filter.",
+    emptyFirst: "No students yet",
+    emptyBody: "Create the first admission after the academic year, program and class are ready.",
+    clear: "Show all students",
+    previous: "Previous",
+    next: "Next",
+    studentRecord: "Open student record",
+    otherStatus: "Other status"
+  },
+  ur: {
+    kicker: "طلبہ",
+    title: "طلبہ",
+    body: "کلاس یا گروپ کے مطابق مستقل طالب علم ریکارڈ کھولیں۔",
+    create: "داخلہ بنائیں",
+    export: "CSV ایکسپورٹ",
+    import: "طلبہ امپورٹ کریں",
+    bulkIds: "بلک ID کارڈز",
+    group: "کلاس / گروپ",
+    allGroups: "تمام کلاسیں / گروپس",
+    apply: "لگائیں",
+    applying: "لوڈ ہو رہا ہے…",
+    emptyGroup: "اس کلاس یا گروپ میں کوئی طالب علم موجود نہیں۔",
+    emptyGroupBody: "دوسری کلاس/گروپ منتخب کریں یا فلٹر ختم کریں۔",
+    emptyFirst: "ابھی کوئی طالب علم نہیں",
+    emptyBody: "تعلیمی سال، پروگرام اور کلاس تیار ہونے کے بعد پہلا داخلہ بنائیں۔",
+    clear: "تمام طلبہ دکھائیں",
+    previous: "پچھلا",
+    next: "اگلا",
+    studentRecord: "طالب علم ریکارڈ کھولیں",
+    otherStatus: "دیگر حالت"
+  }
 } as const;
 
 const statusLabels: Record<SupportedLocale, Record<string, string>> = {
-  en: { active: "Active", paused: "Paused", transferred: "Transferred", completed: "Completed", withdrawn: "Withdrawn", alumni: "Alumni", archived: "Archived" },
-  ur: { active: "فعال", paused: "عارضی طور پر رکا", transferred: "منتقل", completed: "مکمل", withdrawn: "دستبردار", alumni: "فارغ / سابق", archived: "آرکائیو" }
+  en: {
+    active: "Active",
+    paused: "Paused",
+    transferred: "Transferred",
+    completed: "Completed",
+    withdrawn: "Withdrawn",
+    alumni: "Alumni",
+    archived: "Archived"
+  },
+  ur: {
+    active: "فعال",
+    paused: "عارضی طور پر رکا",
+    transferred: "منتقل",
+    completed: "مکمل",
+    withdrawn: "دستبردار",
+    alumni: "فارغ / سابق",
+    archived: "آرکائیو"
+  }
 };
 
-function pageHref(locale: SupportedLocale, page: number, q?: string, status?: string) {
+function positiveInteger(value: string | undefined) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function pageHref(locale: SupportedLocale, page: number, groupId?: number) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (status && status !== "all") params.set("status", status);
+  if (groupId) params.set("group", String(groupId));
   if (page > 1) params.set("page", String(page));
   const query = params.toString();
   return `/${locale}/students${query ? `?${query}` : ""}`;
 }
 
-export default async function StudentsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+export default async function StudentsPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ group?: string; page?: string }>;
+}) {
   const locale = (await params).locale as SupportedLocale;
   await requireOfficeSurface(locale);
   const query = await searchParams;
   const text = copy[locale];
-  const isFiltered = Boolean(query.q?.trim() || (query.status && query.status !== "all"));
-  const result = await getStudentRegister({ locale, query: query.q, status: query.status, page: Number(query.page || 1), pageSize: 25 });
-  const summary = isFiltered ? await getStudentRegister({ locale, status: "all", page: 1, pageSize: 1 }) : result;
-  const thirdValue = isFiltered ? result.total : Math.max(summary.total - summary.active, 0);
-  const thirdLabel = isFiltered ? text.matching : text.other;
 
-  return <>
-    <WorkspacePageHeader
-      eyebrow={text.kicker}
-      title={text.title}
-      description={text.body}
-      actions={[
-        { label: text.import, href: `/${locale}/students/lifecycle` },
-        { label: text.export, href: `/api/students/export?locale=${locale}`, native: true },
-        { label: text.bulkIds, href: `/${locale}/students/id-cards` },
-        { label: text.add, href: `/${locale}/students/new`, kind: "primary" }
-      ]}
-    />
-    <section className="metric-grid" data-page-section>
-      <article className="metric metric-primary"><span>{text.total}</span><strong>{summary.total}</strong></article>
-      <article className="metric"><span>{text.active}</span><strong>{summary.active}</strong></article>
-      <article className="metric"><span>{thirdLabel}</span><strong>{thirdValue}</strong></article>
-    </section>
-    <section className="student-register-section" data-page-section>
-      <GetFilterForm>
-        <FilterBar label={text.filter}>
-          <FieldGroup label={text.search}><input name="q" defaultValue={query.q || ""} /></FieldGroup>
-          <FieldGroup label={text.status}><select name="status" defaultValue={query.status || "all"}><option value="all">{text.all}</option>{Object.entries(statusLabels[locale]).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></FieldGroup>
-          <GetFilterSubmitButton className="action-button action-button-primary" label={text.filter} pendingLabel={text.filtering} />
-        </FilterBar>
-      </GetFilterForm>
-      {result.rows.length ? <TableFrame label={text.title}><table className="student-register-table"><thead><tr><th scope="col">{text.name}</th><th scope="col">{text.number}</th><th scope="col">{text.program}</th><th scope="col">{text.group}</th><th scope="col">{text.joined}</th><th scope="col">{text.status}</th><th scope="col">{text.open}</th></tr></thead><tbody>{result.rows.map((row) => <tr key={row.personId}><td data-label={text.name}><strong>{row.name}</strong>{row.nativeName ? <><br /><small dir="auto">{row.nativeName}</small></> : null}</td><td data-label={text.number}>{row.studentNumber}</td><td data-label={text.program}>{row.program}</td><td data-label={text.group}>{row.group}</td><td data-label={text.joined}>{row.joinedOn || "—"}</td><td data-label={text.status}><span className="status-pill">{statusLabels[locale][row.status] ?? text.otherStatus}</span></td><td data-label={text.open}><Link className="action-button" href={`/${locale}/students/${row.personId}`}>{text.open}</Link></td></tr>)}</tbody></table></TableFrame> : isFiltered ? <InlineState title={text.empty} body={text.clear} action={<Link className="action-button" href={`/${locale}/students`}>{text.clear}</Link>} /> : <InlineState title={text.emptyFirst} body={text.emptyBody} action={<Link className="action-button action-button-primary" href={`/${locale}/students/new`}>{text.emptyAction}</Link>} />}
-      <div className="pagination-row"><span>{result.page} / {result.pages}</span><div className="quick-actions">{result.page > 1 ? <Link className="action-button" href={pageHref(locale, result.page - 1, query.q, query.status)}>{text.previous}</Link> : null}{result.page < result.pages ? <Link className="action-button" href={pageHref(locale, result.page + 1, query.q, query.status)}>{text.next}</Link> : null}</div></div>
-    </section>
-  </>;
+  const groups = await getStudentRegisterGroupOptions(locale);
+  const requestedGroupId = positiveInteger(query.group);
+  const groupId = groups.some((group) => group.id === requestedGroupId)
+    ? requestedGroupId
+    : undefined;
+  const result = await getStudentRegisterByGroup({
+    locale,
+    groupId,
+    page: Number(query.page || 1),
+    pageSize: 25
+  });
+
+  return (
+    <>
+      <WorkspacePageHeader
+        eyebrow={text.kicker}
+        title={text.title}
+        description={text.body}
+        actions={[
+          { label: text.import, href: `/${locale}/students/lifecycle` },
+          { label: text.export, href: `/api/students/export?locale=${locale}`, native: true },
+          { label: text.bulkIds, href: `/${locale}/students/id-cards` },
+          { label: text.create, href: `/${locale}/students/new`, kind: "primary" }
+        ]}
+      />
+
+      <section className="student-register-section" data-page-section>
+        <GetFilterForm>
+          <FilterBar label={text.group}>
+            <FieldGroup label={text.group}>
+              <select name="group" defaultValue={groupId ? String(groupId) : ""}>
+                <option value="">{text.allGroups}</option>
+                {groups.map((group) => (
+                  <option value={group.id} key={group.id}>
+                    {group.label}
+                  </option>
+                ))}
+              </select>
+            </FieldGroup>
+            <GetFilterSubmitButton
+              className="action-button action-button-primary"
+              label={text.apply}
+              pendingLabel={text.applying}
+            />
+          </FilterBar>
+        </GetFilterForm>
+
+        {result.rows.length ? (
+          <div className="student-register-list" role="list" aria-label={text.title}>
+            {result.rows.map((row) => {
+              const status = statusLabels[locale][row.status] ?? text.otherStatus;
+              return (
+                <Link
+                  key={row.personId}
+                  role="listitem"
+                  className="student-register-card"
+                  href={`/${locale}/students/${row.personId}`}
+                  aria-label={`${text.studentRecord}: ${row.name}`}
+                >
+                  <span className="student-register-avatar" aria-hidden="true">
+                    {row.name.trim().charAt(0).toUpperCase() || "S"}
+                  </span>
+                  <span className="student-register-main">
+                    <strong>{row.name}</strong>
+                    {row.nativeName ? <small dir="auto">{row.nativeName}</small> : null}
+                    <span className="student-register-meta">
+                      <span>{row.studentNumber}</span>
+                      <span aria-hidden="true">•</span>
+                      <span>{row.program}</span>
+                      <span aria-hidden="true">•</span>
+                      <span>{row.group}</span>
+                    </span>
+                  </span>
+                  <span className="student-register-side">
+                    <span className="status-pill">{status}</span>
+                    <span className="student-register-chevron" aria-hidden="true">
+                      {locale === "ur" ? "‹" : "›"}
+                    </span>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : groupId ? (
+          <InlineState
+            title={text.emptyGroup}
+            body={text.emptyGroupBody}
+            action={
+              <Link className="action-button" href={`/${locale}/students`}>
+                {text.clear}
+              </Link>
+            }
+          />
+        ) : (
+          <InlineState
+            title={text.emptyFirst}
+            body={text.emptyBody}
+            action={
+              <Link className="action-button action-button-primary" href={`/${locale}/students/new`}>
+                {text.create}
+              </Link>
+            }
+          />
+        )}
+
+        <div className="pagination-row">
+          <span>
+            {result.page} / {result.pages}
+          </span>
+          <div className="quick-actions">
+            {result.page > 1 ? (
+              <Link className="action-button" href={pageHref(locale, result.page - 1, groupId)}>
+                {text.previous}
+              </Link>
+            ) : null}
+            {result.page < result.pages ? (
+              <Link className="action-button" href={pageHref(locale, result.page + 1, groupId)}>
+                {text.next}
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }

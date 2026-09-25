@@ -21,6 +21,8 @@ const photoUpload = read("../../app/api/students/photo/[personId]/upload/route.t
 const studentDetailPage = read("../../app/[locale]/students/[personId]/page.tsx");
 const studentEditPage = read("../../app/[locale]/students/[personId]/edit/page.tsx");
 const studentPlacementPage = read("../../app/[locale]/students/[personId]/placement/page.tsx");
+const registerRuntime = read("./register.ts");
+const registerMigration = read("../../../supabase/migrations/20260925123500_student_register_group_filter.sql");
 
 describe("student operations UI hardening", () => {
   it("locks admission creation and photo attachment against rapid duplicate submission", () => {
@@ -28,12 +30,23 @@ describe("student operations UI hardening", () => {
     expect(admission).toContain("photoUploadLock.current");
   });
 
-  it("renders the student register as a scoped mobile card table with real-ID links", () => {
-    expect(register).toContain('className="student-register-table"');
-    expect(register).toContain("data-label={text.name}");
-    expect(register).toContain("data-label={text.joined}");
-    expect(register).toContain('students/${row.personId}');
-    expect(registerCss).toContain(".student-register-section .workspace-table-frame");
+  it("renders a compact full-row student register with class/group filtering and no duplicate Open action", () => {
+    expect(register).toContain('className="student-register-card"');
+    expect(register).toContain('name="group"');
+    expect(register).toContain("getStudentRegisterByGroup");
+    expect(register).toContain("getStudentRegisterGroupOptions");
+    expect(register).toContain("Create Admission");
+    expect(register).toContain("Import Students");
+    expect(register).not.toContain('className="student-register-table"');
+    expect(register).not.toContain(">Open<");
+    expect(register).not.toContain("metric-grid");
+    expect(register).not.toContain('name="q"');
+    expect(register).not.toContain('name="status"');
+    expect(registerCss).toContain(".student-register-card");
+    expect(registerCss).toContain(".student-register-meta");
+    expect(registerRuntime).toContain('admin.rpc("get_student_register_page_v2"');
+    expect(registerMigration).toContain("p_group_id bigint default null");
+    expect(registerMigration).toContain("rp.permission_code='students.profile.read'");
   });
 
   it("uses the selected academic session on single and batch ID cards", () => {
@@ -67,7 +80,6 @@ describe("student operations UI hardening", () => {
     expect(studentDocumentDownload).toContain('startsWith(`${workspace.tenantId}/`)');
     expect(studentDocumentDownload).toContain('storage.from("tenant-documents").createSignedUrl');
   });
-
 
   it("keeps teacher read surfaces separate from private document, ID-generation, and mutation permissions", () => {
     expect(studentDetailPage).toContain('operatorHasPermissions(workspace, ["documents.file.read"])');
