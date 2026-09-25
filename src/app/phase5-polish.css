@@ -618,3 +618,113 @@ html[lang="ur"] .professional-institution-card small {
     width: 100%;
   }
 }
+
+/* Client-delivery teacher list */
+.teacher-summary-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.teacher-card-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.teacher-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  min-height: 4.75rem;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.teacher-list-main,
+.teacher-list-name,
+.teacher-list-end {
+  min-width: 0;
+}
+
+.teacher-list-main {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.teacher-list-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.teacher-list-name strong {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+}
+
+.teacher-list-name span,
+.teacher-list-role,
+.teacher-list-scope {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.teacher-list-role,
+.teacher-list-scope {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-list-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.teacher-list-chevron {
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.teacher-list-row:hover,
+.teacher-list-row:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  box-shadow: 0 6px 18px rgb(15 35 27 / 6%);
+  outline: none;
+}
+
+@media (max-width: 620px) {
+  .teacher-summary-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .teacher-list-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .teacher-list-end {
+    grid-column: 2;
+    justify-content: space-between;
+  }
+
+  .teacher-list-role,
+  .teacher-list-scope {
+    white-space: normal;
+  }
+
+  [lang="ur"] .teacher-list-name span,
+  [lang="ur"] .teacher-list-role,
+  [lang="ur"] .teacher-list-scope {
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+}

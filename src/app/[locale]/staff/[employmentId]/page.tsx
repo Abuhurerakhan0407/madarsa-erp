@@ -8,26 +8,19 @@ import styles from "./page.module.css";
 
 const copy = {
   en: {
-    teacher: "Teacher", portal: "Portal", attendanceAction: "Attendance", leaveAction: "Leave", all: "All teachers", profile: "Profile", contactStatus: "Contact & status",
+    teacher: "Teacher", portal: "Access", attendanceAction: "Attendance", leaveAction: "Leave", accessAction: "Manage access", all: "All teachers", profile: "Profile", contactStatus: "Contact & status",
     email: "Email", phone: "Phone", joined: "Joined", account: "Account", lastLogin: "Last login", notAdded: "Not added", never: "Never",
     attendance: "Attendance", last30: "Last 30 days", recorded: "Recorded", present: "Present", absent: "Absent", late: "Late",
     teachingScope: "Teaching scope", assignments: "Assignments", programs: "Programs", subjects: "Subjects / components", groups: "Groups", notAssigned: "Not assigned",
-    weekly: "Weekly timetable", periods: "Teaching periods", noPeriods: "No active timetable periods assigned yet.", active: "Active", disabled: "Disabled",
-    emailRequired: "Email required", notCreated: "Not created"
+    active: "Access active", disabled: "Access disabled", emailRequired: "Access setup", notCreated: "Access setup"
   },
   ur: {
-    teacher: "استاد", portal: "پورٹل", attendanceAction: "حاضری", leaveAction: "رخصت", all: "تمام اساتذہ", profile: "پروفائل", contactStatus: "رابطہ اور حیثیت",
+    teacher: "استاد", portal: "رسائی", attendanceAction: "حاضری", leaveAction: "رخصت", accessAction: "رسائی منظم کریں", all: "تمام اساتذہ", profile: "پروفائل", contactStatus: "رابطہ اور حیثیت",
     email: "ای میل", phone: "فون", joined: "شمولیت", account: "اکاؤنٹ", lastLogin: "آخری لاگ اِن", notAdded: "شامل نہیں", never: "کبھی نہیں",
     attendance: "حاضری", last30: "گزشتہ 30 دن", recorded: "ریکارڈ شدہ", present: "حاضر", absent: "غیر حاضر", late: "تاخیر",
     teachingScope: "تدریسی ذمہ داریاں", assignments: "ذمہ داریاں", programs: "پروگرام", subjects: "مضامین / اجزاء", groups: "کلاس / گروپس", notAssigned: "مقرر نہیں",
-    weekly: "ہفتہ وار ٹائم ٹیبل", periods: "تدریسی پیریڈ", noPeriods: "ابھی کوئی فعال تدریسی پیریڈ مقرر نہیں۔", active: "فعال", disabled: "غیر فعال",
-    emailRequired: "ای میل درکار", notCreated: "اکاؤنٹ نہیں بنا"
+    active: "رسائی فعال", disabled: "رسائی غیر فعال", emailRequired: "رسائی سیٹ اپ", notCreated: "رسائی سیٹ اپ"
   }
-} as const;
-
-const day = {
-  en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  ur: ["", "پیر", "منگل", "بدھ", "جمعرات", "جمعہ", "ہفتہ", "اتوار"]
 } as const;
 
 function label(labels: TeacherLabels, locale: SupportedLocale, fallback: string) {
@@ -106,6 +99,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         </div>
         <div className={styles.heroActions}>
           <span className="status-pill">{text.portal}: {accountLabel(teacher.accountStatus, locale)}</span>
+          {data.canManage ? <Link className="action-button" href={`/${locale}/portals`}>{text.accessAction}</Link> : null}
           <Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link>
           <Link className="action-button" href={`/${locale}/staff/leave`}>{text.leaveAction}</Link>
           <Link className="action-button" href={`/${locale}/staff`}>{text.all}</Link>
@@ -167,29 +161,6 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
             <p>{teacher.assignedGroups.length ? teacher.assignedGroups.map((item) => label(item.labels, locale, `${text.groups} ${item.id}`)).join(", ") : text.notAssigned}</p>
           </article>
         </div>
-      </section>
-
-      <section className="professional-card" data-testid="teacher-detail-timetable">
-        <div className={styles.cardHeading}>
-          <p className="state-kicker">{text.weekly}</p>
-          <h2>{text.periods}</h2>
-        </div>
-        {teacher.timetable.length ? (
-          <div className={styles.timetableGrid}>
-            {teacher.timetable.map((slot, index) => (
-              <article className={styles.timetableSlot} key={`${slot.weekday}:${slot.startsAt}:${slot.subjectId}:${index}`}>
-                <div className={styles.slotTime}>
-                  <strong>{day[locale][slot.weekday]}</strong>
-                  <span>{slot.startsAt.slice(0, 5)}–{slot.endsAt.slice(0, 5)}</span>
-                </div>
-                <div className={styles.slotSubject}>
-                  <strong>{label(slot.subjectLabels, locale, `${text.subjects} ${slot.subjectId}`)}</strong>
-                  <span>{label(slot.groupLabels, locale, `${text.groups} ${slot.groupId}`)}{slot.room ? ` · ${slot.room}` : ""}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : <p className={styles.emptyText}>{text.noPeriods}</p>}
       </section>
 
       {data.canManage ? <TeacherProfileForm teacher={teacher} locale={locale} /> : null}

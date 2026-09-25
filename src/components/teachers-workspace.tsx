@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import type { Locale } from "@/lib/i18n/config";
-import type { TeachersWorkspace, TeacherLabels } from "@/lib/teachers/workspace";
+import type { TeachersWorkspace } from "@/lib/teachers/workspace";
 
 type UiLocale = "en" | "ur";
 
@@ -12,9 +13,9 @@ const copy = {
   en: {
     kicker: "Teaching team",
     title: "Teachers",
-    body: "Teaching identity, contact details, assignments, timetable, portal status and attendance—without payroll or private HR fields.",
+    body: "Find teachers quickly, see their teaching scope, and open a full profile only when needed.",
     attendanceAction: "Teacher attendance",
-    accessAction: "Teacher access",
+    accessAction: "Manage access",
     search: "Search",
     searchPlaceholder: "Name or teacher ID",
     status: "Status",
@@ -26,39 +27,27 @@ const copy = {
     loading: "Loading…",
     clear: "Clear",
     teachers: "Teachers",
-    portalActive: "Portal active",
-    needEmail: "Need email",
-    open: "Open",
-    contact: "Contact",
-    emailMissing: "Email not added",
-    phoneMissing: "Phone not added",
-    joined: "Joined",
+    portalActive: "Access active",
+    open: "Open profile",
     teachingScope: "Teaching scope",
     programs: "Programs",
     subjects: "Subjects",
     groups: "Groups",
     notAssigned: "Not assigned",
-    attendance30: "Attendance · 30 days",
-    present: "present",
-    absent: "absent",
-    late: "late",
-    timetable: "Timetable",
-    activePeriods: "active periods",
-    lastPortalLogin: "Last portal login",
-    noPortalLogin: "No portal login yet",
+    assigned: "assigned",
     noTeachers: "No teachers found",
     noTeachersBody: "Adjust the search or status filter. Existing HR records were not deleted or changed.",
-    accountActive: "Active",
-    accountDisabled: "Disabled",
-    accountEmailRequired: "Email required",
-    accountNotCreated: "Not created"
+    accountActive: "Access active",
+    accountDisabled: "Access disabled",
+    accountEmailRequired: "Access setup",
+    accountNotCreated: "Access setup"
   },
   ur: {
     kicker: "تدریسی ٹیم",
     title: "اساتذہ",
-    body: "اساتذہ کی شناخت، رابطہ معلومات، تدریسی ذمہ داریاں، ٹائم ٹیبل، پورٹل حیثیت اور حاضری دیکھیں—تنخواہ یا نجی HR معلومات کے بغیر۔",
+    body: "اساتذہ کو جلد تلاش کریں، تدریسی دائرہ دیکھیں، اور ضرورت پر مکمل پروفائل کھولیں۔",
     attendanceAction: "اساتذہ کی حاضری",
-    accessAction: "اساتذہ کی پورٹل رسائی",
+    accessAction: "رسائی منظم کریں",
     search: "تلاش",
     searchPlaceholder: "نام یا استاد ID",
     status: "حیثیت",
@@ -70,42 +59,25 @@ const copy = {
     loading: "لوڈ ہو رہا ہے…",
     clear: "فلٹر صاف کریں",
     teachers: "اساتذہ",
-    portalActive: "پورٹل فعال",
-    needEmail: "ای میل درکار",
-    open: "کھولیں",
-    contact: "رابطہ",
-    emailMissing: "ای میل شامل نہیں",
-    phoneMissing: "فون شامل نہیں",
-    joined: "شمولیت",
+    portalActive: "رسائی فعال",
+    open: "پروفائل کھولیں",
     teachingScope: "تدریسی ذمہ داریاں",
     programs: "پروگرام",
     subjects: "مضامین",
     groups: "کلاس / گروپس",
     notAssigned: "مقرر نہیں",
-    attendance30: "حاضری · 30 دن",
-    present: "حاضر",
-    absent: "غیر حاضر",
-    late: "تاخیر",
-    timetable: "ٹائم ٹیبل",
-    activePeriods: "فعال پیریڈ",
-    lastPortalLogin: "آخری پورٹل لاگ اِن",
-    noPortalLogin: "ابھی تک پورٹل لاگ اِن نہیں ہوا",
+    assigned: "مقرر",
     noTeachers: "کوئی استاد نہیں ملا",
     noTeachersBody: "تلاش یا حیثیت کا فلٹر تبدیل کریں۔ موجودہ HR ریکارڈ حذف یا تبدیل نہیں کیے گئے۔",
-    accountActive: "فعال",
-    accountDisabled: "غیر فعال",
-    accountEmailRequired: "ای میل درکار",
-    accountNotCreated: "اکاؤنٹ نہیں بنا"
+    accountActive: "رسائی فعال",
+    accountDisabled: "رسائی غیر فعال",
+    accountEmailRequired: "رسائی سیٹ اپ",
+    accountNotCreated: "رسائی سیٹ اپ"
   }
 } as const;
 
 function uiLocale(locale: Locale): UiLocale {
   return locale === "ur" ? "ur" : "en";
-}
-
-function label(labels: TeacherLabels, locale: Locale, fallback: string) {
-  if (locale === "ur") return labels.ur || fallback;
-  return labels.en || fallback;
 }
 
 function account(status: string, locale: UiLocale) {
@@ -133,10 +105,6 @@ function designation(key: string, value: string, locale: UiLocale) {
   return urdu[key] || value;
 }
 
-function pct(present: number, total: number) {
-  return total > 0 ? `${Math.round((present / total) * 100)}%` : "—";
-}
-
 export function TeachersWorkspaceView({ locale, data, search, state }: { locale: Locale; data: TeachersWorkspace; search: string; state: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -155,8 +123,6 @@ export function TeachersWorkspaceView({ locale, data, search, state }: { locale:
 
   const active = data.teachers.filter((teacher) => teacher.state === "active").length;
   const access = data.teachers.filter((teacher) => teacher.accountStatus === "active").length;
-  const missingEmail = data.teachers.filter((teacher) => !teacher.email).length;
-  const localeTag = language === "ur" ? "ur-PK" : "en-US";
 
   return <div className="flow-stack">
     <section className="professional-card" data-page-section>
@@ -175,21 +141,27 @@ export function TeachersWorkspaceView({ locale, data, search, state }: { locale:
         {search || state ? <button className="action-button" type="button" disabled={pending} onClick={() => go({ q: "", state: "" })}>{pending ? text.loading : text.clear}</button> : null}
       </form>
     </section>
-    <section className="attendance-metrics" data-page-section>{[[text.teachers, data.teachers.length], [text.active, active], [text.portalActive, access], [text.needEmail, missingEmail]].map(([key, value]) => <article className="attendance-metric" key={String(key)}><span>{key}</span><strong>{value}</strong></article>)}</section>
-    <section className="flow-stack teacher-card-list" data-page-section>{data.teachers.length ? data.teachers.map((teacher) => <article className="professional-card" key={teacher.employmentId}>
-      <div className="section-heading">
-        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <div className="teacher-avatar" aria-hidden="true">{teacher.photoStoragePath ? <img src={`/api/teachers/photo/${teacher.personId}`} alt="" /> : <span>{teacher.displayName.slice(0, 1).toUpperCase()}</span>}</div>
-          <div><p className="state-kicker">{teacher.teacherId}</p><h2>{teacher.displayName}</h2>{teacher.nameNative ? <p dir="auto">{teacher.nameNative}</p> : null}<p>{designation(teacher.designationKey, teacher.designation, language)}</p></div>
+    <section className="attendance-metrics teacher-summary-metrics" data-page-section>{[[text.teachers, data.teachers.length], [text.active, active], [text.portalActive, access]].map(([key, value]) => <article className="attendance-metric" key={String(key)}><span>{key}</span><strong>{value}</strong></article>)}</section>
+    <section className="teacher-card-list" data-page-section>{data.teachers.length ? data.teachers.map((teacher) => {
+      const scopeParts = [
+        teacher.assignedGroups.length ? `${teacher.assignedGroups.length} ${text.groups}` : "",
+        teacher.assignedSubjects.length ? `${teacher.assignedSubjects.length} ${text.subjects}` : ""
+      ].filter(Boolean);
+      return <Link className="teacher-list-row" href={`/${locale}/staff/${teacher.employmentId}`} key={teacher.employmentId} aria-label={`${text.open}: ${teacher.displayName}`}>
+        <div className="teacher-avatar" aria-hidden="true">{teacher.photoStoragePath ? <Image src={`/api/teachers/photo/${teacher.personId}`} alt="" width={48} height={48} unoptimized /> : <span>{teacher.displayName.slice(0, 1).toUpperCase()}</span>}</div>
+        <div className="teacher-list-main">
+          <div className="teacher-list-name">
+            <strong>{teacher.displayName}</strong>
+            {teacher.nameNative ? <span dir="auto">{teacher.nameNative}</span> : null}
+          </div>
+          <span className="teacher-list-role">{designation(teacher.designationKey, teacher.designation, language)} · {teacher.teacherId}</span>
+          <span className="teacher-list-scope">{scopeParts.length ? scopeParts.join(" · ") : text.notAssigned}</span>
         </div>
-        <div className="quick-actions"><span className="status-pill">{account(teacher.accountStatus, language)}</span><Link className="action-button" href={`/${locale}/staff/${teacher.employmentId}`}>{text.open}</Link></div>
-      </div>
-      <div className="demo-card-grid">
-        <div className="demo-card"><strong>{text.contact}</strong><p>{teacher.email || text.emailMissing}</p><p>{teacher.phone || text.phoneMissing}</p><small>{text.joined} {teacher.joinedOn || "—"}</small></div>
-        <div className="demo-card"><strong>{text.teachingScope}</strong><p>{text.programs}: {teacher.assignedPrograms.length ? teacher.assignedPrograms.map((item) => label(item.labels, locale, `${text.programs} ${item.id}`)).join(", ") : text.notAssigned}</p><p>{text.subjects}: {teacher.assignedSubjects.length ? teacher.assignedSubjects.map((item) => label(item.labels, locale, `${text.subjects} ${item.id}`)).join(", ") : text.notAssigned}</p><p>{text.groups}: {teacher.assignedGroups.length ? teacher.assignedGroups.map((item) => label(item.labels, locale, `${text.groups} ${item.id}`)).join(", ") : text.notAssigned}</p></div>
-        <div className="demo-card"><strong>{text.attendance30}</strong><p>{pct(teacher.attendance.present, teacher.attendance.total)} {text.present}</p><small>{teacher.attendance.present} {text.present} · {teacher.attendance.absent} {text.absent} · {teacher.attendance.late} {text.late}</small></div>
-        <div className="demo-card"><strong>{text.timetable}</strong><p>{teacher.timetable.length} {text.activePeriods}</p><small>{teacher.lastLogin ? `${text.lastPortalLogin} ${new Date(teacher.lastLogin).toLocaleString(localeTag)}` : text.noPortalLogin}</small></div>
-      </div>
-    </article>) : <section className="professional-card"><h2>{text.noTeachers}</h2><p>{text.noTeachersBody}</p></section>}</section>
+        <div className="teacher-list-end">
+          <span className="status-pill">{account(teacher.accountStatus, language)}</span>
+          <span className="teacher-list-chevron" aria-hidden="true">›</span>
+        </div>
+      </Link>;
+    }) : <section className="professional-card"><h2>{text.noTeachers}</h2><p>{text.noTeachersBody}</p></section>}</section>
   </div>;
 }
