@@ -35,10 +35,12 @@ export async function GET(request: Request) {
   const locale: SupportedLocale = url.searchParams.get("locale") === "ur" ? "ur" : "en";
   const requestedDate = validateAttendanceDate(url.searchParams.get("date") ?? undefined);
   const date = requestedDate ?? await getDefaultAttendanceDate();
+  const rawGroup = Number(url.searchParams.get("group") ?? "");
+  const groupId = Number.isInteger(rawGroup) && rawGroup > 0 ? rawGroup : undefined;
 
   try {
     const pageSize = 200;
-    const first = await getAttendanceWorkspace({ date, page: 1, pageSize, locale });
+    const first = await getAttendanceWorkspace({ date, groupId, page: 1, pageSize, locale });
     if (first.total > 10000) {
       return NextResponse.json({ error: "Attendance export is limited to 10,000 rows per file." }, { status: 413 });
     }
@@ -46,7 +48,7 @@ export async function GET(request: Request) {
     const rows = [...first.rows];
     const pages = Math.max(1, Math.ceil(first.total / pageSize));
     for (let page = 2; page <= pages; page += 1) {
-      const next = await getAttendanceWorkspace({ date, page, pageSize, locale });
+      const next = await getAttendanceWorkspace({ date, groupId, page, pageSize, locale });
       rows.push(...next.rows);
     }
 
@@ -83,7 +85,7 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         "content-type": "text/csv; charset=utf-8",
-        "content-disposition": `attachment; filename="attendance-${date}.csv"`,
+        "content-disposition": `attachment; filename="attendance-${date}${groupId ? `-group-${groupId}` : ""}.csv"`,
         "cache-control": "private, no-store",
         "x-content-type-options": "nosniff"
       }
