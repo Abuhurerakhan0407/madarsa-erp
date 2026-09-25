@@ -8,6 +8,7 @@ const i18n = root("src/lib/i18n/config.ts");
 const portalAdmin = root("src/components/portal-admin-center.tsx");
 const credentialRoute = root("src/app/api/portals/credentials/route.ts");
 const conversionRoute = root("src/app/api/admissions/convert/route.ts");
+const conversionPanel = root("src/components/admission-conversion-panel.tsx");
 
 describe("commercial release scope lock", () => {
   it("keeps removed modules out of runtime Client V3 navigation", () => {
@@ -40,7 +41,9 @@ describe("commercial release scope lock", () => {
     expect(credentialRoute).toContain("must_change_password: true");
     expect(credentialRoute).toContain("temporaryPassword");
     expect(conversionRoute).toContain("convert_admission_to_student_v3");
-    expect(conversionRoute).not.toMatch(/createUser|temporaryPassword|generatedPassword/i);
+    expect(conversionRoute).not.toMatch(/createUser|temporaryPassword|generatedPassword|issuePortalAccess|claimCode|claimPath/i);
+    expect(conversionPanel).toContain("Open Parent & Teacher Access");
+    expect(conversionPanel).not.toMatch(/claim code|claimCode|claimPath|copyActivation/i);
     expect(portalAdmin).toContain("PortalCredentialManager");
     expect(portalAdmin).not.toContain("Issue claim code");
   });

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { validateAdmissionConversionInput } from "@/lib/admissions/conversion-model";
-import { issuePortalAccess } from "@/lib/portal/runtime";
 import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
@@ -31,7 +30,7 @@ type ApplicationRecord = {
   applicant_data: Record<string, unknown> | null;
 };
 
-type PortalAccessState = "claim_code_issued" | "existing_account" | "claim_code_unavailable" | "manage_separately";
+type PortalAccessState = "existing_account" | "manage_separately";
 
 function guardianEmail(application: ApplicationRecord): string {
   const value = application.applicant_data?.guardian_email;
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A valid guardian email is required before enrollment." }, { status: 422 });
   }
 
-  // A lost/retried success response must never rotate a claim code or change portal access.
+  // A lost/retried success response must never change portal access.
   if (app.state === "enrolled") {
     const { data, error } = await admin.rpc("convert_admission_to_student", {
       p_identity_id: identity.id,
@@ -123,7 +122,7 @@ export async function POST(request: Request) {
           revision: result.revision,
           guardianEmail: email,
           portalAccessState: "manage_separately" satisfies PortalAccessState,
-          portalAccessWarning: "Enrollment already exists. Manage guardian access from Parent & Teacher Access; no password or claim code was changed."
+          portalAccessWarning: "Enrollment already exists. Manage guardian login from Parent & Teacher Access; no password was changed."
         }
       },
       { status: 200, headers: { "cache-control": "no-store" } }
@@ -188,9 +187,7 @@ export async function POST(request: Request) {
   }
 
   let portalAccessState: PortalAccessState = "manage_separately";
-  let claimCode: string | undefined;
-  let claimPath: string | undefined;
-  let portalAccessWarning: string | undefined;
+  let portalAccessWarning = "Student enrollment succeeded. Create or manage guardian login from Parent & Teacher Access.";
   const guardianPersonId = Number(result.guardian_person_id ?? 0);
 
   if (guardianPersonId > 0) {
@@ -203,31 +200,16 @@ export async function POST(request: Request) {
       .order("updated_at", { ascending: false })
       .limit(1);
 
-    if (linkError) {
-      portalAccessState = "claim_code_unavailable";
-      portalAccessWarning = "Student enrollment succeeded, but guardian access could not be checked. Issue a claim code from Parent & Teacher Access.";
-    } else if (links?.[0]?.identity_id && links[0].status === "verified") {
+    if (!linkError && links?.[0]?.identity_id && links[0].status === "verified") {
       portalAccessState = "existing_account";
-    } else if (links?.[0]?.identity_id) {
-      portalAccessState = "manage_separately";
+      portalAccessWarning = "Student enrollment succeeded. This guardian already has verified portal access.";
+    } else if (!linkError && links?.[0]?.identity_id) {
       portalAccessWarning = "Student enrollment succeeded. Existing guardian access is disabled or pending; manage it from Parent & Teacher Access.";
-    } else {
-      try {
-        const issued = await issuePortalAccess({ personId: guardianPersonId, linkType: "guardian", expiresInDays: 7 });
-        const code = typeof issued.code === "string" ? issued.code : "";
-        const path = typeof issued.claimPath === "string" ? issued.claimPath : "";
-        if (!code || !path) throw new Error("Claim code was not returned.");
-        portalAccessState = "claim_code_issued";
-        claimCode = code;
-        claimPath = path;
-      } catch {
-        portalAccessState = "claim_code_unavailable";
-        portalAccessWarning = "Student enrollment succeeded, but a claim code could not be issued automatically. Issue one from Parent & Teacher Access.";
-      }
+    } else if (linkError) {
+      portalAccessWarning = "Student enrollment succeeded, but guardian access could not be checked. Manage it from Parent & Teacher Access.";
     }
   } else {
-    portalAccessState = "claim_code_unavailable";
-    portalAccessWarning = "Student enrollment succeeded, but guardian access could not be prepared automatically. Use Parent & Teacher Access.";
+    portalAccessWarning = "Student enrollment succeeded, but no linked guardian is available for portal setup. Manage guardian details before creating portal access.";
   }
 
   return NextResponse.json(
@@ -247,8 +229,6 @@ export async function POST(request: Request) {
         groupId: result.group_id,
         photoAttached: result.photo_attached === true,
         portalAccessState,
-        claimCode,
-        claimPath,
         portalAccessWarning
       }
     },

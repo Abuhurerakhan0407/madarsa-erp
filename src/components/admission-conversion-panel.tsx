@@ -19,7 +19,7 @@ type AdmissionConversionPanelProps = {
   convertedStudent: ConvertedStudent;
 };
 
-type PortalAccessState = "claim_code_issued" | "existing_account" | "claim_code_unavailable" | "manage_separately";
+type PortalAccessState = "existing_account" | "manage_separately";
 
 type ConversionResponse = {
   error?: string;
@@ -30,8 +30,6 @@ type ConversionResponse = {
     enrollmentId?: number;
     guardianEmail?: string;
     portalAccessState?: PortalAccessState;
-    claimCode?: string;
-    claimPath?: string;
     portalAccessWarning?: string;
   };
 };
@@ -39,8 +37,6 @@ type ConversionResponse = {
 type ActivationView = {
   guardianEmail: string;
   state: PortalAccessState;
-  claimCode: string | null;
-  claimPath: string | null;
   warning: string | null;
   studentNumber: string | null;
 };
@@ -60,15 +56,11 @@ const copy = {
     openStudents: "Open Students & Academics",
     unavailable: "Enrollment becomes available only after an admission offer or payment-pending state.",
     error: "Unable to enroll this applicant.",
-    activationTitle: "Guardian portal activation",
-    activationBody: "Share this one-time claim code with the guardian. They sign in with their own account and claim access; staff never creates or shares a password.",
-    existingAccount: "This guardian already has verified portal access. No password or login secret was changed.",
-    unavailableActivation: "The student is enrolled, but portal activation needs attention. Issue or manage the guardian claim code from Parent & Teacher Access.",
+    activationTitle: "Guardian portal access",
+    existingAccount: "This guardian already has verified portal access. No password was changed.",
+    unavailableActivation: "Student enrollment is complete. Create or manage the guardian login from Parent & Teacher Access.",
     loginEmail: "Guardian email",
-    claimCode: "One-time claim code",
-    claimLink: "Claim link",
-    copyActivation: "Copy activation details",
-    copied: "Copied",
+    manageAccess: "Open Parent & Teacher Access",
     done: "Done"
   },
   ur: {
@@ -85,15 +77,11 @@ const copy = {
     openStudents: "طلبہ اور تعلیمی ڈھانچہ کھولیں",
     unavailable: "اندراج صرف داخلہ پیشکش یا ادائیگی زیر التوا حالت کے بعد دستیاب ہوتا ہے۔",
     error: "اس درخواست گزار کو داخل نہیں کیا جا سکا۔",
-    activationTitle: "سرپرست پورٹل فعال کریں",
-    activationBody: "یہ ایک بار استعمال ہونے والا کلیم کوڈ سرپرست کو دیں۔ وہ اپنے اکاؤنٹ سے لاگ اِن ہو کر رسائی کلیم کرے گا؛ عملہ کوئی پاس ورڈ بناتا یا شیئر نہیں کرتا۔",
-    existingAccount: "اس سرپرست کی تصدیق شدہ پورٹل رسائی پہلے سے موجود ہے۔ کوئی پاس ورڈ یا لاگ اِن راز تبدیل نہیں کیا گیا۔",
-    unavailableActivation: "طالب علم داخل ہو گیا ہے، لیکن پورٹل فعال کرنے پر توجہ درکار ہے۔ والدین اور اساتذہ کی رسائی سے کلیم کوڈ جاری یا منظم کریں۔",
+    activationTitle: "سرپرست پورٹل رسائی",
+    existingAccount: "اس سرپرست کی تصدیق شدہ پورٹل رسائی پہلے سے موجود ہے۔ کوئی پاس ورڈ تبدیل نہیں کیا گیا۔",
+    unavailableActivation: "طالب علم کا اندراج مکمل ہے۔ والدین و اساتذہ رسائی سے سرپرست کا لاگ اِن بنائیں یا منظم کریں۔",
     loginEmail: "سرپرست کی ای میل",
-    claimCode: "ایک بار استعمال ہونے والا کلیم کوڈ",
-    claimLink: "کلیم لنک",
-    copyActivation: "فعال کرنے کی تفصیل کاپی کریں",
-    copied: "کاپی ہو گیا",
+    manageAccess: "والدین و اساتذہ رسائی کھولیں",
     done: "مکمل"
   }
 } as const;
@@ -114,13 +102,11 @@ export function AdmissionConversionPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activation, setActivation] = useState<ActivationView | null>(null);
-  const [copied, setCopied] = useState(false);
 
   async function convert(confirmNewPerson: boolean) {
     setBusy(true);
     setMessage(null);
     setError(null);
-    setCopied(false);
 
     try {
       const response = await fetch("/api/admissions/convert", {
@@ -149,8 +135,6 @@ export function AdmissionConversionPanel({
         setActivation({
           guardianEmail,
           state: payload.result?.portalAccessState ?? "manage_separately",
-          claimCode: payload.result?.claimCode ?? null,
-          claimPath: payload.result?.claimPath ?? null,
           warning: payload.result?.portalAccessWarning ?? null,
           studentNumber
         });
@@ -165,56 +149,30 @@ export function AdmissionConversionPanel({
     }
   }
 
-  async function copyActivation() {
-    if (!activation?.claimCode || !activation.claimPath) return;
-    const value = `${text.loginEmail}: ${activation.guardianEmail}\n${text.claimCode}: ${activation.claimCode}\n${text.claimLink}: ${activation.claimPath}`;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
 
   function closeActivationView() {
     setActivation(null);
-    setCopied(false);
     router.refresh();
   }
 
   if (activation) {
-    const claimIssued = activation.state === "claim_code_issued" && activation.claimCode && activation.claimPath;
     return (
       <section className="configuration-detail-card" aria-labelledby="guardian-activation-title">
         <span>{text.success}</span>
         <h2 id="guardian-activation-title">{text.activationTitle}</h2>
-        {claimIssued ? <p>{text.activationBody}</p> : activation.state === "existing_account" ? <p>{text.existingAccount}</p> : <p>{activation.warning || text.unavailableActivation}</p>}
+        <p>{activation.state === "existing_account" ? text.existingAccount : activation.warning || text.unavailableActivation}</p>
         {activation.studentNumber ? <p>{text.studentNumber}: <code>{activation.studentNumber}</code></p> : null}
         <dl className="detail-list">
           <div>
             <dt>{text.loginEmail}</dt>
             <dd><code>{activation.guardianEmail}</code></dd>
           </div>
-          {claimIssued ? (
-            <>
-              <div>
-                <dt>{text.claimCode}</dt>
-                <dd><code>{activation.claimCode}</code></dd>
-              </div>
-              <div>
-                <dt>{text.claimLink}</dt>
-                <dd><code>{activation.claimPath}</code></dd>
-              </div>
-            </>
-          ) : null}
         </dl>
         <div className="quick-actions">
-          {claimIssued ? (
-            <button className="action-button" type="button" onClick={copyActivation}>
-              {copied ? text.copied : text.copyActivation}
-            </button>
-          ) : null}
-          <button className="action-button action-button-primary" type="button" onClick={closeActivationView}>
+          <a className="action-button action-button-primary" href={`/${locale}/portals`}>
+            {text.manageAccess}
+          </a>
+          <button className="action-button" type="button" onClick={closeActivationView}>
             {text.done}
           </button>
         </div>
