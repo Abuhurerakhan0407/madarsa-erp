@@ -120,6 +120,8 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
   function selectLocale(nextLocale: SupportedLocale) {
     if (nextLocale === locale || busy) return;
     setLocale(nextLocale);
+    setFieldErrors({});
+    setError(null);
     persistLocale(nextLocale);
   }
 
