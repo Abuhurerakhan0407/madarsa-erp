@@ -37,12 +37,13 @@ describe("student photo update final-touch contract", () => {
     expect(uploadRoute).toContain("await bucket.remove([previousStoragePath])");
   });
 
-  it("requires a camera or uploaded photo in the staff walk-in flow and retries attachment without recreating the student", () => {
+  it("requires and stages a verified photo before permanent student creation", () => {
     expect(photoPicker).toContain('capture="user"');
     expect(photoPicker).toContain("image/jpeg,image/png,image/webp");
     expect(admissionForm).toContain("photoRequired");
-    expect(admissionForm).toContain("pendingPhotoStudent");
-    expect(admissionForm).toContain("/upload");
+    expect(admissionForm).toContain('fetch("/api/admissions/staff-photo"');
+    expect(admissionForm).toContain("photoToken");
+    expect(admissionForm).toContain("photoBound");
     expect(admissionForm).toContain("submissionLock.current");
     expect(admissionForm).toContain("photoUploadLock.current");
   });
