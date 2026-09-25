@@ -15,10 +15,11 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(detail).toContain("assignedPrograms");
     expect(detail).toContain("assignedSubjects");
     expect(detail).toContain("assignedGroups");
-    expect(detail).toContain("teacher.timetable");
     expect(detail).toContain("teacher.attendance");
-    expect(detail).toContain('data-testid="teacher-detail-timetable"');
+    expect(detail).not.toContain("teacher.timetable");
+    expect(detail).not.toContain('data-testid="teacher-detail-timetable"');
     expect(detail).toContain("/api/teachers/photo/");
+    expect(detail).toContain('href={`/${locale}/portals`}');
   });
 
   it("keeps the client-facing teacher editor away from private payroll and qualification controls", () => {
