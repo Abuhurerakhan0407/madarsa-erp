@@ -38,9 +38,17 @@ test("renders accessible sign in and signup modes", async ({ page }) => {
   await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
 
   await expect(page.getByText("Admissions", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("Qur'an", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Qur'an / Hifz", { exact: true })).toHaveCount(1);
   await expect(page.getByText("Fees", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/finance/i)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "اردو" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ur");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByLabel("ای میل")).toBeVisible();
+  await page.getByRole("button", { name: "English" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
 
   await page.getByRole("button", { name: "New institution? Create an account" }).click();
   await expect(

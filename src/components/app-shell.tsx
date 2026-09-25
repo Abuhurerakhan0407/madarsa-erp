@@ -6,9 +6,11 @@ import { InterfaceMotion } from "@/components/interface-motion";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { RoutePendingFeedback } from "@/components/route-pending-feedback";
+import { SessionRouteMemory } from "@/components/session-route-memory";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ErrorState } from "@/components/workspace-ui";
 import { getCurrentAcademicSessionLabel } from "@/lib/academics/current-session";
+import { resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getClientV3Navigation, getSupplementalMobileNavigation } from "@/lib/navigation/client-v3-navigation";
@@ -39,9 +41,12 @@ function initials(name: string) {
 }
 
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
-  const app = await getTranslations("App");
+  const [app, audience, configuredSessionLabel] = await Promise.all([
+    getTranslations("App"),
+    getNavigationAudience(workspace),
+    getCurrentAcademicSessionLabel(locale)
+  ]);
   const copy = shellCopy[locale];
-  const audience = await getNavigationAudience(workspace);
 
   if (audience === "neutral") {
     const denied = accessDeniedCopy[locale];
@@ -56,16 +61,16 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
     </div>;
   }
 
-  const configuredSessionLabel = await getCurrentAcademicSessionLabel(locale);
   const branchLabel = workspace.branchName || copy.mainBranch;
   const academicSessionLabel = configuredSessionLabel || copy.year;
-  const nav = getClientV3Navigation(audience);
+  const profile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
+  const nav = getClientV3Navigation(audience, profile);
   const supplementalMobileItems = getSupplementalMobileNavigation(nav);
   const mobileGroups = supplementalMobileItems.length ? [{ key: "menu", label: copy.more, items: supplementalMobileItems.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) })) }] : [];
   const quickItems = nav.mobile.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }));
 
   return <div className="app-shell professional-shell client-v2-shell" data-client-v3 data-navigation-audience={audience}>
-    <Suspense fallback={null}><RoutePendingFeedback /></Suspense>
+    <Suspense fallback={null}><RoutePendingFeedback /><SessionRouteMemory /></Suspense>
     <a className="skip-link" href="#main-content">{app("skipToContent")}</a>
     <aside className="sidebar professional-sidebar client-v2-sidebar" aria-label={copy.navigation}>
       <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">I</span><span className="brand-copy"><strong>Ilmgaah</strong><small>{copy.productLine}</small></span></div>

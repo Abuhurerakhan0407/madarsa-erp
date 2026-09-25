@@ -46,14 +46,16 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     notFound();
   }
 
-  const workspace = await getTenantContext();
+  const [workspace, messages] = await Promise.all([
+    getTenantContext(),
+    getMessages()
+  ]);
 
   if (!workspace) {
     redirect("/onboarding");
   }
 
   const typedLocale = locale as SupportedLocale;
-  const messages = await getMessages();
 
   return (
     <html lang={typedLocale} dir={getDirection(typedLocale)} translate="no" suppressHydrationWarning>

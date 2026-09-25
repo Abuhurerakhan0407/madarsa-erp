@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/tenancy/context";
 import type { Locale } from "@/lib/i18n/config";
@@ -52,7 +53,8 @@ async function getCapabilities(tenantId: number, membershipId: number): Promise<
   const admin = createAdminClient(); const { data: roles, error: roleError } = await admin.from("membership_roles").select("role_id").eq("tenant_id", tenantId).eq("membership_id", membershipId); if (roleError) throw new Error(`Unable to resolve attendance roles: ${roleError.message}`); const roleIds = (roles ?? []).map((row) => row.role_id); if (!roleIds.length) return { canMark: false, canCorrect: false, canApprove: false,canViewStaff:false };
   const { data: permissions, error } = await admin.from("role_permissions").select("permission_code").eq("tenant_id", tenantId).in("role_id", roleIds).in("permission_code", ["attendance.student.mark", "attendance.student.correct", "attendance.student.approve","hr.employee.read"]); if (error) throw new Error(`Unable to resolve attendance permissions: ${error.message}`); const set = new Set((permissions ?? []).map((row) => row.permission_code)); return { canMark: set.has("attendance.student.mark"), canCorrect: set.has("attendance.student.correct"), canApprove: set.has("attendance.student.approve"),canViewStaff:set.has("hr.employee.read") };
 }
-export async function getAttendanceTimezone(): Promise<string> { const workspace = await getTenantContext(); if (!workspace) return "UTC"; const admin = createAdminClient(); const { data } = await admin.from("institution_profiles").select("timezone").eq("tenant_id", workspace.tenantId).maybeSingle(); return typeof data?.timezone === "string" && data.timezone.trim() ? data.timezone : "UTC"; }
+async function resolveAttendanceTimezone(): Promise<string> { const workspace = await getTenantContext(); if (!workspace) return "UTC"; const admin = createAdminClient(); const { data } = await admin.from("institution_profiles").select("timezone").eq("tenant_id", workspace.tenantId).maybeSingle(); return typeof data?.timezone === "string" && data.timezone.trim() ? data.timezone : "UTC"; }
+export const getAttendanceTimezone = cache(resolveAttendanceTimezone);
 export async function getDefaultAttendanceDate(): Promise<string> { return dateInTimezone(await getAttendanceTimezone()); }
 
 export async function getAttendanceWorkspace(args: { date: string; search?: string; page?: number; pageSize?: number; locale: Locale }): Promise<AttendanceWorkspace> {

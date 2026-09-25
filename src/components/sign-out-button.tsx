@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -8,11 +8,15 @@ type UiLocale = "en" | "ur";
 
 const copy = {
   en: {
+    account: "Account",
+    signedInAs: "Signed in as",
     signOut: "Sign out",
     signingOut: "Signing out…",
     error: "Unable to sign out. Please try again."
   },
   ur: {
+    account: "اکاؤنٹ",
+    signedInAs: "سائن اِن",
     signOut: "سائن آؤٹ",
     signingOut: "سائن آؤٹ ہو رہا ہے…",
     error: "سائن آؤٹ نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
@@ -33,6 +37,7 @@ export function SignOutButton({
   afterSignOut?: string;
 }) {
   const router = useRouter();
+  const menuRef = useRef<HTMLDetailsElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const text = copy[locale];
@@ -49,7 +54,9 @@ export function SignOutButton({
         setError(text.error);
         return;
       }
-      router.push(afterSignOut);
+      menuRef.current?.removeAttribute("open");
+      document.cookie = "ILMGAAH_LAST_ROUTE=; Path=/; Max-Age=0; SameSite=Lax";
+      router.replace(afterSignOut);
       router.refresh();
     } catch {
       setError(text.error);
@@ -59,19 +66,31 @@ export function SignOutButton({
   }
 
   return (
-    <>
-      <button
-        type="button"
+    <details className="account-menu" ref={menuRef}>
+      <summary
         className="user-button"
-        aria-label={`${label}: ${title}. ${busy ? text.signingOut : text.signOut}`}
-        aria-busy={busy || undefined}
-        title={`${title} — ${busy ? text.signingOut : text.signOut}`}
-        onClick={signOut}
-        disabled={busy}
+        aria-label={`${label}: ${title}`}
+        title={`${text.account}: ${title}`}
       >
-        {busy ? <span className="inline-spinner" aria-hidden="true" /> : initials}
-      </button>
-      {error ? <span className="form-message form-error" role="alert">{error}</span> : null}
-    </>
+        <span aria-hidden="true">{initials}</span>
+      </summary>
+      <div className="account-menu-popover">
+        <div className="account-menu-identity">
+          <span>{text.signedInAs}</span>
+          <strong>{title}</strong>
+        </div>
+        <button
+          type="button"
+          className="account-menu-signout"
+          aria-busy={busy || undefined}
+          disabled={busy}
+          onClick={signOut}
+        >
+          {busy ? <span className="inline-spinner" aria-hidden="true" /> : null}
+          <span>{busy ? text.signingOut : text.signOut}</span>
+        </button>
+        {error ? <span className="form-message form-error" role="alert">{error}</span> : null}
+      </div>
+    </details>
   );
 }

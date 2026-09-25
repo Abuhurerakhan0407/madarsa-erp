@@ -3,7 +3,8 @@ export type ProductCapability =
   | "student_lifecycle_import_promotion_renewal"
   | "donations_zakat_sponsorships"
   | "ai_assistant"
-  | "branches_roles_ui";
+  | "branches_roles_ui"
+  | "academics_timetable_homework";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -18,9 +19,8 @@ export type ClientProfileConfig = Readonly<{
   clientV2TenantSlugs?: string | null;
 }>;
 
-// Retired product areas are deliberately not capabilities. Keeping the retired
-// navigation keys here makes older navigation callers fail closed instead of
-// accidentally treating an unknown key as enabled.
+// Retired product areas remain fail-closed. They are not exposed as capabilities
+// because the current product no longer offers them through the legacy routes.
 const RETIRED_NAV_KEYS = new Set(["hostel", "transport", "library", "whatsapp", "demo"]);
 
 const fullProductProfile: ClientCapabilityProfile = {
@@ -30,7 +30,12 @@ const fullProductProfile: ClientCapabilityProfile = {
 
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
-  disabledCapabilities: new Set<ProductCapability>()
+  disabledCapabilities: new Set<ProductCapability>([
+    "academics_timetable_homework",
+    "fees_accounting",
+    "donations_zakat_sponsorships",
+    "ai_assistant"
+  ])
 };
 
 export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> = {
@@ -39,11 +44,17 @@ export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> 
 };
 
 export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | undefined>> = {
+  academics: "academics_timetable_homework",
   fees: "fees_accounting",
+  payroll: "fees_accounting",
   operations: "student_lifecycle_import_promotion_renewal",
+  lifecycle: "student_lifecycle_import_promotion_renewal",
   donations: "donations_zakat_sponsorships",
+  contributions: "donations_zakat_sponsorships",
   ai: "ai_assistant",
-  branches: "branches_roles_ui"
+  assistant: "ai_assistant",
+  branches: "branches_roles_ui",
+  access: "branches_roles_ui"
 };
 
 function normalizeProfileValue(value: string): string {

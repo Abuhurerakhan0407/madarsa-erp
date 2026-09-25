@@ -73,7 +73,7 @@ export function MobileNavigation({ groups, quickItems, menuLabel, closeLabel, na
 
   return <>
     <nav className={styles.bottomNav} aria-label={navigationLabel} style={{ gridTemplateColumns: `repeat(${Math.max(tabCount, 1)}, minmax(0, 1fr))` }}>
-      {quickItems.map((item) => <Link href={item.href} key={item.key} prefetch={false} aria-current={current(pathname, item.href) ? "page" : undefined}>{item.label}</Link>)}
+      {quickItems.map((item) => <Link href={item.href} key={item.key} aria-current={current(pathname, item.href) ? "page" : undefined}>{item.label}</Link>)}
       {hasMenu ? <button ref={triggerRef} className={styles.menuTab} type="button" aria-expanded={open} aria-controls={drawerId} onClick={() => setOpen(true)}><span className={styles.menuIcon} aria-hidden="true"><i /><i /><i /></span><span>{menuLabel}</span></button> : null}
     </nav>
     {hasMenu ? <div className={styles.drawerLayer} data-open={open ? "true" : "false"} aria-hidden={!open}>
@@ -84,7 +84,7 @@ export function MobileNavigation({ groups, quickItems, menuLabel, closeLabel, na
           <button ref={closeRef} className={styles.closeButton} type="button" tabIndex={open ? 0 : -1} onClick={() => close()} aria-label={closeLabel}>×</button>
         </header>
         <nav className={styles.drawerNav} aria-label={navigationLabel}>
-          {visibleGroups.map((group) => <section className={styles.drawerGroup} key={group.key}><p>{group.label}</p><div>{group.items.map((item) => <Link className={styles.drawerLink} href={item.href} key={item.key} prefetch={false} tabIndex={open ? 0 : -1} aria-current={current(pathname, item.href) ? "page" : undefined} onClick={() => close(false)}><span className={styles.indicator} aria-hidden="true" /><span>{item.label}</span><span className={styles.arrow} aria-hidden="true">→</span></Link>)}</div></section>)}
+          {visibleGroups.map((group) => <section className={styles.drawerGroup} key={group.key}><p>{group.label}</p><div>{group.items.map((item) => <Link className={styles.drawerLink} href={item.href} key={item.key} tabIndex={open ? 0 : -1} aria-current={current(pathname, item.href) ? "page" : undefined} onClick={() => close(false)}><span className={styles.indicator} aria-hidden="true" /><span>{item.label}</span><span className={styles.arrow} aria-hidden="true">→</span></Link>)}</div></section>)}
         </nav>
       </aside>
     </div> : null}
