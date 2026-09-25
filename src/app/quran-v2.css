@@ -586,3 +586,123 @@
     font-size: 0.78rem;
   }
 }
+
+/* Phase B client fast-entry roster */
+.quran-daily-head,
+.quran-daily-row {
+  grid-template-columns: minmax(10rem, .85fr) minmax(8rem, .7fr) minmax(22rem, 1.9fr);
+  gap: .85rem;
+}
+
+.quran-daily-row {
+  min-height: 0;
+  align-items: start;
+}
+
+.quran-daily-target-summary {
+  display: grid;
+  min-width: 0;
+  gap: .22rem;
+  padding-block-start: .18rem;
+}
+
+.quran-daily-target-summary span,
+.quran-daily-target-summary small {
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+.quran-daily-target-summary strong {
+  overflow: hidden;
+  font-size: .82rem;
+  text-overflow: ellipsis;
+}
+
+.quran-daily-entry {
+  display: grid;
+  grid-template-columns: minmax(8rem, .55fr) minmax(13rem, 1.35fr) auto;
+  gap: .6rem;
+  align-items: end;
+}
+
+.quran-daily-entry .field-label {
+  margin: 0;
+}
+
+.quran-daily-note textarea {
+  min-height: 3rem;
+  resize: vertical;
+}
+
+.quran-daily-save {
+  min-height: 2.75rem;
+  align-self: end;
+  white-space: nowrap;
+}
+
+.quran-daily-entry .quran-details-toggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.quran-daily-readonly-status {
+  padding-block-start: .35rem;
+}
+
+.quran-daily-message {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (max-width: 820px) {
+  .quran-daily-head {
+    display: none;
+  }
+
+  .quran-daily-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+
+  .quran-daily-student,
+  .quran-daily-target-summary,
+  .quran-daily-entry,
+  .quran-daily-readonly-status {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .quran-daily-entry {
+    grid-template-columns: minmax(8rem, .65fr) minmax(0, 1.35fr) auto;
+  }
+
+  .quran-daily-detail,
+  .quran-daily-message {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 620px) {
+  .quran-daily-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quran-daily-save {
+    width: 100%;
+  }
+
+  .quran-daily-entry .quran-details-toggle {
+    grid-column: 1;
+    min-height: 2.75rem;
+  }
+
+  .quran-daily-target-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [lang="ur"] .quran-daily-target-summary span,
+  [lang="ur"] .quran-daily-target-summary small {
+    font-size: .82rem;
+    line-height: 1.75;
+  }
+}
