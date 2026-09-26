@@ -51,3 +51,11 @@
     font-size: 0.86rem;
   }
 }
+
+
+/* Mobile touch safety: numeric mistake controls stay comfortably tappable. */
+@media (max-width: 620px) {
+  .quran-mistakes input {
+    min-height: 44px;
+  }
+}
