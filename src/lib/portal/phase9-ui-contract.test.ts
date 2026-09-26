@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -47,6 +47,16 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(manager).not.toContain("claimPath");
   });
 
+  it("keeps legacy claim-code routes physically retired", () => {
+    for (const path of [
+      "src/app/api/portals/access/route.ts",
+      "src/app/api/portal/claim/route.ts",
+      "src/app/portal/claim/page.tsx",
+      "src/components/portal-claim-form.tsx"
+    ]) {
+      expect(existsSync(resolve(process.cwd(), path))).toBe(false);
+    }
+  });
   it("keeps privileged provisioning audited and first-login password change guarded", () => {
     const route = read("src/app/api/portals/credentials/route.ts");
     const change = read("src/app/api/portal/password/change/route.ts");
