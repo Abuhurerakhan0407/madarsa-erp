@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateDirectStudentCreateInput } from "@/lib/students/direct-create-model";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -38,12 +38,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const parsedBody = await readBoundedJson(request, 16_384);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
 
   const validation = validateDirectStudentCreateInput(body);
   if (!validation.value) {

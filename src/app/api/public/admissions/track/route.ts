@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { validatePublicAdmissionTrackingInput } from "@/lib/admissions/tracking-model";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function sha256(value: string): string {
@@ -31,12 +31,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Tracking request is too large." }, { status: 413 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsedBody = await readBoundedJson(request, 4_096);
+  if (!parsedBody.ok) {
+    const error = parsedBody.status === 413 ? "Tracking request is too large." : parsedBody.error;
+    return NextResponse.json({ error }, { status: parsedBody.status });
   }
+  const body = parsedBody.value;
 
   const validation = validatePublicAdmissionTrackingInput(body);
   if (!validation.value) {

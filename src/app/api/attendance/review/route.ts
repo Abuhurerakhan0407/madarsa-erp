@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -13,8 +13,9 @@ export async function POST(request: Request) {
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
-  let body: unknown;
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
+  const parsedBody = await readBoundedJson(request, 4_096);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Request body must be an object." }, { status: 400 });
   const input = body as Record<string, unknown>;
   const correctionId = Number(input.correctionId);

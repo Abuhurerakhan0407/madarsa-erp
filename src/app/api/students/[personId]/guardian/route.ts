@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -18,8 +18,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ pers
 
   const personId = Number((await params).personId);
   if (!Number.isInteger(personId) || personId <= 0) return NextResponse.json({ error: "Invalid student." }, { status: 400 });
-  let body: unknown;
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
+  const parsedBody = await readBoundedJson(request, 8_192);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
   const validation = validateStudentGuardianInput(body);
   if (!validation.value) return NextResponse.json({ error: validation.errors[0] || "Invalid guardian details.", details: validation.errors }, { status: 400 });
 
