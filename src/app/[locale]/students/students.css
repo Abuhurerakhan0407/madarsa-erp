@@ -500,3 +500,23 @@
   .pagination-row .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:.5rem}
   .pagination-row .quick-actions>*{width:100%;justify-content:center}
 }
+
+/* Real-device student overview hierarchy. */
+@media (max-width: 620px) {
+  .client-v2-main:has(> .student-register-section) > .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .client-v2-main:has(> .student-register-section) > .metric-grid > .metric:first-child {
+    grid-column: 1 / -1;
+  }
+  .client-v2-main:has(> .student-register-section) > .workspace-page-header .workspace-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .client-v2-main:has(> .student-register-section) > .workspace-page-header .workspace-actions > .action-button-primary {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}

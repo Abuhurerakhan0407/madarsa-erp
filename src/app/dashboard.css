@@ -142,7 +142,7 @@
 
 
 /* App-first dashboard treatment */
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   [data-navigation-audience="office"] .operational-dashboard {
     gap: 1.15rem;
   }

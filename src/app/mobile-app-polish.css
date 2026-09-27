@@ -177,3 +177,11 @@
   [data-navigation-audience="office"] .workspace-loading-state{min-height:9rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface)}
   [data-navigation-audience="office"] .workspace-success{border-radius:.85rem}
 }
+
+/* Real-device mobile chrome: let the two-row header scroll away. */
+@media (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-topbar {
+    position: static;
+    inset-block-start: auto;
+  }
+}
