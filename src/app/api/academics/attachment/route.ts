@@ -7,7 +7,7 @@ import {
   MAX_ACADEMIC_ATTACHMENT_BYTES
 } from "@/lib/academics/attachment-model";
 import { disabledCapabilityResponse } from "@/lib/capabilities/server";
-import { isSameOriginRequest } from "@/lib/security/request";
+import { isSameOriginRequest, readBoundedFormData } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -43,12 +43,12 @@ export async function POST(request: Request) {
   const capabilityDenied = disabledCapabilityResponse(workspace, "academics_timetable_homework");
   if (capabilityDenied) return capabilityDenied;
 
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Unable to read attachment." }, { status: 400 });
+  const parsedForm = await readBoundedFormData(request, MAX_ACADEMIC_ATTACHMENT_BYTES + 768 * 1024);
+  if (!parsedForm.ok) {
+    const error = parsedForm.status === 413 ? "Attachment must be 8 MB or smaller." : "Unable to read attachment.";
+    return NextResponse.json({ error }, { status: parsedForm.status });
   }
+  const formData = parsedForm.value;
   const kind = formData.get("kind");
   const attachment = formData.get("attachment");
   if (!isAcademicAttachmentKind(kind)) {

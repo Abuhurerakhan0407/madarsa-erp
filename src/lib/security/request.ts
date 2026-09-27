@@ -45,3 +45,35 @@ export async function readBoundedJson(request: Request, maxBytes = 32_768): Prom
     reader.releaseLock();
   }
 }
+export async function readBoundedFormData(request: Request, maxBytes: number): Promise<
+  { ok: true; value: FormData } | { ok: false; status: 400 | 413; error: string }
+> {
+  if (Number(request.headers.get("content-length")) > maxBytes) {
+    return { ok: false, status: 413, error: "Request body is too large." };
+  }
+  const contentType = request.headers.get("content-type");
+  const reader = request.body?.getReader();
+  if (!contentType || !reader) return { ok: false, status: 400, error: "Invalid multipart form body." };
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > maxBytes) {
+        return { ok: false, status: 413, error: "Request body is too large." };
+      }
+      chunks.push(chunk.value);
+    }
+    const body = new Uint8Array(bytes);
+    let offset = 0;
+    for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+    const parsed = await new Response(body, { headers: { "content-type": contentType } }).formData();
+    return { ok: true, value: parsed };
+  } catch {
+    return { ok: false, status: 400, error: "Invalid multipart form body." };
+  } finally {
+    reader.releaseLock();
+  }
+}

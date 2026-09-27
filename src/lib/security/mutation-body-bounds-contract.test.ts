@@ -29,6 +29,11 @@ const boundedRoutes = [
   ["onboarding bootstrap", "src/app/api/onboarding/bootstrap/route.ts", "8_192"]
 ] as const;
 
+const boundedMultipartRoutes = [
+  ["academic attachment", "src/app/api/academics/attachment/route.ts", "MAX_ACADEMIC_ATTACHMENT_BYTES + 768 * 1024"],
+  ["staff admission photo", "src/app/api/admissions/staff-photo/route.ts", "MAX_PHOTO_BYTES + 512 * 1024"],
+  ["public admission photo", "src/app/api/public/admissions/[tenantSlug]/photo/route.ts", "MAX_PHOTO_BYTES + 512 * 1024"]
+] as const;
 describe("bounded mutation request bodies", () => {
   it.each(boundedRoutes)("bounds %s JSON", (_name, path, limit) => {
     const source = read(path);
@@ -36,6 +41,11 @@ describe("bounded mutation request bodies", () => {
     expect(source).not.toContain("await request.json()");
   });
 
+  it.each(boundedMultipartRoutes)("bounds %s multipart bodies before parsing", (_name, path, limit) => {
+    const source = read(path);
+    expect(source).toContain(`readBoundedFormData(request, ${limit})`);
+    expect(source).not.toContain("await request.formData()");
+  });
   it("rejects non-object onboarding JSON before field access", () => {
     const source = read("src/app/api/onboarding/bootstrap/route.ts");
     expect(source).toContain('typeof parsedBody.value !== "object"');
