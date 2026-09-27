@@ -32,6 +32,31 @@ describe("Phase 9 Teachers + Portals UI contracts", () => {
     expect(form).not.toContain("contractType");
   });
 
+  it("keeps teacher / staff creation scoped away from private HR controls", () => {
+    const page = read("src/app/[locale]/staff/new/page.tsx");
+    const list = read("src/components/teachers-workspace.tsx");
+    const form = read("src/components/teacher-create-form.tsx");
+    const route = read("src/app/api/teachers/create/route.ts");
+    expect(page).toContain("requireOfficeAudience(locale)");
+    expect(page).toContain("workspace.canManage");
+    expect(list).toContain('href={`/${locale}/staff/new`}');
+    expect(form).toContain('/api/teachers/create');
+    expect(form).not.toMatch(/contractType|qualificationSummary|payrollEligible/);
+    expect(route).toContain("Private HR fields are not accepted here.");
+    expect(route.indexOf("getVerifiedIdentity()")).toBeLessThan(route.indexOf("Private HR fields are not accepted here."));
+    expect(route.indexOf("getTenantContext()")).toBeLessThan(route.indexOf("Private HR fields are not accepted here."));
+    expect(route).toContain('p_contract_type: "permanent"');
+    expect(route).toContain("p_qualification_summary: null");
+    expect(route).toContain("p_payroll_eligible: true");
+    expect(existsSync(resolve(process.cwd(), "src/components/hr-employee-form.tsx"))).toBe(false);
+    expect(existsSync(resolve(process.cwd(), "src/components/hr-employees-workspace.tsx"))).toBe(false);
+  });
+  it("keeps teacher detail and leave management office-only", () => {
+    const detail = read("src/app/[locale]/staff/[employmentId]/page.tsx");
+    const leave = read("src/app/[locale]/staff/leave/page.tsx");
+    expect(detail).toContain("requireOfficeAudience(locale)");
+    expect(leave).toContain("requireOfficeAudience(locale)");
+  });
   it("provides simple Parent and Teacher credential administration without claim-code UI", () => {
     const center = read("src/components/portal-admin-center.tsx");
     const manager = read("src/components/portal-credential-manager.tsx");

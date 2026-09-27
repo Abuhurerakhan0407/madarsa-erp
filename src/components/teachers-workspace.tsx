@@ -15,6 +15,7 @@ const copy = {
     title: "Teachers",
     body: "Find teachers quickly, see their teaching scope, and open a full profile only when needed.",
     attendanceAction: "Teacher attendance",
+    add: "Add teacher / staff",
     accessAction: "Manage access",
     search: "Search",
     searchPlaceholder: "Name or teacher ID",
@@ -47,6 +48,7 @@ const copy = {
     title: "اساتذہ",
     body: "اساتذہ کو جلد تلاش کریں، تدریسی دائرہ دیکھیں، اور ضرورت پر مکمل پروفائل کھولیں۔",
     attendanceAction: "اساتذہ کی حاضری",
+    add: "استاد / عملہ شامل کریں",
     accessAction: "رسائی منظم کریں",
     search: "تلاش",
     searchPlaceholder: "نام یا استاد ID",
@@ -128,7 +130,7 @@ export function TeachersWorkspaceView({ locale, data, search, state }: { locale:
     <section className="professional-card" data-page-section>
       <div className="section-heading">
         <div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div>
-        <div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link></div>
+        <div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link>{data.canManage ? <Link className="action-button action-button-primary" href={`/${locale}/staff/new`}>{text.add}</Link> : null}</div>
       </div>
       <form className="form-grid" aria-busy={pending || undefined} onSubmit={(event) => {
         event.preventDefault();

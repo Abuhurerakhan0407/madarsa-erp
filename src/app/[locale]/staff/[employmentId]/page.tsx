@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TeacherProfileForm } from "@/components/teacher-profile-form";
 import { isLocale, type SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
 import type { TeacherLabels } from "@/lib/teachers/workspace";
 import { getTeacherByEmploymentId } from "@/lib/teachers/workspace";
 import styles from "./page.module.css";
@@ -69,6 +70,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   const { locale: rawLocale, employmentId: rawId } = await params;
   if (!isLocale(rawLocale)) notFound();
   const locale = rawLocale;
+  await requireOfficeAudience(locale);
   const id = Number(rawId);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
 

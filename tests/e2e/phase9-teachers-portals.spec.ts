@@ -2,6 +2,7 @@ import {expect,test} from "@playwright/test";
 
 const json={"content-type":"application/json"};
 const mutations=[
+ ["/api/teachers/create",{displayName:"Teacher",nameNative:"",gender:"",preferredLocale:"en",departmentKey:"academics",designation:"Teacher",joinedOn:"2026-01-01"}],
  ["/api/teachers/update",{employmentId:1,displayName:"Teacher",nameNative:"",email:"teacher@example.com",phone:"+911234567890",designation:"Teacher",joinedOn:"2026-01-01"}],
  ["/api/portals/access-state",{personId:1,kind:"guardian",enabled:false}],
  ["/api/portals/credentials",{personId:1,kind:"guardian",action:"provision",email:"parent@example.com",confirmEmail:"parent@example.com",temporaryPassword:"SecurePortalPassword!2026"}],
@@ -18,3 +19,6 @@ for(const [path,body] of mutations){
 test("teacher operator photo rejects anonymous callers",async({request})=>{expect((await request.get("/api/teachers/photo/1")).status()).toBe(401);});
 test("guardian-scoped teacher photo rejects anonymous callers",async({request})=>{expect((await request.get("/api/portal/teachers/photo/1?tenant=1")).status()).toBe(401);});
 test("portal sends anonymous browser to login",async({page})=>{await page.goto("/portal");await expect(page).toHaveURL(/\/login\?next=%2Fportal|\/login\?next=%252Fportal/);});
+test("new teacher / staff page sends anonymous browser to login",async({page})=>{await page.goto("/en/staff/new");await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fstaff%2Fnew|\/login\?next=%252Fen%252Fstaff%252Fnew/);});
+
+test("teacher creation authenticates before private-field rejection",async({request})=>{const response=await request.post("/api/teachers/create",{headers:json,data:{displayName:"Teacher",designation:"Teacher",joinedOn:"2026-01-01",payrollEligible:false}});expect(response.status()).toBe(401);});
