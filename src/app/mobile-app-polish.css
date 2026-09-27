@@ -266,3 +266,110 @@
     transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
   }
 }
+
+/* Admissions-only mobile forms. Route wrapper prevents spillover into staff surfaces. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface {
+    display: grid;
+    gap: .8rem;
+    min-width: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading {
+    align-items: flex-start;
+    gap: .7rem;
+    padding-block-end: .35rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading > .action-button {
+    width: auto;
+    min-height: 2.65rem;
+    padding-inline: .85rem;
+    font-size: .76rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-section {
+    min-width: 0;
+    margin-block-start: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-section > .configuration-form {
+    display: grid;
+    gap: .8rem;
+    min-width: 0;
+    padding: .9rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 20px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .68rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .field-label {
+    min-width: 0;
+    gap: .32rem;
+    font-size: .78rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field {
+    width: 100%;
+    min-width: 0;
+    border-radius: .82rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form textarea.text-field {
+    min-height: 7rem;
+    resize: vertical;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row {
+    display: grid;
+    grid-template-columns: 1.45rem minmax(0, 1fr);
+    align-items: center;
+    gap: .65rem;
+    min-height: 3.25rem;
+    padding: .72rem .78rem;
+    border: 1px solid var(--border);
+    border-radius: .82rem;
+    background: var(--surface-muted);
+    line-height: 1.45;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+    min-height: 1.35rem;
+    margin: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form > .action-button-primary {
+    width: 100%;
+    min-height: 3.15rem;
+    justify-content: center;
+    border-radius: .85rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .form-message {
+    margin: 0;
+    padding: .72rem .78rem;
+    border-radius: .82rem;
+    font-size: .78rem;
+    line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field,
+  [data-navigation-audience="office"] .document-student,
+  [data-navigation-audience="office"] .document-bulk-toolbar {
+    transition: border-color 140ms ease, box-shadow 160ms ease, transform 120ms ease;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+}

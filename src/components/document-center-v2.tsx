@@ -252,7 +252,7 @@ export function DocumentCenterV2({
           return (
             <article className={`panel document-student ${canUse ? "" : "is-disabled"}`} key={student.personId}>
               <header>
-                <div className="document-select-line">
+                <label className="document-select-line">
                   <input
                     type="checkbox"
                     aria-label={`${t.selectStudent} ${student.name}`}
@@ -266,7 +266,7 @@ export function DocumentCenterV2({
                     <h2>{student.name}</h2>
                     {student.nameNative ? <small dir="auto">{student.nameNative}</small> : null}
                   </div>
-                </div>
+                </label>
                 <strong>{student.program || "—"} · {student.classGroup || "—"}</strong>
               </header>
               <div className="quick-actions">

@@ -94,3 +94,104 @@
   [data-navigation-audience="office"] .documents-recent>div>article{min-height:4rem;padding:.8rem .9rem}
   [data-navigation-audience="office"] .documents-pagination{justify-content:space-between;padding:.35rem 0}
 }
+
+/* Mobile density pass: keep document workflows thumb-friendly without changing behavior. */
+@media (max-width: 640px) {
+  [data-navigation-audience="office"] .document-type-control {
+    gap: .55rem;
+    padding: .82rem;
+    border-radius: 1rem;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem .55rem;
+    padding: .82rem;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid .field-label {
+    min-width: 0;
+    gap: .32rem;
+    font-size: .76rem;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid .text-field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid .document-search-wide {
+    grid-column: 1 / -1;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid > .quick-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+
+  [data-navigation-audience="office"] .document-filter-grid > .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  [data-navigation-audience="office"] .document-bulk-toolbar {
+    gap: .65rem;
+    padding: .82rem;
+  }
+
+  [data-navigation-audience="office"] .document-bulk-toolbar .quick-actions {
+    gap: .5rem;
+  }
+
+  [data-navigation-audience="office"] .document-bulk-toolbar .quick-actions .action-button-primary {
+    grid-column: 1 / -1;
+  }
+
+  [data-navigation-audience="office"] .document-select-line {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: .65rem;
+    align-items: center;
+    width: 100%;
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+
+  [data-navigation-audience="office"] .document-select-line > input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+    min-height: 1.35rem;
+    margin: 0;
+  }
+
+  [data-navigation-audience="office"] .document-select-line > div {
+    min-width: 0;
+  }
+
+  [data-navigation-audience="office"] .document-student > header > strong {
+    padding-inline-start: 2.15rem;
+    color: var(--muted);
+    font-size: .76rem;
+    font-weight: 650;
+  }
+
+  [data-navigation-audience="office"] .document-student > .quick-actions {
+    display: grid;
+    padding: 0 .85rem .85rem;
+  }
+
+  [data-navigation-audience="office"] .document-student > .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.8rem;
+    justify-content: center;
+  }
+
+  [data-navigation-audience="office"] .documents-recent > div > article .secondary-button {
+    min-width: 4.8rem;
+  }
+}
