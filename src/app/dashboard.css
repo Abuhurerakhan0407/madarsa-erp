@@ -139,3 +139,151 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* App-first dashboard treatment */
+@media (max-width: 700px) {
+  [data-navigation-audience="office"] .operational-dashboard {
+    gap: 1.15rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-hero {
+    position: relative;
+    gap: 0.85rem;
+    padding: 1.15rem;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: 1.2rem;
+    background: linear-gradient(145deg, #0f5132, #176b43);
+    color: #fff;
+    box-shadow: 0 12px 30px rgb(15 81 50 / 16%);
+  }
+
+  [data-navigation-audience="office"] .dashboard-hero h1 {
+    margin-block: 0.5rem 0.42rem;
+    color: #fff;
+    font-size: clamp(1.8rem, 8vw, 2.25rem);
+    letter-spacing: -0.045em;
+  }
+
+  [data-navigation-audience="office"] .dashboard-hero p {
+    color: rgb(255 255 255 / 76%);
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  [data-navigation-audience="office"] .dashboard-hero time {
+    border-color: rgb(255 255 255 / 16%);
+    background: rgb(255 255 255 / 10%);
+    color: rgb(255 255 255 / 78%);
+    backdrop-filter: blur(10px);
+  }
+
+  [data-navigation-audience="office"] .dashboard-kickers span {
+    min-height: 1.75rem;
+    border: 1px solid rgb(255 255 255 / 12%);
+    background: rgb(255 255 255 / 9%);
+    color: rgb(255 255 255 / 72%);
+  }
+
+  [data-navigation-audience="office"] .dashboard-kickers .dashboard-live-dot {
+    background: rgb(255 255 255 / 14%);
+    color: #fff;
+  }
+
+  [data-navigation-audience="office"] .dashboard-live-dot::before {
+    background: #79d9a5;
+    box-shadow: 0 0 0 0.2rem rgb(121 217 165 / 14%);
+  }
+
+  [data-navigation-audience="office"] .dashboard-section-heading {
+    align-items: end;
+    padding-inline: 0.1rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-section-heading h2,
+  [data-navigation-audience="office"] .dashboard-panel h2 {
+    font-size: 1rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-section-heading p,
+  [data-navigation-audience="office"] .dashboard-panel header p {
+    font-size: 0.76rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric {
+    min-height: 7.1rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric:active {
+    transform: scale(0.98);
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric span {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric strong {
+    font-size: 1.55rem;
+  }
+
+  [data-navigation-audience="office"] .dashboard-metric small {
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  [data-navigation-audience="office"] .dashboard-panel {
+    padding: 0.9rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 24px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .dashboard-alert {
+    min-height: 4rem;
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--surface-muted) 72%, var(--surface));
+  }
+
+  [data-navigation-audience="office"] .dashboard-route-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-navigation-audience="office"] .dashboard-route-grid a {
+    min-height: 3.75rem;
+    padding: 0.75rem;
+    border-radius: 0.9rem;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-navigation-audience="office"] .dashboard-route-grid a:active,
+  [data-navigation-audience="office"] .dashboard-alert:active {
+    transform: scale(0.985);
+  }
+
+  [data-navigation-audience="office"] .dashboard-trend-card {
+    overflow: hidden;
+  }
+
+  [data-navigation-audience="office"] .dashboard-bars {
+    height: 6.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  [data-navigation-audience="office"] .dashboard-metric-grid,
+  [data-navigation-audience="office"] .dashboard-route-grid {
+    grid-template-columns: 1fr;
+  }
+}
