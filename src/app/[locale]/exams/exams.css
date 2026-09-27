@@ -23,3 +23,65 @@
   [data-navigation-audience="office"] .exam-mark-row>.action-button{width:100%;min-height:3rem;justify-content:center}
   [data-navigation-audience="office"] .exam-moderation{padding-top:.65rem}
 }
+
+/* Real-device overflow hardening for the exam workspace. */
+@media (max-width: 760px) {
+  .client-v2-main:has(.exam-v2-actions) > *,
+  .client-v2-main:has(.exam-v2-actions) .flow-stack,
+  .client-v2-main:has(.exam-v2-actions) .page-heading,
+  .client-v2-main:has(.exam-v2-actions) .professional-card,
+  .client-v2-main:has(.exam-v2-actions) .exam-v2-actions,
+  .client-v2-main:has(.exam-v2-actions) .exam-v2-action {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .client-v2-main:has(.exam-v2-actions) .page-heading,
+  .client-v2-main:has(.exam-v2-actions) .flow-stack,
+  .client-v2-main:has(.exam-v2-actions) .exam-v2-actions {
+    width: 100%;
+  }
+  .client-v2-main:has(.exam-v2-actions) :is(h1, h2, p, strong, span) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .client-v2-main:has(.exam-v2-actions) .section-heading > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-v2-selector"] .field-label,
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-v2-selector"] .text-field,
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-v2-selector"] select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-v2-selector"] select {
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 520px) {
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-selected-context"] > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+    width: 100%;
+  }
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-selected-context"] > div:last-child > .action-button {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.85rem;
+    justify-content: center;
+  }
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-selected-context"] > div:last-child > .action-button-primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .client-v2-main:has(.exam-v2-actions) [data-testid="exam-selected-context"] > div:last-child > .action-button:last-child:nth-child(even) {
+    grid-column: 1 / -1;
+  }
+}

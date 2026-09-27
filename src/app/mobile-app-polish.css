@@ -185,3 +185,84 @@
     inset-block-start: auto;
   }
 }
+
+/* Admission review detail: compact app cards without touching review logic. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) > .configuration-detail-card {
+    min-height: 0;
+    padding: .9rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%);
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list {
+    display: grid;
+    gap: 0;
+    margin-block-start: .5rem;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, .75fr) minmax(0, 1.25fr);
+    gap: .7rem;
+    padding-block: .62rem;
+    border-block-end: 1px solid var(--border);
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div:last-child {
+    border-block-end: 0;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dt {
+    color: var(--muted);
+    font-size: .74rem;
+    font-weight: 720;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: .82rem;
+    font-weight: 650;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .configuration-detail-card .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .configuration-detail-card .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+  [data-navigation-audience="office"] .configuration-section:has(.configuration-module-grid) .configuration-module-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+  }
+  [data-navigation-audience="office"] .configuration-section:has(.configuration-module-grid) .configuration-module {
+    min-height: 0;
+    padding: .82rem;
+    border-radius: .9rem;
+  }
+  [lang="ur"] [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dt,
+  [lang="ur"] [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dd {
+    font-size: .84rem;
+    line-height: 1.75;
+  }
+}
+
+@media (max-width: 380px) {
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .18rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-main .panel,
+  [data-navigation-audience="office"] .student-register-card,
+  [data-navigation-audience="office"] .dashboard-alert,
+  [data-navigation-audience="office"] .dashboard-route-grid a {
+    transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+}
