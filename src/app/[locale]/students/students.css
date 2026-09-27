@@ -483,3 +483,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* App-first student register polish */
+@media(max-width:620px){
+  .student-register-section{gap:.75rem}
+  .student-register-section .filter-bar{margin:.15rem 0 .35rem;padding:.7rem;border-radius:1rem;background:var(--surface)}
+  .student-register-list{gap:.58rem}
+  .student-register-card{min-height:4.8rem;padding:.78rem .8rem;border-radius:1rem;box-shadow:0 1px 2px rgb(15 35 27 / 4%),0 8px 22px rgb(15 35 27 / 3%);-webkit-tap-highlight-color:transparent}
+  .student-register-card:active{transform:scale(.985);background:color-mix(in srgb,var(--accent-soft) 42%,var(--surface))}
+  .student-register-avatar{width:2.7rem;height:2.7rem;border:0;background:var(--accent-soft);font-size:.92rem}
+  .student-register-main>strong{font-size:.95rem}
+  .student-register-main>small{font-size:.75rem}
+  .student-register-meta{margin-top:.12rem;font-size:.7rem;line-height:1.45}
+  .student-register-chevron{font-size:1.5rem;color:color-mix(in srgb,var(--muted) 75%,transparent)}
+  .pagination-row{margin-top:.25rem;padding:.55rem .1rem 0;gap:.6rem}
+  .pagination-row .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:.5rem}
+  .pagination-row .quick-actions>*{width:100%;justify-content:center}
+}

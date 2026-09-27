@@ -162,3 +162,18 @@
     padding: 0.75rem;
   }
 }
+
+/* Mobile task flows and states */
+@media(max-width:620px){
+  [data-navigation-audience="office"] .workspace-task-section{margin-top:.55rem}
+  [data-navigation-audience="office"] .workspace-task-row{grid-template-columns:minmax(0,1fr) auto;min-height:5rem;gap:.75rem;padding:.9rem;border-radius:1rem;box-shadow:0 1px 2px rgb(15 35 27 / 4%),0 8px 20px rgb(15 35 27 / 3%)}
+  [data-navigation-audience="office"] .workspace-task-row>div{gap:.24rem}
+  [data-navigation-audience="office"] .workspace-task-row strong{font-size:.94rem;line-height:1.3}
+  [data-navigation-audience="office"] .workspace-task-row p{font-size:.76rem;line-height:1.5}
+  [data-navigation-audience="office"] .workspace-task-arrow{display:grid;width:2rem;height:2rem;place-items:center;align-self:center;border-radius:999px;background:var(--surface-muted);font-size:1rem}
+  [data-navigation-audience="office"] .workspace-inline-state{min-height:9rem;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 4%)}
+  [data-navigation-audience="office"] .workspace-state{min-height:16rem;padding:1.1rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface)}
+  [data-navigation-audience="office"] .workspace-state-mark{width:2.8rem;min-width:2.8rem;min-height:2.8rem}
+  [data-navigation-audience="office"] .workspace-loading-state{min-height:9rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface)}
+  [data-navigation-audience="office"] .workspace-success{border-radius:.85rem}
+}

@@ -706,3 +706,21 @@
     line-height: 1.75;
   }
 }
+
+/* Office app-first Qur'an workspace */
+@media(max-width:620px){
+  [data-navigation-audience="office"] .quran-daily-register{gap:.85rem}
+  [data-navigation-audience="office"] .quran-daily-toolbar{gap:.6rem;padding:.75rem;border-radius:1rem}
+  [data-navigation-audience="office"] .quran-daily-metrics{grid-template-columns:repeat(2,minmax(0,1fr));border:0;gap:.5rem;background:transparent}
+  [data-navigation-audience="office"] .quran-daily-metrics>div,
+  [data-navigation-audience="office"] .quran-daily-metrics>div:nth-child(3),
+  [data-navigation-audience="office"] .quran-daily-metrics>div:nth-child(even){min-height:4.35rem;padding:.68rem .72rem;border:1px solid var(--border);border-radius:.88rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 3%)}
+  [data-navigation-audience="office"] .quran-daily-metrics strong{font-size:1.3rem}
+  [data-navigation-audience="office"] .quran-daily-roster{border:0;border-radius:0;background:transparent;overflow:visible}
+  [data-navigation-audience="office"] .quran-daily-roster>header{padding:.55rem .1rem .65rem}
+  [data-navigation-audience="office"] .quran-daily-row{margin-bottom:.58rem;padding:.82rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 4%)}
+  [data-navigation-audience="office"] .quran-daily-student strong{font-size:.94rem}
+  [data-navigation-audience="office"] .quran-daily-entry{gap:.5rem}
+  [data-navigation-audience="office"] .quran-daily-save{min-height:3rem;border-radius:.72rem}
+  [data-navigation-audience="office"] .quran-details-toggle{min-height:2.75rem;padding-inline:.25rem}
+}
