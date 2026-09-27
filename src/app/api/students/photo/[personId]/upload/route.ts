@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { operatorHasPermissions } from "@/lib/access/operator-permission";
-import { isSameOriginRequest } from "@/lib/security/request";
+import { isSameOriginRequest, readBoundedFormData } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -27,53 +27,6 @@ function detectPhotoType(bytes: Uint8Array): StudentPhotoType | null {
   return null;
 }
 
-async function readBoundedMultipart(
-  request: Request,
-  contentType: string
-): Promise<{ ok: true; value: FormData } | { ok: false; status: 400 | 413; error: string }> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_MULTIPART_BYTES) {
-    return { ok: false, status: 413, error: "Student photo must be 5 MB or smaller." };
-  }
-
-  const reader = request.body?.getReader();
-  if (!reader) return { ok: false, status: 400, error: "Unable to read student photo." };
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  try {
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      total += chunk.value.byteLength;
-      if (total > MAX_MULTIPART_BYTES) {
-        void reader.cancel().catch(() => {});
-        return { ok: false, status: 413, error: "Student photo must be 5 MB or smaller." };
-      }
-      chunks.push(chunk.value);
-    }
-  } catch {
-    return { ok: false, status: 400, error: "Unable to read student photo." };
-  } finally {
-    reader.releaseLock();
-  }
-
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  try {
-    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-    const value = await new Response(buffer, { headers: { "content-type": contentType } }).formData();
-    return { ok: true, value };
-  } catch {
-    return { ok: false, status: 400, error: "Unable to read student photo." };
-  }
-}
-
 export async function POST(request: Request, { params }: { params: Promise<{ personId: string }> }) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Cross-origin upload blocked." }, { status: 403 });
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
@@ -96,8 +49,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ per
     return NextResponse.json({ error: "Invalid student." }, { status: 400 });
   }
 
-  const multipart = await readBoundedMultipart(request, contentType);
-  if (!multipart.ok) return NextResponse.json({ error: multipart.error }, { status: multipart.status });
+  const multipart = await readBoundedFormData(request, MAX_MULTIPART_BYTES);
+  if (!multipart.ok) {
+    const error = multipart.status === 413 ? "Student photo must be 5 MB or smaller." : "Unable to read student photo.";
+    return NextResponse.json({ error }, { status: multipart.status });
+  }
   const photo = multipart.value.get("photo");
   if (!(photo instanceof File)) return NextResponse.json({ error: "Student photo is required." }, { status: 400 });
   if (photo.size < 1 || photo.size > MAX_PHOTO_BYTES) {

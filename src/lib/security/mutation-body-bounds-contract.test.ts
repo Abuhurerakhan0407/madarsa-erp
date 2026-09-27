@@ -32,7 +32,8 @@ const boundedRoutes = [
 const boundedMultipartRoutes = [
   ["academic attachment", "src/app/api/academics/attachment/route.ts", "MAX_ACADEMIC_ATTACHMENT_BYTES + 768 * 1024"],
   ["staff admission photo", "src/app/api/admissions/staff-photo/route.ts", "MAX_PHOTO_BYTES + 512 * 1024"],
-  ["public admission photo", "src/app/api/public/admissions/[tenantSlug]/photo/route.ts", "MAX_PHOTO_BYTES + 512 * 1024"]
+  ["public admission photo", "src/app/api/public/admissions/[tenantSlug]/photo/route.ts", "MAX_PHOTO_BYTES + 512 * 1024"],
+  ["student profile photo", "src/app/api/students/photo/[personId]/upload/route.ts", "MAX_MULTIPART_BYTES"]
 ] as const;
 describe("bounded mutation request bodies", () => {
   it.each(boundedRoutes)("bounds %s JSON", (_name, path, limit) => {
