@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 
@@ -33,13 +33,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  let body: BootstrapBody;
-
-  try {
-    body = (await request.json()) as BootstrapBody;
-  } catch {
+  const parsedBody = await readBoundedJson(request, 8_192);
+  if (!parsedBody.ok) {
+    return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  }
+  if (!parsedBody.value || typeof parsedBody.value !== "object" || Array.isArray(parsedBody.value)) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+  const body = parsedBody.value as BootstrapBody;
 
   const displayName = cleanText(body.displayName);
   const institutionName = cleanText(body.institutionName);
