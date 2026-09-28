@@ -222,3 +222,29 @@
     line-height: 1.55;
   }
 }
+
+/* Keep the whole student identity row tappable with valid label semantics. */
+@media (max-width: 640px) {
+  [data-navigation-audience="office"] .document-select-line {
+    position: relative;
+  }
+
+  [data-navigation-audience="office"] .document-select-line > input[type="checkbox"] {
+    position: relative;
+    z-index: 2;
+  }
+
+  [data-navigation-audience="office"] .document-select-line > div {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  [data-navigation-audience="office"] .document-select-hitbox {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: .72rem;
+    cursor: pointer;
+  }
+}

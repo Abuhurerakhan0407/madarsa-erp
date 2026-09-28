@@ -252,8 +252,9 @@ export function DocumentCenterV2({
           return (
             <article className={`panel document-student ${canUse ? "" : "is-disabled"}`} key={student.personId}>
               <header>
-                <label className="document-select-line">
+                <div className="document-select-line">
                   <input
+                    id={`document-select-${student.personId}`}
                     type="checkbox"
                     aria-label={`${t.selectStudent} ${student.name}`}
                     checked={selected.includes(student.personId)}
@@ -266,7 +267,8 @@ export function DocumentCenterV2({
                     <h2>{student.name}</h2>
                     {student.nameNative ? <small dir="auto">{student.nameNative}</small> : null}
                   </div>
-                </label>
+                  <label className="document-select-hitbox" htmlFor={`document-select-${student.personId}`} aria-hidden="true" />
+                </div>
                 <strong>{student.program || "—"} · {student.classGroup || "—"}</strong>
               </header>
               <div className="quick-actions">
