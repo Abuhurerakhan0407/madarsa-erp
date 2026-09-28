@@ -12,7 +12,8 @@ function validEmail(value: unknown) {
 
 function validPassword(value: unknown) {
   if (typeof value !== "string") return null;
-  if (value.length < 8 || value.length > 256) return null;
+  if (value.length < 12 || value.length > 128) return null;
+  if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/[0-9]/.test(value) || !/[^A-Za-z0-9]/.test(value)) return null;
   return value;
 }
 
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
   if (!email || !password) {
     return NextResponse.json(
-      { error: "A valid email and password of at least 8 characters are required." },
+      { error: "A valid email and a 12–128 character password with uppercase, lowercase, number, and symbol are required." },
       { status: 400 }
     );
   }

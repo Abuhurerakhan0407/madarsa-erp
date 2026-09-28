@@ -31,7 +31,7 @@ const copy = {
     newInstitution: "New institution? Create an account",
     existing: "Already have an account? Sign in",
     emailRequired: "Enter a valid email address.",
-    passwordRequired: "Password must be at least 8 characters.",
+    passwordRequired: "Use 12–128 characters with uppercase, lowercase, number, and symbol.",
     invalidCredentials: "Email or password is incorrect.",
     rateLimited: "Too many attempts. Please wait a moment and try again.",
     genericError: "Unable to sign in. Please try again.",
@@ -58,7 +58,7 @@ const copy = {
     newInstitution: "نیا ادارہ؟ اکاؤنٹ بنائیں",
     existing: "اکاؤنٹ موجود ہے؟ سائن اِن کریں",
     emailRequired: "درست ای میل درج کریں۔",
-    passwordRequired: "پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔",
+    passwordRequired: "پاس ورڈ 12 سے 128 حروف کا ہو اور اس میں بڑا حرف، چھوٹا حرف، نمبر اور علامت شامل ہو۔",
     invalidCredentials: "ای میل یا پاس ورڈ درست نہیں۔",
     rateLimited: "بہت زیادہ کوششیں ہوئیں۔ کچھ دیر بعد دوبارہ کوشش کریں۔",
     genericError: "سائن اِن نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
@@ -128,7 +128,7 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
   function validate(): boolean {
     const nextErrors: FieldErrors = {};
     if (!isValidEmail(email.trim())) nextErrors.email = text.emailRequired;
-    if (password.length < 8) nextErrors.password = text.passwordRequired;
+    if (mode === "signup" ? !(password.length >= 12 && password.length <= 128 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) : password.length < 8) nextErrors.password = text.passwordRequired;
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -257,7 +257,7 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
                 className="text-field"
                 type="password"
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                minLength={8}
+                minLength={mode === "signup" ? 12 : 8}
                 required
                 value={password}
                 aria-invalid={Boolean(fieldErrors.password)}

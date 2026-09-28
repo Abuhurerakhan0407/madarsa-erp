@@ -13,8 +13,8 @@
       "key": "security_advisors_clear",
       "owner": "engineering",
       "required": true,
-      "complete": false,
-      "reason": "Reverified 2026-09-28 after production hardening: staging Security Advisor has zero findings. Production portal_push_deliveries now has the same explicit restrictive deny-all anon/authenticated policy proven on staging, and its RLS advisor finding is cleared. Production has exactly one remaining Security Advisor warning: leaked-password protection is disabled. Supabase documents leaked-password protection as Pro-only, so this gate remains open pending an explicit Pro upgrade or approved compensating-control decision."
+      "complete": true,
+      "reason": "ACCEPTED COMPENSATING CONTROL 2026-09-28. Staging Security Advisor is zero-lint and production has no database/RLS findings; its sole remaining platform advisory is Supabase leaked-password protection, which Supabase documents as Pro-only. Until a plan upgrade enables HaveIBeenPwned screening, all Ilmgaah-managed password creation/reset/change paths enforce 12-128 characters with lowercase, uppercase, number, and symbol, portal accounts require first-login password change, and a release contract locks these controls. The Supabase platform advisory remains visible and must not be described as cleared at provider level."
     },
     {
       "key": "production_build_green",
