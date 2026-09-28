@@ -14,7 +14,7 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Staging is zero-lint after the complete clean-room rebuild and current release migrations: 258/258 public tables have RLS, zero policyless RLS tables, zero WhatsApp RPCs, and all SECURITY DEFINER routines have pinned search_path. Production remains intentionally unmigrated and still has pre-release findings. Supabase leaked-password protection is Pro-only, so the Free-plan limitation requires an explicit launch decision/compensating controls."
+      "reason": "Reverified 2026-09-28: staging Security Advisor is zero-lint after applying the explicit deny-all anon/authenticated policy for portal_push_deliveries. Production currently has exactly two Security Advisor findings: portal_push_deliveries has no policy (the committed 20260928100500 fix is proven on staging but not yet applied to production) and leaked-password protection is disabled. Supabase documents leaked-password protection as Pro-only, so production cutover still requires the migration plus an explicit plan/compensating-control decision."
     },
     {
       "key": "production_build_green",
@@ -35,7 +35,7 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Blocked externally. Every new Git-triggered Vercel preview is BLOCKED before a build starts and links to Vercel Troubleshoot Project Collaboration -> Team configuration. No production deployment or alias change is permitted until the final gates pass and explicit production approval is given."
+      "reason": "Reverified 2026-09-28 through Vercel: the newest QA Git deployment dpl_5eAC4jTrQ2fY9KPyehdUgDnnQrQE is BLOCKED before build and links to Troubleshoot Project Collaboration -> Team configuration. The currently READY production deployment is older than the current QA head. No production deployment or alias change is permitted until the external team-configuration blocker is resolved, final gates pass, and explicit production approval is given."
     },
     {
       "key": "pricing_approved",
