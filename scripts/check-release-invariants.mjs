@@ -91,7 +91,8 @@ for (const path of [
   "supabase/migrations/20260918100000_retire_whatsapp_runtime.sql",
   "supabase/migrations/20260918101500_lock_release_locales_en_ur.sql",
   "supabase/migrations/20260918102000_lock_preferred_locales_en_ur.sql",
-  "supabase/migrations/20260918102500_explicit_fail_closed_rls_policies.sql"
+  "supabase/migrations/20260918102500_explicit_fail_closed_rls_policies.sql",
+  "supabase/migrations/20260928100500_portal_push_deliveries_deny_client_policy.sql"
 ]) await requireExists(path);
 
 const i18n = await source("src/lib/i18n/config.ts");
