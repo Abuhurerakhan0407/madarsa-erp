@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./mobile-app-polish.css";
 
 :root {
   color-scheme: light;

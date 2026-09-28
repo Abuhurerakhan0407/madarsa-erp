@@ -483,3 +483,215 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* App-first student register polish */
+@media(max-width:620px){
+  .student-register-section{gap:.75rem}
+  .student-register-section .filter-bar{margin:.15rem 0 .35rem;padding:.7rem;border-radius:1rem;background:var(--surface)}
+  .student-register-list{gap:.58rem}
+  .student-register-card{min-height:4.8rem;padding:.78rem .8rem;border-radius:1rem;box-shadow:0 1px 2px rgb(15 35 27 / 4%),0 8px 22px rgb(15 35 27 / 3%);-webkit-tap-highlight-color:transparent}
+  .student-register-card:active{transform:scale(.985);background:color-mix(in srgb,var(--accent-soft) 42%,var(--surface))}
+  .student-register-avatar{width:2.7rem;height:2.7rem;border:0;background:var(--accent-soft);font-size:.92rem}
+  .student-register-main>strong{font-size:.95rem}
+  .student-register-main>small{font-size:.75rem}
+  .student-register-meta{margin-top:.12rem;font-size:.7rem;line-height:1.45}
+  .student-register-chevron{font-size:1.5rem;color:color-mix(in srgb,var(--muted) 75%,transparent)}
+  .pagination-row{margin-top:.25rem;padding:.55rem .1rem 0;gap:.6rem}
+  .pagination-row .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:.5rem}
+  .pagination-row .quick-actions>*{width:100%;justify-content:center}
+}
+
+/* Real-device student overview hierarchy. */
+@media (max-width: 620px) {
+  .client-v2-main:has(> .student-register-section) > .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .client-v2-main:has(> .student-register-section) > .metric-grid > .metric:first-child {
+    grid-column: 1 / -1;
+  }
+  .client-v2-main:has(> .student-register-section) > .workspace-page-header .workspace-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .client-v2-main:has(> .student-register-section) > .workspace-page-header .workspace-actions > .action-button-primary {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}
+
+/* Real-device student profile + admission-flow polish. */
+@media (max-width: 620px) {
+  .student-print-profile {
+    display: grid;
+    gap: .8rem;
+  }
+  .student-print-profile > .workspace-page-header .workspace-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .student-print-profile > .workspace-page-header .workspace-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+  .student-print-profile > .panel,
+  .student-print-profile .dashboard-grid > .panel {
+    padding: .88rem;
+  }
+  .student-print-profile .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+  .student-print-profile .student-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+  }
+  .student-print-profile .student-detail-grid > div {
+    min-height: 4.4rem;
+    padding: .7rem;
+    border-radius: .85rem;
+  }
+  .student-print-profile > .panel:first-of-type .dashboard-grid > .panel:first-child .student-detail-grid > div:first-child {
+    grid-column: 1 / -1;
+    min-height: auto;
+  }
+  .student-print-profile .dashboard-grid .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .student-print-profile .dashboard-grid .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+  .student-print-profile .dashboard-grid .quick-actions > .action-button-primary {
+    grid-column: 1 / -1;
+  }
+  .student-print-profile .student-notes {
+    gap: .55rem;
+  }
+  .student-print-profile .student-notes > div {
+    padding: .72rem;
+    border: 1px solid var(--border);
+    border-radius: .85rem;
+    background: var(--surface-muted);
+  }
+  .student-print-profile > .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+  }
+  .student-print-profile > .metric-grid > .metric:first-child:last-child,
+  .student-print-profile > .metric-grid > .metric:first-child:nth-last-child(3) {
+    grid-column: 1 / -1;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) {
+    gap: .8rem;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) > .workspace-context-strip {
+    padding: .78rem .85rem;
+    border-radius: .9rem;
+    border-inline-start: 3px solid var(--accent);
+  }
+  .configuration-form.client-v2-form [data-admission-step] {
+    padding: .9rem;
+    border-radius: 1rem;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) .configuration-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .7rem;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) details > summary {
+    min-height: 2.85rem;
+    display: flex;
+    align-items: center;
+    padding: .6rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: .8rem;
+    background: var(--surface-muted);
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) > .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: .5rem;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) > .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+  .configuration-form.client-v2-form:has([data-admission-step]) > .quick-actions > .action-button-primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 360px) {
+  .student-print-profile .student-detail-grid,
+  .student-print-profile > .metric-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .student-print-profile > .metric-grid > .metric {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .student-print-profile > .workspace-page-header h1 {
+    font-size: clamp(1.75rem, 7vw, 2rem);
+  }
+  .student-print-profile > .workspace-page-header .workspace-description {
+    font-size: .8rem;
+    line-height: 1.5;
+  }
+  .student-print-profile > .workspace-page-header .workspace-actions > * {
+    min-height: 2.75rem;
+    padding-inline: .7rem;
+    font-size: .76rem;
+  }
+  .student-print-profile > .panel:first-of-type .dashboard-grid > .panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .student-print-profile > .panel:first-of-type .dashboard-grid {
+    gap: .7rem;
+  }
+  .student-print-profile > .panel:first-of-type .panel-header {
+    margin-block-end: .65rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .client-v2-main:has(.configuration-form.client-v2-form) > .workspace-page-header .workspace-actions {
+    display: flex;
+    width: auto;
+    justify-content: flex-start;
+  }
+  .client-v2-main:has(.configuration-form.client-v2-form) > .workspace-page-header .workspace-actions > * {
+    width: auto;
+    min-height: 2.65rem;
+    padding-inline: .8rem;
+    font-size: .76rem;
+  }
+  .client-v2-main:has(.configuration-form.client-v2-form) > .workspace-context-strip {
+    margin-block: .15rem .8rem;
+    padding: .8rem .85rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: .9rem;
+    background: color-mix(in srgb, var(--accent-soft) 34%, var(--surface));
+  }
+  .client-v2-main:has(.configuration-form.client-v2-form) > .workspace-context-strip p {
+    margin: 0;
+    font-size: .78rem;
+    line-height: 1.55;
+  }
+  [lang="ur"] .client-v2-main:has(.configuration-form.client-v2-form) > .workspace-context-strip p {
+    font-size: .88rem;
+    line-height: 1.85;
+  }
+}

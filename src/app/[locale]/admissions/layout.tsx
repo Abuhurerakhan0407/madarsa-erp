@@ -10,5 +10,5 @@ export default async function AdmissionsLayout({
 }) {
   const { locale } = await params;
   await requireOfficeSurface(locale, ["admissions.application.review"]);
-  return children;
+  return <div className="admissions-mobile-surface">{children}</div>;
 }

@@ -1,0 +1,536 @@
+/* Office mobile app polish. Keep business logic untouched. */
+@media (max-width: 900px) {
+  [data-navigation-audience="office"] {
+    --app-mobile-gutter: clamp(0.82rem, 3.5vw, 1rem);
+    --app-mobile-radius: 1rem;
+    --app-mobile-radius-lg: 1.2rem;
+  }
+
+  [data-navigation-audience="office"] .workspace {
+    min-height: 100dvh;
+    padding-block-end: calc(5.35rem + env(safe-area-inset-bottom));
+    background: var(--background);
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar {
+    min-height: auto;
+    padding: max(0.55rem, env(safe-area-inset-top)) var(--app-mobile-gutter) 0.55rem;
+    border-block-end-color: color-mix(in srgb, var(--border) 68%, transparent);
+    background: color-mix(in srgb, var(--surface) 93%, transparent);
+    box-shadow: 0 1px 0 rgb(15 35 27 / 3%);
+    backdrop-filter: blur(20px) saturate(1.12);
+  }
+
+  [data-navigation-audience="office"] .topbar-school-context {
+    display: grid;
+    gap: 0.08rem;
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar .topbar-context {
+    font-size: 0.9rem;
+    font-weight: 780;
+    letter-spacing: -0.015em;
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar .topbar-session {
+    display: block;
+    max-width: 62vw;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.68rem;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar .user-button {
+    width: 2.65rem;
+    height: 2.65rem;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  [data-navigation-audience="office"] .client-v2-main {
+    width: 100%;
+    padding: 0.85rem var(--app-mobile-gutter) 1.5rem;
+  }
+
+  [data-navigation-audience="office"] .workspace-page-header,
+  [data-navigation-audience="office"] .client-v2-main .page-heading {
+    gap: 0.75rem;
+    padding: 0.15rem 0 1rem;
+    border-block-end: 0;
+  }
+
+  [data-navigation-audience="office"] .workspace-page-header h1,
+  [data-navigation-audience="office"] .client-v2-main .page-heading h1 {
+    font-size: clamp(1.65rem, 7vw, 2rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+
+  [data-navigation-audience="office"] .workspace-description,
+  [data-navigation-audience="office"] .client-v2-main .page-heading p:not(.state-kicker) {
+    margin-block-start: 0.45rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  [data-navigation-audience="office"] .client-v2-main .panel,
+  [data-navigation-audience="office"] .client-v2-main .professional-card,
+  [data-navigation-audience="office"] .workspace-record-card,
+  [data-navigation-audience="office"] .workspace-filter-bar {
+    border-radius: var(--app-mobile-radius);
+    border-color: color-mix(in srgb, var(--border) 86%, transparent);
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 24px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .client-v2-main .action-button,
+  [data-navigation-audience="office"] .client-v2-main button,
+  [data-navigation-audience="office"] .client-v2-main input,
+  [data-navigation-audience="office"] .client-v2-main select,
+  [data-navigation-audience="office"] .client-v2-main textarea {
+    min-height: 3rem;
+  }
+
+  [data-navigation-audience="office"] .client-v2-main .action-button,
+  [data-navigation-audience="office"] .workspace-task-row,
+  [data-navigation-audience="office"] .workspace-record-link {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-navigation-audience="office"] .client-v2-main .action-button:active,
+  [data-navigation-audience="office"] .workspace-task-row:active,
+  [data-navigation-audience="office"] .workspace-record-link:active {
+    transform: scale(0.985);
+  }
+
+  [data-navigation-audience="office"] .workspace-section,
+  [data-navigation-audience="office"] .workspace-task-section {
+    margin-block-start: 1.15rem;
+  }
+
+  [data-navigation-audience="office"] .workspace-section-header,
+  [data-navigation-audience="office"] .workspace-section-heading {
+    margin-block-end: 0.7rem;
+  }
+
+  [data-navigation-audience="office"] .workspace-task-list {
+    border: 0;
+  }
+
+  [data-navigation-audience="office"] .workspace-task-row {
+    min-height: 4.65rem;
+    margin-block-end: 0.55rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--app-mobile-radius);
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%);
+  }
+
+  [data-navigation-audience="office"] .workspace-task-row:last-child {
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .client-v2-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem 0.65rem !important;
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar .global-search-box {
+    margin-block-start: 0.1rem;
+  }
+
+  [data-navigation-audience="office"] .client-v2-topbar .global-search-box > .text-field {
+    min-height: 2.85rem;
+    border-radius: 0.9rem;
+    background: var(--surface-muted);
+  }
+
+  [data-navigation-audience="office"] .workspace-actions {
+    gap: 0.45rem;
+  }
+
+  [data-navigation-audience="office"] .workspace-actions > * {
+    min-height: 2.9rem;
+  }
+
+  [data-navigation-audience="office"] .workspace-filter-bar {
+    margin-block: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Mobile task flows and states */
+@media(max-width:620px){
+  [data-navigation-audience="office"] .workspace-task-section{margin-top:.55rem}
+  [data-navigation-audience="office"] .workspace-task-row{grid-template-columns:minmax(0,1fr) auto;min-height:5rem;gap:.75rem;padding:.9rem;border-radius:1rem;box-shadow:0 1px 2px rgb(15 35 27 / 4%),0 8px 20px rgb(15 35 27 / 3%)}
+  [data-navigation-audience="office"] .workspace-task-row>div{gap:.24rem}
+  [data-navigation-audience="office"] .workspace-task-row strong{font-size:.94rem;line-height:1.3}
+  [data-navigation-audience="office"] .workspace-task-row p{font-size:.76rem;line-height:1.5}
+  [data-navigation-audience="office"] .workspace-task-arrow{display:grid;width:2rem;height:2rem;place-items:center;align-self:center;border-radius:999px;background:var(--surface-muted);font-size:1rem}
+  [data-navigation-audience="office"] .workspace-inline-state{min-height:9rem;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 4%)}
+  [data-navigation-audience="office"] .workspace-state{min-height:16rem;padding:1.1rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface)}
+  [data-navigation-audience="office"] .workspace-state-mark{width:2.8rem;min-width:2.8rem;min-height:2.8rem}
+  [data-navigation-audience="office"] .workspace-loading-state{min-height:9rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface)}
+  [data-navigation-audience="office"] .workspace-success{border-radius:.85rem}
+}
+
+/* Real-device mobile chrome: let the two-row header scroll away. */
+@media (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-topbar {
+    position: static;
+    inset-block-start: auto;
+  }
+}
+
+/* Admission review detail: compact app cards without touching review logic. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) > .configuration-detail-card {
+    min-height: 0;
+    padding: .9rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%);
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list {
+    display: grid;
+    gap: 0;
+    margin-block-start: .5rem;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, .75fr) minmax(0, 1.25fr);
+    gap: .7rem;
+    padding-block: .62rem;
+    border-block-end: 1px solid var(--border);
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div:last-child {
+    border-block-end: 0;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dt {
+    color: var(--muted);
+    font-size: .74rem;
+    font-weight: 720;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: .82rem;
+    font-weight: 650;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .configuration-detail-card .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .configuration-detail-card .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+  [data-navigation-audience="office"] .configuration-section:has(.configuration-module-grid) .configuration-module-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+  }
+  [data-navigation-audience="office"] .configuration-section:has(.configuration-module-grid) .configuration-module {
+    min-height: 0;
+    padding: .82rem;
+    border-radius: .9rem;
+  }
+  [lang="ur"] [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dt,
+  [lang="ur"] [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list dd {
+    font-size: .84rem;
+    line-height: 1.75;
+  }
+}
+
+@media (max-width: 380px) {
+  [data-navigation-audience="office"] .configuration-detail-grid:has(.term-list) .term-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .18rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-main .panel,
+  [data-navigation-audience="office"] .student-register-card,
+  [data-navigation-audience="office"] .dashboard-alert,
+  [data-navigation-audience="office"] .dashboard-route-grid a {
+    transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+}
+
+/* Admissions-only mobile forms. Route wrapper prevents spillover into staff surfaces. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface {
+    display: grid;
+    gap: .8rem;
+    min-width: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading {
+    align-items: flex-start;
+    gap: .7rem;
+    padding-block-end: .35rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading > .action-button {
+    width: auto;
+    min-height: 2.65rem;
+    padding-inline: .85rem;
+    font-size: .76rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-section {
+    min-width: 0;
+    margin-block-start: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-section > .configuration-form {
+    display: grid;
+    gap: .8rem;
+    min-width: 0;
+    padding: .9rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 20px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .68rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .field-label {
+    min-width: 0;
+    gap: .32rem;
+    font-size: .78rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field {
+    width: 100%;
+    min-width: 0;
+    border-radius: .82rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form textarea.text-field {
+    min-height: 7rem;
+    resize: vertical;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row {
+    display: grid;
+    grid-template-columns: 1.45rem minmax(0, 1fr);
+    align-items: center;
+    gap: .65rem;
+    min-height: 3.25rem;
+    padding: .72rem .78rem;
+    border: 1px solid var(--border);
+    border-radius: .82rem;
+    background: var(--surface-muted);
+    line-height: 1.45;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+    min-height: 1.35rem;
+    margin: 0;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form > .action-button-primary {
+    width: 100%;
+    min-height: 3.15rem;
+    justify-content: center;
+    border-radius: .85rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .form-message {
+    margin: 0;
+    padding: .72rem .78rem;
+    border-radius: .82rem;
+    font-size: .78rem;
+    line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field,
+  [data-navigation-audience="office"] .document-student,
+  [data-navigation-audience="office"] .document-bulk-toolbar {
+    transition: border-color 140ms ease, box-shadow 160ms ease, transform 120ms ease;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .text-field:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+}
+
+/* Admissions enquiry list/detail hierarchy. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .6rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module {
+    min-height: 0;
+    padding: .86rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 20px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module h3 {
+    margin-block-start: .62rem;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module p {
+    margin-block-start: .28rem;
+    font-size: .78rem;
+    line-height: 1.48;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module > .action-button {
+    width: 100%;
+    margin-block-start: .72rem;
+    justify-content: center;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card {
+    min-height: 0;
+    padding: .9rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 20px rgb(15 35 27 / 3%);
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card > h2 {
+    margin-block-start: .25rem;
+    font-size: 1rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card > p {
+    margin-block-start: .35rem;
+    font-size: .78rem;
+    line-height: 1.5;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card > .configuration-form {
+    display: grid;
+    gap: .68rem;
+    margin-block-start: .75rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card > .configuration-form > .action-button-primary {
+    width: 100%;
+    min-height: 3.1rem;
+    justify-content: center;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: .5rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .page-heading .quick-actions > * {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .section-heading {
+    margin-block-end: .55rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .section-heading h2 {
+    font-size: 1.12rem;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface > .form-message {
+    margin: 0;
+    padding: .78rem .82rem;
+    border-radius: .9rem;
+    font-size: .78rem;
+    line-height: 1.5;
+  }
+}
+
+/* Final mobile form ergonomics and narrow-screen resilience. */
+@media (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-main input,
+  [data-navigation-audience="office"] .client-v2-main select,
+  [data-navigation-audience="office"] .client-v2-main textarea {
+    scroll-margin-block: 5rem 8rem;
+  }
+
+  [data-navigation-audience="office"] .client-v2-main button:disabled,
+  [data-navigation-audience="office"] .client-v2-main .action-button[aria-disabled="true"] {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .form-message code {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    direction: ltr;
+    text-align: start;
+    user-select: all;
+    font-size: .72rem;
+    line-height: 1.55;
+  }
+
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module p,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card p,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .field-label,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row {
+    line-height: 1.8;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row:has(input:focus-visible) {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 11%, transparent);
+  }
+}
+
+/* Final Admissions edge states. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .empty-state {
+    min-height: 7rem;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-muted);
+    line-height: 1.55;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module,
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card,
+  [data-navigation-audience="office"] .admissions-mobile-surface .check-row {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module,
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card {
+    overflow-wrap: anywhere;
+  }
+}
