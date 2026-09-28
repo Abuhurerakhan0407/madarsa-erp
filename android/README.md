@@ -8,7 +8,7 @@ This directory contains the Trusted Web Activity (TWA) release configuration for
 - Trusted origin: `https://www.ilmgaah.in`
 - App name: `Ilmgaah`
 - Current version: `1.0.0`
-- Version code: `1`
+- Version code: `3`
 - Start URL: `/login?source=app`
 - Notifications: enabled
 - Minimum Android SDK: 23
