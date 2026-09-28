@@ -7,14 +7,14 @@
       "owner": "engineering",
       "required": true,
       "complete": true,
-      "reason": "GREEN on isolated Supabase staging. A clean-room rebuild was proven from the three committed Phase 2/3 baseline contracts, the recovered production foundation, the complete production migration history, and all release migrations currently on the RC branch. The biometric auto-apply/arrival migration and targeted arrival lookup index also apply cleanly. Staging remains data-empty after synthetic smoke cleanup, and Security Advisor is zero-lint. Production remains untouched."
+      "reason": "GREEN on isolated Supabase staging with clean-room rebuild and release migrations proven. Production runtime parity was rechecked for the critical post-Sep-24 Student Import and portal credential RPCs, and the 20260928100500 portal_push_deliveries restrictive RLS policy has now been applied successfully to production. Staging remains zero-lint; the verified release-critical database surfaces checked in this QA pass match staging."
     },
     {
       "key": "security_advisors_clear",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Reverified 2026-09-28: staging Security Advisor is zero-lint after applying the explicit deny-all anon/authenticated policy for portal_push_deliveries. Production currently has exactly two Security Advisor findings: portal_push_deliveries has no policy (the committed 20260928100500 fix is proven on staging but not yet applied to production) and leaked-password protection is disabled. Supabase documents leaked-password protection as Pro-only, so production cutover still requires the migration plus an explicit plan/compensating-control decision."
+      "reason": "Reverified 2026-09-28 after production hardening: staging Security Advisor has zero findings. Production portal_push_deliveries now has the same explicit restrictive deny-all anon/authenticated policy proven on staging, and its RLS advisor finding is cleared. Production has exactly one remaining Security Advisor warning: leaked-password protection is disabled. Supabase documents leaked-password protection as Pro-only, so this gate remains open pending an explicit Pro upgrade or approved compensating-control decision."
     },
     {
       "key": "production_build_green",
