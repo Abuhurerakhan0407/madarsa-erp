@@ -301,3 +301,9 @@
   .attendance-mark{width:100%;min-height:3rem;border-radius:.75rem;font-size:.78rem;-webkit-tap-highlight-color:transparent}
   .attendance-mark:active:not(:disabled){transform:scale(.98)}
 }
+
+/* Final mobile touch-target fix: nav action links must honor min-height. */
+.attendance-page-actions > * {
+  display: flex;
+  align-items: center;
+}
