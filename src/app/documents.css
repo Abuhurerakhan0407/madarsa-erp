@@ -195,3 +195,30 @@
     min-width: 4.8rem;
   }
 }
+
+/* Final narrow-screen document resilience. */
+@media (max-width: 640px) {
+  [data-navigation-audience="office"] .document-select-line > div,
+  [data-navigation-audience="office"] .document-select-line h2,
+  [data-navigation-audience="office"] .document-select-line span,
+  [data-navigation-audience="office"] .document-select-line small,
+  [data-navigation-audience="office"] .document-student > header > strong {
+    overflow-wrap: anywhere;
+  }
+
+  [data-navigation-audience="office"] .document-select-line input[type="checkbox"] {
+    accent-color: var(--accent);
+  }
+
+  [data-navigation-audience="office"] .document-select-line:has(input:focus-visible) {
+    border-radius: .72rem;
+    outline: 2px solid color-mix(in srgb, var(--accent) 58%, white);
+    outline-offset: 3px;
+  }
+
+  [data-navigation-audience="office"] .documents-shell .empty-state {
+    margin: 0;
+    border-radius: 1rem;
+    line-height: 1.55;
+  }
+}

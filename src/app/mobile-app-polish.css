@@ -470,3 +470,67 @@
     line-height: 1.5;
   }
 }
+
+/* Final mobile form ergonomics and narrow-screen resilience. */
+@media (max-width: 900px) {
+  [data-navigation-audience="office"] .client-v2-main input,
+  [data-navigation-audience="office"] .client-v2-main select,
+  [data-navigation-audience="office"] .client-v2-main textarea {
+    scroll-margin-block: 5rem 8rem;
+  }
+
+  [data-navigation-audience="office"] .client-v2-main button:disabled,
+  [data-navigation-audience="office"] .client-v2-main .action-button[aria-disabled="true"] {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .form-message code {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    direction: ltr;
+    text-align: start;
+    user-select: all;
+    font-size: .72rem;
+    line-height: 1.55;
+  }
+
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module p,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card p,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .field-label,
+  [lang="ur"] [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row {
+    line-height: 1.8;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-form .check-row:has(input:focus-visible) {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 11%, transparent);
+  }
+}
+
+/* Final Admissions edge states. */
+@media (max-width: 620px) {
+  [data-navigation-audience="office"] .admissions-mobile-surface .empty-state {
+    min-height: 7rem;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface-muted);
+    line-height: 1.55;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module,
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card,
+  [data-navigation-audience="office"] .admissions-mobile-surface .check-row {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-module,
+  [data-navigation-audience="office"] .admissions-mobile-surface .configuration-detail-card {
+    overflow-wrap: anywhere;
+  }
+}

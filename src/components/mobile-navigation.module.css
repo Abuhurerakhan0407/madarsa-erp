@@ -456,3 +456,27 @@
     padding: 0.55rem 0.8rem calc(1rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Final mobile accessibility: respect reduced motion after app-first overrides. */
+@media (prefers-reduced-motion: reduce) and (max-width: 900px) {
+  .bottomNav a,
+  .menuTab,
+  .backdrop,
+  .drawer {
+    transition: none !important;
+  }
+
+  .bottomNav a:active,
+  .menuTab:active {
+    transform: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .bottomNav a:focus-visible,
+  .menuTab:focus-visible,
+  .closeButton:focus-visible,
+  .drawerLink:focus-visible {
+    outline-offset: -3px;
+  }
+}
