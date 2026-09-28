@@ -6,8 +6,8 @@
       "key": "database_migrations_applied",
       "owner": "engineering",
       "required": true,
-      "complete": true,
-      "reason": "GREEN on isolated Supabase staging with clean-room rebuild and release migrations proven. Production runtime parity was rechecked for the critical post-Sep-24 Student Import and portal credential RPCs, and the 20260928100500 portal_push_deliveries restrictive RLS policy has now been applied successfully to production. Staging remains zero-lint; the verified release-critical database surfaces checked in this QA pass match staging."
+      "complete": false,
+      "reason": "BLOCKED after direct 2026-09-28 schema-contract verification. Production and staging both lack the committed Sep-25 release RPCs save_staff_admission_draft_v1/discard_staff_admission_draft_v1/finalize_staff_admission_v1, get_student_register_page_v2, and import_students_batch_v2. Production report metadata also still includes student_person_id for the four aggregate reports that 20260925162500 removes. The 20260928100500 portal_push_deliveries restrictive RLS policy is applied and verified in production. Do not mark this gate green until the remaining non-Hostel Sep-25 migrations are applied/proven on staging first, then production under explicit safe cutover."
     },
     {
       "key": "security_advisors_clear",
