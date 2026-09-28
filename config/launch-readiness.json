@@ -92,8 +92,8 @@
       "key": "biometric_bridge_client_package_ready",
       "owner": "engineering",
       "required": true,
-      "complete": false,
-      "reason": "Server-side biometric auto-apply and guardian arrival notification are proven on managed staging. A portable Windows bridge has been built and manually smoke-tested locally for CSV delivery plus offline queue/retry, but its final source/package gate and commit are pending because the laptop Remote Desktop connector went offline during packaging."
+      "complete": true,
+      "reason": "GREEN locally from committed source: biometric bridge unit tests passed 6/6, the portable Windows package built successfully, and package smoke passed delivery plus offline queue/retry. Physical mBio/LAN/export/autostart acceptance remains tracked separately by biometric_site_acceptance_passed."
     },
     {
       "key": "biometric_site_acceptance_passed",

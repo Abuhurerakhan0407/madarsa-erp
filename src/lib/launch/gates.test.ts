@@ -14,7 +14,6 @@ describe("commercial launch gates", () => {
       { key: "production_deployment_current", owner: "engineering" },
       { key: "backup_restore_drill_passed", owner: "operations" },
       { key: "pilot_institution_signed_off", owner: "product" },
-      { key: "biometric_bridge_client_package_ready", owner: "engineering" },
       { key: "biometric_site_acceptance_passed", owner: "operations" },
       { key: "apk_release_ready", owner: "engineering" }
     ]);
