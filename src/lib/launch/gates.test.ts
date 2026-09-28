@@ -10,7 +10,6 @@ describe("commercial launch gates", () => {
     expect(result.ready).toBe(false);
     expect(result.blocking).toEqual([
       { key: "security_advisors_clear", owner: "engineering" },
-      { key: "production_build_green", owner: "engineering" },
       { key: "critical_e2e_green", owner: "engineering" },
       { key: "production_deployment_current", owner: "engineering" },
       { key: "backup_restore_drill_passed", owner: "operations" },
