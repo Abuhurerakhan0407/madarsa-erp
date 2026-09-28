@@ -32,6 +32,8 @@ for (const path of [
   "src/app/[locale]/quran/page.tsx",
   "src/app/[locale]/staff/page.tsx",
   "src/app/[locale]/portals/page.tsx",
+  "src/app/api/portals/credentials/route.ts",
+  "src/app/api/portals/access-state/route.ts",
   "src/app/[locale]/my-students/page.tsx",
   "src/app/[locale]/exams/page.tsx",
   "src/app/[locale]/reports/page.tsx",
@@ -109,16 +111,27 @@ const deviceUi = await source("src/components/attendance-device-center.tsx");
 if (deviceUi.includes('value="nfc"') || deviceUi.includes('value="hybrid"')) failures.push("src/components/attendance-device-center.tsx: retired NFC/hybrid device option returned");
 
 const credentials = await source("src/app/api/portals/credentials/route.ts");
-requireMatch("src/app/api/portals/credentials/route.ts", credentials, /PORTAL_CREDENTIALS_RETIRED/, "temporary-password credential API must stay retired");
-forbidMatch("src/app/api/portals/credentials/route.ts", credentials, /createUser|updateUserById|temporaryPassword|randomBytes/i, "staff password provisioning/reset logic returned");
+for (const [pattern, message] of [
+  [/isSameOriginRequest/, "credential mutation must enforce same-origin requests"],
+  [/readBoundedJson\(request,\s*8192\)/, "credential request body must stay bounded"],
+  [/portal\.credentials\.create/, "credential creation permission gate is missing"],
+  [/record_portal_credential_audit_v1/, "credential security audit is missing"],
+  [/must_change_password:\s*true/, "temporary credentials must force a password change"],
+  [/link_portal_identity_v1/, "portal identity linking contract is missing"],
+  [/cache-control[^\n]*no-store/i, "credential responses must remain non-cacheable"]
+]) requireMatch("src/app/api/portals/credentials/route.ts", credentials, pattern, message);
+forbidMatch("src/app/api/portals/credentials/route.ts", credentials, /randomBytes|Math\.random\s*\(/i, "server-generated password logic returned");
 
 const conversion = await source("src/app/api/admissions/convert/route.ts");
-requireMatch("src/app/api/admissions/convert/route.ts", conversion, /convert_admission_to_student_v3/, "admission conversion must use claim-only v3 contract");
+requireMatch("src/app/api/admissions/convert/route.ts", conversion, /convert_admission_to_student_v3/, "admission conversion must use the v3 conversion contract");
 forbidMatch("src/app/api/admissions/convert/route.ts", conversion, /createUser|temporaryPassword|generatedPassword|password\s*:/i, "admission conversion must never create or return portal passwords");
 
-const portalAdmin = await source("src/components/portal-admin-center.tsx");
-requireMatch("src/components/portal-admin-center.tsx", portalAdmin, /Issue claim code/, "Access Center must expose claim-code activation");
-forbidMatch("src/components/portal-admin-center.tsx", portalAdmin, /\/api\/portals\/credentials|temporary password|reset password/i, "Access Center must not expose staff password controls");
+for (const path of [
+  "src/app/api/portal/claim/route.ts",
+  "src/app/api/portals/access/route.ts",
+  "src/app/portal/claim/page.tsx",
+  "src/components/portal-claim-form.tsx"
+]) await requireMissing(path);
 
 const claimMigration = await source("supabase/migrations/20260916124501_phase5_claim_only_portal_lifecycle.sql");
 requireMatch("supabase/migrations/20260916124501_phase5_claim_only_portal_lifecycle.sql", claimMigration, /convert_admission_to_student_v3/, "claim-only database contract is missing");
@@ -141,5 +154,5 @@ if (failures.length) {
   failures.forEach((failure) => console.error("- " + failure));
   process.exitCode = 1;
 } else {
-  console.log("Release invariants passed: required modules/PDFs/migrations present; EN/UR, claim-only portals, biometric-only attendance, retired commercial modules enforced.");
+  console.log("Release invariants passed: required modules/PDFs/migrations present; EN/UR, managed portal credentials, biometric-only attendance, retired commercial modules enforced.");
 }
