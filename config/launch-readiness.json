@@ -60,7 +60,7 @@
       "owner": "operations",
       "required": true,
       "complete": false,
-      "reason": "NOT PROVEN. Recovery scripts/contracts are tested, but Supabase Free does not provide downloadable backups and the connected management tools cannot retrieve the database password. A real external pg_dump -> isolated restore -> integrity smoke must be completed before production cutover, or the project must move to a plan/backup setup that provides an equivalent tested recovery path."
+      "reason": "NOT PROVEN. The repository already contains a fail-closed Recovery Drill workflow with pg_dump, encrypted artifact creation, isolated PostgreSQL restore, and schema/Auth/Storage/integrity validation. The latest real workflow run (GitHub Actions run 33558161663 on 2026-09-01) failed before pg_dump at Check recovery secret availability because no approved source database URL was configured: MADARSA_ERP_DATABASE_URL or legacy BACKUP_DB_URL. The later recovery-source diagnostic workflow exists but has no workflow_dispatch run. Next action is to configure the production Session Pooler/Supavisor PostgreSQL URL as MADARSA_ERP_DATABASE_URL, run the diagnostic, then dispatch the Recovery Drill with apply_gate=false; keep this gate open until dump -> isolated restore -> integrity smoke succeeds."
     },
     {
       "key": "payment_webhooks_verified",
