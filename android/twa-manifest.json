@@ -35,7 +35,12 @@
   "isMetaQuest": false,
   "minSdkVersion": 23,
   "orientation": "portrait-primary",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "name": "release",
+      "value": "11:8F:A8:EA:15:49:C3:B2:C9:AD:DF:45:A7:F0:05:5C:F2:77:5E:4E:6A:86:EC:C1:65:89:AA:4A:69:70:20:A7"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": []
 }
