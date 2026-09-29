@@ -107,7 +107,7 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Final signed Android APK, installation/update testing, and release artifact are still pending. Add the App Install button/link to the Ilmgaah website only after the final APK is proven."
+      "reason": "PARTIAL 2026-09-29. Final Android wrapper is committed at versionCode 3 with package in.ilmgaah.app, trusted www.ilmgaah.in origin, Chrome trusted-provider launch, and WebView fallback. Fresh release assemble succeeded and produced the expected unsigned code-3 APK. Existing release keystore identity matches published Digital Asset Links, but its keystore/key passwords are not recoverable from local history, environment, Credential Manager, or Gradle logs; signed APK/AAB generation and install/update proof remain blocked on those signing credentials. ADB currently reports no attached Android device, so real-device EN/UR QA also remains pending."
     }
   ]
 }
