@@ -106,8 +106,8 @@
       "key": "apk_release_ready",
       "owner": "engineering",
       "required": true,
-      "complete": false,
-      "reason": "PARTIAL 2026-09-29. Final Android wrapper is committed at versionCode 3 with package in.ilmgaah.app, trusted www.ilmgaah.in origin, Chrome trusted-provider launch, and WebView fallback. Fresh release assemble succeeded and produced the expected unsigned code-3 APK. Existing release keystore identity matches published Digital Asset Links, but its keystore/key passwords are not recoverable from local history, environment, Credential Manager, or Gradle logs; signed APK/AAB generation and install/update proof remain blocked on those signing credentials. ADB currently reports no attached Android device, so real-device EN/UR QA also remains pending."
+      "complete": true,
+      "reason": "GREEN 2026-09-29. Final signed Android versionCode 3 artifacts were rebuilt from HEAD 59abdea after rotating the exposed keystore password while preserving the existing signing key/certificate. APK in.ilmgaah.app is versionCode 3 / versionName 1.0.0, SHA-256 d2f90ea361ae5786e4341eb2f6bfad54dad29695bf324913058804adacddeac6; AAB SHA-256 28cfc09fd9d6ea3e928e686bdacb6e108c5606958bdec4338bb277d06f98c0e0 and jarsigner verification passes. APK signer SHA-256 118fa8ea1549c3b2c9addf45a7f0055cf2775e4e6a86ecc16589aa4a697020a7 matches generated and live Digital Asset Links. Redmi Note 9 Pro Max install -r succeeded; pulled installed APK hash and signer match the final artifact. Real-device standalone QA passed EN/UR Home, Students, Attendance, Quran, Exams, Documents and Admissions (14/14 route checks), real soft-keyboard viewport behavior, bottom navigation, portrait-primary rotation enforcement, background/resume and force-stop relaunch/session preservation. Device UI exercised the currently deployed web build because current HEAD remains intentionally undeployed; current-head deployment verification remains tracked by production_deployment_current."
     }
   ]
 }
