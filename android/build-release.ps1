@@ -30,9 +30,11 @@ if (-not $KeyPassword) {
   throw "BUBBLEWRAP_KEY_PASSWORD / -KeyPassword is required for a signed release."
 }
 
-$manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
-$signingKeyPath = Join-Path (Split-Path $ManifestPath -Parent) $manifest.signingKey.path
-$launcherActivityPath = Join-Path (Split-Path $ManifestPath -Parent) "app\src\main\java\in\ilmgaah\app\LauncherActivity.java"
+$resolvedManifestPath = (Resolve-Path $ManifestPath).Path
+$manifestDirectory = Split-Path $resolvedManifestPath -Parent
+$manifest = Get-Content $resolvedManifestPath -Raw | ConvertFrom-Json
+$signingKeyPath = Join-Path $manifestDirectory $manifest.signingKey.path
+$launcherActivityPath = Join-Path $manifestDirectory "app\src\main\java\in\ilmgaah\app\LauncherActivity.java"
 
 if (-not (Test-Path $launcherActivityPath)) {
   throw "Trusted launcher source is missing: $launcherActivityPath"
@@ -58,7 +60,7 @@ pnpm.cmd dlx @bubblewrap/cli doctor
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Output "Regenerating the Android project from twa-manifest.json..."
-pnpm.cmd dlx @bubblewrap/cli update --manifest="$ManifestPath" --skipVersionUpgrade
+pnpm.cmd dlx @bubblewrap/cli update --manifest="$resolvedManifestPath" --skipVersionUpgrade
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # Bubblewrap regenerates LauncherActivity and drops Ilmgaah's trusted Chrome provider override.
@@ -66,11 +68,11 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 [IO.File]::WriteAllText($launcherActivityPath, $trustedLauncherSource, [Text.UTF8Encoding]::new($false))
 
 Write-Output "Building signed APK + AAB..."
-pnpm.cmd dlx @bubblewrap/cli build --manifest="$ManifestPath"
+pnpm.cmd dlx @bubblewrap/cli build --manifest="$resolvedManifestPath"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Output "Generating Digital Asset Links..."
-pnpm.cmd dlx @bubblewrap/cli fingerprint generateAssetLinks --manifest="$ManifestPath"
+pnpm.cmd dlx @bubblewrap/cli fingerprint generateAssetLinks --manifest="$resolvedManifestPath"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $apk = Join-Path (Get-Location) "app-release-signed.apk"
