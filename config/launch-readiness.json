@@ -21,21 +21,21 @@
       "owner": "engineering",
       "required": true,
       "complete": true,
-      "reason": "GREEN locally on the current production-runtime code: clean Next.js production build compiled successfully with TypeScript after removing stale dev-cache writers. Subsequent commits only add test/release-tooling files, so no runtime code changed after that proof."
+      "reason": "GREEN 2026-09-29 on current HEAD e210443. Clean isolated verification passed lint with 0 errors, TypeScript, 934/934 Vitest tests, and a fresh Next.js 16.3.3 production build using the existing environment."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Production-mode Playwright is GREEN for the existing suite: 434/434 passed across Chromium and Pixel 7 against next start. A new read-only Admin/Teacher/Parent authenticated smoke harness also linted/typechecked and safely skips without dedicated credentials. Gate remains open until those three real role sessions run against a safe test tenant."
+      "reason": "Current-head production-mode Playwright is GREEN for all non-credential-gated coverage: 434/434 passed across Chromium and Pixel 7 against next start on 2026-09-29. Six Admin/Teacher/Parent authenticated role-smoke cases remain intentionally skipped because dedicated E2E login credentials are not configured; this gate stays open until those real role sessions run."
     },
     {
       "key": "production_deployment_current",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Reverified 2026-09-28 through Vercel: the newest QA Git deployment dpl_5eAC4jTrQ2fY9KPyehdUgDnnQrQE is BLOCKED before build and links to Troubleshoot Project Collaboration -> Team configuration. The currently READY production deployment is older than the current QA head. No production deployment or alias change is permitted until the external team-configuration blocker is resolved, final gates pass, and explicit production approval is given."
+      "reason": "Reverified 2026-09-29 through Vercel. Latest Git deployment dpl_J8TZPwvRFxaNi4K4c5fNbwwLcL45 (ui/mobile-ux-polish ae0e53a) is BLOCKED before build with Troubleshoot Project Collaboration -> Team configuration. Current final HEAD e210443 has no READY production deployment, and deployment is explicitly prohibited until final approval. Existing READY production deployment remains older."
     },
     {
       "key": "pricing_approved",
