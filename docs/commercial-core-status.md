@@ -21,13 +21,13 @@ Integrated on this release candidate:
 - Minimal Contributions runtime for Donation / Zakat / Sponsorship.
 - Minimal Payroll runtime.
 - Operational AI Assistant using aggregate authorized context.
-- Hostel & Mess workspace reactivated on the reintegration branch using the existing governed database/runtime contract.
 - English and Urdu as the only routable release locales.
 
 Removed from the commercial product:
 
 - Student Portal.
 - WhatsApp Automation.
+- Hostel & Mess.
 - Transport / Routes.
 - Library.
 - Internal scripted demo suite.
