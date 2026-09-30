@@ -35,7 +35,7 @@
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Reverified 2026-09-29 through Vercel. Latest Git deployment dpl_J8TZPwvRFxaNi4K4c5fNbwwLcL45 (ui/mobile-ux-polish ae0e53a) is BLOCKED before build with Troubleshoot Project Collaboration -> Team configuration. Current final HEAD e210443 has no READY production deployment, and deployment is explicitly prohibited until final approval. Existing READY production deployment remains older."
+      "reason": "Reverified 2026-09-30 through Vercel. Current Hostel/Mess PR tip has Git deployment dpl_HDYA4xy1v8i8BCNMz3cgAEkPjhFD for commit f8f6d587, and it is BLOCKED before build with Vercel Team Configuration. The commit status also reports Vercel failure. No current-tip READY production deployment exists; deployment remains prohibited until final approval. An older READY production deployment remains separate from this release snapshot."
     },
     {
       "key": "pricing_approved",
