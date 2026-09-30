@@ -37,6 +37,11 @@ describe("Hostel & Mess workspace contract", () => {
     }
   });
 
+  it("preserves the recorded visitor identity in the register", () => {
+    expect(operations).toContain("visitorName:text(obj(x.visitor_identity_snapshot).name)");
+    expect(page).toContain("v.visitorName");
+  });
+
   it("keeps the restored route on English and Urdu release copy", () => {
     expect(page).toContain(" en:{");
     expect(page).toContain(" ur:{");
