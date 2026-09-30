@@ -21,6 +21,7 @@ const credentials: Record<Role, { email: string; password: string }> = {
 
 const url = (path: string) => appBaseUrl ? `${appBaseUrl}${path}` : path;
 const configured = (role: Role) => Boolean(supabaseUrl && supabaseKey && credentials[role].email && credentials[role].password);
+const ciHasAllRoleCredentials = process.env.CI ? (["admin", "teacher", "parent"] as const).every((role) => configured(role)) : true;
 async function accessToken(request: APIRequestContext, role: Role) {
   const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     headers: { apikey: supabaseKey, "content-type": "application/json" },
@@ -50,6 +51,12 @@ async function bootstrap(request: APIRequestContext, token: string, role: Role) 
   expect(workspace, `${role} workspace missing`).toBeTruthy();
   return workspace as Workspace;
 }
+test.beforeAll(() => {
+  if (process.env.CI) {
+    expect(ciHasAllRoleCredentials, "CI authenticated E2E credentials are incomplete").toBe(true);
+  }
+});
+
 for (const role of ["admin", "teacher", "parent"] as const) {
   test(`${role} authenticated mobile workspace stays scoped and read-only`, async ({ request }) => {
     test.skip(!configured(role), `Set dedicated E2E_${role.toUpperCase()}_EMAIL/PASSWORD credentials to run this smoke.`);
