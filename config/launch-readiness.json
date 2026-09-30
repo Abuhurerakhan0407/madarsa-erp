@@ -21,14 +21,14 @@
       "owner": "engineering",
       "required": true,
       "complete": true,
-      "reason": "GREEN on previously verified release snapshot e210443 (2026-09-29): clean isolated verification passed lint with 0 errors, TypeScript, 934/934 Vitest tests, and a fresh Next.js 16.3.3 production build using the existing environment. Current Hostel/Mess PR tip c4c247 has not yet received a fresh production build, so this gate remains tied to the last verified snapshot until current-tip CI/build evidence exists."
+      "reason": "GREEN for the current application source snapshot through f7c84fc (2026-09-30). A fresh isolated production build passed locally with Next.js 16.3.3: compile succeeded, TypeScript succeeded, 147/147 static pages generated, and build exited 0. CI has not yet reproduced this because the GitHub Actions checks job is failing before executing steps."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Production-mode Playwright is GREEN on the previously verified release snapshot for all non-credential-gated coverage: 434/434 passed across Chromium and Pixel 7 against next start on 2026-09-29. Six Admin/Teacher/Parent authenticated role-smoke cases remain intentionally skipped because dedicated E2E login credentials are not configured. The current Hostel/Mess PR tip c4c247 added anonymous EN/UR route coverage but does not yet have authenticated role-session evidence, so this gate stays open."
+      "reason": "GREEN locally against current application source f7c84fc in production-server mode: 436/442 Playwright tests passed across Chromium and Pixel 7, with the same six Admin/Teacher/Parent authenticated role-smoke cases skipped because dedicated E2E credentials are not configured. The six skipped cases mean real authenticated role sessions still need to run before this gate can close."
     },
     {
       "key": "production_deployment_current",
