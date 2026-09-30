@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
 const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
@@ -29,7 +29,7 @@ test.beforeAll(() => {
   });
 });
 
-async function signInForRoute(page: any, route: string) {
+async function signInForRoute(page: Page, route: string) {
   await page.goto(route);
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.getByLabel("Email address").fill(adminEmail);
