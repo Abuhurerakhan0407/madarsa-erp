@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { provisionStagingRoleUsers } from "./staging-provision";
 
 type Role = "admin" | "teacher" | "parent";
 type Workspace = {
@@ -11,13 +12,12 @@ type Workspace = {
 const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
 const supabaseUrl = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/$/, "");
 const supabaseKey = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
-const supabaseSecret = stripQuotes(process.env.SUPABASE_SECRET_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
-const credentials: Record<Role, { email: string; password: string }> = {
-  admin: { email: stripQuotes(process.env.E2E_ADMIN_EMAIL), password: stripQuotes(process.env.E2E_ADMIN_PASSWORD) },
-  teacher: { email: stripQuotes(process.env.E2E_TEACHER_EMAIL), password: stripQuotes(process.env.E2E_TEACHER_PASSWORD) },
-  parent: { email: stripQuotes(process.env.E2E_PARENT_EMAIL), password: stripQuotes(process.env.E2E_PARENT_PASSWORD) },
+let credentials: Record<Role, { email: string; password: string }> = {
+  admin: { email: "", password: "" },
+  teacher: { email: "", password: "" },
+  parent: { email: "", password: "" },
 };
 
 const roles = ["admin", "teacher", "parent"] as const;
@@ -25,25 +25,15 @@ const url = (path: string) => appBaseUrl ? `${appBaseUrl}${path}` : path;
 const configured = (role: Role) => Boolean(
   supabaseUrl &&
   supabaseKey &&
-  supabaseSecret &&
   credentials[role].email &&
   credentials[role].password
 );
 
-test.beforeAll(() => {
+test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
-
-  const missing = roles.flatMap((role) => {
-    const absent: string[] = [];
-    if (!supabaseUrl) absent.push("NEXT_PUBLIC_SUPABASE_URL");
-    if (!supabaseKey) absent.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
-    if (!supabaseSecret) absent.push("SUPABASE_SECRET_KEY");
-    if (!credentials[role].email) absent.push(`E2E_${role.toUpperCase()}_EMAIL`);
-    if (!credentials[role].password) absent.push(`E2E_${role.toUpperCase()}_PASSWORD`);
-    return absent;
-  });
-
-  expect([...new Set(missing)], "Authenticated E2E configuration is incomplete in CI.").toEqual([]);
+  const provisioned = await provisionStagingRoleUsers(testInfo.project.name);
+  credentials = provisioned.credentials;
+  expect(roles.every((role) => configured(role))).toBe(true);
 });
 
 async function accessToken(request: APIRequestContext, role: Role) {

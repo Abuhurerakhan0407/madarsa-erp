@@ -48,12 +48,6 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
       SUPABASE_SECRET_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SECRET_KEY }}
-      E2E_ADMIN_EMAIL: ${{ secrets.ILMGAAH_E2E_ADMIN_EMAIL }}
-      E2E_ADMIN_PASSWORD: ${{ secrets.ILMGAAH_E2E_ADMIN_PASSWORD }}
-      E2E_TEACHER_EMAIL: ${{ secrets.ILMGAAH_E2E_TEACHER_EMAIL }}
-      E2E_TEACHER_PASSWORD: ${{ secrets.ILMGAAH_E2E_TEACHER_PASSWORD }}
-      E2E_PARENT_EMAIL: ${{ secrets.ILMGAAH_E2E_PARENT_EMAIL }}
-      E2E_PARENT_PASSWORD: ${{ secrets.ILMGAAH_E2E_PARENT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
