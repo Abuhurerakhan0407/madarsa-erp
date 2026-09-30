@@ -6,6 +6,7 @@ import {
 } from "./client-profile";
 
 const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
+  [/^\/(?:en|ur)\/hostel(?:\/|$)/, "hostel_mess_operations"],
   [/^\/(?:en|ur)\/people-academics(?:\/|$)/, "academics_timetable_homework"],
   [/^\/(?:en|ur)\/fees(?:\/|$)/, "fees_accounting"],
   [/^\/(?:en|ur)\/payroll(?:\/|$)/, "fees_accounting"],

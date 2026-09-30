@@ -18,6 +18,7 @@ describe("client capability profiles", () => {
       "donations",
       "ai",
       "branches",
+      "hostel",
       "students",
       "attendance",
       "configuration"
@@ -32,7 +33,7 @@ describe("client capability profiles", () => {
     for (const key of ["academics", "fees", "payroll", "donations", "contributions", "ai", "assistant"]) {
       expect(isNavItemEnabled(profile, key)).toBe(false);
     }
-    for (const key of ["operations", "lifecycle", "branches", "access", "students", "attendance", "configuration"]) {
+    for (const key of ["operations", "lifecycle", "branches", "access", "hostel", "students", "attendance", "configuration"]) {
       expect(isNavItemEnabled(profile, key)).toBe(true);
     }
   });
@@ -42,7 +43,7 @@ describe("client capability profiles", () => {
       resolveClientProfileFromConfig("default-madarsa", {}),
       resolveClientProfileFromConfig("client-madarsa", { tenantProfile: "client-v2" })
     ]) {
-      for (const key of ["hostel", "transport", "library", "whatsapp", "demo"]) {
+      for (const key of ["transport", "library", "whatsapp", "demo"]) {
         expect(isNavItemEnabled(profile, key)).toBe(false);
       }
     }

@@ -25,12 +25,12 @@ This file is the release scope lock for the current commercial handoff.
 - Contributions — Donation / Zakat / Sponsorship, intentionally small, complete workflow
 - Payroll — intentionally small, complete workflow
 - AI Assistant — operational aggregate assistant, no fabricated records
+- Hostel & Mess — resident accommodation, security and meal-service workspace
 
 ## Explicitly removed from commercial release
 
 - Student Portal
 - WhatsApp Automation
-- Hostel & Mess
 - Transport / Routes
 - Library
 

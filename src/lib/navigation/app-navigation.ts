@@ -25,6 +25,7 @@ export const APP_NAV_GROUPS: AppNavGroup[] = [
     { key: "fees", labels: { en: "Fees & Payments", ur: "فیس و ادائیگیاں" }, href: (locale) => `/${locale}/fees` },
     { key: "donations", labels: { en: "Donations, Zakat & Sponsorships", ur: "عطیات، زکوٰۃ و کفالت" }, href: (locale) => `/${locale}/contributions` },
     { key: "operations", labels: { en: "Import, Promotion & Renewal", ur: "امپورٹ، پروموشن و رینیول" }, href: (locale) => `/${locale}/students/lifecycle` },
+    { key: "hostel", labels: { en: "Hostel & Mess", ur: "ہاسٹل و میس" }, href: (locale) => `/${locale}/hostel` },
     { key: "certificates", labels: { en: "IDs, Documents & Certificates", ur: "آئی ڈی، دستاویزات و سرٹیفکیٹس" }, href: (locale) => `/${locale}/documents` },
     { key: "reports", labels: { en: "Reports & Analytics", ur: "رپورٹس و تجزیات" }, href: (locale) => `/${locale}/reports` },
     { key: "configuration", labels: { en: "Institution Settings", ur: "ادارہ سیٹنگز" }, href: (locale) => `/${locale}/settings/configuration` },
