@@ -43,6 +43,13 @@ describe("Hostel & Mess workspace contract", () => {
     expect(page).toContain("v.visitorName");
   });
 
+  it("renders a governed incident register without exposing restricted details", () => {
+    expect(page).toContain("data.incidents.length");
+    expect(page).toContain("i.category");
+    expect(page).toContain("i.severity");
+    expect(page).not.toContain("i.restrictedDetails");
+  });
+
   it("keeps the restored route on English and Urdu release copy", () => {
     expect(page).toContain(" en:{");
     expect(page).toContain(" ur:{");
