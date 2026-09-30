@@ -43,8 +43,8 @@ jobs:
   e2e:
     needs: checks
     if: ${{ always() }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 30
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
@@ -58,5 +58,5 @@ jobs:
         with:
           node-version: 22
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
