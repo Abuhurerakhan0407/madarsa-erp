@@ -11,6 +11,7 @@ type Workspace = {
 const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
 const supabaseUrl = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/$/, "");
 const supabaseKey = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+const supabaseSecret = stripQuotes(process.env.SUPABASE_SECRET_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
 const credentials: Record<Role, { email: string; password: string }> = {
@@ -19,8 +20,32 @@ const credentials: Record<Role, { email: string; password: string }> = {
   parent: { email: stripQuotes(process.env.E2E_PARENT_EMAIL), password: stripQuotes(process.env.E2E_PARENT_PASSWORD) },
 };
 
+const roles = ["admin", "teacher", "parent"] as const;
 const url = (path: string) => appBaseUrl ? `${appBaseUrl}${path}` : path;
-const configured = (role: Role) => Boolean(supabaseUrl && supabaseKey && credentials[role].email && credentials[role].password);
+const configured = (role: Role) => Boolean(
+  supabaseUrl &&
+  supabaseKey &&
+  supabaseSecret &&
+  credentials[role].email &&
+  credentials[role].password
+);
+
+test.beforeAll(() => {
+  if (!process.env.CI) return;
+
+  const missing = roles.flatMap((role) => {
+    const absent: string[] = [];
+    if (!supabaseUrl) absent.push("NEXT_PUBLIC_SUPABASE_URL");
+    if (!supabaseKey) absent.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+    if (!supabaseSecret) absent.push("SUPABASE_SECRET_KEY");
+    if (!credentials[role].email) absent.push(`E2E_${role.toUpperCase()}_EMAIL`);
+    if (!credentials[role].password) absent.push(`E2E_${role.toUpperCase()}_PASSWORD`);
+    return absent;
+  });
+
+  expect([...new Set(missing)], "Authenticated E2E configuration is incomplete in CI.").toEqual([]);
+});
+
 async function accessToken(request: APIRequestContext, role: Role) {
   const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     headers: { apikey: supabaseKey, "content-type": "application/json" },
@@ -50,7 +75,8 @@ async function bootstrap(request: APIRequestContext, token: string, role: Role) 
   expect(workspace, `${role} workspace missing`).toBeTruthy();
   return workspace as Workspace;
 }
-for (const role of ["admin", "teacher", "parent"] as const) {
+
+for (const role of roles) {
   test(`${role} authenticated mobile workspace stays scoped and read-only`, async ({ request }) => {
     test.skip(!configured(role), `Set dedicated E2E_${role.toUpperCase()}_EMAIL/PASSWORD credentials to run this smoke.`);
 
