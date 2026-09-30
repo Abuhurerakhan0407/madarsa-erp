@@ -34,6 +34,10 @@ for (const route of ["/en/hostel", "/ur/hostel"] as const) {
       await expect(page.getByRole("heading", { name: "Add hostel" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Visitor check-in" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Meal service" })).toBeVisible();
+      await expect(page.getByText("E2E Student", { exact: true })).toBeVisible();
+      await expect(page.getByText("E2E Visitor", { exact: true })).toBeVisible();
+      await expect(page.getByText("E2E Hostel", { exact: true })).toBeVisible();
+      await expect(page.getByText("E2E Mess", { exact: true })).toBeVisible();
       return;
     }
 
@@ -41,5 +45,9 @@ for (const route of ["/en/hostel", "/ur/hostel"] as const) {
     await expect(page.getByRole("heading", { name: "ہاسٹل شامل کریں" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "وزیٹر چیک اِن" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "میل سروس" })).toBeVisible();
+    await expect(page.getByText("E2E Student", { exact: true })).toBeVisible();
+    await expect(page.getByText("E2E Visitor", { exact: true })).toBeVisible();
+    await expect(page.getByText("E2E Hostel", { exact: true })).toBeVisible();
+    await expect(page.getByText("E2E Mess", { exact: true })).toBeVisible();
   });
 }
