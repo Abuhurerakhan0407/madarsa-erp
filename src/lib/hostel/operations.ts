@@ -16,7 +16,7 @@ export type HostelMessCenter={
  beds:Array<{id:number;hostelId:number;hostelLabel:string;buildingKey:string;floorKey:string|null;roomKey:string;bedKey:string;category:string|null;state:string}>;
  allocations:Array<{id:number;bedId:number;studentPersonId:number;displayName:string;studentNumber:string|null;hostelLabel:string;buildingKey:string;roomKey:string;bedKey:string;startsOn:string;endsOn:string|null;state:string}>;
  students:Array<{personId:number;enrollmentId:number;displayName:string;studentNumber:string|null}>;
- visitors:Array<{id:number;allocationId:number;residentName:string;purpose:string;checkedInAt:string;checkedOutAt:string|null}>;
+ visitors:Array<{id:number;allocationId:number;residentName:string;visitorName:string;purpose:string;checkedInAt:string;checkedOutAt:string|null}>;
  incidents:Array<{id:number;allocationId:number|null;residentName:string|null;category:string;severity:string;state:string;occurredAt:string}>;
  messUnits:Array<{id:number;key:string;label:string;state:string}>;
  mealServices:Array<{id:number;messUnitId:number;unitLabel:string;mealType:string;servingDate:string;expectedCount:number|null;servedCount:number;state:string}>;
