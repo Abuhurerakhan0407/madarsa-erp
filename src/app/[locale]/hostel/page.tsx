@@ -1,7 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
-import { routing } from "@/i18n/routing";
-import type { Locale } from "@/lib/i18n/config";
 import { addHostelBed,allocateHostelBed,checkInHostelVisitor,checkOutHostelVisitor,closeMealService,createHostel,createMealService,createMessUnit,getHostelMessCenter,recordHostelIncident,recordMealAttendance,vacateHostelAllocation } from "@/lib/hostel/operations";
 import styles from "./hostel.module.css";
 
@@ -12,7 +10,7 @@ const copy={
 } as const;
 
 export default async function HostelPage({params}:{params:Promise<{locale:string}>}){
- const{locale:raw}=await params;if(!routing.locales.includes(raw as Locale))notFound();const locale=raw === "ur" ? "ur" : "en",t=copy[locale],data=await getHostelMessCenter();
+ const{locale:raw}=await params;if(raw!=="en"&&raw!=="ur")notFound();const locale=raw,t=copy[locale],data=await getHostelMessCenter();
  const openAlloc=data.allocations.filter(a=>["allocated","occupied","temporary_leave"].includes(a.state));const openVisitors=data.visitors.filter(v=>!v.checkedOutAt);const openMeals=data.mealServices.filter(s=>s.state==="open"||s.state==="planned");
  async function hostelAction(fd:FormData){"use server";const key=String(fd.get("key")??"").trim(),label=String(fd.get("label")??"").trim(),warden=Number(fd.get("warden"));if(key&&label)await createHostel({key,label,wardenPersonId:warden||null});revalidatePath(`/${locale}/hostel`);}
  async function bedAction(fd:FormData){"use server";const hostelId=Number(fd.get("hostelId")),buildingKey=String(fd.get("building")??"").trim(),floorKey=String(fd.get("floor")??"").trim()||null,roomKey=String(fd.get("room")??"").trim(),bedKey=String(fd.get("bed")??"").trim(),category=String(fd.get("category")??"").trim()||null;if(hostelId&&buildingKey&&roomKey&&bedKey)await addHostelBed({hostelId,buildingKey,floorKey,roomKey,bedKey,category});revalidatePath(`/${locale}/hostel`);}
