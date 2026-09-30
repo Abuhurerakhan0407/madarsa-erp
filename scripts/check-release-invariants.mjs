@@ -45,6 +45,7 @@ for (const path of [
   "src/app/[locale]/contributions/page.tsx",
   "src/app/[locale]/payroll/page.tsx",
   "src/app/[locale]/assistant/page.tsx",
+  "src/app/[locale]/hostel/page.tsx",
   "src/app/global-not-found.tsx",
   "src/app/api/documents/pdf/route.ts",
   "src/app/api/documents/student-status-certificate/[personId]/pdf/route.ts",
@@ -99,7 +100,8 @@ const i18n = await source("src/lib/i18n/config.ts");
 requireMatch("src/lib/i18n/config.ts", i18n, /locales\s*=\s*\["en",\s*"ur"\]/, "release locales must be EN/UR only");
 
 const nav = await source("src/lib/navigation/client-v3-navigation.ts");
-forbidMatch("src/lib/navigation/client-v3-navigation.ts", nav, /whatsapp|hostel|transport|library|student\s+portal/i, "retired module leaked into release navigation");
+requireMatch("src/lib/navigation/client-v3-navigation.ts", nav, /item\("hostel",\s*"Hostel & Mess"/i, "Hostel & Mess must be present in release navigation");
+forbidMatch("src/lib/navigation/client-v3-navigation.ts", nav, /whatsapp|transport|library|student\s+portal/i, "retired module leaked into release navigation");
 
 const publicHome = await source("public/ilmgaah-home.html");
 forbidMatch("public/ilmgaah-home.html", publicHome, /whatsapp|wa\.me/i, "retired WhatsApp dependency leaked into public release UI");
@@ -143,7 +145,6 @@ requireMatch("supabase/migrations/20260918100000_retire_whatsapp_runtime.sql", w
 for (const path of [
   "src/app/[locale]/communications/whatsapp/page.tsx",
   "src/app/[locale]/whatsapp/page.tsx",
-  "src/app/[locale]/hostel/page.tsx",
   "src/app/[locale]/transport/page.tsx",
   "src/app/[locale]/library/page.tsx",
   "src/app/[locale]/student-portal/page.tsx",
