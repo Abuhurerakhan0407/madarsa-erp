@@ -103,6 +103,13 @@
       "reason": "Pending physical client-site proof with the actual mBio terminal and vendor software: LAN connectivity, automatic CSV/XLSX export, real column mapping, bridge install/autostart, mapped punch, offline recovery, restart recovery, and client acceptance. The installation procedure is documented in docs/biometric-client-installation-runbook.md."
     },
     {
+      "key": "hostel_mess_acceptance_passed",
+      "owner": "operations",
+      "required": true,
+      "complete": false,
+      "reason": "Pending authenticated English/Urdu desktop and mobile workflow proof for Hostel setup, bed registration and resident allocation/vacate, visitor security, incident register, Mess units, meal services and meal attendance against the governed staging database. This gate must remain open until those workflows and branch/role authorization are proven end-to-end."
+    },
+    {
       "key": "apk_release_ready",
       "owner": "engineering",
       "required": true,
