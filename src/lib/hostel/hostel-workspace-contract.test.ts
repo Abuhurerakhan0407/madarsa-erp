@@ -50,6 +50,13 @@ describe("Hostel & Mess workspace contract", () => {
     expect(page).not.toContain("i.restrictedDetails");
   });
 
+  it("keeps Hostel & Mess out of the Teacher navigation", () => {
+    const navigation = read("lib/navigation/client-v3-navigation.ts");
+    expect(navigation).toContain('item("hostel", "Hostel & Mess"');
+    const teacherBlock = navigation.slice(navigation.indexOf("const teacherPrimary"), navigation.indexOf("function enabled"));
+    expect(teacherBlock).not.toContain('item("hostel"');
+  });
+
   it("keeps the restored route on English and Urdu release copy", () => {
     expect(page).toContain(" en:{");
     expect(page).toContain(" ur:{");
