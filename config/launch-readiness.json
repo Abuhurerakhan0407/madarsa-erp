@@ -21,21 +21,21 @@
       "owner": "engineering",
       "required": true,
       "complete": true,
-      "reason": "GREEN for the current application source snapshot through f7c84fc (2026-09-30). A fresh isolated production build passed locally with Next.js 16.3.3: compile succeeded, TypeScript succeeded, 147/147 static pages generated, and build exited 0. CI has not yet reproduced this because the GitHub Actions checks job is failing before executing steps."
+      "reason": "GREEN 2026-10-01. GitHub Actions Core checks run 1229 on current PR tip d10c980f passed release invariants, lint, typecheck, full Vitest, production build, source packaging, and artifact upload."
     },
     {
       "key": "critical_e2e_green",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "GREEN locally against current application source f7c84fc in production-server mode: 436/442 Playwright tests passed across Chromium and Pixel 7, with the same six Admin/Teacher/Parent authenticated role-smoke cases skipped because dedicated E2E credentials are not configured. The six skipped cases mean real authenticated role sessions still need to run before this gate can close."
+      "reason": "BLOCKED 2026-10-01. The current E2E workflow reaches the staging target check, but staging admin-key validation fails before Playwright because the configured GitHub Actions admin key is rejected by Supabase with INVALID_API_KEY/bad_checksum. Run 1227 previously reached Playwright with 436/442 passed, but the two admin role-smoke cases failed during staging Auth provisioning for the same invalid key and four authenticated role cases did not run. Keep this gate open until admin, teacher, and parent authenticated smoke plus the remaining critical E2E matrix pass against staging."
     },
     {
       "key": "production_deployment_current",
       "owner": "engineering",
       "required": true,
       "complete": false,
-      "reason": "Reverified 2026-09-30 through Vercel. Current Hostel/Mess PR tip has Git deployment dpl_HDYA4xy1v8i8BCNMz3cgAEkPjhFD for commit f8f6d587, and it is BLOCKED before build with Vercel Team Configuration. The commit status also reports Vercel failure. No current-tip READY production deployment exists; deployment remains prohibited until final approval. An older READY production deployment remains separate from this release snapshot."
+      "reason": "BLOCKED 2026-10-01. Current PR tip d10c980f has Vercel deployment dpl_7H4ySfPbGzuzvveg6ErknWeEhxSW in BLOCKED state before build under the Vercel team-configuration restriction. No current-tip READY production deployment exists."
     },
     {
       "key": "pricing_approved",
@@ -60,7 +60,7 @@
       "owner": "operations",
       "required": true,
       "complete": false,
-      "reason": "NOT PROVEN. The repository already contains a fail-closed Recovery Drill workflow with pg_dump, encrypted artifact creation, isolated PostgreSQL restore, and schema/Auth/Storage/integrity validation. The latest real workflow run (GitHub Actions run 33558161663 on 2026-09-01) failed before pg_dump at Check recovery secret availability because no approved source database URL was configured: MADARSA_ERP_DATABASE_URL or legacy BACKUP_DB_URL. The later recovery-source diagnostic workflow exists but has no workflow_dispatch run. Next action is to configure the production Session Pooler/Supavisor PostgreSQL URL as MADARSA_ERP_DATABASE_URL, run the diagnostic, then dispatch the Recovery Drill with apply_gate=false; keep this gate open until dump -> isolated restore -> integrity smoke succeeds."
+      "reason": "NOT PROVEN. The repository contains a fail-closed Recovery Drill workflow with pg_dump, encrypted artifact creation, isolated PostgreSQL restore, and schema/Auth/Storage/integrity validation. No approved production database URL has been configured for the source dump, so the dump -> isolated restore -> integrity smoke sequence has not been completed."
     },
     {
       "key": "payment_webhooks_verified",
