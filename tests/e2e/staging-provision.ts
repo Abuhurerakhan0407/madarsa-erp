@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const STAGING_REF = "loihcxyblzdfiogrdihm";
+const STAGING_SUPABASE_URL = `https://${STAGING_REF}.supabase.co`;
 
 type Role = "admin" | "teacher" | "parent";
 type Credentials = Record<Role, { email: string; password: string }>;
@@ -54,7 +55,7 @@ async function ensureUser(admin: SupabaseClient, email: string, portalAccount: b
 }
 
 export async function provisionStagingRoleUsers(projectName: string): Promise<Provisioned> {
-  const supabaseUrl = clean(process.env.E2E_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const supabaseUrl = STAGING_SUPABASE_URL;
   const secret = clean(process.env.SUPABASE_SECRET_KEY);
   requireStaging(supabaseUrl, secret);
   const admin = createClient(supabaseUrl, secret, {
