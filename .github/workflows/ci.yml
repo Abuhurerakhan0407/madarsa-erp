@@ -51,7 +51,9 @@ jobs:
       E2E_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
       NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
-      SUPABASE_SECRET_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SECRET_KEY }}
+      # E2E server routes use this elevated key; the verified staging credential is the legacy service_role key.
+      # Keep this mapping CI-only; production continues to use SUPABASE_SECRET_KEY normally.
+      SUPABASE_SECRET_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
