@@ -70,14 +70,14 @@ jobs:
         run: |
           key="$SUPABASE_SECRET_KEY"
           if [ -n "$key" ]; then
-            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               -H "Authorization: Bearer $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
+            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
             if [ "$code" = "200" ]; then
               exit 0
             fi
           fi
           key="$SUPABASE_SERVICE_ROLE_KEY"
           if [ -n "$key" ]; then
-            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               -H "Authorization: Bearer $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
+            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
             if [ "$code" = "200" ]; then
               exit 0
             fi
