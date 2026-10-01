@@ -9,7 +9,8 @@ type Workspace = {
   accessMode: "membership" | "portal";
 };
 
-const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
+const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^[\'"]|[\'"]$/g, "");
+const STAGING_SUPABASE_URL = "https://loihcxyblzdfiogrdihm.supabase.co";
 const supabaseUrl = STAGING_SUPABASE_URL;
 const supabaseKey = stripQuotes(process.env.E2E_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
