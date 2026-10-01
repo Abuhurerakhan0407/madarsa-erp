@@ -46,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      E2E_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
+      E2E_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
       NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
       SUPABASE_SECRET_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SECRET_KEY }}
@@ -59,4 +61,6 @@ jobs:
           node-version: 22
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify staging secret is present
+        run: test -n "$SUPABASE_SECRET_KEY"
       - run: pnpm test:e2e
