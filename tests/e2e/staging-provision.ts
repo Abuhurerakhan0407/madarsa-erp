@@ -30,7 +30,6 @@ async function isValidAdminKey(url: string, key: string) {
     const response = await fetch(`${url}/rest/v1/`, {
       headers: {
         apikey: key,
-        authorization: `Bearer ${key}`,
       },
     });
     return response.status === 200;
