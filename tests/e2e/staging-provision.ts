@@ -11,7 +11,7 @@ type Provisioned = { credentials: Credentials };
 const clean = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
 const password = () => randomBytes(18).toString("base64url") + "aA1!";
 
-function requireStaging(url: string, secret: string) {
+function requireStaging(url: string, key: string) {
   if (!process.env.CI) throw new Error("Staging role provisioning is CI-only.");
   let hostname = "";
   try {
@@ -22,7 +22,28 @@ function requireStaging(url: string, secret: string) {
   if (hostname !== (STAGING_REF + ".supabase.co")) {
     throw new Error("Refusing to seed a non-staging Supabase project.");
   }
-  if (!secret) throw new Error("SUPABASE_SECRET_KEY is required for staging E2E provisioning.");
+  if (!key) throw new Error("A staging admin API key is required for E2E provisioning.");
+}
+
+async function isValidAdminKey(url: string, key: string) {
+  try {
+    const response = await fetch(`${url}/rest/v1/`, {
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${key}`,
+      },
+    });
+    return response.status === 200;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveAdminKey(url: string, candidates: string[]) {
+  for (const candidate of candidates) {
+    if (candidate && await isValidAdminKey(url, candidate)) return candidate;
+  }
+  throw new Error("No valid staging admin API key was accepted. Refresh the GitHub Actions secret with the exact staging key; do not trim or alter it.");
 }
 
 async function findUser(admin: SupabaseClient, email: string) {
@@ -62,8 +83,10 @@ async function ensureUser(admin: SupabaseClient, email: string, portalAccount: b
 export async function provisionStagingRoleUsers(projectName: string): Promise<Provisioned> {
   const supabaseUrl = STAGING_SUPABASE_URL;
   const secret = clean(process.env.SUPABASE_SECRET_KEY);
-  requireStaging(supabaseUrl, secret);
-  const admin = createClient(supabaseUrl, secret, {
+  const legacyServiceRoleKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  requireStaging(supabaseUrl, secret || legacyServiceRoleKey);
+  const adminKey = await resolveAdminKey(supabaseUrl, [secret, legacyServiceRoleKey]);
+  const admin = createClient(supabaseUrl, adminKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
