@@ -54,7 +54,7 @@ async function ensureUser(admin: SupabaseClient, email: string, portalAccount: b
 }
 
 export async function provisionStagingRoleUsers(projectName: string): Promise<Provisioned> {
-  const supabaseUrl = clean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const supabaseUrl = clean(process.env.E2E_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
   const secret = clean(process.env.SUPABASE_SECRET_KEY);
   requireStaging(supabaseUrl, secret);
   const admin = createClient(supabaseUrl, secret, {
