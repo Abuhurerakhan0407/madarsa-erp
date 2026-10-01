@@ -10,7 +10,7 @@ type Workspace = {
 };
 
 const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
-const supabaseUrl = stripQuotes(process.env.E2E_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/$/, "");
+const supabaseUrl = STAGING_SUPABASE_URL;
 const supabaseKey = stripQuotes(process.env.E2E_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
