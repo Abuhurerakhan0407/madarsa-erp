@@ -13,7 +13,13 @@ const password = () => randomBytes(18).toString("base64url") + "aA1!";
 function requireStaging(url: string, secret: string) {
   if (!process.env.CI) throw new Error("Staging role provisioning is CI-only.");
   const normalized = url.replace(/\/$/, "");
-  if (!normalized.endsWith("." + STAGING_REF + ".supabase.co")) {
+  let hostname = "";
+  try {
+    hostname = new URL(normalized).hostname;
+  } catch {
+    throw new Error("Refusing to seed an invalid Supabase URL.");
+  }
+  if (hostname !== STAGING_REF + ".supabase.co") {
     throw new Error("Refusing to seed a non-staging Supabase project.");
   }
   if (!secret) throw new Error("SUPABASE_SECRET_KEY is required for staging E2E provisioning.");
