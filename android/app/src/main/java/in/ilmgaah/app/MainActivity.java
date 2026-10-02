@@ -333,10 +333,9 @@ public class MainActivity extends Activity {
                 body.put("password", passwordValue);
 
                 NativeApi.postJson(
-                        ClientConfig.SUPABASE_URL +
-                                "/auth/v1/token?grant_type=password",
+                        ClientConfig.API_BASE + "/api/mobile/auth",
                         body.toString(),
-                        ClientConfig.SUPABASE_PUBLISHABLE_KEY,
+                        null,
                         result -> {
                             if (!result.ok()) {
                                 signInButton.setEnabled(true);
