@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
 import type { AdmissionStaffAction } from "@/lib/admissions/staff-action-model";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type AdmissionActionPanelProps = {
   applicationId: number;
   state: string;
-  locale: Locale;
+  locale: SupportedLocale;
 };
 
 type ActionOption = {
@@ -48,25 +48,10 @@ const copy = {
     success: "درخواست کا ورک فلو اپ ڈیٹ ہو گیا۔",
     error: "درخواست اپ ڈیٹ نہیں ہو سکی۔",
     noAction: "اس حالت سے ابھی کوئی عمل دستیاب نہیں ہے۔"
-  },
-  ar: {
-    title: "إجراءات القبول",
-    body: "تتبع الإجراءات مسار العمل المثبت لهذا الطلب وصلاحيات دورك.",
-    note: "ملاحظة المراجعة (اختياري)",
-    reason: "سبب القرار",
-    start_review: "بدء المراجعة",
-    complete_review: "إكمال المراجعة",
-    offer: "تقديم عرض قبول",
-    waitlist: "إضافة إلى قائمة الانتظار",
-    reject: "رفض",
-    working: "جارٍ التحديث…",
-    success: "تم تحديث مسار الطلب.",
-    error: "تعذر تحديث هذا الطلب.",
-    noAction: "لا يوجد إجراء متاح من هذه الحالة حاليًا."
   }
 } as const;
 
-function optionsForState(state: string, locale: Locale): ActionOption[] {
+function optionsForState(state: string, locale: SupportedLocale): ActionOption[] {
   const text = copy[locale];
   if (state === "submitted") return [{ action: "start_review", label: text.start_review }];
   if (state === "verification") return [{ action: "complete_review", label: text.complete_review }];

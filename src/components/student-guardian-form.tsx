@@ -2,17 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Guardian = { name: string; relationship: string; phone: string | null; occupation: string | null; education: string | null; canCollect: boolean } | null;
 
 const copy = {
   en: { title: "Primary guardian", body: "Maintain the student's main family contact and pickup authority.", name: "Guardian name", relationship: "Relationship", phone: "Phone", occupation: "Occupation", education: "Education", collect: "Authorized to collect student", save: "Save guardian", saving: "Saving…", saved: "Guardian details saved.", error: "Unable to save guardian details.", father: "Father", mother: "Mother", guardian: "Guardian" },
-  ur: { title: "بنیادی سرپرست", body: "طالب علم کے بنیادی خاندانی رابطے اور پک اپ اختیار کو برقرار رکھیں۔", name: "سرپرست کا نام", relationship: "رشتہ", phone: "فون", occupation: "پیشہ", education: "تعلیم", collect: "طالب علم کو لے جانے کی اجازت", save: "سرپرست محفوظ کریں", saving: "محفوظ ہو رہا ہے…", saved: "سرپرست کی معلومات محفوظ ہو گئیں۔", error: "سرپرست کی معلومات محفوظ نہیں ہو سکیں۔", father: "والد", mother: "والدہ", guardian: "سرپرست" },
-  ar: { title: "ولي الأمر الأساسي", body: "حافظ على جهة الاتصال العائلية الأساسية وصلاحية استلام الطالب.", name: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "الهاتف", occupation: "المهنة", education: "التعليم", collect: "مصرح له باستلام الطالب", save: "حفظ ولي الأمر", saving: "جارٍ الحفظ…", saved: "تم حفظ بيانات ولي الأمر.", error: "تعذر حفظ بيانات ولي الأمر.", father: "الأب", mother: "الأم", guardian: "ولي الأمر" }
+  ur: { title: "بنیادی سرپرست", body: "طالب علم کے بنیادی خاندانی رابطے اور پک اپ اختیار کو برقرار رکھیں۔", name: "سرپرست کا نام", relationship: "رشتہ", phone: "فون", occupation: "پیشہ", education: "تعلیم", collect: "طالب علم کو لے جانے کی اجازت", save: "سرپرست محفوظ کریں", saving: "محفوظ ہو رہا ہے…", saved: "سرپرست کی معلومات محفوظ ہو گئیں۔", error: "سرپرست کی معلومات محفوظ نہیں ہو سکیں۔", father: "والد", mother: "والدہ", guardian: "سرپرست" }
 } as const;
 
-export function StudentGuardianForm({ locale, personId, guardian }: { locale: Locale; personId: number; guardian: Guardian }) {
+export function StudentGuardianForm({ locale, personId, guardian }: { locale: SupportedLocale; personId: number; guardian: Guardian }) {
   const text = copy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);

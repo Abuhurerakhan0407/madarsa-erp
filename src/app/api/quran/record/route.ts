@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateQuranAttemptInput } from "@/lib/quran/model";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -14,8 +14,9 @@ export async function POST(request: Request) {
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
-  let body: unknown;
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }); }
+  const parsedBody = await readBoundedJson(request, 32_768);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Request body must be an object." }, { status: 400 });
   const raw = body as Record<string, unknown>;
   const requestKey = typeof raw.requestKey === "string" ? raw.requestKey.trim() : "";
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   if (!validation.value) return NextResponse.json({ error: validation.errors[0] || "Invalid Qur'an record.", details: validation.errors }, { status: 400 });
   const value = validation.value;
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("record_quran_hifz_attempt_idempotent", {
+  const { data, error } = await admin.rpc("record_quran_hifz_attempt_scoped_v1", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
@@ -44,7 +45,6 @@ export async function POST(request: Request) {
     p_overall_score: value.overallScore ?? null,
     p_prompts: value.prompts ?? null,
     p_outcome: value.outcome,
-    p_teacher_person_id: value.teacherPersonId ?? null,
     p_teacher_remark: value.teacherRemark ?? null,
     p_parent_visible_remark: value.parentVisibleRemark ?? null,
     p_private_note: value.privateNote ?? null,

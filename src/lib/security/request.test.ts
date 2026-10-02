@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "./request";
+import { isJsonRequest, isSameOriginRequest, readBoundedFormData, readBoundedJson } from "./request";
 
 describe("mutation request guards", () => {
   it("enforces actual bytes even with a forged small Content-Length", async () => {
@@ -20,6 +20,22 @@ describe("mutation request guards", () => {
     expect(await readBoundedJson(request, 24)).toMatchObject({ ok: false, status: 413 });
   });
 
+  it("bounds the full multipart stream even without Content-Length", async () => {
+    const form = new FormData();
+    form.set("photo", new File([new Uint8Array(256)], "photo.jpg", { type: "image/jpeg" }));
+    const request = new Request("https://app.example.com/api/upload", { method: "POST", body: form });
+    expect(request.headers.get("content-length")).toBeNull();
+    expect(await readBoundedFormData(request, 128)).toMatchObject({ ok: false, status: 413 });
+  });
+
+  it("parses a multipart form within the byte limit", async () => {
+    const form = new FormData();
+    form.set("kind", "homework");
+    const request = new Request("https://app.example.com/api/upload", { method: "POST", body: form });
+    const parsed = await readBoundedFormData(request, 4096);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.value.get("kind")).toBe("homework");
+  });
   it("accepts multilingual JSON within the limit and rejects malformed JSON", async () => {
     const request = (body: string) => new Request("https://app.example.com/api", { method: "POST", body });
     expect(await readBoundedJson(request('{"name":"ابو"}'))).toEqual({ ok: true, value: { name: "ابو" } });

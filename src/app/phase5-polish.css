@@ -1,0 +1,856 @@
+/* Phase 5 final interaction, layout and Urdu readability polish. */
+
+.flow-stack {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.professional-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 35 27 / 4%), 0 8px 24px rgb(15 35 27 / 4%);
+}
+
+.professional-card > :first-child,
+.demo-card > :first-child,
+.attendance-metric > :first-child {
+  margin-block-start: 0;
+}
+
+.professional-card > :last-child,
+.demo-card > :last-child,
+.attendance-metric > :last-child {
+  margin-block-end: 0;
+}
+
+.section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading > * {
+  min-width: 0;
+}
+
+.section-heading h1,
+.section-heading h2,
+.section-heading h3 {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.section-heading p {
+  margin: 0.28rem 0 0;
+  line-height: 1.55;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.form-grid .field-label {
+  min-width: 0;
+  margin: 0;
+}
+
+.form-grid > .action-button {
+  width: fit-content;
+  align-self: end;
+}
+
+.attendance-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.attendance-metric {
+  display: grid;
+  min-width: 0;
+  min-height: 6.6rem;
+  align-content: space-between;
+  gap: 0.55rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.attendance-metric span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+.attendance-metric strong {
+  color: var(--foreground);
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.demo-card {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--surface-muted));
+}
+
+.demo-card strong,
+.demo-card h3 {
+  color: var(--foreground);
+}
+
+.demo-card h3,
+.demo-card p {
+  margin: 0;
+}
+
+.demo-card p {
+  margin-block-start: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.demo-card small {
+  display: block;
+  margin-block-start: 0.4rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.teacher-avatar {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.teacher-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.teacher-card-list > .professional-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px;
+}
+
+/* Exams: restore the card-based action hub visible in the intended design. */
+.exam-v2-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.exam-v2-action {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  min-height: 8.5rem;
+  align-content: start;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.exam-v2-action:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  box-shadow: 0 10px 26px rgb(15 35 27 / 8%);
+}
+
+.exam-v2-action > span:first-child {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  grid-row: 1 / span 2;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-v2-action h2 {
+  margin: 0;
+  align-self: end;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.exam-v2-action p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+[data-testid="exam-v2-selector"] .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Pending feedback: controls visibly acknowledge every async/navigation action. */
+.inline-spinner {
+  display: inline-block;
+  width: 0.95em;
+  height: 0.95em;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: ilmgaah-spin 650ms linear infinite;
+}
+
+.action-button[disabled],
+.action-button[aria-busy="true"],
+.nav-link[aria-busy="true"],
+.locale-link[aria-busy="true"],
+.auth-submit[aria-busy="true"],
+a[data-route-pending="true"] {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+a[data-route-pending="true"] {
+  pointer-events: none;
+}
+
+a[data-route-pending="true"]:not([data-managed-pending="true"]):not(.locale-link)::after {
+  content: "";
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-inline-start: 0.45rem;
+  vertical-align: -0.08em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: ilmgaah-spin 650ms linear infinite;
+}
+
+.nav-link[aria-busy="true"] .inline-spinner {
+  margin-inline-start: auto;
+}
+
+.locale-link[aria-busy="true"] {
+  gap: 0.35rem;
+}
+
+.route-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.route-loading-track {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--sidebar-size);
+  inset-inline-end: 0;
+  height: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+}
+
+.route-loading-track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0.08);
+  transform-origin: left center;
+  background: var(--accent);
+  animation: ilmgaah-progress 950ms cubic-bezier(.2,.75,.25,1) infinite alternate;
+}
+
+[dir="rtl"] .route-loading-track span {
+  transform-origin: right center;
+}
+
+.route-loading-pill {
+  position: absolute;
+  inset-block-start: 5rem;
+  inset-inline-end: 1rem;
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  color: var(--accent-strong);
+  box-shadow: 0 8px 24px rgb(15 35 27 / 10%);
+  backdrop-filter: blur(8px);
+  font-size: 0.75rem;
+  font-weight: 720;
+}
+
+.route-loading-label::before {
+  content: "Loading…";
+}
+
+html[lang="ur"] .route-loading-label::before {
+  content: "لوڈ ہو رہا ہے…";
+}
+
+.global-search-box {
+  position: relative;
+}
+
+.global-search-progress {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  inset-block-start: 50%;
+  z-index: 2;
+  display: inline-flex;
+  transform: translateY(-50%);
+  color: var(--accent-strong);
+}
+
+.global-search-box .text-field[aria-busy="true"] {
+  padding-inline-end: 2.5rem;
+}
+
+/* Urdu UI uses a compact Naskh face for controls/layout. Nastaliq remains available
+   for dedicated display text, but is no longer forced across every UI element. */
+html[lang="ur"] body,
+html[lang="ur"] input,
+html[lang="ur"] button,
+html[lang="ur"] select,
+html[lang="ur"] textarea {
+  font-family: var(--font-naskh-arabic), "Noto Naskh Arabic", serif !important;
+}
+
+html[lang="ur"] :where(h1, h2, h3, h4, p, span, strong, small, label, a, button, input, select, textarea, td, th) {
+  line-height: 1.58;
+  letter-spacing: 0 !important;
+}
+
+html[lang="ur"] :where(.state-kicker, .sample-label, .nav-section-label) {
+  text-transform: none;
+  letter-spacing: 0 !important;
+}
+
+html[lang="ur"] :where(.page-heading h1, .demo-hub-hero h1, .demo-module-heading h1) {
+  line-height: 1.38;
+  letter-spacing: 0 !important;
+}
+
+html[lang="ur"] :where(.action-button, .nav-link, .locale-link, .text-field, .user-button) {
+  min-height: 3rem;
+  line-height: 1.45;
+}
+
+html[lang="ur"] :where(.professional-card, .demo-card, .attendance-metric, .section-heading, .page-heading, .topbar-actions, .quick-actions) > * {
+  min-width: 0;
+}
+
+html[lang="ur"] :where(.professional-card, .demo-card, .attendance-metric, .workspace-record-row, td, th) {
+  overflow-wrap: anywhere;
+}
+
+html[lang="ur"] .professional-institution-card strong,
+html[lang="ur"] .professional-institution-card span,
+html[lang="ur"] .professional-institution-card small {
+  line-height: 1.45;
+}
+
+@keyframes ilmgaah-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ilmgaah-progress {
+  0% { transform: scaleX(0.08); opacity: 0.7; }
+  65% { transform: scaleX(0.72); opacity: 1; }
+  100% { transform: scaleX(0.94); opacity: 0.9; }
+}
+
+@media (max-width: 980px) {
+  .exam-v2-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .demo-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attendance-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .route-loading-track {
+    inset-inline-start: 0;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-heading .quick-actions {
+    width: 100%;
+  }
+
+  .section-heading .quick-actions .action-button {
+    flex: 1 1 auto;
+  }
+
+  [data-testid="exam-v2-selector"] .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .exam-v2-actions,
+  .demo-card-grid,
+  .attendance-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .professional-card {
+    padding: 0.9rem;
+  }
+
+  .exam-v2-action {
+    min-height: 7.25rem;
+  }
+
+  .route-loading-pill {
+    inset-block-start: 4.7rem;
+    inset-inline: 0.75rem auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-spinner,
+  .route-loading-track span,
+  a[data-route-pending="true"]::after {
+    animation: none;
+  }
+
+  .exam-v2-action {
+    transition: none;
+  }
+}
+
+
+/* Parent/teacher portal runs outside the locale route, so Urdu styling keys off
+   the localized portal container instead of the document root. */
+.auth-screen [lang="ur"],
+.auth-screen [lang="ur"] input,
+.auth-screen [lang="ur"] button,
+.auth-screen [lang="ur"] select,
+.auth-screen [lang="ur"] textarea {
+  font-family: var(--font-naskh-arabic), "Noto Naskh Arabic", serif !important;
+}
+
+.auth-screen [lang="ur"] :where(h1, h2, h3, h4, p, span, strong, small, label, a, button, input, select, textarea, td, th) {
+  line-height: 1.72;
+  letter-spacing: 0 !important;
+}
+
+.auth-screen [lang="ur"] :where(.state-kicker, .sample-label) {
+  font-size: 0.82rem !important;
+  text-transform: none;
+}
+
+.auth-screen [lang="ur"] .demo-card small {
+  font-size: 0.82rem;
+}
+
+.auth-screen [lang="en"] .state-kicker {
+  font-size: 0.72rem !important;
+}
+
+.auth-screen [lang="en"] .demo-card small {
+  font-size: 0.76rem;
+}
+
+@media (max-width: 620px) {
+  .auth-screen > main {
+    width: min(100%, 100vw) !important;
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      max(0.9rem, env(safe-area-inset-right))
+      max(1.25rem, env(safe-area-inset-bottom))
+      max(0.9rem, env(safe-area-inset-left)) !important;
+  }
+
+  .auth-screen [lang] .professional-card {
+    border-radius: 0.8rem;
+  }
+
+  .auth-screen [lang] .quick-actions {
+    width: 100%;
+  }
+
+  .auth-screen [lang] .quick-actions > * {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* Parent portal table containment: schedule/results stay usable on phones. */
+.auth-screen [lang] .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-screen [lang] .table-wrap table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+
+.auth-screen [lang] .table-wrap th,
+.auth-screen [lang] .table-wrap td {
+  padding: 0.72rem 0.75rem;
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.auth-screen [lang] .table-wrap th {
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.auth-screen [lang] .table-wrap td {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang="ur"] .table-wrap th,
+.auth-screen [lang="ur"] .table-wrap td {
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .table-wrap {
+    margin-inline: -0.1rem;
+  }
+
+  .auth-screen [lang] .table-wrap table {
+    min-width: 38rem;
+  }
+}
+
+
+/* Portal activation/password/error states. */
+.auth-screen [lang] .flow-form {
+  display: grid;
+  gap: 0.85rem;
+  margin-block-start: 1rem;
+}
+
+.auth-screen [lang] .flow-form > .action-button {
+  width: fit-content;
+}
+
+.auth-screen [lang] .form-message {
+  margin: 0;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-screen [lang] .form-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+}
+
+.auth-screen [lang="ur"] .form-message {
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 620px) {
+  .auth-screen [lang] .flow-form > .action-button {
+    width: 100%;
+  }
+}
+
+/* Client-delivery teacher list */
+.teacher-summary-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.teacher-card-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.teacher-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  min-height: 4.75rem;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.teacher-list-main,
+.teacher-list-name,
+.teacher-list-end {
+  min-width: 0;
+}
+
+.teacher-list-main {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.teacher-list-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.teacher-list-name strong {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+}
+
+.teacher-list-name span,
+.teacher-list-role,
+.teacher-list-scope {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.teacher-list-role,
+.teacher-list-scope {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-list-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.teacher-list-chevron {
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.teacher-list-row:hover,
+.teacher-list-row:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  box-shadow: 0 6px 18px rgb(15 35 27 / 6%);
+  outline: none;
+}
+
+@media (max-width: 620px) {
+  .teacher-summary-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .teacher-list-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .teacher-list-end {
+    grid-column: 2;
+    justify-content: space-between;
+  }
+
+  .teacher-list-role,
+  .teacher-list-scope {
+    white-space: normal;
+  }
+
+  [lang="ur"] .teacher-list-name span,
+  [lang="ur"] .teacher-list-role,
+  [lang="ur"] .teacher-list-scope {
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+}
+
+/* Client portal access */
+.portal-access-manager {
+  width: 100%;
+}
+
+.portal-type-tabs {
+  margin-block: 1rem;
+}
+
+.portal-person-select {
+  max-width: 32rem;
+}
+
+.portal-access-detail {
+  display: grid;
+  gap: 1rem;
+  margin-block-start: 1rem;
+}
+
+.portal-access-preview,
+.portal-handoff-grid,
+.portal-credential-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.portal-access-preview > div,
+.portal-handoff-grid > div {
+  display: grid;
+  gap: .3rem;
+  min-width: 0;
+  padding: .85rem;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--surface-muted);
+}
+
+.portal-access-preview span,
+.portal-handoff-grid span {
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.portal-access-preview strong,
+.portal-handoff-grid strong {
+  overflow-wrap: anywhere;
+}
+
+.portal-credential-form {
+  display: grid;
+  gap: .7rem;
+}
+
+.portal-credential-grid .field-label {
+  margin-block: 0;
+}
+
+.portal-password-toggle {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  font-size: .82rem;
+}
+
+.portal-password-toggle input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.portal-password-rule {
+  margin: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.portal-handoff-card .code-block {
+  padding: .55rem .7rem;
+  border-radius: .55rem;
+
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: .88rem;
+}
+
+.portal-password-page {
+  width: min(640px, 100%);
+  margin: 8vh auto 0;
+}
+
+.portal-password-page > p {
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .portal-access-preview,
+  .portal-handoff-grid,
+  .portal-credential-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-type-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portal-type-tabs .action-button,
+  .portal-credential-form > .action-button,
+  .portal-handoff-card .quick-actions .action-button {
+    width: 100%;
+  }
+
+  .portal-password-page {
+    margin-block-start: 2vh;
+  }
+
+  html[lang="ur"] .portal-access-manager,
+  .portal-password-page[lang="ur"] {
+    line-height: 1.8;
+  }
+}

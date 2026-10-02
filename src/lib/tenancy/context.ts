@@ -42,42 +42,44 @@ async function resolveTenantContext(): Promise<TenantContext | null> {
 
   if (!membership) return null;
 
-  const [{ data: tenant, error: tenantError }, { data: profile, error: profileError }] =
-    await Promise.all([
-      supabase
-        .from("tenants")
-        .select("id, name, slug, state, primary_branch_id, client_profile")
-        .eq("id", membership.tenant_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("identity_id", identity.id)
-        .maybeSingle()
-    ]);
+  const tenantPromise = supabase
+    .from("tenants")
+    .select("id, name, slug, state, primary_branch_id, client_profile")
+    .eq("id", membership.tenant_id)
+    .single();
+  const profilePromise = supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("identity_id", identity.id)
+    .maybeSingle();
+  const scopePromise = membership.all_branches
+    ? Promise.resolve({ data: [] as Array<{ branch_id: number }>, error: null })
+    : supabase
+        .from("membership_branch_scopes")
+        .select("branch_id")
+        .eq("tenant_id", membership.tenant_id)
+        .eq("membership_id", membership.id)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+  const [
+    { data: tenant, error: tenantError },
+    { data: profile, error: profileError },
+    { data: scopeRows, error: scopeError }
+  ] = await Promise.all([tenantPromise, profilePromise, scopePromise]);
 
   if (tenantError) {
     throw new Error(`Unable to resolve tenant: ${tenantError.message}`);
   }
-
   if (profileError) {
     throw new Error(`Unable to resolve profile: ${profileError.message}`);
   }
-
-  let scopedBranchIds: number[] = [];
-  if (!membership.all_branches) {
-    const { data, error } = await supabase
-      .from("membership_branch_scopes")
-      .select("branch_id")
-      .eq("tenant_id", tenant.id)
-      .eq("membership_id", membership.id)
-      .order("created_at", { ascending: true })
-      .limit(1);
-    if (error) throw new Error(`Unable to resolve membership branch: ${error.message}`);
-    scopedBranchIds = (data ?? []).map((row) => row.branch_id);
-    if (scopedBranchIds.length === 0) return null;
+  if (scopeError) {
+    throw new Error(`Unable to resolve membership branch: ${scopeError.message}`);
   }
 
+  const scopedBranchIds = (scopeRows ?? []).map((row) => row.branch_id);
+  if (!membership.all_branches && scopedBranchIds.length === 0) return null;
   const workspaceBranchId = selectWorkspaceBranchId(
     tenant.primary_branch_id,
     membership.all_branches,

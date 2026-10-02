@@ -31,9 +31,9 @@ export default async function OnboardingPage() {
       <section className="onboarding-card" aria-labelledby="onboarding-title">
         <header className="onboarding-header">
           <div className="auth-brand">
-            <span className="brand-mark" aria-hidden="true">M</span>
+            <span className="brand-mark" aria-hidden="true">I</span>
             <div>
-              <strong>Madarsa ERP</strong>
+              <strong>Ilmgaah</strong>
               <span>Secure institution setup</span>
             </div>
           </div>

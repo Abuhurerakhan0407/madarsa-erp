@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 22
       - run: pnpm install --no-frozen-lockfile
+      - run: pnpm release:invariants
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -41,11 +42,17 @@ jobs:
 
   e2e:
     needs: checks
+    if: ${{ always() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://dysfnytqpbfxpmerkyaz.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JE-qS9os44gw9TKy4GxYSA_5ZH_17H7
+      # Authenticated E2E must never target the production Supabase project.
+      E2E_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
+      E2E_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
+      NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
+      SUPABASE_SECRET_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SECRET_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.ILMGAAH_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -55,5 +62,28 @@ jobs:
         with:
           node-version: 22
       - run: pnpm install --no-frozen-lockfile
+      - name: Verify E2E Supabase target is staging
+        run: test "$NEXT_PUBLIC_SUPABASE_URL" = "https://loihcxyblzdfiogrdihm.supabase.co"
+      - name: Verify staging admin key is present
+        run: test -n "$SUPABASE_SECRET_KEY" || test -n "$SUPABASE_SERVICE_ROLE_KEY"
+      - name: Verify staging admin key is valid
+        run: |
+          key="$SUPABASE_SECRET_KEY"
+          if [ -n "$key" ]; then
+            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+          fi
+          key="$SUPABASE_SERVICE_ROLE_KEY"
+          if [ -n "$key" ]; then
+            code="$(curl -sS -o /dev/null -w '%{http_code}'               -H "apikey: $key"               "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/")"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+          fi
+          echo "No valid staging admin API key was accepted. Refresh the GitHub Actions secret with the exact staging key; do not trim or alter it."
+          exit 1
+      - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e

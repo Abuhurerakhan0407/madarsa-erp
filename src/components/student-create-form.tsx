@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FieldGroup } from "@/components/workspace-ui";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Option = { id: number; label: string };
 type GroupOption = Option & { sessionId: number; programId: number };
@@ -12,7 +12,7 @@ type CreateBody = {
   nameNative?: string;
   dateOfBirth?: string;
   gender?: string;
-  preferredLocale: Locale;
+  preferredLocale: SupportedLocale;
   sessionId: number;
   programId: number;
   groupId?: number;
@@ -25,14 +25,13 @@ type CreateBody = {
 };
 
 const copy = {
-  en: { student: "Student details", academic: "Academic placement", guardian: "Guardian", wellbeing: "Health & safeguarding", name: "Student name", native: "Name in Urdu / Arabic", dob: "Date of birth", gender: "Gender", language: "Preferred language", session: "Academic session", program: "Program", group: "Class / group", joined: "Joining date", guardianName: "Guardian name", relationship: "Relationship", phone: "Guardian phone", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Create student", saving: "Creating…", duplicate: "A possible matching person already exists. Review the details before creating a separate student record.", confirm: "Create as separate student", error: "Unable to create the student.", none: "Not assigned", male: "Male", female: "Female", other: "Other", undisclosed: "Undisclosed", father: "Father", mother: "Mother", guardianRole: "Guardian" },
-  ur: { student: "طالب علم کی تفصیلات", academic: "تعلیمی تعیناتی", guardian: "سرپرست", wellbeing: "صحت اور حفاظت", name: "طالب علم کا نام", native: "اردو / عربی نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت کی تاریخ", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "سرپرست کا فون", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "طالب علم بنائیں", saving: "بنایا جا رہا ہے…", duplicate: "ممکنہ طور پر ملتا جلتا فرد پہلے سے موجود ہے۔ الگ ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", confirm: "الگ طالب علم بنائیں", error: "طالب علم نہیں بنایا جا سکا۔", none: "متعین نہیں", male: "مرد", female: "خاتون", other: "دیگر", undisclosed: "درج نہیں", father: "والد", mother: "والدہ", guardianRole: "سرپرست" },
-  ar: { student: "بيانات الطالب", academic: "التسجيل الأكاديمي", guardian: "ولي الأمر", wellbeing: "الصحة والحماية", name: "اسم الطالب", native: "الاسم بالأردية / العربية", dob: "تاريخ الميلاد", gender: "الجنس", language: "اللغة المفضلة", session: "العام الدراسي", program: "البرنامج", group: "الفصل / المجموعة", joined: "تاريخ الالتحاق", guardianName: "اسم ولي الأمر", relationship: "صلة القرابة", phone: "هاتف ولي الأمر", medical: "ملاحظات طبية", accessibility: "احتياجات التعلم / الوصول", pickup: "قيود الاستلام", save: "إنشاء الطالب", saving: "جارٍ الإنشاء…", duplicate: "يوجد شخص محتمل مطابق. راجع البيانات قبل إنشاء سجل طالب منفصل.", confirm: "إنشاء طالب منفصل", error: "تعذر إنشاء الطالب.", none: "غير معين", male: "ذكر", female: "أنثى", other: "أخرى", undisclosed: "غير مذكور", father: "الأب", mother: "الأم", guardianRole: "ولي أمر" }
+  en: { student: "Student details", academic: "Academic placement", guardian: "Guardian", wellbeing: "Health & safeguarding", name: "Student name", native: "Name in Urdu", dob: "Date of birth", gender: "Gender", language: "Preferred language", session: "Academic session", program: "Program", group: "Class / group", joined: "Joining date", guardianName: "Guardian name", relationship: "Relationship", phone: "Guardian phone", medical: "Medical notes", accessibility: "Accessibility / learning needs", pickup: "Pickup restrictions", save: "Create student", saving: "Creating…", duplicate: "A possible matching person already exists. Review the details before creating a separate student record.", confirm: "Create as separate student", error: "Unable to create the student.", none: "Not assigned", male: "Male", female: "Female", other: "Other", undisclosed: "Undisclosed", father: "Father", mother: "Mother", guardianRole: "Guardian" },
+  ur: { student: "طالب علم کی تفصیلات", academic: "تعلیمی تعیناتی", guardian: "سرپرست", wellbeing: "صحت اور حفاظت", name: "طالب علم کا نام", native: "اردو نام", dob: "تاریخ پیدائش", gender: "جنس", language: "ترجیحی زبان", session: "تعلیمی سال", program: "پروگرام", group: "کلاس / گروپ", joined: "شمولیت کی تاریخ", guardianName: "سرپرست کا نام", relationship: "رشتہ", phone: "سرپرست کا فون", medical: "طبی نوٹس", accessibility: "خصوصی / تعلیمی ضروریات", pickup: "پک اپ پابندیاں", save: "طالب علم بنائیں", saving: "بنایا جا رہا ہے…", duplicate: "ممکنہ طور پر ملتا جلتا فرد پہلے سے موجود ہے۔ الگ ریکارڈ بنانے سے پہلے تفصیلات چیک کریں۔", confirm: "الگ طالب علم بنائیں", error: "طالب علم نہیں بنایا جا سکا۔", none: "متعین نہیں", male: "مرد", female: "خاتون", other: "دیگر", undisclosed: "درج نہیں", father: "والد", mother: "والدہ", guardianRole: "سرپرست" }
 } as const;
 
 function value(form: FormData, name: string) { const v = String(form.get(name) || "").trim(); return v || undefined; }
 
-export function StudentCreateForm({ locale, sessions, programs, groups }: { locale: Locale; sessions: Option[]; programs: Option[]; groups: GroupOption[] }) {
+export function StudentCreateForm({ locale, sessions, programs, groups }: { locale: SupportedLocale; sessions: Option[]; programs: Option[]; groups: GroupOption[] }) {
   const text = copy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -61,7 +60,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
     const guardianName = value(form, "guardianName");
     const body: CreateBody = {
       displayName: String(form.get("displayName") || "").trim(),
-      nameNative: value(form, "nameNative"), dateOfBirth: value(form, "dateOfBirth"), gender: value(form, "gender"), preferredLocale: String(form.get("preferredLocale") || locale) as Locale,
+      nameNative: value(form, "nameNative"), dateOfBirth: value(form, "dateOfBirth"), gender: value(form, "gender"), preferredLocale: String(form.get("preferredLocale") || locale) as SupportedLocale,
       sessionId: Number(form.get("sessionId")), programId: Number(form.get("programId")), groupId: Number(form.get("groupId")) || undefined, joinedOn: value(form, "joinedOn"),
       medicalSummary: value(form, "medicalSummary"), accessibilityNeeds: value(form, "accessibilityNeeds"), pickupRestrictions: value(form, "pickupRestrictions"),
       guardian: guardianName ? { name: guardianName, relationship: String(form.get("relationship") || "guardian"), phone: value(form, "guardianPhone") } : undefined
@@ -76,7 +75,7 @@ export function StudentCreateForm({ locale, sessions, programs, groups }: { loca
       <FieldGroup label={text.native}><input name="nameNative" maxLength={160} dir="auto" /></FieldGroup>
       <FieldGroup label={text.dob}><input name="dateOfBirth" type="date" /></FieldGroup>
       <FieldGroup label={text.gender}><select name="gender" defaultValue=""><option value="">—</option><option value="male">{text.male}</option><option value="female">{text.female}</option><option value="other">{text.other}</option><option value="undisclosed">{text.undisclosed}</option></select></FieldGroup>
-      <FieldGroup label={text.language}><select name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></FieldGroup>
+      <FieldGroup label={text.language}><select name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option></select></FieldGroup>
     </div></section>
 
     <section className="panel"><header className="panel-header"><h2>{text.academic}</h2></header><div className="configuration-form-grid">

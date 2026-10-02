@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/tenancy/context";
 import type { Locale } from "@/lib/i18n/config";
@@ -52,14 +53,15 @@ async function getCapabilities(tenantId: number, membershipId: number): Promise<
   const admin = createAdminClient(); const { data: roles, error: roleError } = await admin.from("membership_roles").select("role_id").eq("tenant_id", tenantId).eq("membership_id", membershipId); if (roleError) throw new Error(`Unable to resolve attendance roles: ${roleError.message}`); const roleIds = (roles ?? []).map((row) => row.role_id); if (!roleIds.length) return { canMark: false, canCorrect: false, canApprove: false,canViewStaff:false };
   const { data: permissions, error } = await admin.from("role_permissions").select("permission_code").eq("tenant_id", tenantId).in("role_id", roleIds).in("permission_code", ["attendance.student.mark", "attendance.student.correct", "attendance.student.approve","hr.employee.read"]); if (error) throw new Error(`Unable to resolve attendance permissions: ${error.message}`); const set = new Set((permissions ?? []).map((row) => row.permission_code)); return { canMark: set.has("attendance.student.mark"), canCorrect: set.has("attendance.student.correct"), canApprove: set.has("attendance.student.approve"),canViewStaff:set.has("hr.employee.read") };
 }
-export async function getAttendanceTimezone(): Promise<string> { const workspace = await getTenantContext(); if (!workspace) return "UTC"; const admin = createAdminClient(); const { data } = await admin.from("institution_profiles").select("timezone").eq("tenant_id", workspace.tenantId).maybeSingle(); return typeof data?.timezone === "string" && data.timezone.trim() ? data.timezone : "UTC"; }
+async function resolveAttendanceTimezone(): Promise<string> { const workspace = await getTenantContext(); if (!workspace) return "UTC"; const admin = createAdminClient(); const { data } = await admin.from("institution_profiles").select("timezone").eq("tenant_id", workspace.tenantId).maybeSingle(); return typeof data?.timezone === "string" && data.timezone.trim() ? data.timezone : "UTC"; }
+export const getAttendanceTimezone = cache(resolveAttendanceTimezone);
 export async function getDefaultAttendanceDate(): Promise<string> { return dateInTimezone(await getAttendanceTimezone()); }
 
-export async function getAttendanceWorkspace(args: { date: string; search?: string; page?: number; pageSize?: number; locale: Locale }): Promise<AttendanceWorkspace> {
+export async function getAttendanceWorkspace(args: { date: string; groupId?: number; search?: string; page?: number; pageSize?: number; locale: Locale }): Promise<AttendanceWorkspace> {
   const workspace = await getTenantContext(); if (!workspace || !workspace.branchId) throw new Error("Active branch is required."); const admin = createAdminClient();
   const [timezone, capabilities, rpc,emergencyRpc,insightsRpc] = await Promise.all([
     getAttendanceTimezone(), getCapabilities(workspace.tenantId, workspace.membershipId),
-    admin.rpc("get_student_attendance_workspace", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_attendance_date: args.date, p_search: args.search?.trim() || null, p_page: args.page ?? 1, p_page_size: args.pageSize ?? 50 }),
+    admin.rpc("get_student_attendance_workspace_v3", { p_identity_id: workspace.identityId, p_tenant_id: workspace.tenantId, p_branch_id: workspace.branchId, p_attendance_date: args.date, p_group_id: args.groupId ?? null, p_search: args.search?.trim() || null, p_page: args.page ?? 1, p_page_size: args.pageSize ?? 50 }),
     admin.rpc("get_emergency_manual_attendance_v1",{p_identity_id:workspace.identityId,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_attendance_date:args.date,p_subject_type:"student"}),
     admin.rpc("get_attendance_v2_insights_v1",{p_identity_id:workspace.identityId,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_attendance_date:args.date})
   ]);
@@ -71,4 +73,48 @@ export async function getAttendanceWorkspace(args: { date: string; search?: stri
     summary: { total: Number(summary.total ?? 0), present: Number(summary.present ?? 0), absent: Number(summary.absent ?? 0), late: Number(summary.late ?? 0), leave: Number(summary.leave ?? 0), unmarked: Number(summary.unmarked ?? 0), biometric: Number(summary.biometric ?? 0), nfc: Number(summary.nfc ?? 0), pendingCorrections: Number(summary.pending_corrections ?? 0) },
     insights:{dailyPercent:numberValue(insightRaw.daily_percent)??0,weeklyPercent:numberValue(insightRaw.weekly_percent)??0,monthlyPercent:numberValue(insightRaw.monthly_percent)??0,trend:mapTrend(insightRaw.trend)},emergency:{canManage:boolValue(emergencyRaw.can_manage),authorizations},
     total: Number(raw.total ?? 0), page: Number(raw.page ?? args.page ?? 1), pageSize: Number(raw.page_size ?? args.pageSize ?? 50), rows };
+}
+
+
+export type AttendanceGroupOption = {
+  id: number;
+  key: string;
+  label: string;
+};
+
+function localizedGroupLabel(labels: unknown, locale: Locale, fallback: string) {
+  if (!labels || typeof labels !== "object" || Array.isArray(labels)) return fallback;
+  const map = labels as Record<string, unknown>;
+  const value = map[locale] ?? map.en;
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+export async function getAttendancePageOptions(locale: Locale): Promise<{
+  groups: AttendanceGroupOption[];
+  canViewStaff: boolean;
+}> {
+  const workspace = await getTenantContext();
+  if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
+  const admin = createAdminClient();
+  const [capabilities, groupsResult] = await Promise.all([
+    getCapabilities(workspace.tenantId, workspace.membershipId),
+    admin
+      .from("academic_groups")
+      .select("id,key,labels")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("branch_id", workspace.branchId)
+      .eq("status", "active")
+      .order("key", { ascending: true })
+  ]);
+  if (groupsResult.error) {
+    throw new Error(`Unable to load attendance class/group options: ${groupsResult.error.message}`);
+  }
+  return {
+    groups: (groupsResult.data ?? []).map((row) => ({
+      id: row.id,
+      key: row.key,
+      label: localizedGroupLabel(row.labels, locale, row.key)
+    })),
+    canViewStaff: capabilities.canViewStaff
+  };
 }

@@ -28,12 +28,12 @@ export async function getStudentLifecycleCenter():Promise<StudentLifecycleCenter
  };
 }
 
-export async function prepareNextAcademicSession(input:{sourceSessionId:number;key:string;labels:{en:string;ur?:string;ar?:string};startsOn:string;endsOn:string}){
+export async function prepareNextAcademicSession(input:{sourceSessionId:number;key:string;labels:{en:string;ur?:string};startsOn:string;endsOn:string}){
  const w=await workspace();const admin=createAdminClient();const{data,error}=await admin.rpc("prepare_next_academic_session_v1",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_source_session_id:input.sourceSessionId,p_key:input.key,p_labels:input.labels,p_starts_on:input.startsOn,p_ends_on:input.endsOn});if(error)throw new Error(error.message);return object(data);
 }
 
 export async function importStudentsBatch(input:{sessionId:number;programId:number;groupId:number;joinedOn:string;rows:StudentImportRow[];requestKey:string}){
- const w=await workspace();const admin=createAdminClient();const{data,error}=await admin.rpc("import_students_batch_v1",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_session_id:input.sessionId,p_program_id:input.programId,p_group_id:input.groupId,p_joined_on:input.joinedOn,p_rows:input.rows,p_request_key:input.requestKey});if(error)throw new Error(error.message);return object(data);
+ const w=await workspace();const admin=createAdminClient();const{data,error}=await admin.rpc("import_students_batch_v2",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_session_id:input.sessionId,p_program_id:input.programId,p_group_id:input.groupId,p_joined_on:input.joinedOn,p_rows:input.rows,p_request_key:input.requestKey});if(error)throw new Error(error.message);return object(data);
 }
 
 export async function planStudentRollover(input:{studentPersonIds:number[];targetSessionId:number;targetGroupId:number;mode:"promotion"|"renewal";requestKey:string}){

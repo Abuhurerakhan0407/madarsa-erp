@@ -14,8 +14,8 @@ export async function getQuranStudentDetail(personId:number):Promise<QuranStuden
   const w=await getTenantContext();if(!w||!w.branchId)throw new Error("Active branch is required.");const admin=createAdminClient();
   const common={p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_student_person_id:personId};
   const [{data,error},{data:wallData,error:wallError}]=await Promise.all([
-    admin.rpc("get_quran_student_detail_v2",{...common,p_limit:100}),
-    admin.rpc("get_quran_juz_wall_v2",common)
+    admin.rpc("get_quran_student_detail_scoped_v1",{...common,p_limit:100}),
+    admin.rpc("get_quran_juz_wall_scoped_v1",common)
   ]);
   if(error)throw new Error(`Unable to load Qur'an history: ${error.message}`);if(wallError)throw new Error(`Unable to load Hifz wall: ${wallError.message}`);
   const r=data&&typeof data==="object"&&!Array.isArray(data)?data as Raw:{};const s=r.student&&typeof r.student==="object"&&!Array.isArray(r.student)?r.student as Raw:{};const summary=r.summary&&typeof r.summary==="object"&&!Array.isArray(r.summary)?r.summary as Raw:{};
@@ -28,6 +28,6 @@ export async function getQuranStudentDetail(personId:number):Promise<QuranStuden
 }
 
 export async function getQuranRevisionQueue(state:"open"|"completed"|"all",page:number):Promise<QuranRevisionQueue>{
-  const w=await getTenantContext();if(!w||!w.branchId)throw new Error("Active branch is required.");const admin=createAdminClient();const {data,error}=await admin.rpc("get_quran_revision_queue_v1",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_state:state,p_page:page,p_page_size:50});if(error)throw new Error(`Unable to load revision queue: ${error.message}`);const r=data&&typeof data==="object"&&!Array.isArray(data)?data as Raw:{};
+  const w=await getTenantContext();if(!w||!w.branchId)throw new Error("Active branch is required.");const admin=createAdminClient();const {data,error}=await admin.rpc("get_quran_revision_queue_v2",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId,p_state:state,p_page:page,p_page_size:50});if(error)throw new Error(`Unable to load revision queue: ${error.message}`);const r=data&&typeof data==="object"&&!Array.isArray(data)?data as Raw:{};
   return{localDate:str(r.local_date),total:num(r.total)??0,page:num(r.page)??1,pageSize:num(r.page_size)??50,rows:arr(r.rows).flatMap(x=>{if(!x||typeof x!=="object"||Array.isArray(x))return[];const o=x as Raw;const id=num(o.id),studentPersonId=num(o.student_person_id);if(!id||!studentPersonId)return[];return[{id,studentPersonId,name:str(o.name)??"Student",studentNumber:str(o.student_number)??"—",sourceType:str(o.source_type)??"teacher",sourceKey:str(o.source_key),dueOn:str(o.due_on)??"",state:str(o.state)??"due",overdue:o.overdue===true,createdAt:str(o.created_at)??""}];})};
 }

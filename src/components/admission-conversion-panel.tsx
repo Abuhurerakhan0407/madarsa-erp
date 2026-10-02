@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { admissionStateLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type ConvertedStudent = {
   personId: number;
@@ -14,10 +14,12 @@ type ConvertedStudent = {
 type AdmissionConversionPanelProps = {
   applicationId: number;
   state: string;
-  locale: Locale;
+  locale: SupportedLocale;
   duplicateReviewStatus: string;
   convertedStudent: ConvertedStudent;
 };
+
+type PortalAccessState = "existing_account" | "manage_separately";
 
 type ConversionResponse = {
   error?: string;
@@ -27,14 +29,15 @@ type ConversionResponse = {
     studentNumber?: string;
     enrollmentId?: number;
     guardianEmail?: string;
-    credentialState?: "temporary_password_created" | "existing_account";
-    temporaryPassword?: string;
+    portalAccessState?: PortalAccessState;
+    portalAccessWarning?: string;
   };
 };
 
-type CredentialView = {
+type ActivationView = {
   guardianEmail: string;
-  temporaryPassword: string | null;
+  state: PortalAccessState;
+  warning: string | null;
   studentNumber: string | null;
 };
 
@@ -53,14 +56,12 @@ const copy = {
     openStudents: "Open Students & Academics",
     unavailable: "Enrollment becomes available only after an admission offer or payment-pending state.",
     error: "Unable to enroll this applicant.",
-    credentialsTitle: "Guardian portal credentials",
-    credentialsBody: "Copy and send these credentials now. The temporary password will disappear permanently when you close this view.",
-    loginEmail: "Login email",
-    temporaryPassword: "Temporary password",
-    existingAccount: "This guardian already has a portal account. Their existing password was not changed.",
-    copyCredentials: "Copy credentials",
-    copied: "Copied",
-    done: "Done — hide credentials"
+    activationTitle: "Guardian portal access",
+    existingAccount: "This guardian already has verified portal access. No password was changed.",
+    unavailableActivation: "Student enrollment is complete. Create or manage the guardian login from Parent & Teacher Access.",
+    loginEmail: "Guardian email",
+    manageAccess: "Open Parent & Teacher Access",
+    done: "Done"
   },
   ur: {
     title: "طالب علم کا اندراج",
@@ -76,37 +77,12 @@ const copy = {
     openStudents: "طلبہ اور تعلیمی ڈھانچہ کھولیں",
     unavailable: "اندراج صرف داخلہ پیشکش یا ادائیگی زیر التوا حالت کے بعد دستیاب ہوتا ہے۔",
     error: "اس درخواست گزار کو داخل نہیں کیا جا سکا۔",
-    credentialsTitle: "سرپرست پورٹل کی اسناد",
-    credentialsBody: "یہ اسناد ابھی کاپی کر کے بھیج دیں۔ اس منظر کو بند کرنے کے بعد عارضی پاس ورڈ دوبارہ نہیں دکھایا جائے گا۔",
-    loginEmail: "لاگ اِن ای میل",
-    temporaryPassword: "عارضی پاس ورڈ",
-    existingAccount: "اس سرپرست کا پورٹل اکاؤنٹ پہلے سے موجود ہے۔ موجودہ پاس ورڈ تبدیل نہیں کیا گیا۔",
-    copyCredentials: "اسناد کاپی کریں",
-    copied: "کاپی ہو گیا",
-    done: "مکمل — اسناد چھپائیں"
-  },
-  ar: {
-    title: "تسجيل الطالب",
-    body: "حوّل طلب القبول المقبول إلى ملف طالب دائم وتسجيل نشط. يلزم وجود تسلسل منشور لأرقام الطلاب.",
-    enroll: "تسجيل كطالب",
-    confirm: "إنشاء طالب منفصل رغم ذلك",
-    working: "جارٍ التسجيل…",
-    success: "تم تسجيل الطالب بنجاح.",
-    duplicate: "قد يكون هناك شخص مطابق موجود بالفعل. راجع التحذير قبل إنشاء طالب منفصل.",
-    existing: "سجل الطالب الدائم",
-    studentNumber: "رقم الطالب",
-    enrollment: "التسجيل",
-    openStudents: "فتح الطلاب والهيكل الأكاديمي",
-    unavailable: "يصبح التسجيل متاحًا فقط بعد عرض القبول أو حالة انتظار الدفع.",
-    error: "تعذر تسجيل هذا المتقدم.",
-    credentialsTitle: "بيانات دخول ولي الأمر",
-    credentialsBody: "انسخ بيانات الدخول وأرسلها الآن. ستختفي كلمة المرور المؤقتة نهائيًا عند إغلاق هذا العرض.",
-    loginEmail: "بريد تسجيل الدخول",
-    temporaryPassword: "كلمة المرور المؤقتة",
-    existingAccount: "لدى ولي الأمر حساب بوابة موجود بالفعل. لم يتم تغيير كلمة المرور الحالية.",
-    copyCredentials: "نسخ بيانات الدخول",
-    copied: "تم النسخ",
-    done: "تم — إخفاء بيانات الدخول"
+    activationTitle: "سرپرست پورٹل رسائی",
+    existingAccount: "اس سرپرست کی تصدیق شدہ پورٹل رسائی پہلے سے موجود ہے۔ کوئی پاس ورڈ تبدیل نہیں کیا گیا۔",
+    unavailableActivation: "طالب علم کا اندراج مکمل ہے۔ والدین و اساتذہ رسائی سے سرپرست کا لاگ اِن بنائیں یا منظم کریں۔",
+    loginEmail: "سرپرست کی ای میل",
+    manageAccess: "والدین و اساتذہ رسائی کھولیں",
+    done: "مکمل"
   }
 } as const;
 
@@ -125,14 +101,12 @@ export function AdmissionConversionPanel({
   const [candidateCount, setCandidateCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<CredentialView | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [activation, setActivation] = useState<ActivationView | null>(null);
 
   async function convert(confirmNewPerson: boolean) {
     setBusy(true);
     setMessage(null);
     setError(null);
-    setCopied(false);
 
     try {
       const response = await fetch("/api/admissions/convert", {
@@ -158,11 +132,10 @@ export function AdmissionConversionPanel({
       const studentNumber = payload.result?.studentNumber ?? null;
       const guardianEmail = payload.result?.guardianEmail;
       if (guardianEmail) {
-        setCredentials({
+        setActivation({
           guardianEmail,
-          temporaryPassword: payload.result?.credentialState === "temporary_password_created"
-            ? payload.result.temporaryPassword ?? null
-            : null,
+          state: payload.result?.portalAccessState ?? "manage_separately",
+          warning: payload.result?.portalAccessWarning ?? null,
           studentNumber
         });
       } else {
@@ -176,49 +149,30 @@ export function AdmissionConversionPanel({
     }
   }
 
-  async function copyCredentials() {
-    if (!credentials?.temporaryPassword) return;
-    const value = `${text.loginEmail}: ${credentials.guardianEmail}\n${text.temporaryPassword}: ${credentials.temporaryPassword}`;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
 
-  function closeCredentialView() {
-    setCredentials(null);
-    setCopied(false);
+  function closeActivationView() {
+    setActivation(null);
     router.refresh();
   }
 
-  if (credentials) {
+  if (activation) {
     return (
-      <section className="configuration-detail-card" aria-labelledby="guardian-credentials-title">
+      <section className="configuration-detail-card" aria-labelledby="guardian-activation-title">
         <span>{text.success}</span>
-        <h2 id="guardian-credentials-title">{text.credentialsTitle}</h2>
-        {credentials.temporaryPassword ? <p>{text.credentialsBody}</p> : <p>{text.existingAccount}</p>}
-        {credentials.studentNumber ? <p>{text.studentNumber}: <code>{credentials.studentNumber}</code></p> : null}
+        <h2 id="guardian-activation-title">{text.activationTitle}</h2>
+        <p>{activation.state === "existing_account" ? text.existingAccount : activation.warning || text.unavailableActivation}</p>
+        {activation.studentNumber ? <p>{text.studentNumber}: <code>{activation.studentNumber}</code></p> : null}
         <dl className="detail-list">
           <div>
             <dt>{text.loginEmail}</dt>
-            <dd><code>{credentials.guardianEmail}</code></dd>
+            <dd><code>{activation.guardianEmail}</code></dd>
           </div>
-          {credentials.temporaryPassword ? (
-            <div>
-              <dt>{text.temporaryPassword}</dt>
-              <dd><code>{credentials.temporaryPassword}</code></dd>
-            </div>
-          ) : null}
         </dl>
         <div className="quick-actions">
-          {credentials.temporaryPassword ? (
-            <button className="action-button" type="button" onClick={copyCredentials}>
-              {copied ? text.copied : text.copyCredentials}
-            </button>
-          ) : null}
-          <button className="action-button action-button-primary" type="button" onClick={closeCredentialView}>
+          <a className="action-button action-button-primary" href={`/${locale}/portals`}>
+            {text.manageAccess}
+          </a>
+          <button className="action-button" type="button" onClick={closeActivationView}>
             {text.done}
           </button>
         </div>

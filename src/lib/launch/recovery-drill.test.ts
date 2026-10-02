@@ -17,18 +17,39 @@ const docs = readFileSync(new URL("../../../docs/recovery-drill.md", import.meta
 const validPoolerUrl =
   "postgresql://postgres.dysfnytqpbfxpmerkyaz:secret@aws-0-ap-south-1.pooler.supabase.com:5432/postgres";
 const validLocalRestoreUrl = "postgresql://postgres:secret@127.0.0.1:54329/postgres";
+const validationTimeoutMs = process.platform === "win32" ? 60_000 : 5_000;
 
 function runValidation(overrides: Record<string, string>) {
+  const validationEnv = {
+    SOURCE_DB_URL: validPoolerUrl,
+    RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
+    RESTORE_DB_URL: validLocalRestoreUrl,
+    RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
+    TARGET_RPO_HOURS: "24",
+    ...overrides
+  };
+
+  if (process.platform === "win32") {
+    return spawnSync(
+      "wsl.exe",
+      [
+        "env",
+        ...Object.entries(validationEnv).map(([key, value]) => `${key}=${value}`),
+        "bash",
+        "scripts/recovery-drill.sh"
+      ],
+      {
+        encoding: "utf8",
+        env: process.env
+      }
+    );
+  }
+
   return spawnSync("bash", ["scripts/recovery-drill.sh"], {
     encoding: "utf8",
     env: {
       ...process.env,
-      SOURCE_DB_URL: validPoolerUrl,
-      RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
-      RESTORE_DB_URL: validLocalRestoreUrl,
-      RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
-      TARGET_RPO_HOURS: "24",
-      ...overrides
+      ...validationEnv
     }
   });
 }
@@ -64,7 +85,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(result.stderr).not.toContain("dysfnytqpbfxpmerkyaz@evil.example.com");
-  });
+  }, validationTimeoutMs);
 
   it("rejects libpq host/service query overrides on the source URL", () => {
     const result = runValidation({
@@ -74,7 +95,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("approved Madarsa ERP Supabase project endpoint");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, validationTimeoutMs);
 
   it("accepts the approved pooler identity before rejecting a non-local restore host", () => {
     const result = runValidation({
@@ -84,7 +105,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Restore target must resolve directly to localhost");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, validationTimeoutMs);
 
   it("rejects libpq host/service query overrides on an otherwise local restore URL", () => {
     const result = runValidation({
@@ -94,7 +115,7 @@ describe("database recovery drill automation", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Restore target must resolve directly to localhost");
     expect(result.stderr).not.toContain("evil.example.com");
-  });
+  }, validationTimeoutMs);
 
   it("uses Supabase-aware dump, encryption, and restore verification", () => {
     expect(script).toContain("supabase db dump");

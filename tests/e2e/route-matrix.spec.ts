@@ -9,37 +9,27 @@ const PROTECTED_ROUTES = [
   "/en/students/1",
   "/en/students/lifecycle",
   "/en/students/id-cards",
+  "/en/programs",
   "/en/people-academics",
+  "/en/my-students",
   "/en/attendance",
   "/en/attendance/devices",
   "/en/quran",
   "/en/quran/revision",
   "/en/exams",
   "/en/portals",
-  "/en/hostel",
-  "/en/transport",
   "/en/staff",
   "/en/staff/attendance",
   "/en/staff/leave",
-  "/en/library",
   "/en/documents",
   "/en/reports",
-  "/en/communications/whatsapp",
+  "/en/fees",
+  "/en/contributions",
+  "/en/payroll",
+  "/en/assistant",
   "/en/access",
+  "/en/hostel",
   "/en/settings/configuration"
-] as const;
-
-const AUTHENTICATED_DEMO_AND_LEGACY_ROUTES = [
-  "/en/demo",
-  "/en/demo/transport",
-  "/en/demo/operations",
-  "/en/demo/hostel",
-  "/en/demo/library",
-  "/en/demo/branches",
-  "/en/demo/academics",
-  "/en/demo/donations",
-  "/en/demo/fees",
-  "/en/demo/ai"
 ] as const;
 
 function expectedLoginPattern(route: string): RegExp {
@@ -53,15 +43,8 @@ for (const route of PROTECTED_ROUTES) {
   });
 }
 
-for (const route of AUTHENTICATED_DEMO_AND_LEGACY_ROUTES) {
-  test(`redirects anonymous access for ${route} to sign in`, async ({ page }) => {
-    await page.goto(route);
-    await expect(page).toHaveURL(expectedLoginPattern(route));
-  });
-}
-
 test("preserves localized protected routes in the post-login next target", async ({ page }) => {
-  for (const route of ["/ur/students", "/ar/admissions"] as const) {
+  for (const route of ["/ur/students", "/ur/admissions", "/ur/hostel"] as const) {
     await page.goto(route);
     await expect(page).toHaveURL(expectedLoginPattern(route));
   }

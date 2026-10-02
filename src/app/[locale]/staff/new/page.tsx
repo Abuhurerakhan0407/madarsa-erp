@@ -1,4 +1,13 @@
-import type {Locale} from '@/lib/i18n/config';
-import {hrCopy} from '@/lib/hr/copy';
-import {HrEmployeeForm} from '@/components/hr-employee-form';
-export default async function NewEmployeePage({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=(raw==='ur'||raw==='ar'?raw:'en') as Locale;const t=hrCopy[locale];return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.createTitle}</h1><p>{t.createBody}</p></div></section><HrEmployeeForm locale={locale}/></>;}
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { TeacherCreateForm } from "@/components/teacher-create-form";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { requireOfficeAudience } from "@/lib/navigation/office-gate";
+import { getTeachersWorkspace } from "@/lib/teachers/workspace";
+
+export const metadata: Metadata = { title: "Add Teacher / Staff | Ilmgaah" };
+export default async function NewStaffPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: rawLocale } = await params; const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
+  await requireOfficeAudience(locale); const workspace = await getTeachersWorkspace(); if (!workspace.canManage) redirect(`/${locale}/staff`);
+  return <div className="flow-stack"><TeacherCreateForm locale={locale} /></div>;
+}

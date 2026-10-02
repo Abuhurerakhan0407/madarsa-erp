@@ -1,7 +1,6 @@
-import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { validateAdmissionConversionInput } from "@/lib/admissions/conversion-model";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -31,21 +30,11 @@ type ApplicationRecord = {
   applicant_data: Record<string, unknown> | null;
 };
 
-function temporaryPassword(): string {
-  return `${randomBytes(18).toString("base64url")}!aA7`;
-}
+type PortalAccessState = "existing_account" | "manage_separately";
 
 function guardianEmail(application: ApplicationRecord): string {
   const value = application.applicant_data?.guardian_email;
   return typeof value === "string" ? value.trim().toLowerCase() : "";
-}
-
-async function removeUnlinkedIdentity(admin: ReturnType<typeof createAdminClient>, identityId: string) {
-  try {
-    await admin.auth.admin.deleteUser(identityId);
-  } catch {
-    // Best-effort compensation only. Never expose credentials or auth internals in the response.
-  }
 }
 
 export async function POST(request: Request) {
@@ -72,12 +61,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const parsedBody = await readBoundedJson(request, 4_096);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
 
   const validation = validateAdmissionConversionInput(body);
   if (!validation.value) {
@@ -108,24 +94,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A valid guardian email is required before enrollment." }, { status: 422 });
   }
 
-  const { data: canCreateCredentials, error: permissionError } = await admin.rpc(
-    "operator_has_permission_v1",
-    {
-      p_identity_id: identity.id,
-      p_tenant_id: workspace.tenantId,
-      p_branch_id: app.branch_id,
-      p_permission_code: "portal.credentials.create"
-    }
-  );
-
-  if (permissionError) {
-    return NextResponse.json({ error: "Unable to verify portal credential permission." }, { status: 500 });
-  }
-  if (canCreateCredentials !== true) {
-    return NextResponse.json({ error: "Guardian credential permission required." }, { status: 403 });
-  }
-
-  // A lost/retried success response must not rotate a password or require the staged photo again.
+  // A lost/retried success response must never change portal access.
   if (app.state === "enrolled") {
     const { data, error } = await admin.rpc("convert_admission_to_student", {
       p_identity_id: identity.id,
@@ -149,62 +118,22 @@ export async function POST(request: Request) {
           state: result.state,
           revision: result.revision,
           guardianEmail: email,
-          credentialState: "existing_account"
+          portalAccessState: "manage_separately" satisfies PortalAccessState,
+          portalAccessWarning: "Enrollment already exists. Manage guardian login from Parent & Teacher Access; no password was changed."
         }
       },
       { status: 200, headers: { "cache-control": "no-store" } }
     );
   }
 
-  const { data: existingIdentity, error: identityLookupError } = await admin.rpc(
-    "find_auth_identity_by_email_v1",
-    { p_email: email }
-  );
-  if (identityLookupError) {
-    return NextResponse.json({ error: "Unable to resolve guardian login identity." }, { status: 500 });
-  }
-
-  let guardianIdentityId = typeof existingIdentity === "string" ? existingIdentity : "";
-  let generatedPassword: string | null = null;
-  let createdIdentity = false;
-
-  if (!guardianIdentityId) {
-    generatedPassword = temporaryPassword();
-    const created = await admin.auth.admin.createUser({
-      email,
-      password: generatedPassword,
-      email_confirm: true,
-      user_metadata: {
-        must_change_password: true,
-        portal_account: true,
-        provisioned_from: "admission_conversion"
-      }
-    });
-
-    if (created.error || !created.data.user?.id) {
-      // Handle an email-create race without ever resetting an existing account's password.
-      const retry = await admin.rpc("find_auth_identity_by_email_v1", { p_email: email });
-      if (retry.error || typeof retry.data !== "string") {
-        return NextResponse.json({ error: "Unable to create guardian portal account." }, { status: 503 });
-      }
-      guardianIdentityId = retry.data;
-      generatedPassword = null;
-    } else {
-      guardianIdentityId = created.data.user.id;
-      createdIdentity = true;
-    }
-  }
-
-  const { data, error } = await admin.rpc("convert_admission_to_student_v2", {
+  const { data, error } = await admin.rpc("convert_admission_to_student_v3", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_application_id: validation.value.applicationId,
-    p_guardian_identity_id: guardianIdentityId,
     p_confirm_new_person: validation.value.confirmNewPerson
   });
 
   if (error) {
-    if (createdIdentity) await removeUnlinkedIdentity(admin, guardianIdentityId);
     const message = error.message.toLowerCase();
     if (message.includes("permission denied")) {
       return NextResponse.json({ error: "Admission conversion permission required." }, { status: 403 });
@@ -222,7 +151,7 @@ export async function POST(request: Request) {
       message.includes("conversion linkage") ||
       message.includes("class or group") ||
       message.includes("student photo") ||
-      message.includes("guardian identity")
+      message.includes("guardian email matches multiple records")
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
@@ -244,7 +173,6 @@ export async function POST(request: Request) {
 
   const result = (data ?? {}) as ConversionResult;
   if (result.duplicate_review_required) {
-    if (createdIdentity) await removeUnlinkedIdentity(admin, guardianIdentityId);
     return NextResponse.json(
       {
         error: "A possible matching person already exists. Confirm before creating a separate student.",
@@ -253,6 +181,32 @@ export async function POST(request: Request) {
       },
       { status: 409, headers: { "cache-control": "no-store" } }
     );
+  }
+
+  let portalAccessState: PortalAccessState = "manage_separately";
+  let portalAccessWarning = "Student enrollment succeeded. Create or manage guardian login from Parent & Teacher Access.";
+  const guardianPersonId = Number(result.guardian_person_id ?? 0);
+
+  if (guardianPersonId > 0) {
+    const { data: links, error: linkError } = await admin
+      .from("identity_person_links")
+      .select("identity_id,status,updated_at")
+      .eq("tenant_id", workspace.tenantId)
+      .eq("person_id", guardianPersonId)
+      .eq("link_type", "guardian")
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (!linkError && links?.[0]?.identity_id && links[0].status === "verified") {
+      portalAccessState = "existing_account";
+      portalAccessWarning = "Student enrollment succeeded. This guardian already has verified portal access.";
+    } else if (!linkError && links?.[0]?.identity_id) {
+      portalAccessWarning = "Student enrollment succeeded. Existing guardian access is disabled or pending; manage it from Parent & Teacher Access.";
+    } else if (linkError) {
+      portalAccessWarning = "Student enrollment succeeded, but guardian access could not be checked. Manage it from Parent & Teacher Access.";
+    }
+  } else {
+    portalAccessWarning = "Student enrollment succeeded, but no linked guardian is available for portal setup. Manage guardian details before creating portal access.";
   }
 
   return NextResponse.json(
@@ -271,8 +225,8 @@ export async function POST(request: Request) {
         guardianLinked: result.guardian_linked === true,
         groupId: result.group_id,
         photoAttached: result.photo_attached === true,
-        credentialState: createdIdentity ? "temporary_password_created" : "existing_account",
-        temporaryPassword: createdIdentity ? generatedPassword : undefined
+        portalAccessState,
+        portalAccessWarning
       }
     },
     {

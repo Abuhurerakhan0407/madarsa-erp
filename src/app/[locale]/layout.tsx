@@ -4,11 +4,11 @@ import { getMessages } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
-import { getDirection, type Locale } from "@/lib/i18n/config";
+import { getDirection, type SupportedLocale } from "@/lib/i18n/config";
 import { getAppFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
 import "../globals.css";
-import "../demo.css";
 import "../professional.css";
 import "../professional-flows.css";
 import "../hr.css";
@@ -17,15 +17,16 @@ import "../documents.css";
 import "../dashboard.css";
 import "../client-v2.css";
 import "../client-v2-polish.css";
+import "../client-jamia.css";
 import "../quran-v2.css";
 import "../academics-v2.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Madarsa ERP",
-    template: "%s | Madarsa ERP"
+    default: JAMIA_CLIENT.name,
+    template: "%s | Jamia Islamia"
   },
-  description: "Multi-tenant operating system for Madrasas and Islamic institutions.",
+  description: "Jamia Islamia Uloomul Quraan — Hifz, Arabic learning and residential hostel operations.",
   other: {
     google: "notranslate"
   }
@@ -47,14 +48,16 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     notFound();
   }
 
-  const workspace = await getTenantContext();
+  const [workspace, messages] = await Promise.all([
+    getTenantContext(),
+    getMessages()
+  ]);
 
   if (!workspace) {
     redirect("/onboarding");
   }
 
-  const typedLocale = locale as Locale;
-  const messages = await getMessages();
+  const typedLocale = locale as SupportedLocale;
 
   return (
     <html lang={typedLocale} dir={getDirection(typedLocale)} translate="no" suppressHydrationWarning>

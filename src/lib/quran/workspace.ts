@@ -81,7 +81,7 @@ export async function getQuranHifzWorkspace(args: { search?: string; page?: numb
   const workspace = await getTenantContext();
   if (!workspace || !workspace.branchId) throw new Error("Active branch is required.");
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("get_quran_hifz_workspace_v3", {
+  const { data, error } = await admin.rpc("get_quran_hifz_workspace_v4", {
     p_identity_id: workspace.identityId,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,

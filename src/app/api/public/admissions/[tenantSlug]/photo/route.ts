@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getPublicAdmissionsContext } from "@/lib/admissions/public-intake-context";
-import { isSameOriginRequest } from "@/lib/security/request";
+import { isSameOriginRequest, readBoundedFormData } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RouteContext = {
@@ -65,12 +65,12 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Admissions are not available for this institution." }, { status: 404 });
   }
 
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Unable to read student photo." }, { status: 400 });
+  const parsedForm = await readBoundedFormData(request, MAX_PHOTO_BYTES + 512 * 1024);
+  if (!parsedForm.ok) {
+    const error = parsedForm.status === 413 ? "Student photo must be 5 MB or smaller." : "Unable to read student photo.";
+    return NextResponse.json({ error }, { status: parsedForm.status });
   }
+  const formData = parsedForm.value;
 
   const photo = formData.get("photo");
   if (!(photo instanceof File)) {

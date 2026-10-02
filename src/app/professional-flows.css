@@ -360,3 +360,59 @@
     transition: none !important;
   }
 }
+
+
+/* Client-delivery professional flow readability polish */
+.section-heading > div > p,
+.configuration-banner span,
+.academic-structure-panel .panel-header p {
+  font-size: 0.68rem;
+}
+
+.section-heading > span,
+.configuration-module p,
+.configuration-detail-card p,
+.workflow-preview li,
+.responsive-table td {
+  font-size: 0.78rem;
+}
+
+.configuration-banner p {
+  font-size: 0.8rem;
+}
+
+.module-state,
+.status-pill {
+  min-height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+}
+
+.configuration-module h3 {
+  font-size: 0.9rem;
+}
+
+.responsive-table th {
+  font-size: 0.7rem;
+}
+
+[lang="ur"] .section-heading > div > p,
+[lang="ur"] .configuration-banner span,
+[lang="ur"] .academic-structure-panel .panel-header p {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[lang="ur"] .section-heading > div > p,
+[lang="ur"] .section-heading > span,
+[lang="ur"] .configuration-module p,
+[lang="ur"] .configuration-detail-card p,
+[lang="ur"] .workflow-preview li,
+[lang="ur"] .responsive-table th,
+[lang="ur"] .responsive-table td,
+[lang="ur"] .module-state,
+[lang="ur"] .status-pill {
+  font-size: 0.84rem;
+  line-height: 1.75;
+}

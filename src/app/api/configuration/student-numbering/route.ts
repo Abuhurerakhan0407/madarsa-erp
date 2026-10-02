@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateStudentNumberingInput } from "@/lib/configuration/student-numbering";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -33,12 +33,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active primary branch required." }, { status: 409 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const parsedBody = await readBoundedJson(request, 8_192);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
 
   const validation = validateStudentNumberingInput(body);
   if (!validation.value) {

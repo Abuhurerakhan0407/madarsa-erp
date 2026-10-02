@@ -170,10 +170,16 @@
   font-weight: 700;
 }
 
-.quran-quick-buttons button:first-child {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+.quran-quick-buttons button[aria-pressed="true"] {
+  border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.quran-quick-buttons button[aria-pressed="false"]:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--surface-muted);
 }
 
 .quran-quick-buttons button:disabled,
@@ -427,4 +433,294 @@
   .quran-detailed-actions .action-button {
     flex: 1 1 8rem;
   }
+}
+
+
+/* Client-delivery readability polish */
+.quran-daily-toolbar {
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 35 27 / 3%);
+}
+
+.quran-daily-metrics {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+}
+
+.quran-daily-metrics span,
+.quran-daily-cell span,
+.quran-progress-summary span,
+.quran-detail-heading span {
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.quran-daily-metrics strong {
+  font-size: 1.45rem;
+}
+
+.quran-daily-roster {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface);
+}
+
+.quran-daily-roster > header {
+  padding: 0.95rem 1rem;
+}
+
+.quran-daily-head {
+  padding: 0.62rem 1rem;
+  background: color-mix(in srgb, var(--surface-muted) 76%, var(--surface));
+  font-size: 0.72rem;
+}
+
+.quran-daily-row {
+  padding: 0.9rem 1rem;
+}
+
+.quran-daily-student strong {
+  font-size: 0.9rem;
+}
+
+.quran-daily-student > span,
+.quran-daily-student small,
+.quran-daily-target small,
+.quran-daily-links {
+  font-size: 0.74rem;
+}
+
+.quran-daily-cell strong,
+.quran-progress-summary strong {
+  font-size: 0.82rem;
+}
+
+.quran-quick-buttons button {
+  min-height: 2.5rem;
+  padding-inline: 0.62rem;
+  border-radius: 0.55rem;
+  font-size: 0.72rem;
+}
+
+.quran-daily-status {
+  font-size: 0.7rem;
+}
+
+[lang="ur"] .quran-daily-head {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[lang="ur"] .quran-daily-head,
+[lang="ur"] .quran-daily-metrics span,
+[lang="ur"] .quran-daily-cell span,
+[lang="ur"] .quran-daily-student > span,
+[lang="ur"] .quran-daily-student small,
+[lang="ur"] .quran-daily-target small,
+[lang="ur"] .quran-daily-links,
+[lang="ur"] .quran-quick-buttons button {
+  font-size: 0.82rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 620px) {
+  .quran-daily-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quran-daily-metrics > div,
+  .quran-daily-metrics > div:nth-child(3) {
+    min-height: 5rem;
+    border-inline-end: 1px solid var(--border);
+  }
+
+  .quran-daily-metrics > div:nth-child(even) {
+    border-inline-end: 0;
+  }
+
+  .quran-daily-row {
+    padding: 0.95rem;
+  }
+
+  .quran-quick-buttons button {
+    min-height: 2.9rem;
+    font-size: 0.76rem;
+  }
+
+  .quran-juz-wall {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.3rem;
+  }
+
+  .quran-juz-wall i {
+    min-height: 1.8rem;
+    font-size: 0.64rem;
+  }
+}
+
+
+/* Client-delivery Qur'an progress-wall legibility */
+.quran-juz-wall i {
+  min-height: 1.8rem;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+[lang="ur"] .quran-juz-wall i {
+  font-size: 0.74rem;
+}
+
+@media (max-width: 620px) {
+  .quran-juz-wall i {
+    min-height: 2rem;
+    font-size: 0.72rem;
+  }
+
+  [lang="ur"] .quran-juz-wall i {
+    font-size: 0.78rem;
+  }
+}
+
+/* Phase B client fast-entry roster */
+.quran-daily-head,
+.quran-daily-row {
+  grid-template-columns: minmax(10rem, .85fr) minmax(8rem, .7fr) minmax(22rem, 1.9fr);
+  gap: .85rem;
+}
+
+.quran-daily-row {
+  min-height: 0;
+  align-items: start;
+}
+
+.quran-daily-target-summary {
+  display: grid;
+  min-width: 0;
+  gap: .22rem;
+  padding-block-start: .18rem;
+}
+
+.quran-daily-target-summary span,
+.quran-daily-target-summary small {
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+.quran-daily-target-summary strong {
+  overflow: hidden;
+  font-size: .82rem;
+  text-overflow: ellipsis;
+}
+
+.quran-daily-entry {
+  display: grid;
+  grid-template-columns: minmax(8rem, .55fr) minmax(13rem, 1.35fr) auto;
+  gap: .6rem;
+  align-items: end;
+}
+
+.quran-daily-entry .field-label {
+  margin: 0;
+}
+
+.quran-daily-note textarea {
+  min-height: 3rem;
+  resize: vertical;
+}
+
+.quran-daily-save {
+  min-height: 2.75rem;
+  align-self: end;
+  white-space: nowrap;
+}
+
+.quran-daily-entry .quran-details-toggle {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.quran-daily-readonly-status {
+  padding-block-start: .35rem;
+}
+
+.quran-daily-message {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (max-width: 820px) {
+  .quran-daily-head {
+    display: none;
+  }
+
+  .quran-daily-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .65rem;
+  }
+
+  .quran-daily-student,
+  .quran-daily-target-summary,
+  .quran-daily-entry,
+  .quran-daily-readonly-status {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .quran-daily-entry {
+    grid-template-columns: minmax(8rem, .65fr) minmax(0, 1.35fr) auto;
+  }
+
+  .quran-daily-detail,
+  .quran-daily-message {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 620px) {
+  .quran-daily-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quran-daily-save {
+    width: 100%;
+  }
+
+  .quran-daily-entry .quran-details-toggle {
+    grid-column: 1;
+    min-height: 2.75rem;
+  }
+
+  .quran-daily-target-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [lang="ur"] .quran-daily-target-summary span,
+  [lang="ur"] .quran-daily-target-summary small {
+    font-size: .82rem;
+    line-height: 1.75;
+  }
+}
+
+/* Office app-first Qur'an workspace */
+@media(max-width:620px){
+  [data-navigation-audience="office"] .quran-daily-register{gap:.85rem}
+  [data-navigation-audience="office"] .quran-daily-toolbar{gap:.6rem;padding:.75rem;border-radius:1rem}
+  [data-navigation-audience="office"] .quran-daily-metrics{grid-template-columns:repeat(2,minmax(0,1fr));border:0;gap:.5rem;background:transparent}
+  [data-navigation-audience="office"] .quran-daily-metrics>div,
+  [data-navigation-audience="office"] .quran-daily-metrics>div:nth-child(3),
+  [data-navigation-audience="office"] .quran-daily-metrics>div:nth-child(even){min-height:4.35rem;padding:.68rem .72rem;border:1px solid var(--border);border-radius:.88rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 3%)}
+  [data-navigation-audience="office"] .quran-daily-metrics strong{font-size:1.3rem}
+  [data-navigation-audience="office"] .quran-daily-roster{border:0;border-radius:0;background:transparent;overflow:visible}
+  [data-navigation-audience="office"] .quran-daily-roster>header{padding:.55rem .1rem .65rem}
+  [data-navigation-audience="office"] .quran-daily-row{margin-bottom:.58rem;padding:.82rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface);box-shadow:0 1px 2px rgb(15 35 27 / 4%)}
+  [data-navigation-audience="office"] .quran-daily-student strong{font-size:.94rem}
+  [data-navigation-audience="office"] .quran-daily-entry{gap:.5rem}
+  [data-navigation-audience="office"] .quran-daily-save{min-height:3rem;border-radius:.72rem}
+  [data-navigation-audience="office"] .quran-details-toggle{min-height:2.75rem;padding-inline:.25rem}
 }

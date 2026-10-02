@@ -5,7 +5,7 @@ self.addEventListener("push", (event) => {
   } catch {
     payload = { body: event.data ? event.data.text() : "" };
   }
-  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim() : "Madarsa ERP update";
+  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim() : "Ilmgaah update";
   const body = typeof payload.body === "string" && payload.body.trim() ? payload.body.trim() : "You have a new portal notification.";
   const link = typeof payload.link === "string" && payload.link.startsWith("/") ? payload.link : "/portal";
   event.waitUntil(self.registration.showNotification(title, {

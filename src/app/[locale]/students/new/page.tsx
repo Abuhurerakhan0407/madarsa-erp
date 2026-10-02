@@ -1,26 +1,107 @@
-import { StudentCreateForm } from "@/components/student-create-form";
+import { notFound } from "next/navigation";
+import {
+  StudentCreateForm,
+  type StaffAdmissionFormDraft
+} from "@/components/student-create-form-v3";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
-import type { Locale } from "@/lib/i18n/config";
+import { getStaffAdmissionDraft } from "@/lib/admissions/staff-drafts";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getStudentCreateOptions } from "@/lib/students/register";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
-  en: { kicker: "Students · New", title: "Add student", body: "Create the permanent student record, academic placement and primary guardian in one guided workflow.", back: "Back to students", warning: "Academic session and program must already be configured. Class/group assignment is optional and can be added later." },
-  ur: { kicker: "طلبہ · نیا", title: "طالب علم شامل کریں", body: "مستقل طالب علم ریکارڈ، تعلیمی تعیناتی اور بنیادی سرپرست ایک ہی ورک فلو میں بنائیں۔", back: "طلبہ پر واپس", warning: "تعلیمی سال اور پروگرام پہلے سے کنفیگر ہونا ضروری ہے۔ کلاس / گروپ بعد میں بھی شامل کیا جا سکتا ہے۔" },
-  ar: { kicker: "الطلاب · جديد", title: "إضافة طالب", body: "أنشئ سجل الطالب الدائم والتسجيل الأكاديمي وولي الأمر الأساسي في مسار واحد.", back: "العودة للطلاب", warning: "يجب إعداد العام الدراسي والبرنامج مسبقًا. تعيين الفصل أو المجموعة اختياري ويمكن إضافته لاحقًا." }
+  en: {
+    kicker: "Admissions",
+    title: "Create Admission",
+    body: "Create a student and guardian through a guided, resumable admission flow.",
+    back: "Back to Admissions",
+    warning:
+      "Each completed step is saved securely as a draft. The permanent student, guardian link and enrollment are created only after final confirmation."
+  },
+  ur: {
+    kicker: "داخلہ",
+    title: "داخلہ بنائیں",
+    body: "رہنمائی والے محفوظ داخلہ عمل کے ذریعے طالب علم اور سرپرست بنائیں۔",
+    back: "داخلہ پر واپس",
+    warning:
+      "ہر مکمل مرحلہ محفوظ ڈرافٹ کے طور پر محفوظ ہوتا ہے۔ مستقل طالب علم، سرپرست لنک اور اندراج صرف آخری تصدیق کے بعد بنتے ہیں۔"
+  }
 } as const;
 
-export default async function NewStudentPage({ params }: { params: Promise<{ locale: string }> }) {
-  const locale = (await params).locale as Locale;
+type NewStudentPageProps = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ draft?: string }>;
+};
+
+export default async function NewStudentPage({
+  params,
+  searchParams
+}: NewStudentPageProps) {
+  const rawLocale = (await params).locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const text = copy[locale];
+  const workspace = await getTenantContext();
+  if (!workspace) return null;
+
   const options = await getStudentCreateOptions(locale);
-  return <>
-    <WorkspacePageHeader
-      eyebrow={text.kicker}
-      title={text.title}
-      description={text.body}
-      actions={[{ label: text.back, href: `/${locale}/students` }]}
-    />
-    <div className="workspace-context-strip" data-page-section><p>{text.warning}</p></div>
-    <StudentCreateForm locale={locale} sessions={options.sessions} programs={options.programs} groups={options.groups} />
-  </>;
+  const draftValue = (await searchParams).draft;
+  let initialDraft: StaffAdmissionFormDraft | null = null;
+
+  if (draftValue) {
+    const draftId = Number(draftValue);
+    if (!Number.isSafeInteger(draftId) || draftId <= 0) notFound();
+
+    const draft = await getStaffAdmissionDraft(workspace, draftId);
+    if (!draft) notFound();
+
+    const groupId =
+      options.groups.find(
+        (group) =>
+          group.key === draft.groupKey &&
+          group.sessionId === draft.sessionId &&
+          group.programId === draft.programId
+      )?.id ?? null;
+
+    initialDraft = {
+      id: draft.id,
+      preferredLocale: draft.preferredLocale,
+      sessionId: draft.sessionId,
+      programId: draft.programId,
+      groupId,
+      displayName: draft.displayName,
+      nameNative: draft.nameNative,
+      dateOfBirth: draft.dateOfBirth,
+      gender: draft.gender,
+      joinedOn: draft.joinedOn,
+      guardianName: draft.guardianName,
+      guardianEmail: draft.guardianEmail,
+      guardianPhone: draft.guardianPhone,
+      guardianRelationship: draft.guardianRelationship,
+      medicalSummary: draft.medicalSummary,
+      accessibilityNeeds: draft.accessibilityNeeds,
+      pickupRestrictions: draft.pickupRestrictions,
+      photoBound: draft.photoBound
+    };
+  }
+
+  return (
+    <>
+      <WorkspacePageHeader
+        eyebrow={text.kicker}
+        title={text.title}
+        description={text.body}
+        actions={[{ label: text.back, href: `/${locale}/admissions` }]}
+      />
+      <div className="workspace-context-strip" data-page-section>
+        <p>{text.warning}</p>
+      </div>
+      <StudentCreateForm
+        locale={locale}
+        sessions={options.sessions}
+        programs={options.programs}
+        groups={options.groups}
+        initialDraft={initialDraft}
+      />
+    </>
+  );
 }

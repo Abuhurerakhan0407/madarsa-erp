@@ -1,19 +1,120 @@
 {
   "schemaVersion": 1,
-  "product": "Madarsa ERP",
+  "product": "Ilmgaah",
   "gates": [
-    { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": true },
-    { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": false },
-    { "key": "production_build_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "production_deployment_current", "owner": "engineering", "required": true, "complete": true },
-    { "key": "pricing_approved", "owner": "commercial", "required": true, "complete": true },
-    { "key": "tax_boundary_approved", "owner": "finance_legal", "required": true, "complete": true },
-    { "key": "retention_schedule_approved", "owner": "privacy_legal", "required": true, "complete": true },
-    { "key": "backup_restore_drill_passed", "owner": "operations", "required": true, "complete": true },
-    { "key": "payment_webhooks_verified", "owner": "engineering", "required": true, "complete": false },
-    { "key": "messaging_packaging_approved", "owner": "commercial", "required": true, "complete": true },
-    { "key": "pilot_institution_signed_off", "owner": "product", "required": true, "complete": false },
-    { "key": "support_runbook_ready", "owner": "operations", "required": true, "complete": true }
+    {
+      "key": "database_migrations_applied",
+      "owner": "engineering",
+      "required": true,
+      "complete": true,
+      "reason": "GREEN 2026-09-28. All committed non-Hostel Sep-25 release contracts were applied to isolated staging first and then production: staff admission draft/discard/finalize RPCs, student register v2, aggregate report filter metadata cleanup, and student import v2. Both environments expose the five RPCs only to service_role, all are security-invoker, staging Security Advisor remains zero-lint, production report metadata no longer includes student_person_id, and production portal_push_deliveries restrictive RLS remains verified."
+    },
+    {
+      "key": "security_advisors_clear",
+      "owner": "engineering",
+      "required": true,
+      "complete": true,
+      "reason": "ACCEPTED COMPENSATING CONTROL 2026-09-28. Staging Security Advisor is zero-lint and production has no database/RLS findings; its sole remaining platform advisory is Supabase leaked-password protection, which Supabase documents as Pro-only. Until a plan upgrade enables HaveIBeenPwned screening, all Ilmgaah-managed password creation/reset/change paths enforce 12-128 characters with lowercase, uppercase, number, and symbol, portal accounts require first-login password change, and a release contract locks these controls. The Supabase platform advisory remains visible and must not be described as cleared at provider level."
+    },
+    {
+      "key": "production_build_green",
+      "owner": "engineering",
+      "required": true,
+      "complete": true,
+      "reason": "GREEN 2026-10-01. GitHub Actions Core checks run 1229 on current PR tip d10c980f passed release invariants, lint, typecheck, full Vitest, production build, source packaging, and artifact upload."
+    },
+    {
+      "key": "critical_e2e_green",
+      "owner": "engineering",
+      "required": true,
+      "complete": false,
+      "reason": "BLOCKED 2026-10-01. The current E2E workflow reaches the staging target check, but staging admin-key validation fails before Playwright because the configured GitHub Actions admin key is rejected by Supabase with INVALID_API_KEY/bad_checksum. Run 1227 previously reached Playwright with 436/442 passed, but the two admin role-smoke cases failed during staging Auth provisioning for the same invalid key and four authenticated role cases did not run. Keep this gate open until admin, teacher, and parent authenticated smoke plus the remaining critical E2E matrix pass against staging."
+    },
+    {
+      "key": "production_deployment_current",
+      "owner": "engineering",
+      "required": true,
+      "complete": false,
+      "reason": "BLOCKED 2026-10-01. Current PR tip d10c980f has Vercel deployment dpl_7H4ySfPbGzuzvveg6ErknWeEhxSW in BLOCKED state before build under the Vercel team-configuration restriction. No current-tip READY production deployment exists."
+    },
+    {
+      "key": "pricing_approved",
+      "owner": "commercial",
+      "required": true,
+      "complete": true
+    },
+    {
+      "key": "tax_boundary_approved",
+      "owner": "finance_legal",
+      "required": true,
+      "complete": true
+    },
+    {
+      "key": "retention_schedule_approved",
+      "owner": "privacy_legal",
+      "required": true,
+      "complete": true
+    },
+    {
+      "key": "backup_restore_drill_passed",
+      "owner": "operations",
+      "required": true,
+      "complete": false,
+      "reason": "NOT PROVEN. The repository contains a fail-closed Recovery Drill workflow with pg_dump, encrypted artifact creation, isolated PostgreSQL restore, and schema/Auth/Storage/integrity validation. No approved production database URL has been configured for the source dump, so the dump -> isolated restore -> integrity smoke sequence has not been completed."
+    },
+    {
+      "key": "payment_webhooks_verified",
+      "owner": "engineering",
+      "required": false,
+      "complete": false,
+      "reason": "Launch Fees scope records payments manually; Razorpay subscription webhook belongs to platform subscription billing, not institution fee collection."
+    },
+    {
+      "key": "messaging_packaging_approved",
+      "owner": "commercial",
+      "required": true,
+      "complete": true
+    },
+    {
+      "key": "pilot_institution_signed_off",
+      "owner": "product",
+      "required": true,
+      "complete": false,
+      "reason": "Blocked: no recorded pilot institution sign-off evidence."
+    },
+    {
+      "key": "support_runbook_ready",
+      "owner": "operations",
+      "required": true,
+      "complete": true
+    },
+    {
+      "key": "biometric_bridge_client_package_ready",
+      "owner": "engineering",
+      "required": true,
+      "complete": true,
+      "reason": "GREEN locally from committed source: biometric bridge unit tests passed 6/6, the portable Windows package built successfully, and package smoke passed delivery plus offline queue/retry. Physical mBio/LAN/export/autostart acceptance remains tracked separately by biometric_site_acceptance_passed."
+    },
+    {
+      "key": "biometric_site_acceptance_passed",
+      "owner": "operations",
+      "required": true,
+      "complete": false,
+      "reason": "Pending physical client-site proof with the actual mBio terminal and vendor software: LAN connectivity, automatic CSV/XLSX export, real column mapping, bridge install/autostart, mapped punch, offline recovery, restart recovery, and client acceptance. The installation procedure is documented in docs/biometric-client-installation-runbook.md."
+    },
+    {
+      "key": "hostel_mess_acceptance_passed",
+      "owner": "operations",
+      "required": true,
+      "complete": false,
+      "reason": "Pending authenticated English/Urdu desktop and mobile workflow proof for Hostel setup, bed registration and resident allocation/vacate, visitor security, incident register, Mess units, meal services and meal attendance against the governed staging database. This gate must remain open until those workflows and branch/role authorization are proven end-to-end."
+    },
+    {
+      "key": "apk_release_ready",
+      "owner": "engineering",
+      "required": true,
+      "complete": true,
+      "reason": "GREEN 2026-09-29. Final signed Android versionCode 3 artifacts were rebuilt from HEAD 59abdea after rotating the exposed keystore password while preserving the existing signing key/certificate. APK in.ilmgaah.app is versionCode 3 / versionName 1.0.0, SHA-256 d2f90ea361ae5786e4341eb2f6bfad54dad29695bf324913058804adacddeac6; AAB SHA-256 28cfc09fd9d6ea3e928e686bdacb6e108c5606958bdec4338bb277d06f98c0e0 and jarsigner verification passes. APK signer SHA-256 118fa8ea1549c3b2c9addf45a7f0055cf2775e4e6a86ecc16589aa4a697020a7 matches generated and live Digital Asset Links. Redmi Note 9 Pro Max install -r succeeded; pulled installed APK hash and signer match the final artifact. Real-device standalone QA passed EN/UR Home, Students, Attendance, Quran, Exams, Documents and Admissions (14/14 route checks), real soft-keyboard viewport behavior, bottom navigation, portrait-primary rotation enforcement, background/resume and force-stop relaunch/session preservation. Device UI exercised the currently deployed web build because current HEAD remains intentionally undeployed; current-head deployment verification remains tracked by production_deployment_current."
+    }
   ]
 }

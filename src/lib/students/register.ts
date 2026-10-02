@@ -131,7 +131,7 @@ export async function getStudentRegister(options: {
 export type StudentCreateOptions = {
   sessions: Array<{ id: number; label: string }>;
   programs: Array<{ id: number; label: string }>;
-  groups: Array<{ id: number; label: string; sessionId: number; programId: number }>;
+  groups: Array<{ id: number; key: string; label: string; sessionId: number; programId: number }>;
 };
 
 export async function getStudentCreateOptions(locale: string): Promise<StudentCreateOptions> {
@@ -156,9 +156,122 @@ export async function getStudentCreateOptions(locale: string): Promise<StudentCr
       .map((row) => ({ id: row.id, label: localizedLabel(row.labels, locale, row.key) })),
     groups: (groups.data ?? []).map((row) => ({
       id: row.id,
+      key: row.key,
       label: localizedLabel(row.labels, locale, row.key),
       sessionId: row.session_id,
       programId: row.program_id
     }))
   };
+}
+
+
+export type StudentRegisterGroupOption = {
+  id: number;
+  key: string;
+  label: string;
+};
+
+async function loadRegisterGroupPage(options: {
+  identityId: string;
+  tenantId: number;
+  branchId: number;
+  locale: string;
+  groupId?: number;
+  page: number;
+  pageSize: number;
+}): Promise<StudentRegisterResult> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("get_student_register_page_v2", {
+    p_identity_id: options.identityId,
+    p_tenant_id: options.tenantId,
+    p_branch_id: options.branchId,
+    p_group_id: options.groupId ?? null,
+    p_page: options.page,
+    p_page_size: options.pageSize
+  });
+  if (error) throw new Error(`Unable to load student register: ${error.message}`);
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Student register returned an invalid response.");
+  }
+  const result = data as RuntimeResult;
+  const rows = Array.isArray(result.rows) ? result.rows : [];
+  return {
+    rows: rows.map((row) => ({
+      personId: row.person_id,
+      studentNumber: row.student_number,
+      name: row.name,
+      nativeName: row.native_name,
+      status: row.status,
+      joinedOn: row.joined_on,
+      program: row.program_key
+        ? localizedLabel(row.program_labels, options.locale, row.program_key)
+        : "—",
+      group: row.group_key
+        ? localizedLabel(row.group_labels, options.locale, row.group_key)
+        : "—"
+    })),
+    total: Number(result.total ?? 0),
+    active: Number(result.active ?? 0),
+    page: Math.max(Number(result.page ?? options.page), 1),
+    pageSize: Math.max(Number(result.page_size ?? options.pageSize), 1),
+    pages: Math.max(Number(result.pages ?? 1), 1)
+  };
+}
+
+export async function getStudentRegisterByGroup(options: {
+  locale: string;
+  groupId?: number;
+  page?: number;
+  pageSize?: number;
+}): Promise<StudentRegisterResult> {
+  const workspace = await getTenantContext();
+  if (!workspace || !workspace.branchId) {
+    throw new Error("Active branch is required for student records.");
+  }
+  const pageSize = Math.min(Math.max(options.pageSize ?? 25, 1), 100);
+  const requestedPage = Math.max(options.page ?? 1, 1);
+  const first = await loadRegisterGroupPage({
+    identityId: workspace.identityId,
+    tenantId: workspace.tenantId,
+    branchId: workspace.branchId,
+    locale: options.locale,
+    groupId: options.groupId,
+    page: requestedPage,
+    pageSize
+  });
+  if (requestedPage <= first.pages) return first;
+  return loadRegisterGroupPage({
+    identityId: workspace.identityId,
+    tenantId: workspace.tenantId,
+    branchId: workspace.branchId,
+    locale: options.locale,
+    groupId: options.groupId,
+    page: first.pages,
+    pageSize
+  });
+}
+
+export async function getStudentRegisterGroupOptions(
+  locale: string
+): Promise<StudentRegisterGroupOption[]> {
+  const workspace = await getTenantContext();
+  if (!workspace || !workspace.branchId) {
+    throw new Error("Active branch is required for student records.");
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("academic_groups")
+    .select("id,key,labels")
+    .eq("tenant_id", workspace.tenantId)
+    .eq("branch_id", workspace.branchId)
+    .eq("status", "active")
+    .order("key", { ascending: true });
+  if (error) {
+    throw new Error(`Unable to load class/group filters: ${error.message}`);
+  }
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    key: row.key,
+    label: localizedLabel(row.labels, locale, row.key)
+  }));
 }

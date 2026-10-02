@@ -27,7 +27,7 @@ export const progressMethods = [
 export const unitStructures = ["juz", "surah", "ayah_range", "chapter", "lesson", "topic", "book", "custom_unit"] as const;
 export const progressStates = ["not_started", "in_progress", "completed", "passed", "repeat", "needs_support", "skipped"] as const;
 
-type LocalizedText = { en: string; ur?: string; ar?: string };
+type LocalizedText = { en: string; ur?: string };
 
 type CreateProgramMutation = {
   action: "create_program";
@@ -132,9 +132,8 @@ function localizedText(value: unknown, max = 240): LocalizedText | null {
   if (!input) return null;
   const en = typeof input.en === "string" ? input.en.trim() : "";
   const ur = typeof input.ur === "string" ? input.ur.trim() : "";
-  const ar = typeof input.ar === "string" ? input.ar.trim() : "";
-  if (en.length < 1 || en.length > max || ur.length > max || ar.length > max) return null;
-  return { en, ...(ur ? { ur } : {}), ...(ar ? { ar } : {}) };
+  if (en.length < 1 || en.length > max || ur.length > max) return null;
+  return { en, ...(ur ? { ur } : {}) };
 }
 
 function isoDate(value: unknown): string | null {

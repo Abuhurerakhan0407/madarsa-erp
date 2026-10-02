@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CLIENT_PROFILES } from "../capabilities/client-profile";
 import { APP_NAV_GROUPS, findNavItem, getVisibleNavigation } from "./app-navigation";
 
-const clientV2TargetOrder = [
+const commercialOrder = [
   "overview",
   "admissions",
   "students",
@@ -13,51 +13,60 @@ const clientV2TargetOrder = [
   "exams",
   "portals",
   "staff",
+  "payroll",
+  "fees",
+  "donations",
+  "operations",
+  "hostel",
   "certificates",
   "reports",
-  "configuration"
-];
-
-const clientHiddenKeys = [
-  "fees",
-  "operations",
-  "donations",
-  "hostel",
-  "transport",
-  "library",
-  "whatsapp",
+  "configuration",
   "ai",
   "branches"
 ];
 
-describe("Phase 1 app navigation", () => {
-  it("keeps the Client V2 target navigation in the required order", () => {
+const clientV2Order = commercialOrder.filter(
+  (key) => !["academics", "payroll", "fees", "donations", "ai"].includes(key)
+);
+
+const retiredKeys = ["transport", "library", "whatsapp"];
+
+describe("commercial app navigation", () => {
+  it("keeps the full-product launch navigation in the required order", () => {
+    const visible = getVisibleNavigation(CLIENT_PROFILES["full-product"]);
+    expect(visible.flatMap((group) => group.items.map((item) => item.key))).toEqual(
+      commercialOrder
+    );
+  });
+
+  it("applies the client-v2 module visibility contract without reordering the remaining navigation", () => {
     const visible = getVisibleNavigation(CLIENT_PROFILES["client-v2"]);
-    expect(visible.flatMap((group) => group.items.map((item) => item.key))).toEqual(clientV2TargetOrder);
+    expect(visible.flatMap((group) => group.items.map((item) => item.key))).toEqual(
+      clientV2Order
+    );
   });
 
-  it("keeps reusable modules in the full-product navigation", () => {
-    const visibleKeys = getVisibleNavigation(CLIENT_PROFILES["full-product"]).flatMap((group) => group.items.map((item) => item.key));
-    for (const key of clientHiddenKeys) expect(visibleKeys).toContain(key);
-  });
-
-  it("hides client-disabled modules without deleting their navigation definitions", () => {
-    const visibleKeys = getVisibleNavigation(CLIENT_PROFILES["client-v2"]).flatMap((group) => group.items.map((item) => item.key));
-    const definedKeys = APP_NAV_GROUPS.flatMap((group) => group.items.map((item) => item.key));
-    for (const key of clientHiddenKeys) {
-      expect(visibleKeys).not.toContain(key);
-      expect(definedKeys).toContain(key);
+  it("does not define retired modules in any product profile", () => {
+    for (const profile of Object.values(CLIENT_PROFILES)) {
+      const visibleKeys = getVisibleNavigation(profile).flatMap((group) =>
+        group.items.map((item) => item.key)
+      );
+      for (const key of retiredKeys) expect(visibleKeys).not.toContain(key);
     }
+    const definedKeys = APP_NAV_GROUPS.flatMap((group) =>
+      group.items.map((item) => item.key)
+    );
+    for (const key of retiredKeys) expect(definedKeys).not.toContain(key);
   });
 
-  it("provides localized labels and concrete routes for target items", () => {
-    for (const key of clientV2TargetOrder) {
+  it("provides English and Urdu labels and concrete routes for every launch item", () => {
+    for (const key of commercialOrder) {
       const item = findNavItem(key);
       expect(item).toBeDefined();
       expect(item?.labels.en.trim()).not.toBe("");
       expect(item?.labels.ur.trim()).not.toBe("");
-      expect(item?.labels.ar.trim()).not.toBe("");
       expect(item?.href("en")).toMatch(/^\/en(?:\/|$)/);
+      expect(item?.href("ur")).toMatch(/^\/ur(?:\/|$)/);
     }
   });
 });

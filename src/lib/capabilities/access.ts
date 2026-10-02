@@ -6,20 +6,23 @@ import {
 } from "./client-profile";
 
 const APP_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
-  [/^\/(?:en|ur|ar)\/demo\/fees(?:\/|$)/, "fees_accounting"],
-  [/^\/(?:en|ur|ar)\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
-  [/^\/(?:en|ur|ar)\/demo\/donations(?:\/|$)/, "donations_zakat_sponsorships"],
-  [/^\/(?:en|ur|ar)\/hostel(?:\/|$)/, "hostel_mess"],
-  [/^\/(?:en|ur|ar)\/transport(?:\/|$)/, "transport"],
-  [/^\/(?:en|ur|ar)\/library(?:\/|$)/, "library"],
-  [/^\/(?:en|ur|ar)\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"],
-  [/^\/(?:en|ur|ar)\/demo\/ai(?:\/|$)/, "ai_assistant"],
-  [/^\/(?:en|ur|ar)\/access(?:\/|$)/, "branches_roles_ui"]
+  [/^\/(?:en|ur)\/hostel(?:\/|$)/, "hostel_mess_operations"],
+  [/^\/(?:en|ur)\/people-academics(?:\/|$)/, "academics_timetable_homework"],
+  [/^\/(?:en|ur)\/fees(?:\/|$)/, "fees_accounting"],
+  [/^\/(?:en|ur)\/payroll(?:\/|$)/, "fees_accounting"],
+  [/^\/(?:en|ur)\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
+  [/^\/(?:en|ur)\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
+  [/^\/(?:en|ur)\/assistant(?:\/|$)/, "ai_assistant"],
+  [/^\/(?:en|ur)\/access(?:\/|$)/, "branches_roles_ui"]
 ];
 
 const API_ROUTE_CAPABILITIES: ReadonlyArray<readonly [RegExp, ProductCapability]> = [
-  [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"],
-  [/^\/api\/communications\/whatsapp(?:\/|$)/, "whatsapp_automation"]
+  [/^\/api\/academics(?:\/|$)/, "academics_timetable_homework"],
+  [/^\/api\/fees(?:\/|$)/, "fees_accounting"],
+  [/^\/api\/payroll(?:\/|$)/, "fees_accounting"],
+  [/^\/api\/contributions(?:\/|$)/, "donations_zakat_sponsorships"],
+  [/^\/api\/assistant(?:\/|$)/, "ai_assistant"],
+  [/^\/api\/students\/lifecycle(?:\/|$)/, "student_lifecycle_import_promotion_renewal"]
 ];
 
 export function canAccessCapability(
@@ -36,11 +39,7 @@ export function canTenantAccessCapability(
   permissionAllowed = true,
   tenantProfile?: string | null
 ): boolean {
-  return canAccessCapability(
-    resolveClientProfile(tenantSlug, tenantProfile),
-    capability,
-    permissionAllowed
-  );
+  return canAccessCapability(resolveClientProfile(tenantSlug, tenantProfile), capability, permissionAllowed);
 }
 
 function capabilityForPath(

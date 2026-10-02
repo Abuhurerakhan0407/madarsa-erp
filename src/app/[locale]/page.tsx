@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { isCapabilityEnabled, resolveClientProfile } from "@/lib/capabilities/client-profile";
-import type { Locale } from "@/lib/i18n/config";
+import { redirect } from "next/navigation";
+import type { SupportedLocale } from "@/lib/i18n/config";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
+import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
 
@@ -41,24 +43,23 @@ type DashboardCopy = {
   attempts: string;
   quick: string;
   quickBody: string;
-  allModules: string;
   routes: Record<string, string>;
   alertLabels: Record<string, string>;
 };
 
-const copy: Record<Locale, DashboardCopy> = {
+const copy: Record<SupportedLocale, DashboardCopy> = {
   en: {
     year: "Academic year 2026–27",
-    subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, teachers and reporting.",
+    subtitle: "Hifz, Arabic learning, Talaba, attendance, Ustadhs, hostel and Guardian Portal — one clear workspace.",
     live: "Live operations",
     metricsTitle: "Institution overview",
     metricsBody: "These figures come from the same governed records used inside each operational workspace.",
-    students: "Active students",
+    students: "Active Talaba",
     attendance: "Attendance today",
     attendanceNotStarted: "Not started",
     admissions: "Open admissions",
-    quran: "Qur'an / Hifz students",
-    staff: "Active teachers",
+    quran: "Hifz students",
+    staff: "Active Ustadhs",
     exams: "Current exam marks",
     total: "total",
     active: "active",
@@ -80,10 +81,9 @@ const copy: Record<Locale, DashboardCopy> = {
     admissionTrend: "Admissions submitted",
     quranTrend: "Qur'an attempts",
     attempts: "attempts",
-    quick: "Operational workspaces",
-    quickBody: "Open the workspaces used for day-to-day institution operations.",
-    allModules: "View complete suite",
-    routes: { admissions: "Admissions", students: "Students", programs: "Programs & Syllabus", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "Teachers", reports: "Reports & Analytics", documents: "IDs & Documents", configuration: "Institution Configuration" },
+    quick: "Main workspaces",
+    quickBody: "The everyday areas used by the Jamia office.",
+    routes: { admissions: "Admissions", students: "Talaba", attendance: "Attendance", quran: "Qur'an & Hifz", academics: "Academics", hostel: "Hostel", portals: "Guardian & Ustadh", exams: "Exams & Results", documents: "IDs & Documents", reports: "Reports" },
     alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Teacher leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
   ur: {
@@ -96,7 +96,7 @@ const copy: Record<Locale, DashboardCopy> = {
     attendance: "آج کی حاضری",
     attendanceNotStarted: "شروع نہیں ہوئی",
     admissions: "کھلے داخلے",
-    quran: "قرآن / حفظ طلبہ",
+    quran: "حفظ طلبہ",
     staff: "فعال اساتذہ",
     exams: "موجودہ امتحانی نمبر",
     total: "کل",
@@ -119,64 +119,24 @@ const copy: Record<Locale, DashboardCopy> = {
     admissionTrend: "جمع شدہ داخلے",
     quranTrend: "قرآن کوششیں",
     attempts: "کوششیں",
-    quick: "آپریشنل ورک اسپیسز",
-    quickBody: "ادارے کے روزمرہ کام کے لیے متعلقہ ورک اسپیسز کھولیں۔",
-    allModules: "مکمل سسٹم دیکھیں",
+    quick: "اہم ورک اسپیسز",
+    quickBody: "جامعہ کے روزمرہ کام کے لیے اہم حصے کھولیں۔",
     routes: { admissions: "داخلہ", students: "طلبہ", programs: "پروگرامز و نصاب", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "اساتذہ", reports: "رپورٹس و اینالیٹکس", documents: "ID و دستاویزات", configuration: "ادارہ کنفیگریشن" },
     alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "اساتذہ کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
-  },
-  ar: {
-    year: "العام الدراسي 2026–27",
-    subtitle: "عمليات الفرع الحية للطلاب والقبول والحضور والقرآن والاختبارات والمعلمين والتقارير.",
-    live: "عمليات حية",
-    metricsTitle: "نظرة عامة على المؤسسة",
-    metricsBody: "تأتي هذه الأرقام من نفس السجلات المحكومة المستخدمة داخل مساحات العمل التشغيلية.",
-    students: "الطلاب النشطون",
-    attendance: "حضور اليوم",
-    attendanceNotStarted: "لم يبدأ",
-    admissions: "طلبات القبول المفتوحة",
-    quran: "طلاب القرآن / الحفظ",
-    staff: "المعلمون النشطون",
-    exams: "درجات الاختبار الحالي",
-    total: "الإجمالي",
-    active: "نشط",
-    present: "حاضر",
-    absent: "غائب",
-    open: "مفتوح",
-    converted: "تم تسجيلهم",
-    revisionDue: "مراجعة مستحقة",
-    markedToday: "تم تسجيل حضورهم اليوم",
-    marks: "درجات مسجلة",
-    noExam: "لا يوجد اختبار نشط",
-    published: "منشور",
-    alerts: "يحتاج إلى انتباه",
-    alertsBody: "العناصر التشغيلية التي تحتاج متابعة الآن.",
-    noAlerts: "لا توجد تنبيهات تشغيلية نشطة.",
-    trends: "آخر 7 أيام",
-    trendsBody: "نشاط الفرع الحقيقي، وليس بيانات عرض.",
-    attendanceTrend: "حضور الطلاب",
-    admissionTrend: "طلبات القبول المقدمة",
-    quranTrend: "محاولات القرآن",
-    attempts: "محاولات",
-    quick: "مساحات العمل التشغيلية",
-    quickBody: "افتح مساحات العمل المستخدمة في عمليات المؤسسة اليومية.",
-    allModules: "عرض النظام الكامل",
-    routes: { admissions: "القبول", students: "الطلاب", programs: "البرامج والمنهج", attendance: "الحضور", quran: "القرآن والحفظ", exams: "الاختبارات والنتائج", staff: "المعلمون", reports: "التقارير والتحليلات", documents: "الهويات والمستندات", configuration: "تهيئة المؤسسة" },
-    alertLabels: { attendance_not_started: "لم يبدأ حضور الطلاب اليوم", attendance_unmarked: "هناك طلاب لم يسجل حضورهم بعد", admissions_open: "طلبات قبول تحتاج إلى إجراء", quran_revision_due: "طلاب لديهم مراجعة قرآن مستحقة", staff_leave_pending: "طلبات إجازة المعلمين بانتظار القرار", exam_marks_remaining: "درجات اختبار ما زالت بحاجة إلى إدخال" }
   }
 };
 
-const dateLocales: Record<Locale, string> = { en: "en-IN", ur: "ur-IN", ar: "ar-SA" };
+const dateLocales: Record<SupportedLocale, string> = { en: "en-IN", ur: "ur-IN" };
 
 function number(value: number): string {
   return new Intl.NumberFormat("en-IN").format(value);
 }
 
-function shortDate(date: string, locale: Locale): string {
+function shortDate(date: string, locale: SupportedLocale): string {
   return new Intl.DateTimeFormat(dateLocales[locale], { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00.000Z`));
 }
 
-function TrendBars({ points, locale, suffix = "" }: { points: DashboardTrendPoint[]; locale: Locale; suffix?: string }) {
+function TrendBars({ points, locale, suffix = "" }: { points: DashboardTrendPoint[]; locale: SupportedLocale; suffix?: string }) {
   const max = Math.max(...points.map((point) => point.value), 1);
   return (
     <div className="dashboard-bars" role="img" aria-label={points.map((point) => `${shortDate(point.date, locale)} ${point.value}${suffix}`).join(", ")}>
@@ -192,31 +152,34 @@ function TrendBars({ points, locale, suffix = "" }: { points: DashboardTrendPoin
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
   const { locale: rawLocale } = await params;
-  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const text = copy[locale];
   const workspace = await getTenantContext();
   if (!workspace) return null;
+
+  const audience = await getNavigationAudience(workspace);
+  if (audience === "teacher") redirect(`/${locale}/my-students`);
+  if (audience === "neutral") return null;
+
   const dashboard = await getOperationalDashboard(locale);
-  const clientProfile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
-  const showFullSuite = isCapabilityEnabled(clientProfile, "internal_demo_suite");
   const dateLabel = new Intl.DateTimeFormat(dateLocales[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${dashboard.localDate}T00:00:00.000Z`));
   const operationalRoutes = [
     ["admissions", `/${locale}/admissions`],
     ["students", `/${locale}/students`],
-    ["programs", `/${locale}/programs`],
     ["attendance", `/${locale}/attendance`],
     ["quran", `/${locale}/quran`],
+    ["academics", `/${locale}/people-academics`],
+    ["hostel", `/${locale}/hostel`],
+    ["portals", `/${locale}/portals`],
     ["exams", `/${locale}/exams`],
-    ["staff", `/${locale}/staff`],
-    ["reports", `/${locale}/reports`],
     ["documents", `/${locale}/documents`],
-    ["configuration", `/${locale}/settings/configuration`]
+    ["reports", `/${locale}/reports`]
   ] as const;
 
   return (
     <div className="operational-dashboard">
       <section className="dashboard-hero" data-page-section>
-        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
+        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{locale === "ur" ? JAMIA_CLIENT.nameUr : JAMIA_CLIENT.name}</h1><p>{text.subtitle}</p><small className="jamia-dashboard-director">{JAMIA_CLIENT.director} · {JAMIA_CLIENT.address}</small></div>
         <time dateTime={dashboard.localDate}>{dateLabel}</time>
       </section>
 
@@ -234,7 +197,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
       <section className="dashboard-grid" data-page-section>
         <article className="dashboard-panel dashboard-alert-panel"><header><div><h2>{text.alerts}</h2><p>{text.alertsBody}</p></div><span>{dashboard.alerts.length}</span></header>{dashboard.alerts.length ? <div className="dashboard-alert-list">{dashboard.alerts.map((alert) => <Link className={`dashboard-alert dashboard-alert-${alert.severity}`} href={alert.href} key={alert.key}><div><strong>{text.alertLabels[alert.key] ?? alert.key}</strong><small>{alert.count}</small></div><span aria-hidden="true">→</span></Link>)}</div> : <p className="dashboard-empty">{text.noAlerts}</p>}</article>
-        <article className="dashboard-panel dashboard-route-panel"><header><div><h2>{text.quick}</h2><p>{text.quickBody}</p></div></header><div className="dashboard-route-grid">{operationalRoutes.map(([key, href]) => <Link href={href} key={key}><span>{text.routes[key]}</span><b aria-hidden="true">↗</b></Link>)}</div>{showFullSuite ? <Link className="dashboard-suite-link" href={`/${locale}/demo`}>{text.allModules} →</Link> : null}</article>
+        <article className="dashboard-panel dashboard-route-panel"><header><div><h2>{text.quick}</h2><p>{text.quickBody}</p></div></header><div className="dashboard-route-grid">{operationalRoutes.map(([key, href]) => <Link href={href} key={key}><span>{text.routes[key]}</span><b aria-hidden="true">↗</b></Link>)}</div></article>
       </section>
 
       <section className="dashboard-section" data-page-section>

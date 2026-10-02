@@ -1,25 +1,169 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
-import type {Locale} from "@/lib/i18n/config";
-import type {TeachersWorkspace,TeacherLabels} from "@/lib/teachers/workspace";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import type { Locale } from "@/lib/i18n/config";
+import type { TeachersWorkspace } from "@/lib/teachers/workspace";
 
-function label(labels:TeacherLabels,locale:Locale,fallback:string){return labels[locale]||labels.en||labels.ur||labels.ar||fallback;}
-function account(status:string){return status==="active"?"Active":status==="disabled"?"Disabled":status==="email_required"?"Email required":"Not created";}
-function pct(present:number,total:number){return total>0?`${Math.round((present/total)*100)}%`:"—";}
+type UiLocale = "en" | "ur";
 
-export function TeachersWorkspaceView({locale,data,search,state}:{locale:Locale;data:TeachersWorkspace;search:string;state:string}){
- const router=useRouter();
- function go(next:{q?:string;state?:string}){const p=new URLSearchParams();const q=next.q!==undefined?next.q:search;const st=next.state!==undefined?next.state:state;if(q)p.set("q",q);if(st)p.set("state",st);router.push(`/${locale}/staff${p.size?`?${p}`:""}`);}
- const active=data.teachers.filter(t=>t.state==="active").length;const access=data.teachers.filter(t=>t.accountStatus==="active").length;const missingEmail=data.teachers.filter(t=>!t.email).length;
- return <div className="flow-stack">
-  <section className="professional-card"><div className="section-heading"><div><p className="state-kicker">Teaching team</p><h1>Teachers</h1><p>Teaching identity, contact details, assignments, timetable, portal status and attendance—without payroll or private HR fields.</p></div><div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>Teacher attendance</Link><Link className="action-button" href={`/${locale}/portals?tab=teachers`}>Teacher access</Link></div></div>
-   <form className="form-grid" onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);go({q:String(fd.get("q")||"").trim()});}}><label className="field-label">Search<input className="text-field" name="q" defaultValue={search} placeholder="Name or teacher ID"/></label><label className="field-label">Status<select className="text-field" value={state} onChange={e=>go({state:e.target.value})}><option value="">All current</option><option value="active">Active</option><option value="on_leave">On leave</option><option value="suspended">Suspended</option></select></label><button className="action-button" type="submit">Search</button>{search||state?<button className="action-button" type="button" onClick={()=>go({q:"",state:""})}>Clear</button>:null}</form>
-  </section>
-  <section className="attendance-metrics">{[["Teachers",data.teachers.length],["Active",active],["Portal active",access],["Need email",missingEmail]].map(([k,v])=><article className="attendance-metric" key={String(k)}><span>{k}</span><strong>{v}</strong></article>)}</section>
-  <section className="flow-stack">{data.teachers.length?data.teachers.map(t=><article className="professional-card" key={t.employmentId}><div className="section-heading"><div style={{display:"flex",gap:14,alignItems:"center"}}><div className="teacher-avatar" aria-hidden="true">{t.photoStoragePath?<img src={`/api/teachers/photo/${t.personId}`} alt=""/>:<span>{t.displayName.slice(0,1).toUpperCase()}</span>}</div><div><p className="state-kicker">{t.teacherId}</p><h2>{t.displayName}</h2>{t.nameNative?<p dir="auto">{t.nameNative}</p>:null}<p>{t.designation}</p></div></div><div className="quick-actions"><span className="status-pill">{account(t.accountStatus)}</span><Link className="action-button" href={`/${locale}/staff/${t.employmentId}`}>Open</Link></div></div>
-   <div className="demo-card-grid"><div className="demo-card"><strong>Contact</strong><p>{t.email||"Email not added"}</p><p>{t.phone||"Phone not added"}</p><small>Joined {t.joinedOn||"—"}</small></div><div className="demo-card"><strong>Teaching scope</strong><p>Programs: {t.assignedPrograms.length?t.assignedPrograms.map(x=>label(x.labels,locale,`Program ${x.id}`)).join(", "):"Not assigned"}</p><p>Subjects: {t.assignedSubjects.length?t.assignedSubjects.map(x=>label(x.labels,locale,`Subject ${x.id}`)).join(", "):"Not assigned"}</p><p>Groups: {t.assignedGroups.length?t.assignedGroups.map(x=>label(x.labels,locale,`Group ${x.id}`)).join(", "):"Not assigned"}</p></div><div className="demo-card"><strong>Attendance · 30 days</strong><p>{pct(t.attendance.present,t.attendance.total)} present</p><small>{t.attendance.present} present · {t.attendance.absent} absent · {t.attendance.late} late</small></div><div className="demo-card"><strong>Timetable</strong><p>{t.timetable.length} active periods</p><small>{t.lastLogin?`Last portal login ${new Date(t.lastLogin).toLocaleString()}`:"No portal login yet"}</small></div></div>
-  </article>):<section className="professional-card"><h2>No teachers found</h2><p>Adjust the search/status filter. Existing HR records were not deleted or changed.</p></section>}</section>
- </div>;
+const copy = {
+  en: {
+    kicker: "Teaching team",
+    title: "Teachers",
+    body: "Find teachers quickly, see their teaching scope, and open a full profile only when needed.",
+    attendanceAction: "Teacher attendance",
+    add: "Add teacher / staff",
+    accessAction: "Manage access",
+    search: "Search",
+    searchPlaceholder: "Name or teacher ID",
+    status: "Status",
+    allCurrent: "All current",
+    active: "Active",
+    onLeave: "On leave",
+    suspended: "Suspended",
+    searching: "Searching…",
+    loading: "Loading…",
+    clear: "Clear",
+    teachers: "Teachers",
+    portalActive: "Access active",
+    open: "Open profile",
+    teachingScope: "Teaching scope",
+    programs: "Programs",
+    subjects: "Subjects",
+    groups: "Groups",
+    notAssigned: "Not assigned",
+    assigned: "assigned",
+    noTeachers: "No teachers found",
+    noTeachersBody: "Adjust the search or status filter. Existing HR records were not deleted or changed.",
+    accountActive: "Access active",
+    accountDisabled: "Access disabled",
+    accountEmailRequired: "Access setup",
+    accountNotCreated: "Access setup"
+  },
+  ur: {
+    kicker: "تدریسی ٹیم",
+    title: "اساتذہ",
+    body: "اساتذہ کو جلد تلاش کریں، تدریسی دائرہ دیکھیں، اور ضرورت پر مکمل پروفائل کھولیں۔",
+    attendanceAction: "اساتذہ کی حاضری",
+    add: "استاد / عملہ شامل کریں",
+    accessAction: "رسائی منظم کریں",
+    search: "تلاش",
+    searchPlaceholder: "نام یا استاد ID",
+    status: "حیثیت",
+    allCurrent: "تمام موجودہ",
+    active: "فعال",
+    onLeave: "رخصت پر",
+    suspended: "معطل",
+    searching: "تلاش جاری ہے…",
+    loading: "لوڈ ہو رہا ہے…",
+    clear: "فلٹر صاف کریں",
+    teachers: "اساتذہ",
+    portalActive: "رسائی فعال",
+    open: "پروفائل کھولیں",
+    teachingScope: "تدریسی ذمہ داریاں",
+    programs: "پروگرام",
+    subjects: "مضامین",
+    groups: "کلاس / گروپس",
+    notAssigned: "مقرر نہیں",
+    assigned: "مقرر",
+    noTeachers: "کوئی استاد نہیں ملا",
+    noTeachersBody: "تلاش یا حیثیت کا فلٹر تبدیل کریں۔ موجودہ HR ریکارڈ حذف یا تبدیل نہیں کیے گئے۔",
+    accountActive: "رسائی فعال",
+    accountDisabled: "رسائی غیر فعال",
+    accountEmailRequired: "رسائی سیٹ اپ",
+    accountNotCreated: "رسائی سیٹ اپ"
+  }
+} as const;
+
+function uiLocale(locale: Locale): UiLocale {
+  return locale === "ur" ? "ur" : "en";
+}
+
+function account(status: string, locale: UiLocale) {
+  const text = copy[locale];
+  return status === "active"
+    ? text.accountActive
+    : status === "disabled"
+      ? text.accountDisabled
+      : status === "email_required"
+        ? text.accountEmailRequired
+        : text.accountNotCreated;
+}
+
+function designation(key: string, value: string, locale: UiLocale) {
+  if (locale === "en") return value;
+  const urdu: Record<string, string> = {
+    teacher: "استاد",
+    assistant_teacher: "معاون استاد",
+    attendance_supervisor: "حاضری نگران",
+    dars_e_nizami_teacher: "درسِ نظامی استاد",
+    admissions_coordinator: "داخلہ رابطہ کار",
+    hifz_instructor: "حفظ استاد",
+    exam_evaluator: "امتحانی ممتحن"
+  };
+  return urdu[key] || value;
+}
+
+export function TeachersWorkspaceView({ locale, data, search, state }: { locale: Locale; data: TeachersWorkspace; search: string; state: string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const language = uiLocale(locale);
+  const text = copy[language];
+
+  function go(next: { q?: string; state?: string }) {
+    const params = new URLSearchParams();
+    const q = next.q !== undefined ? next.q : search;
+    const nextState = next.state !== undefined ? next.state : state;
+    if (q) params.set("q", q);
+    if (nextState) params.set("state", nextState);
+    const query = params.toString();
+    startTransition(() => router.push(`/${locale}/staff${query ? `?${query}` : ""}`));
+  }
+
+  const active = data.teachers.filter((teacher) => teacher.state === "active").length;
+  const access = data.teachers.filter((teacher) => teacher.accountStatus === "active").length;
+
+  return <div className="flow-stack">
+    <section className="professional-card" data-page-section>
+      <div className="section-heading">
+        <div><p className="state-kicker">{text.kicker}</p><h1>{text.title}</h1><p>{text.body}</p></div>
+        <div className="quick-actions"><Link className="action-button" href={`/${locale}/staff/attendance`}>{text.attendanceAction}</Link>{data.canManage ? <Link className="action-button action-button-primary" href={`/${locale}/staff/new`}>{text.add}</Link> : null}</div>
+      </div>
+      <form className="form-grid" aria-busy={pending || undefined} onSubmit={(event) => {
+        event.preventDefault();
+        const fd = new FormData(event.currentTarget);
+        go({ q: String(fd.get("q") || "").trim() });
+      }}>
+        <label className="field-label">{text.search}<input className="text-field" name="q" defaultValue={search} placeholder={text.searchPlaceholder} disabled={pending} /></label>
+        <label className="field-label">{text.status}<select className="text-field" value={state} disabled={pending} onChange={(event) => go({ state: event.target.value })}><option value="">{text.allCurrent}</option><option value="active">{text.active}</option><option value="on_leave">{text.onLeave}</option><option value="suspended">{text.suspended}</option></select></label>
+        <button className="action-button" type="submit" disabled={pending} aria-busy={pending || undefined}>{pending ? <><span className="inline-spinner" aria-hidden="true" />{text.searching}</> : text.search}</button>
+        {search || state ? <button className="action-button" type="button" disabled={pending} onClick={() => go({ q: "", state: "" })}>{pending ? text.loading : text.clear}</button> : null}
+      </form>
+    </section>
+    <section className="attendance-metrics teacher-summary-metrics" data-page-section>{[[text.teachers, data.teachers.length], [text.active, active], [text.portalActive, access]].map(([key, value]) => <article className="attendance-metric" key={String(key)}><span>{key}</span><strong>{value}</strong></article>)}</section>
+    <section className="teacher-card-list" data-page-section>{data.teachers.length ? data.teachers.map((teacher) => {
+      const scopeParts = [
+        teacher.assignedGroups.length ? `${teacher.assignedGroups.length} ${text.groups}` : "",
+        teacher.assignedSubjects.length ? `${teacher.assignedSubjects.length} ${text.subjects}` : ""
+      ].filter(Boolean);
+      return <Link className="teacher-list-row" href={`/${locale}/staff/${teacher.employmentId}`} key={teacher.employmentId} aria-label={`${text.open}: ${teacher.displayName}`}>
+        <div className="teacher-avatar" aria-hidden="true">{teacher.photoStoragePath ? <Image src={`/api/teachers/photo/${teacher.personId}`} alt="" width={48} height={48} unoptimized /> : <span>{teacher.displayName.slice(0, 1).toUpperCase()}</span>}</div>
+        <div className="teacher-list-main">
+          <div className="teacher-list-name">
+            <strong>{teacher.displayName}</strong>
+            {teacher.nameNative ? <span dir="auto">{teacher.nameNative}</span> : null}
+          </div>
+          <span className="teacher-list-role">{designation(teacher.designationKey, teacher.designation, language)} · {teacher.teacherId}</span>
+          <span className="teacher-list-scope">{scopeParts.length ? scopeParts.join(" · ") : text.notAssigned}</span>
+        </div>
+        <div className="teacher-list-end">
+          <span className="status-pill">{account(teacher.accountStatus, language)}</span>
+          <span className="teacher-list-chevron" aria-hidden="true">›</span>
+        </div>
+      </Link>;
+    }) : <section className="professional-card"><h2>{text.noTeachers}</h2><p>{text.noTeachersBody}</p></section>}</section>
+  </div>;
 }

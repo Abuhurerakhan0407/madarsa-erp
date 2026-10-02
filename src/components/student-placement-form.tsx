@@ -2,17 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Placement = { currentGroupId: number | null; groups: Array<{ id: number; label: string }> };
 
 const copy = {
   en: { group: "Class / group", unassigned: "Not assigned", reason: "Reason / note", reasonHint: "Optional administrative note for the placement change", save: "Update placement", saving: "Updating…", saved: "Placement updated.", error: "Unable to update placement.", noGroups: "No active groups exist for this student's current session and program. Create the academic group first." },
-  ur: { group: "کلاس / گروپ", unassigned: "مقرر نہیں", reason: "وجہ / نوٹ", reasonHint: "پلیسمنٹ تبدیلی کے لیے اختیاری انتظامی نوٹ", save: "پلیسمنٹ اپ ڈیٹ کریں", saving: "اپ ڈیٹ ہو رہا ہے…", saved: "پلیسمنٹ اپ ڈیٹ ہو گئی۔", error: "پلیسمنٹ اپ ڈیٹ نہیں ہو سکی۔", noGroups: "اس طالب علم کے موجودہ تعلیمی سال اور پروگرام کے لیے کوئی فعال گروپ موجود نہیں۔ پہلے تعلیمی گروپ بنائیں۔" },
-  ar: { group: "الفصل / المجموعة", unassigned: "غير معين", reason: "السبب / ملاحظة", reasonHint: "ملاحظة إدارية اختيارية لتغيير التوزيع", save: "تحديث التوزيع", saving: "جارٍ التحديث…", saved: "تم تحديث التوزيع.", error: "تعذر تحديث التوزيع.", noGroups: "لا توجد مجموعات نشطة للعام والبرنامج الحاليين لهذا الطالب. أنشئ المجموعة الأكاديمية أولاً." }
+  ur: { group: "کلاس / گروپ", unassigned: "مقرر نہیں", reason: "وجہ / نوٹ", reasonHint: "پلیسمنٹ تبدیلی کے لیے اختیاری انتظامی نوٹ", save: "پلیسمنٹ اپ ڈیٹ کریں", saving: "اپ ڈیٹ ہو رہا ہے…", saved: "پلیسمنٹ اپ ڈیٹ ہو گئی۔", error: "پلیسمنٹ اپ ڈیٹ نہیں ہو سکی۔", noGroups: "اس طالب علم کے موجودہ تعلیمی سال اور پروگرام کے لیے کوئی فعال گروپ موجود نہیں۔ پہلے تعلیمی گروپ بنائیں۔" }
 } as const;
 
-export function StudentPlacementForm({ locale, personId, placement }: { locale: Locale; personId: number; placement: Placement }) {
+export function StudentPlacementForm({ locale, personId, placement }: { locale: SupportedLocale; personId: number; placement: Placement }) {
   const text = copy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);

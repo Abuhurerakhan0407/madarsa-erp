@@ -49,11 +49,23 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname === "/login") {
     if (!identityId) return sessionResponse;
-    const destination = safeAuthRedirect(request.nextUrl.searchParams.get("next"));
+    const requested = request.nextUrl.searchParams.get("next");
+    const destination = requested
+      ? safeAuthRedirect(requested)
+      : request.nextUrl.searchParams.get("source") === "app"
+        ? "/app-entry"
+        : safeAuthRedirect(null);
     return copySessionState(
       sessionResponse,
       NextResponse.redirect(new URL(destination, request.url))
     );
+  }
+
+  if (pathname === "/app-entry") {
+    if (identityId) return sessionResponse;
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("source", "app");
+    return copySessionState(sessionResponse, NextResponse.redirect(loginUrl));
   }
 
   if (pathname === "/onboarding") {

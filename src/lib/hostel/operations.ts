@@ -16,7 +16,7 @@ export type HostelMessCenter={
  beds:Array<{id:number;hostelId:number;hostelLabel:string;buildingKey:string;floorKey:string|null;roomKey:string;bedKey:string;category:string|null;state:string}>;
  allocations:Array<{id:number;bedId:number;studentPersonId:number;displayName:string;studentNumber:string|null;hostelLabel:string;buildingKey:string;roomKey:string;bedKey:string;startsOn:string;endsOn:string|null;state:string}>;
  students:Array<{personId:number;enrollmentId:number;displayName:string;studentNumber:string|null}>;
- visitors:Array<{id:number;allocationId:number;residentName:string;purpose:string;checkedInAt:string;checkedOutAt:string|null}>;
+ visitors:Array<{id:number;allocationId:number;residentName:string;visitorName:string;purpose:string;checkedInAt:string;checkedOutAt:string|null}>;
  incidents:Array<{id:number;allocationId:number|null;residentName:string|null;category:string;severity:string;state:string;occurredAt:string}>;
  messUnits:Array<{id:number;key:string;label:string;state:string}>;
  mealServices:Array<{id:number;messUnitId:number;unitLabel:string;mealType:string;servingDate:string;expectedCount:number|null;servedCount:number;state:string}>;
@@ -32,7 +32,7 @@ export async function getHostelMessCenter():Promise<HostelMessCenter>{
   beds:rows(d.beds).map(x=>({id:num(x.id)!,hostelId:num(x.hostel_id)!,hostelLabel:text(x.hostel_label)??"Hostel",buildingKey:text(x.building_key)??"",floorKey:text(x.floor_key),roomKey:text(x.room_key)??"",bedKey:text(x.bed_key)??"",category:text(x.category),state:text(x.state)??""})),
   allocations:rows(d.allocations).map(x=>({id:num(x.id)!,bedId:num(x.bed_id)!,studentPersonId:num(x.student_person_id)!,displayName:text(x.display_name)??"Student",studentNumber:text(x.student_number),hostelLabel:text(x.hostel_label)??"Hostel",buildingKey:text(x.building_key)??"",roomKey:text(x.room_key)??"",bedKey:text(x.bed_key)??"",startsOn:text(x.starts_on)??"",endsOn:text(x.ends_on),state:text(x.state)??""})),
   students:rows(d.students).map(x=>({personId:num(x.person_id)!,enrollmentId:num(x.enrollment_id)!,displayName:text(x.display_name)??"Student",studentNumber:text(x.student_number)})),
-  visitors:rows(d.visitors).map(x=>({id:num(x.id)!,allocationId:num(x.allocation_id)!,residentName:text(x.resident_name)??"Resident",purpose:text(x.purpose)??"",checkedInAt:text(x.checked_in_at)??"",checkedOutAt:text(x.checked_out_at)})),
+  visitors:rows(d.visitors).map(x=>({id:num(x.id)!,allocationId:num(x.allocation_id)!,residentName:text(x.resident_name)??"Resident",visitorName:text(obj(x.visitor_identity_snapshot).name)??"Visitor",purpose:text(x.purpose)??"",checkedInAt:text(x.checked_in_at)??"",checkedOutAt:text(x.checked_out_at)})),
   incidents:rows(d.incidents).map(x=>({id:num(x.id)!,allocationId:num(x.allocation_id),residentName:text(x.resident_name),category:text(x.category)??"",severity:text(x.severity)??"",state:text(x.state)??"",occurredAt:text(x.occurred_at)??""})),
   messUnits:rows(d.mess_units).map(x=>({id:num(x.id)!,key:text(x.key)??"",label:text(x.label)??"Mess",state:text(x.state)??""})),
   mealServices:rows(d.meal_services).map(x=>({id:num(x.id)!,messUnitId:num(x.mess_unit_id)!,unitLabel:text(x.unit_label)??"Mess",mealType:text(x.meal_type)??"",servingDate:text(x.serving_date)??"",expectedCount:num(x.expected_count),servedCount:num(x.served_count)??0,state:text(x.state)??""})),

@@ -53,24 +53,6 @@ const ui = {
     status: "موجودہ حالت",
     received: "موصول",
     again: "دوسری درخواست چیک کریں"
-  },
-  ar: {
-    kicker: "تتبع القبول",
-    title: "تتبع طلبك",
-    body: "أدخل مرجع التتبع والمفتاح الخاص اللذين ظهرا بعد الإرسال. لا يتم وضع المفتاح الخاص في عنوان URL أبدًا.",
-    reference: "مرجع التتبع",
-    secret: "مفتاح التتبع الخاص",
-    submit: "عرض الحالة",
-    loading: "جارٍ التحقق بأمان…",
-    language: "اللغة",
-    notFound: "تعذر التحقق من بيانات التتبع هذه.",
-    submitted: "مُقدّم",
-    program: "البرنامج",
-    session: "العام الدراسي",
-    institution: "المؤسسة",
-    status: "الحالة الحالية",
-    received: "تاريخ الاستلام",
-    again: "تتبع طلب آخر"
   }
 } as const;
 
@@ -120,7 +102,7 @@ export function PublicAdmissionTracker({ locale, initialReference = "" }: Public
       <section className="tracking-card">
         <header className="tracking-header">
           <div>
-            <div className="tracking-brand">M</div>
+            <div className="tracking-brand">I</div>
             <p className="tracking-kicker">{text.kicker}</p>
             <h1>{text.title}</h1>
             <p>{text.body}</p>
@@ -128,7 +110,6 @@ export function PublicAdmissionTracker({ locale, initialReference = "" }: Public
           <div className="tracking-languages" aria-label={text.language}>
             <a aria-current={locale === "en" ? "page" : undefined} href={`?lang=en${initialReference ? `&ref=${encodeURIComponent(initialReference)}` : ""}`}>EN</a>
             <a aria-current={locale === "ur" ? "page" : undefined} href={`?lang=ur${initialReference ? `&ref=${encodeURIComponent(initialReference)}` : ""}`}>اردو</a>
-            <a aria-current={locale === "ar" ? "page" : undefined} href={`?lang=ar${initialReference ? `&ref=${encodeURIComponent(initialReference)}` : ""}`}>العربية</a>
           </div>
         </header>
 

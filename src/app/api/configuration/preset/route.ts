@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getConfigurationPreset } from "@/lib/configuration/presets";
 import { buildPresetDraftPayload } from "@/lib/configuration/preset-payload";
-import { isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -25,16 +25,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Active tenant membership required." }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsedBody = await readBoundedJson(request, 4_096);
+  if (!parsedBody.ok) {
+    return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
   }
 
   const presetKey =
-    typeof body === "object" && body !== null && "presetKey" in body
-      ? (body as { presetKey?: unknown }).presetKey
+    typeof parsedBody.value === "object" && parsedBody.value !== null && "presetKey" in parsedBody.value
+      ? (parsedBody.value as { presetKey?: unknown }).presetKey
       : undefined;
 
   if (typeof presetKey !== "string") {

@@ -1,0 +1,266 @@
+/* Jamia Islamia Uloomul Quraan — client-facing visual system. */
+.client-jamia-shell {
+  --jamia-green: #14734f;
+  --jamia-green-deep: #0d5a3d;
+  --jamia-green-soft: #eaf6f0;
+  --jamia-blue: #1769a8;
+  --jamia-blue-soft: #eaf3fb;
+  --jamia-ink: #17211b;
+  --jamia-muted: #65736b;
+  --jamia-border: #dce5df;
+  --background: #f7faf8;
+  --foreground: var(--jamia-ink);
+  --surface: #ffffff;
+  --surface-muted: #f1f5f2;
+  --border: var(--jamia-border);
+  --border-strong: #c7d4cc;
+  --accent: var(--jamia-green);
+  --accent-strong: var(--jamia-green-deep);
+  --accent-soft: var(--jamia-green-soft);
+  color-scheme: light;
+}
+
+.client-jamia-shell .professional-sidebar {
+  background: #ffffff;
+  border-inline-end-color: #dfe7e2;
+  box-shadow: 8px 0 28px rgb(21 53 38 / 4%);
+}
+
+.client-jamia-shell .jamia-brand-mark {
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 0.7rem;
+  background: var(--jamia-green);
+  box-shadow: 0 4px 14px rgb(20 115 79 / 18%);
+  font-size: 1.15rem;
+}
+
+.client-jamia-shell .brand-copy strong {
+  color: var(--jamia-ink);
+}
+
+.client-jamia-shell .brand-copy small {
+  max-width: 12rem;
+  color: var(--jamia-muted);
+  line-height: 1.35;
+}
+
+.client-jamia-shell .client-v2-institution {
+  border-color: var(--jamia-border);
+  border-inline-start: 3px solid var(--jamia-green);
+  background: linear-gradient(180deg, #ffffff, #f7fbf8);
+}
+
+.client-jamia-shell .client-v2-institution strong {
+  color: var(--jamia-ink);
+  line-height: 1.45;
+}
+
+.client-jamia-shell .client-v2-institution span,
+.client-jamia-shell .client-v2-institution small {
+  color: var(--jamia-muted);
+}
+
+.client-jamia-shell .client-v2-sidebar .nav-link {
+  color: #3a4941;
+}
+
+.client-jamia-shell .client-v2-sidebar .nav-link:hover {
+  background: #f2f7f4;
+  color: var(--jamia-green-deep);
+}
+
+.client-jamia-shell .client-v2-sidebar .nav-link[aria-current="page"] {
+  background: var(--jamia-green-soft);
+  color: var(--jamia-green-deep);
+  box-shadow: inset 3px 0 0 var(--jamia-green);
+}
+
+.client-jamia-shell .jamia-sidebar-meta {
+  display: grid;
+  gap: 0.18rem;
+  margin-top: auto;
+  padding: 0.75rem 0.7rem;
+  border-top: 1px solid var(--jamia-border);
+  color: var(--jamia-muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.client-jamia-shell .jamia-sidebar-meta a {
+  color: var(--jamia-blue);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.client-jamia-shell .client-v2-topbar {
+  border-top: 2px solid var(--jamia-blue);
+  border-bottom-color: var(--jamia-border);
+  background: rgb(255 255 255 / 96%);
+}
+
+.client-jamia-shell .topbar-context {
+  color: var(--jamia-ink);
+  font-weight: 760;
+}
+
+.client-jamia-shell .topbar-session {
+  color: var(--jamia-muted);
+}
+
+.client-jamia-shell .client-v2-topbar .action-button-primary {
+  background: var(--jamia-green);
+  border-color: var(--jamia-green);
+}
+
+.client-jamia-shell .client-v2-topbar .action-button-primary:hover {
+  background: var(--jamia-green-deep);
+  border-color: var(--jamia-green-deep);
+}
+
+.client-jamia-shell .client-v2-main {
+  background: var(--background);
+}
+
+.client-jamia-shell .dashboard-hero {
+  border-inline-start: 4px solid var(--jamia-green);
+  border-color: var(--jamia-border);
+  background: #ffffff;
+  box-shadow: 0 6px 22px rgb(21 53 38 / 4%);
+}
+
+.client-jamia-shell .dashboard-kickers .dashboard-live-dot {
+  background: var(--jamia-green-soft);
+  color: var(--jamia-green-deep);
+}
+
+.client-jamia-shell .dashboard-live-dot::before {
+  background: var(--jamia-green);
+}
+
+.client-jamia-shell .dashboard-metric {
+  border-color: var(--jamia-border);
+  background: #ffffff;
+}
+
+.client-jamia-shell .dashboard-metric:hover {
+  border-color: #b8cabf;
+}
+
+.client-jamia-shell .dashboard-metric-primary {
+  background: var(--jamia-green);
+  border-color: var(--jamia-green);
+}
+
+.client-jamia-shell .dashboard-route-grid a:hover {
+  border-color: var(--jamia-blue);
+  color: var(--jamia-blue);
+}
+
+.client-jamia-shell .mobile-nav {
+  --mobile-nav-accent: var(--jamia-green);
+}
+
+@media (max-width: 900px) {
+  .client-jamia-shell .client-v2-sidebar {
+    box-shadow: none;
+  }
+
+  .client-jamia-shell .client-v2-topbar {
+    border-top-width: 1px;
+  }
+
+  .client-jamia-shell .client-v2-main {
+    background: var(--background);
+  }
+}
+
+@media (max-width: 620px) {
+  .client-jamia-shell .jamia-sidebar-meta {
+    display: none;
+  }
+
+  .client-jamia-shell .dashboard-hero {
+    border-inline-start-width: 3px;
+  }
+}
+
+.client-jamia-shell .dashboard-section:has(.dashboard-trend-grid) {
+  display: none;
+}
+
+.client-jamia-shell .jamia-dashboard-director {
+  display: block;
+  margin-top: 0.8rem;
+  color: var(--jamia-muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+[lang="ur"] .client-jamia-shell .jamia-dashboard-director {
+  line-height: 1.9;
+}
+
+.client-jamia-shell .dashboard-route-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 620px) {
+  .client-jamia-shell .dashboard-route-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.client-jamia-portal {
+  min-height: 100dvh;
+  background:
+    linear-gradient(180deg, #f7faf8 0%, #ffffff 42%);
+}
+
+.client-jamia-portal > main {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(0.9rem, 3.5vw, 1.5rem) 3rem;
+}
+
+.client-jamia-portal .professional-card {
+  border-color: #dce5df;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgb(20 64 45 / 5%);
+}
+
+.client-jamia-portal .section-heading h1,
+.client-jamia-portal .section-heading h2 {
+  color: #17211b;
+}
+
+.client-jamia-portal .state-kicker {
+  color: #14734f;
+}
+
+.client-jamia-portal .action-button-primary,
+.client-jamia-portal .action-button[aria-current="page"] {
+  border-color: #14734f;
+  background: #14734f;
+  color: #ffffff;
+}
+
+.client-jamia-portal .locale-switcher {
+  direction: ltr;
+}
+
+.client-jamia-portal .locale-link[aria-current="page"] {
+  background: #eaf6f0;
+  color: #0d5a3d;
+}
+
+@media (max-width: 620px) {
+  .client-jamia-portal > main {
+    padding-inline: 0.85rem;
+  }
+
+  .client-jamia-portal .professional-card {
+    border-radius: 0.9rem;
+  }
+}

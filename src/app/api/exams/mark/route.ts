@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {validateExamMarkInput} from "@/lib/exams/model";
-import {isJsonRequest,isSameOriginRequest} from "@/lib/security/request";
+import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {getVerifiedIdentity} from "@/lib/supabase/identity";
 import {getTenantContext} from "@/lib/tenancy/context";
@@ -11,7 +11,9 @@ export async function POST(request:Request){
   const length=Number(request.headers.get("content-length")??0);if(Number.isFinite(length)&&length>16384)return NextResponse.json({error:"Request body is too large."},{status:413});
   const identity=await getVerifiedIdentity();if(!identity)return NextResponse.json({error:"Authentication required."},{status:401});
   const workspace=await getTenantContext();if(!workspace||workspace.identityId!==identity.id||!workspace.branchId)return NextResponse.json({error:"Active branch membership required."},{status:403});
-  let body:unknown;try{body=await request.json();}catch{return NextResponse.json({error:"Invalid JSON body."},{status:400});}
+  const parsedBody = await readBoundedJson(request, 16_384);
+  if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.error }, { status: parsedBody.status });
+  const body = parsedBody.value;
   const validation=validateExamMarkInput(body);if(!validation.value)return NextResponse.json({error:validation.errors[0]||"Invalid mark entry.",details:validation.errors},{status:400});
   const value=validation.value;const admin=createAdminClient();const {data,error}=await admin.rpc("record_exam_mark_v1",{p_identity_id:identity.id,p_tenant_id:workspace.tenantId,p_branch_id:workspace.branchId,p_exam_subject_id:value.examSubjectId,p_student_person_id:value.studentPersonId,p_entry_status:value.entryStatus,p_raw_marks:value.rawMarks,p_comment:value.comment});
   if(error){const message=error.message.toLowerCase();if(message.includes("permission denied"))return NextResponse.json({error:"Mark entry permission required."},{status:403});if(message.includes("not eligible")||message.includes("not open")||message.includes("not configured"))return NextResponse.json({error:error.message},{status:409});if(message.includes("invalid")||message.includes("outside")||message.includes("cannot carry")||message.includes("too long"))return NextResponse.json({error:error.message},{status:422});return NextResponse.json({error:"Unable to save marks."},{status:500});}
