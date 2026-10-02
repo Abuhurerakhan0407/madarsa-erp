@@ -43,4 +43,9 @@ describe("mobile API security contract", () => {
       expect(text, file).not.toMatch(/export async function (POST|PUT|PATCH|DELETE)/);
     }
   });
+
+  it("maps the bootstrap-created institution owner role to the admin mobile surface", () => {
+    expect(source("src/app/api/mobile/bootstrap/route.ts")).toContain('"institution_owner"');
+    expect(source("src/lib/mobile/server-auth.ts")).toContain('"institution_owner"');
+  });
 });
