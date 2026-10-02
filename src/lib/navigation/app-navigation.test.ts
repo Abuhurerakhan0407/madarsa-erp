@@ -17,6 +17,7 @@ const commercialOrder = [
   "fees",
   "donations",
   "operations",
+  "hostel",
   "certificates",
   "reports",
   "configuration",
@@ -28,7 +29,7 @@ const clientV2Order = commercialOrder.filter(
   (key) => !["academics", "payroll", "fees", "donations", "ai"].includes(key)
 );
 
-const retiredKeys = ["hostel", "transport", "library", "whatsapp"];
+const retiredKeys = ["transport", "library", "whatsapp"];
 
 describe("commercial app navigation", () => {
   it("keeps the full-product launch navigation in the required order", () => {

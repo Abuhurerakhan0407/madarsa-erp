@@ -4,7 +4,8 @@ export type ProductCapability =
   | "donations_zakat_sponsorships"
   | "ai_assistant"
   | "branches_roles_ui"
-  | "academics_timetable_homework";
+  | "academics_timetable_homework"
+  | "hostel_mess_operations";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -21,7 +22,7 @@ export type ClientProfileConfig = Readonly<{
 
 // Retired product areas remain fail-closed. They are not exposed as capabilities
 // because the current product no longer offers them through the legacy routes.
-const RETIRED_NAV_KEYS = new Set(["hostel", "transport", "library", "whatsapp", "demo"]);
+const RETIRED_NAV_KEYS = new Set(["transport", "library", "whatsapp", "demo"]);
 
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
@@ -54,7 +55,8 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   ai: "ai_assistant",
   assistant: "ai_assistant",
   branches: "branches_roles_ui",
-  access: "branches_roles_ui"
+  access: "branches_roles_ui",
+  hostel: "hostel_mess_operations"
 };
 
 function normalizeProfileValue(value: string): string {

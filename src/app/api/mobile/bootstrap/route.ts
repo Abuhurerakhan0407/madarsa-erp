@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     if (roleError) continue;
 
     const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
-    const surface: MobileSurface | null = roleKeys.some((key) => key === "owner" || key === "admin" || key === "accountant")
+    const surface: MobileSurface | null = roleKeys.some((key) => key === "institution_owner" || key === "owner" || key === "admin" || key === "accountant")
       ? "admin"
       : roleKeys.includes("teacher")
         ? "teacher"

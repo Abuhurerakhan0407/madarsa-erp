@@ -14,7 +14,8 @@ const mappedRoutes = [
   ["/ur/students/lifecycle", "student_lifecycle_import_promotion_renewal"],
   ["/en/contributions", "donations_zakat_sponsorships"],
   ["/en/assistant", "ai_assistant"],
-  ["/en/access", "branches_roles_ui"]
+  ["/en/access", "branches_roles_ui"],
+  ["/en/hostel", "hostel_mess_operations"]
 ] as const;
 
 describe("commercial capability access", () => {
@@ -25,7 +26,6 @@ describe("commercial capability access", () => {
 
   it("does not map retired application routes", () => {
     for (const pathname of [
-      "/en/hostel",
       "/en/transport",
       "/en/library",
       "/en/communications/whatsapp",
@@ -76,5 +76,6 @@ describe("commercial capability access", () => {
   it("never lets capability enablement bypass RBAC permission denial", () => {
     expect(canAccessCapability(CLIENT_PROFILES["full-product"], undefined, false)).toBe(false);
     expect(canAccessCapability(CLIENT_PROFILES["client-v2"], "branches_roles_ui", false)).toBe(false);
+    expect(canAccessCapability(CLIENT_PROFILES["client-v2"], "hostel_mess_operations")).toBe(true);
   });
 });

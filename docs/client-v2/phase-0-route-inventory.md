@@ -13,12 +13,15 @@
 | Fees & Accounting | `/{locale}/demo/fees` | hidden from navigation + server 404 boundary |
 | Import / Promotion / Renewal | `/{locale}/students/lifecycle` | hidden from navigation + server 404 boundary |
 | Donations / Sponsorships | `/{locale}/demo/donations` | hidden from navigation + server 404 boundary |
-| Hostel & Mess | `/{locale}/hostel` | hidden from navigation + server 404 boundary |
 | Transport | `/{locale}/transport` | hidden from navigation + server 404 boundary |
 | Library | `/{locale}/library` | hidden from navigation + server 404 boundary |
 | WhatsApp Automation | `/{locale}/communications/whatsapp` | hidden from navigation + server 404 boundary |
 | AI Assistant | `/{locale}/demo/ai` | hidden from navigation + server 404 boundary |
 | Branches & Roles UI | `/{locale}/access` | hidden from navigation + server 404 boundary; RBAC remains intact |
+
+## Reactivated commercial workspace
+
+Hostel & Mess is no longer a Client V2-hidden route. The current commercial workspace is `/{locale}/hostel`; visibility is controlled by the Hostel/Mess capability plus existing branch permissions. Teacher navigation remains unchanged.
 
 ## Client-hidden API families
 

@@ -12,7 +12,7 @@ const conversionPanel = root("src/components/admission-conversion-panel.tsx");
 
 describe("commercial release scope lock", () => {
   it("keeps removed modules out of runtime Client V3 navigation", () => {
-    for (const value of ["hostel", "transport", "library", "whatsapp", "student portal"])
+    for (const value of ["transport", "library", "whatsapp", "student portal"])
       expect(nav.toLowerCase()).not.toContain(value);
   });
 
@@ -20,7 +20,7 @@ describe("commercial release scope lock", () => {
     for (const key of [
       "admissions", "students", "programs", "academics", "lifecycle", "attendance",
       "quran", "exams", "portals", "teachers", "payroll", "fees", "contributions",
-      "documents", "reports", "settings", "access", "assistant"
+      "documents", "reports", "settings", "access", "assistant", "hostel"
     ]) expect(nav).toContain(`item("${key}"`);
   });
 

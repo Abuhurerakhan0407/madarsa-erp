@@ -14,7 +14,7 @@ describe("commercial launch gates", () => {
       { key: "backup_restore_drill_passed", owner: "operations" },
       { key: "pilot_institution_signed_off", owner: "product" },
       { key: "biometric_site_acceptance_passed", owner: "operations" },
-      { key: "apk_release_ready", owner: "engineering" }
+      { key: "hostel_mess_acceptance_passed", owner: "operations" }
     ]);
   });
   it("becomes ready only after all required gates pass", () => {

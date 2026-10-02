@@ -28,6 +28,7 @@ const PROTECTED_ROUTES = [
   "/en/payroll",
   "/en/assistant",
   "/en/access",
+  "/en/hostel",
   "/en/settings/configuration"
 ] as const;
 
@@ -43,7 +44,7 @@ for (const route of PROTECTED_ROUTES) {
 }
 
 test("preserves localized protected routes in the post-login next target", async ({ page }) => {
-  for (const route of ["/ur/students", "/ur/admissions"] as const) {
+  for (const route of ["/ur/students", "/ur/admissions", "/ur/hostel"] as const) {
     await page.goto(route);
     await expect(page).toHaveURL(expectedLoginPattern(route));
   }
