@@ -12,6 +12,7 @@ export type StudentDetail = {
   admissionNumber: string | null;
   name: string;
   nativeName: string | null;
+  photoStoragePath: string | null;
   dateOfBirth: string | null;
   gender: string | null;
   preferredLocale: "en" | "ur" | "ar";
@@ -73,7 +74,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
   if (!association.data) return null;
 
   const [person, profile, enrollment] = await Promise.all([
-    supabase.from("persons").select("id,display_name,name_native,date_of_birth,gender,preferred_locale").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
+    supabase.from("persons").select("id,display_name,name_native,photo_storage_path,date_of_birth,gender,preferred_locale").eq("tenant_id", workspace.tenantId).eq("id", personId).maybeSingle(),
     supabase.from("student_profiles").select("person_id,student_number,admission_number,status,joined_on,medical_summary,accessibility_needs,pickup_restrictions").eq("tenant_id", workspace.tenantId).eq("person_id", personId).maybeSingle(),
     supabase.from("enrollments").select("id,program_id,group_id,status").eq("tenant_id", workspace.tenantId).eq("branch_id", workspace.branchId).eq("student_person_id", personId).neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
@@ -122,6 +123,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     admissionNumber: profile.data.admission_number,
     name: person.data.display_name,
     nativeName: person.data.name_native,
+    photoStoragePath: person.data.photo_storage_path,
     dateOfBirth: person.data.date_of_birth,
     gender: person.data.gender,
     preferredLocale: supportedLocale(person.data.preferred_locale),

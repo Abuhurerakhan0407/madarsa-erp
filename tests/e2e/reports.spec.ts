@@ -1,5 +1,5 @@
 import {expect,test} from '@playwright/test';
-const body={reportKey:'student_master',parameters:{},outputFormat:'screen',requestKey:'report-request-e2e-00001'};
+const body={reportKey:'daily_attendance',parameters:{date_from:'2026-09-01',date_to:'2026-09-03'},outputFormat:'screen',requestKey:'report-request-e2e-00001'};
 const json={'content-type':'application/json'};
 test('report API rejects anonymous callers',async({request})=>{const response=await request.post('/api/reports/run',{headers:json,data:body});expect(response.status()).toBe(401);});
 test('report API blocks cross-origin mutation before auth',async({request})=>{const response=await request.post('/api/reports/run',{headers:{...json,origin:'https://attacker.example'},data:body});expect(response.status()).toBe(403);});

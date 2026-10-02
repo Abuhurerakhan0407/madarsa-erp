@@ -1,0 +1,9 @@
+import {readFileSync} from 'node:fs';
+import {describe,expect,it} from 'vitest';
+import {clientDocumentTypes,documentAvailable} from './workspace';
+const migration=readFileSync('supabase/migrations/20260903203000_phase10_documents_reports.sql','utf8');
+describe('Phase 10 documents and reports contract',()=>{
+ it('keeps all five required document types',()=>{expect(clientDocumentTypes).toEqual(['student_id_card','student_profile','status_certificate','exam_report_card','quran_progress_report']);});
+ it('uses availability from canonical document state',()=>{const base={personId:1,studentNumber:'S1',admissionNumber:null,name:'A',nameNative:null,sessionId:1,programId:1,groupId:1,academicYear:'2026',program:'Hifz',classGroup:'A',photoAvailable:true,idCardAvailable:true,profileAvailable:true,quranProgressAvailable:false,reportCardIssued:false,reportCardIssuedAt:null};expect(documentAvailable(base,'student_id_card')).toBe(true);expect(documentAvailable(base,'quran_progress_report')).toBe(false);expect(documentAvailable(base,'exam_report_card')).toBe(false);expect(documentAvailable(base,'status_certificate')).toBe(true);});
+ it('extends existing engines with real filters and service-role-only RPCs',()=>{expect(migration).toContain('get_operational_document_center_v2');expect(migration).toContain('run_operational_report_v1');expect(migration).toContain('student_number ilike');expect(migration).toContain("coalesce(s.admission_number,'') ilike");expect(migration).toContain('student_curriculum_progress');expect(migration).toContain('hr_effective_attendance_v1');expect(migration).toContain('quran_effective_recitation_attempts_v1');expect(migration).toContain('mark_entries');expect(migration).toContain('grant execute on function public.run_operational_report_v1');expect(migration).toContain('to service_role');expect(migration).not.toContain('raw_user_meta_data');});
+});

@@ -3,6 +3,7 @@ export type PdfTextLine = {
   size?: number;
   bold?: boolean;
   gapAfter?: number;
+  pageBreakBefore?: boolean;
 };
 
 type PdfOptions = {
@@ -59,6 +60,7 @@ function splitPages(lines: PdfTextLine[]): PdfTextLine[][] {
   let page: PdfTextLine[] = [];
   let used = 0;
   for (const line of lines) {
+    if (line.pageBreakBefore && page.length) { pages.push(page); page = []; used = 0; }
     const size = Math.min(Math.max(line.size ?? 10, 7), 24);
     const wrapped = chunks(line.text, size >= 16 ? 60 : 84).length;
     const height = wrapped * Math.max(size + 5, 14) + (line.gapAfter ?? 0);
