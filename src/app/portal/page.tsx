@@ -17,8 +17,9 @@ import { getPortalTeacherWorkspace } from "@/lib/portal/teacher-workspace";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
 
-export const metadata: Metadata = { title: "Parent & Teacher Portal | Ilmgaah" };
+export const metadata: Metadata = { title: "Guardian & Ustadh Portal | Jamia Islamia" };
 type Raw = Record<string, unknown>;
 const object = (value: unknown): Raw => value && typeof value === "object" && !Array.isArray(value) ? value as Raw : {};
 const rows = (value: unknown): Raw[] => Array.isArray(value) ? value.filter((item) => item && typeof item === "object" && !Array.isArray(item)) as Raw[] : [];
@@ -27,7 +28,7 @@ const num = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) :
 
 const copy = {
   en: {
-    portal: "Parent & Teacher Portal",
+    portal: "Guardian & Ustadh Portal",
     noAccess: "No portal access linked yet",
     noAccessBody: "Sign in is working, but this account has not been linked to a verified guardian or teacher record.",
     returnHome: "Back to home",
@@ -41,11 +42,11 @@ const copy = {
     notices: "Institution notices",
     archive: "Notice archive",
     noNotices: "No published portal notices.",
-    audience: { tenant: "Institution", parents: "Parents", employees: "Teachers" },
-    linkType: { guardian: "Guardian", employee: "Teacher" }
+    audience: { tenant: "Institution", parents: "Guardians", employees: "Ustadhs" },
+    linkType: { guardian: "Guardian", employee: "Ustadh" }
   },
   ur: {
-    portal: "والدین اور اساتذہ پورٹل",
+    portal: "گارڈین اور اساتذہ پورٹل",
     noAccess: "ابھی کوئی پورٹل رسائی منسلک نہیں",
     noAccessBody: "سائن اِن درست کام کر رہا ہے، لیکن یہ اکاؤنٹ ابھی کسی تصدیق شدہ سرپرست یا استاد کے ریکارڈ سے منسلک نہیں ہے۔",
     returnHome: "ہوم پر واپس جائیں",
@@ -59,7 +60,7 @@ const copy = {
     notices: "ادارے کی اطلاعات",
     archive: "اطلاعات کا ریکارڈ",
     noNotices: "کوئی شائع شدہ پورٹل اطلاع نہیں۔",
-    audience: { tenant: "ادارہ", parents: "والدین", employees: "اساتذہ" },
+    audience: { tenant: "ادارہ", parents: "گارڈین", employees: "اساتذہ" },
     linkType: { guardian: "سرپرست", employee: "استاد" }
   }
 } as const;
@@ -132,7 +133,7 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
   ]);
   if (tenantError) throw new Error(`Unable to load institution: ${tenantError.message}`);
 
-  const currentTenant = tenants?.find((item) => Number(item.id) === tenantId);
+
   const children = rows(home.children);
   const employee = object(home.employee);
   const notices = rows(home.notices);
@@ -146,7 +147,7 @@ export default async function PortalPage({ searchParams }: { searchParams: Promi
         <div className="section-heading">
           <div>
             <p className="state-kicker">{t.secure}</p>
-            <h1>{currentTenant?.name ?? "Ilmgaah"}</h1>
+            <h1>{locale === "ur" ? JAMIA_CLIENT.nameUr : JAMIA_CLIENT.name}</h1>
             <p>{portalLinks.map((link) => `${text(link.display_name)} · ${t.linkType[text(link.link_type) as keyof typeof t.linkType] ?? text(link.link_type)}`).join(" · ")}</p>
           </div>
           <div className="quick-actions">

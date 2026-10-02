@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { SupportedLocale } from "@/lib/i18n/config";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
 import { getNavigationAudience } from "@/lib/navigation/audience";
 import { getOperationalDashboard, type DashboardTrendPoint } from "@/lib/dashboard/workspace";
 import { getTenantContext } from "@/lib/tenancy/context";
@@ -49,16 +50,16 @@ type DashboardCopy = {
 const copy: Record<SupportedLocale, DashboardCopy> = {
   en: {
     year: "Academic year 2026–27",
-    subtitle: "Live branch operations across students, admissions, attendance, Qur'an learning, exams, teachers and reporting.",
+    subtitle: "Hifz, Arabic learning, Talaba, attendance, Ustadhs, hostel and Guardian Portal — one clear workspace.",
     live: "Live operations",
     metricsTitle: "Institution overview",
     metricsBody: "These figures come from the same governed records used inside each operational workspace.",
-    students: "Active students",
+    students: "Active Talaba",
     attendance: "Attendance today",
     attendanceNotStarted: "Not started",
     admissions: "Open admissions",
-    quran: "Qur'an / Hifz students",
-    staff: "Active teachers",
+    quran: "Hifz students",
+    staff: "Active Ustadhs",
     exams: "Current exam marks",
     total: "total",
     active: "active",
@@ -80,9 +81,9 @@ const copy: Record<SupportedLocale, DashboardCopy> = {
     admissionTrend: "Admissions submitted",
     quranTrend: "Qur'an attempts",
     attempts: "attempts",
-    quick: "Operational workspaces",
-    quickBody: "Open the workspaces used for day-to-day institution operations.",
-    routes: { admissions: "Admissions", students: "Students", programs: "Programs & Syllabus", attendance: "Attendance", quran: "Qur'an & Hifz", exams: "Exams & Results", staff: "Teachers", reports: "Reports & Analytics", documents: "IDs & Documents", configuration: "Institution Configuration" },
+    quick: "Main workspaces",
+    quickBody: "The everyday areas used by the Jamia office.",
+    routes: { admissions: "Admissions", students: "Talaba", attendance: "Attendance", quran: "Qur'an & Hifz", academics: "Academics", hostel: "Hostel", portals: "Guardian & Ustadh", exams: "Exams & Results", documents: "IDs & Documents", reports: "Reports" },
     alertLabels: { attendance_not_started: "Today's student attendance has not been opened", attendance_unmarked: "Students still unmarked for attendance", admissions_open: "Admission applications need workflow action", quran_revision_due: "Students have Qur'an revision due", staff_leave_pending: "Teacher leave requests are waiting", exam_marks_remaining: "Exam marks still need to be recorded" }
   },
   ur: {
@@ -95,7 +96,7 @@ const copy: Record<SupportedLocale, DashboardCopy> = {
     attendance: "آج کی حاضری",
     attendanceNotStarted: "شروع نہیں ہوئی",
     admissions: "کھلے داخلے",
-    quran: "قرآن / حفظ طلبہ",
+    quran: "حفظ طلبہ",
     staff: "فعال اساتذہ",
     exams: "موجودہ امتحانی نمبر",
     total: "کل",
@@ -118,8 +119,8 @@ const copy: Record<SupportedLocale, DashboardCopy> = {
     admissionTrend: "جمع شدہ داخلے",
     quranTrend: "قرآن کوششیں",
     attempts: "کوششیں",
-    quick: "آپریشنل ورک اسپیسز",
-    quickBody: "ادارے کے روزمرہ کام کے لیے متعلقہ ورک اسپیسز کھولیں۔",
+    quick: "اہم ورک اسپیسز",
+    quickBody: "جامعہ کے روزمرہ کام کے لیے اہم حصے کھولیں۔",
     routes: { admissions: "داخلہ", students: "طلبہ", programs: "پروگرامز و نصاب", attendance: "حاضری", quran: "قرآن و حفظ", exams: "امتحانات و نتائج", staff: "اساتذہ", reports: "رپورٹس و اینالیٹکس", documents: "ID و دستاویزات", configuration: "ادارہ کنفیگریشن" },
     alertLabels: { attendance_not_started: "آج طلبہ کی حاضری شروع نہیں ہوئی", attendance_unmarked: "طلبہ کی حاضری ابھی درج نہیں ہوئی", admissions_open: "داخلہ درخواستوں پر کارروائی باقی ہے", quran_revision_due: "طلبہ کا قرآن ریویژن باقی ہے", staff_leave_pending: "اساتذہ کی رخصت درخواستیں زیر انتظار ہیں", exam_marks_remaining: "امتحانی نمبر ابھی درج کرنا باقی ہیں" }
   }
@@ -165,20 +166,20 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const operationalRoutes = [
     ["admissions", `/${locale}/admissions`],
     ["students", `/${locale}/students`],
-    ["programs", `/${locale}/programs`],
     ["attendance", `/${locale}/attendance`],
     ["quran", `/${locale}/quran`],
+    ["academics", `/${locale}/people-academics`],
+    ["hostel", `/${locale}/hostel`],
+    ["portals", `/${locale}/portals`],
     ["exams", `/${locale}/exams`],
-    ["staff", `/${locale}/staff`],
-    ["reports", `/${locale}/reports`],
     ["documents", `/${locale}/documents`],
-    ["configuration", `/${locale}/settings/configuration`]
+    ["reports", `/${locale}/reports`]
   ] as const;
 
   return (
     <div className="operational-dashboard">
       <section className="dashboard-hero" data-page-section>
-        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{workspace.tenantName}</h1><p>{text.subtitle}</p></div>
+        <div><div className="dashboard-kickers"><span>{text.year}</span><span className="dashboard-live-dot">{text.live}</span></div><h1>{locale === "ur" ? JAMIA_CLIENT.nameUr : JAMIA_CLIENT.name}</h1><p>{text.subtitle}</p><small className="jamia-dashboard-director">{JAMIA_CLIENT.director} · {JAMIA_CLIENT.address}</small></div>
         <time dateTime={dashboard.localDate}>{dateLabel}</time>
       </section>
 

@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import { getDirection, type SupportedLocale } from "@/lib/i18n/config";
 import { getAppFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
 import "../globals.css";
 import "../professional.css";
 import "../professional-flows.css";
@@ -16,15 +17,16 @@ import "../documents.css";
 import "../dashboard.css";
 import "../client-v2.css";
 import "../client-v2-polish.css";
+import "../client-jamia.css";
 import "../quran-v2.css";
 import "../academics-v2.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Ilmgaah",
-    template: "%s | Ilmgaah"
+    default: JAMIA_CLIENT.name,
+    template: "%s | Jamia Islamia"
   },
-  description: "Ilmgaah institution operating system for madrasas and Islamic education.",
+  description: "Jamia Islamia Uloomul Quraan — Hifz, Arabic learning and residential hostel operations.",
   other: {
     google: "notranslate"
   }

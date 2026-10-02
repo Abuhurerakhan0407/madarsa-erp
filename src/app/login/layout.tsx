@@ -8,8 +8,8 @@ import "../auth-flow.css";
 import "../auth-professional.css";
 
 export const metadata: Metadata = {
-  title: "Sign in — Ilmgaah",
-  description: "Secure access to your Ilmgaah institution workspace."
+  title: "Sign in — Jamia Islamia",
+  description: "Secure access to the Jamia Islamia Uloomul Quraan workspace."
 };
 
 export default async function LoginLayout({
@@ -17,7 +17,7 @@ export default async function LoginLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const locale: SupportedLocale =
-    cookieStore.get("NEXT_LOCALE")?.value === "ur" ? "ur" : "en";
+    cookieStore.get("NEXT_LOCALE")?.value === "en" ? "en" : "ur";
 
   return (
     <html lang={locale} dir={getDirection(locale)}>

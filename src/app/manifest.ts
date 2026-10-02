@@ -3,17 +3,17 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Ilmgaah",
-    short_name: "Ilmgaah",
-    description: "Ilmgaah for madrasa administrators, teachers, parents, and staff.",
+    name: "Jamia Islamia Uloomul Quraan",
+    short_name: "Jamia Islamia",
+    description: "Jamia Islamia Uloomul Quraan for Hifz, Arabic learning and residential hostel operations.",
     start_url: "/login?source=app",
     scope: "/",
     display: "standalone",
-    background_color: "#f8f6ef",
-    theme_color: "#0a7154",
+    background_color: "#ffffff",
+    theme_color: "#14734f",
     orientation: "portrait-primary",
     categories: ["education", "productivity"],
-    lang: "en",
+    lang: "ur",
     icons: [
       {
         src: "/icons/icon-192.png",

@@ -490,3 +490,171 @@
     margin-block: 0.5rem;
   }
 }
+
+/* Jamia Islamia client login */
+.client-jamia-auth {
+  background: #f7faf8;
+}
+
+.client-jamia-auth .professional-auth-card {
+  border: 1px solid #dbe5df;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgb(19 66 47 / 9%);
+}
+
+.client-jamia-auth .auth-presentation {
+  position: relative;
+  min-height: 38rem;
+  overflow: hidden;
+  border-inline-end: 1px solid #e1e9e4;
+  background: #ffffff;
+  color: #17211b;
+}
+
+.client-jamia-auth .auth-presentation::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.28rem;
+  background: linear-gradient(90deg, #14734f 0%, #14734f 62%, #1769a8 100%);
+  content: "";
+}
+
+.client-jamia-auth .auth-presentation::after {
+  position: absolute;
+  inset-inline-end: -5rem;
+  inset-block-end: -5rem;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid rgb(23 105 168 / 12%);
+  border-radius: 50%;
+  content: "";
+}
+
+.client-jamia-auth .auth-brand-light .brand-mark {
+  border: 0;
+  background: #14734f;
+  color: #ffffff;
+}
+
+.client-jamia-auth .auth-brand-light strong {
+  color: #17211b !important;
+}
+
+.client-jamia-auth .auth-brand-light span:not(.brand-mark) {
+  color: #65736b !important;
+}
+
+.client-jamia-auth .auth-presentation-kicker {
+  color: #14734f;
+  font-size: 0.7rem;
+}
+
+.client-jamia-auth .auth-presentation-copy h2 {
+  max-width: 12ch;
+  color: #0f5138;
+  font-size: clamp(2.15rem, 4vw, 3.35rem);
+  line-height: 1;
+}
+
+.client-jamia-auth .auth-presentation-copy > p:last-child {
+  color: #5f6e66;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.client-jamia-auth .auth-presentation-points {
+  position: relative;
+  z-index: 1;
+}
+
+.client-jamia-auth .auth-presentation-points span {
+  border-color: #dce9e2;
+  background: #f7fbf8;
+  color: #315346;
+}
+
+.client-jamia-auth .jamia-auth-meta {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.2rem;
+  color: #6a776f;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.client-jamia-auth .jamia-auth-meta a {
+  color: #1769a8;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.client-jamia-auth .auth-form-panel {
+  background: #ffffff;
+}
+
+.client-jamia-auth .auth-form-panel .auth-heading h1 {
+  color: #17211b;
+}
+
+.client-jamia-auth .auth-form-panel .action-button-primary {
+  border-color: #14734f;
+  background: #14734f;
+  box-shadow: 0 7px 18px rgb(20 115 79 / 14%);
+}
+
+.client-jamia-auth .auth-form-panel .action-button-primary:hover {
+  border-color: #0d5a3d;
+  background: #0d5a3d;
+}
+
+.client-jamia-auth .auth-language-button[aria-pressed="true"] {
+  color: #0d5a3d;
+}
+
+.client-jamia-auth .auth-mode-switch {
+  color: #1769a8;
+}
+
+[dir="rtl"] .client-jamia-auth .auth-presentation {
+  border-inline-end: 0;
+  border-inline-start: 1px solid #e1e9e4;
+}
+
+@media (max-width: 820px) {
+  .client-jamia-auth .auth-presentation {
+    min-height: auto;
+    border-inline-end: 0;
+    border-block-end: 1px solid #e1e9e4;
+  }
+
+  [dir="rtl"] .client-jamia-auth .auth-presentation {
+    border-inline-start: 0;
+  }
+
+  .client-jamia-auth .auth-presentation-copy h2 {
+    max-width: 16ch;
+    font-size: 1.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .client-jamia-auth {
+    background: #ffffff;
+  }
+
+  .client-jamia-auth .professional-auth-card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .client-jamia-auth .auth-presentation {
+    border-radius: 0 0 0.9rem 0.9rem;
+  }
+
+  .client-jamia-auth .jamia-auth-meta {
+    display: none;
+  }
+}

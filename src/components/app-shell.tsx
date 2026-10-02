@@ -9,11 +9,9 @@ import { RoutePendingFeedback } from "@/components/route-pending-feedback";
 import { SessionRouteMemory } from "@/components/session-route-memory";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ErrorState } from "@/components/workspace-ui";
-import { getCurrentAcademicSessionLabel } from "@/lib/academics/current-session";
-import { resolveClientProfile } from "@/lib/capabilities/client-profile";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { getNavigationAudience } from "@/lib/navigation/audience";
-import { getClientV3Navigation, getSupplementalMobileNavigation } from "@/lib/navigation/client-v3-navigation";
+import { JAMIA_CLIENT, JAMIA_OFFICE_NAV } from "@/lib/client-branding";
 import type { TenantContext } from "@/lib/tenancy/context";
 
 type AppShellProps = { children: ReactNode; locale: SupportedLocale; workspace: TenantContext };
@@ -41,10 +39,9 @@ function initials(name: string) {
 }
 
 export async function AppShell({ children, locale, workspace }: AppShellProps) {
-  const [app, audience, configuredSessionLabel] = await Promise.all([
+  const [app, audience] = await Promise.all([
     getTranslations("App"),
-    getNavigationAudience(workspace),
-    getCurrentAcademicSessionLabel(locale)
+    getNavigationAudience(workspace)
   ]);
   const copy = shellCopy[locale];
 
@@ -61,34 +58,49 @@ export async function AppShell({ children, locale, workspace }: AppShellProps) {
     </div>;
   }
 
-  const branchLabel = workspace.branchName || copy.mainBranch;
-  const academicSessionLabel = configuredSessionLabel || copy.year;
-  const profile = resolveClientProfile(workspace.tenantSlug, workspace.clientProfile);
-  const nav = getClientV3Navigation(audience, profile);
-  const supplementalMobileItems = getSupplementalMobileNavigation(nav);
+  const clientName = locale === "ur" ? JAMIA_CLIENT.nameUr : JAMIA_CLIENT.name;
+  const clientShortName = locale === "ur" ? JAMIA_CLIENT.shortNameUr : JAMIA_CLIENT.shortName;
+  const branchLabel = locale === "ur" ? "مرکزی کیمپس" : JAMIA_CLIENT.branch;
+  const academicSessionLabel = JAMIA_CLIENT.year;
+  const nav = audience === "teacher"
+    ? JAMIA_OFFICE_NAV.filter((item) => ["home", "talaba", "attendance", "hifz", "portals"].includes(item.key))
+    : JAMIA_OFFICE_NAV;
+  const quickKeys = new Set(["home", "talaba", "attendance", "hifz"]);
+  const quickItems = nav.filter((item) => quickKeys.has(item.key)).map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }));
+  const supplementalMobileItems = nav.filter((item) => !quickKeys.has(item.key));
   const mobileGroups = supplementalMobileItems.length ? [{ key: "menu", label: copy.more, items: supplementalMobileItems.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) })) }] : [];
-  const quickItems = nav.mobile.map((item) => ({ key: item.key, label: item.labels[locale], href: item.href(locale) }));
 
-  return <div className="app-shell professional-shell client-v2-shell" data-client-v3 data-navigation-audience={audience}>
+  return <div className="app-shell professional-shell client-v2-shell client-jamia-shell" data-client-v3 data-client-jamia data-navigation-audience={audience}>
     <Suspense fallback={null}><RoutePendingFeedback /><SessionRouteMemory /></Suspense>
     <a className="skip-link" href="#main-content">{app("skipToContent")}</a>
     <aside className="sidebar professional-sidebar client-v2-sidebar" aria-label={copy.navigation}>
-      <div className="brand-lockup professional-brand-lockup"><span className="brand-mark" aria-hidden="true">I</span><span className="brand-copy"><strong>Ilmgaah</strong><small>{copy.productLine}</small></span></div>
-      <div className="institution-card professional-institution-card client-v2-institution"><span className="client-v2-institution-label">{copy.workspace}</span><strong>{workspace.tenantName}</strong><span>{branchLabel}</span><small>{academicSessionLabel}</small></div>
+      <div className="brand-lockup professional-brand-lockup">
+        <span className="brand-mark jamia-brand-mark" aria-hidden="true">ج</span>
+        <span className="brand-copy"><strong>{clientShortName}</strong><small>{locale === "ur" ? JAMIA_CLIENT.descriptorUr : JAMIA_CLIENT.descriptor}</small></span>
+      </div>
+      <div className="institution-card professional-institution-card client-v2-institution">
+        <span className="client-v2-institution-label">{locale === "ur" ? "ادارہ" : "Institution"}</span>
+        <strong>{clientName}</strong>
+        <span>{branchLabel}</span>
+        <small>{academicSessionLabel}</small>
+      </div>
       <nav aria-label={copy.navigation} className="primary-nav demo-primary-nav client-v2-primary-nav">
-        <div className="nav-section">{nav.primary.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</div>
-        {nav.more.length ? <details className="nav-section" open><summary className="nav-section-label" style={{ cursor: "pointer" }}>{copy.more}</summary>{nav.more.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</details> : null}
+        <div className="nav-section">{nav.map((item) => <AppNavLink href={item.href(locale)} key={item.key} className="nav-link"><span className="nav-indicator" aria-hidden="true" /><span>{item.labels[locale]}</span></AppNavLink>)}</div>
       </nav>
+      <div className="jamia-sidebar-meta">
+        <span>{JAMIA_CLIENT.director}</span>
+        <a href="tel:9450825657">{JAMIA_CLIENT.phone}</a>
+      </div>
       <LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — sidebar`} />
     </aside>
     <div className="workspace">
       <header className="topbar professional-topbar client-v2-topbar" style={{ gap: ".75rem", flexWrap: "wrap" }}>
-        <div className="topbar-school-context"><p className="topbar-context">{workspace.tenantName}</p><p className="topbar-session">{branchLabel} · {academicSessionLabel}</p></div>
+        <div className="topbar-school-context"><p className="topbar-context">{clientName}</p><p className="topbar-session">{branchLabel} · {academicSessionLabel}</p></div>
         {audience === "office" ? <GlobalStudentSearch locale={locale} /> : null}
         <div className="topbar-actions">{audience === "office" ? <AppNavLink className="action-button action-button-primary" href={`/${locale}/students/new`}>{copy.newAdmission}</AppNavLink> : null}<LocaleSwitcher currentLocale={locale} label={`${app("changeLanguage")} — topbar`} /><SignOutButton label={app("userMenu")} initials={initials(workspace.displayName)} title={workspace.displayName} locale={locale} /></div>
       </header>
       <main id="main-content" className="main-content professional-main-content client-v2-main"><InterfaceMotion />{children}</main>
     </div>
-    <MobileNavigation groups={mobileGroups} quickItems={quickItems} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={workspace.tenantName} branchLabel={branchLabel} />
+    <MobileNavigation groups={mobileGroups} quickItems={quickItems} menuLabel={copy.menu} closeLabel={copy.close} navigationLabel={copy.navigation} institutionName={clientName} branchLabel={branchLabel} />
   </div>;
 }

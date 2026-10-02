@@ -24,8 +24,8 @@ def twaManifest = [
     applicationId: 'in.ilmgaah.app',
     hostName: 'www.ilmgaah.in', // The domain being opened in the TWA.
     launchUrl: '/login?source=app', // The start path for the TWA. Must be relative to the domain.
-    name: 'Ilmgaah', // The application name.
-    launcherName: 'Ilmgaah', // The name shown on the Android Launcher.
+    name: 'Jamia Islamia Uloomul Quraan', // The client application name.
+    launcherName: 'Jamia Islamia', // The name shown on the Android Launcher.
     themeColor: '#0A7154', // The color used for the status bar.
     themeColorDark: '#075943', // The color used for the dark status bar.
     navigationColor: '#F8F6EF', // The color used for the navigation bar.
@@ -57,8 +57,8 @@ android {
         applicationId "in.ilmgaah.app"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 3
-        versionName "1.0.0"
+        versionCode 4
+        versionName "1.1.0"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name

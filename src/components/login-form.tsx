@@ -5,22 +5,23 @@ import { useRouter } from "next/navigation";
 import { safeAuthRedirect } from "@/lib/auth/redirects";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { createClient } from "@/lib/supabase/client";
+import { JAMIA_CLIENT } from "@/lib/client-branding";
 
 type Mode = "signin" | "signup";
 type FieldErrors = { email?: string; password?: string };
 
 const copy = {
   en: {
-    productLine: "Institution operations",
-    connected: "One connected workspace",
-    presentationTitle: "Run the madrasa from one clear mobile workspace.",
+    productLine: "Hifz • Arabic • Residential Hostel",
+    connected: "One calm workspace for the madrasa",
+    presentationTitle: "Jamia Islamia Uloomul Quraan",
     presentationBody:
-      "Admissions, students, attendance, Qur'an / Hifz, staff, documents and reports stay connected without fragmented registers.",
-    areas: ["Admissions", "Students", "Attendance", "Qur'an / Hifz", "Reports"],
-    secure: "Secure Ilmgaah access",
+      "Admissions, Talaba, attendance, Hifz, Ustadhs, hostel and Guardian Portal in one clear workspace.",
+    areas: ["Talaba", "Attendance", "Hifz", "Hostel", "Guardian Portal"],
+    secure: "Secure Jamia access",
     signInTitle: "Welcome back",
     signUpTitle: "Create your institution account",
-    signInBody: "Sign in to continue to your institution workspace.",
+    signInBody: "Sign in to continue to the Jamia workspace.",
     signUpBody: "Create an account. Institution setup continues after sign in.",
     email: "Email address",
     password: "Password",
@@ -38,16 +39,16 @@ const copy = {
     language: "Language"
   },
   ur: {
-    productLine: "ادارہ آپریشنز",
-    connected: "ایک مربوط ورک اسپیس",
-    presentationTitle: "مدرسے کا روزمرہ کام ایک واضح موبائل ورک اسپیس سے چلائیں۔",
+    productLine: "حفظ • عربی • رہائشی ہاسٹل",
+    connected: "مدرسے کے لیے ایک سادہ ورک اسپیس",
+    presentationTitle: "جامعہ اسلامیہ علوم القرآن",
     presentationBody:
-      "داخلہ، طلبہ، حاضری، قرآن / حفظ، عملہ، دستاویزات اور رپورٹس ایک ہی جگہ مربوط رہتے ہیں۔",
-    areas: ["داخلہ", "طلبہ", "حاضری", "قرآن / حفظ", "رپورٹس"],
-    secure: "محفوظ علمگاہ رسائی",
+      "داخلہ، طلبہ، حاضری، حفظ، اساتذہ، ہاسٹل اور گارڈین پورٹل ایک ہی واضح ورک اسپیس میں۔",
+    areas: ["طلبہ", "حاضری", "حفظ", "ہاسٹل", "گارڈین پورٹل"],
+    secure: "جامعہ کی محفوظ رسائی",
     signInTitle: "خوش آمدید",
     signUpTitle: "ادارے کا اکاؤنٹ بنائیں",
-    signInBody: "اپنے ادارے کے ورک اسپیس میں جانے کے لیے سائن اِن کریں۔",
+    signInBody: "جامعہ کے ورک اسپیس میں جانے کے لیے سائن اِن کریں۔",
     signUpBody: "اکاؤنٹ بنائیں۔ سائن اِن کے بعد ادارے کا سیٹ اپ جاری رہے گا۔",
     email: "ای میل",
     password: "پاس ورڈ",
@@ -177,13 +178,13 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
   }
 
   return (
-    <main className="auth-screen professional-auth-screen">
+    <main className="auth-screen professional-auth-screen client-jamia-auth">
       <section className="auth-card professional-auth-card" aria-labelledby="auth-title">
         <aside className="auth-presentation" aria-label="Ilmgaah">
-          <div className="auth-brand auth-brand-light">
-            <span className="brand-mark" aria-hidden="true">I</span>
+          <div className="auth-brand auth-brand-light jamia-auth-brand">
+            <span className="brand-mark jamia-brand-mark" aria-hidden="true">ج</span>
             <div>
-              <strong>Ilmgaah</strong>
+              <strong>{locale === "ur" ? JAMIA_CLIENT.shortNameUr : JAMIA_CLIENT.shortName}</strong>
               <span>{text.productLine}</span>
             </div>
           </div>
@@ -196,6 +197,10 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
 
           <div className="auth-presentation-points" aria-label="Core areas">
             {text.areas.map((area) => <span key={area}>{area}</span>)}
+          </div>
+          <div className="jamia-auth-meta">
+            <span>{JAMIA_CLIENT.director}</span>
+            <a href="tel:9450825657">{JAMIA_CLIENT.phone}</a>
           </div>
         </aside>
 

@@ -13,7 +13,7 @@ const copy: Record<SupportedLocale, {
   en: {
     title: "Parent & Teacher Access | Ilmgaah",
     kicker: "People & access",
-    heading: "Parent & Teacher Access",
+    heading: "Guardian & Ustadh Access",
     body: "Manage parent and teacher portal access, credentials and institution notices without exposing unrelated HR or role-administration data."
   },
   ur: {
