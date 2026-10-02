@@ -1,0 +1,4 @@
+import {getContributionsWorkspace} from '@/lib/contributions/workspace';
+import {ContributionsWorkspaceView} from '@/components/contributions-workspace';
+const copy={en:{kicker:'Community finance',title:'Contributions',body:'Record donations, Zakat and sponsorships with contributor details, optional beneficiary links and receipt references.'},ur:{kicker:'کمیونٹی مالیات',title:'عطیات',body:'عطیات، زکوٰۃ اور کفالت کو عطیہ دہندہ، اختیاری مستفید طالب علم اور رسید کے ساتھ درج کریں۔'}} as const;
+export default async function ContributionsPage({params}:{params:Promise<{locale:string}>}){const{locale:raw}=await params;const locale=raw==='ur'?'ur':'en';const data=await getContributionsWorkspace();const t=copy[locale];return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p></div></section><ContributionsWorkspaceView locale={locale} data={data}/></>;}

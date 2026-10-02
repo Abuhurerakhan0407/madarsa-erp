@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StudentPlacementForm } from "@/components/student-placement-form";
+import { operatorHasPermissions } from "@/lib/access/operator-permission";
 import type { Locale } from "@/lib/i18n/config";
 import { getStudentDetail } from "@/lib/students/detail";
 import { getStudentPlacement } from "@/lib/students/placement";
+import { getTenantContext } from "@/lib/tenancy/context";
 
 const copy = {
   en: { kicker: "Student · Enrollment", title: "Manage class placement", body: "Change the student's class/group inside the current academic session and program. Program transfers and session promotion stay governed workflows elsewhere.", back: "Back to profile", session: "Academic session", program: "Program", current: "Current class / group" },
@@ -16,6 +18,8 @@ export default async function StudentPlacementPage({ params }: { params: Promise
   const locale = raw.locale as Locale;
   const personId = Number(raw.personId);
   if (!Number.isInteger(personId) || personId <= 0) notFound();
+  const workspace = await getTenantContext();
+  if (!workspace?.branchId || !(await operatorHasPermissions(workspace, ["academics.enrollment.manage"]))) notFound();
   const [student, placement] = await Promise.all([getStudentDetail(personId, locale), getStudentPlacement(personId, locale)]);
   if (!student || !placement) notFound();
   const text = copy[locale];

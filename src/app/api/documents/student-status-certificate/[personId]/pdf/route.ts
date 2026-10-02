@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server";
-import { createStudentStatusCertificatePdf } from "@/lib/documents/student-status-pdf";
+import { createUnicodeStudentStatusCertificatePdf } from "@/lib/documents/student-status-pdf";
 import { getStudentStatusCertificate } from "@/lib/documents/student-status";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ personId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ personId: string }> }) {
   const identity = await getVerifiedIdentity();
   if (!identity) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const workspace = await getTenantContext();
   if (!workspace || workspace.identityId !== identity.id || !workspace.branchId) {
     return NextResponse.json({ error: "Active branch membership required." }, { status: 403 });
   }
+  const locale = new URL(request.url).searchParams.get("locale") === "ur" ? "ur" : "en";
   const personId = Number((await params).personId);
   if (!Number.isInteger(personId) || personId <= 0) return NextResponse.json({ error: "Student is invalid." }, { status: 400 });
 
   try {
     const certificate = await getStudentStatusCertificate(personId);
     if (!certificate) return NextResponse.json({ error: "Student status certificate has not been issued." }, { status: 404 });
-    const pdf = createStudentStatusCertificatePdf(certificate);
+    const pdf = await createUnicodeStudentStatusCertificatePdf(certificate, locale);
     const buffer = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     return new Response(buffer, {
       status: 200,
