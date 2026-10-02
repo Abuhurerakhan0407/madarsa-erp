@@ -57,26 +57,40 @@ async function findUser(admin: SupabaseClient, email: string) {
 }
 
 async function ensureUser(admin: SupabaseClient, email: string, portalAccount: boolean) {
-  const nextPassword = password();
-  const existing = await findUser(admin, email);
-  if (existing) {
-    const updated = await admin.auth.admin.updateUserById(existing.id, {
-      password: nextPassword,
-      email_confirm: true,
-      app_metadata: { ...existing.app_metadata, ...(portalAccount ? { portal_account: true } : {}) },
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const nextPassword = password();
+    const existing = await findUser(admin, email);
+    let account: { id: string; email: string; password: string };
+
+    if (existing) {
+      const updated = await admin.auth.admin.updateUserById(existing.id, {
+        password: nextPassword,
+        email_confirm: true,
+        app_metadata: { ...existing.app_metadata, ...(portalAccount ? { portal_account: true } : {}) },
+      });
+      if (updated.error || !updated.data.user) throw new Error("Unable to reset staging E2E user: " + email);
+      account = { id: updated.data.user.id, email, password: nextPassword };
+    } else {
+      const created = await admin.auth.admin.createUser({
+        email,
+        password: nextPassword,
+        email_confirm: true,
+        app_metadata: portalAccount ? { portal_account: true } : {},
+      });
+      if (created.error || !created.data.user) throw new Error("Unable to create staging E2E user: " + email);
+      account = { id: created.data.user.id, email, password: nextPassword };
+    }
+
+    const verified = await admin.auth.signInWithPassword({
+      email: account.email,
+      password: account.password,
     });
-    if (updated.error || !updated.data.user) throw new Error("Unable to reset staging E2E user: " + email);
-    return { id: updated.data.user.id, email, password: nextPassword };
+    if (!verified.error && verified.data.user) return account;
+
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
   }
 
-  const created = await admin.auth.admin.createUser({
-    email,
-    password: nextPassword,
-    email_confirm: true,
-    app_metadata: portalAccount ? { portal_account: true } : {},
-  });
-  if (created.error || !created.data.user) throw new Error("Unable to create staging E2E user: " + email);
-  return { id: created.data.user.id, email, password: nextPassword };
+  throw new Error("Unable to verify staging E2E password credentials: " + email);
 }
 
 export async function provisionStagingRoleUsers(projectName: string): Promise<Provisioned> {
