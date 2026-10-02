@@ -7,10 +7,10 @@ import { HrAttendanceV2Workspace } from "@/components/hr-attendance-v2-workspace
 const copy = {
   en: {
     kicker: "Attendance",
-    title: "Teacher / Staff attendance",
-    body: "Biometric-first teacher and staff attendance with governed emergency manual controls.",
-    students: "Students",
-    teachers: "Teachers / Staff",
+    title: "Ustadh / Staff attendance",
+    body: "Biometric-first Ustadh and staff attendance with governed emergency manual controls.",
+    students: "Talaba",
+    teachers: "Ustadh / Staff",
     date: "Attendance date",
     load: "Load"
   },

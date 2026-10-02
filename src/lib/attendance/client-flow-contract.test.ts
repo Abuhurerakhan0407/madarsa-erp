@@ -12,11 +12,11 @@ const exportRoute = read("src/app/api/attendance/export/route.ts");
 const attendanceCss = read("src/app/[locale]/attendance/attendance.css");
 
 describe("client attendance flow", () => {
-  it("uses a compact Students / Teachers segmented attendance shell", () => {
+  it("uses a compact Talaba / Ustadh segmented attendance shell", () => {
     expect(studentPage).toContain("attendance-audience-tabs");
-    expect(studentPage).toContain("Teachers / Staff");
+    expect(studentPage).toContain("Ustadh / Staff");
     expect(teacherPage).toContain("attendance-audience-tabs");
-    expect(teacherPage).toContain("Teachers / Staff");
+    expect(teacherPage).toContain("Ustadh / Staff");
     expect(attendanceCss).toContain(".attendance-audience-tab.is-active");
   });
 
