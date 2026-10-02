@@ -60,7 +60,7 @@ describe("Hostel & Mess workspace contract", () => {
   it("keeps the restored route on English and Urdu release copy", () => {
     expect(page).toContain(" en:{");
     expect(page).toContain(" ur:{");
-    expect(page).toContain("Hostel & Mess");
-    expect(page).toContain("ہاسٹل اور میس");
+    expect(page).toContain("Hostel operations");
+    expect(page).toContain("ہاسٹل آپریشنز");
   });
 });

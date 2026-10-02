@@ -50,12 +50,12 @@ const embeddedWebManifest = JSON.parse(
 ) as { start_url?: string };
 
 describe("Android TWA release configuration", () => {
-  it("locks the Ilmgaah Android identity and trusted origin", () => {
+  it("locks the Jamia Islamia Android identity and trusted origin", () => {
     expect(config).toMatchObject({
       packageId: "in.ilmgaah.app",
       host: "www.ilmgaah.in",
-      name: "Ilmgaah",
-      launcherName: "Ilmgaah",
+      name: "Jamia Islamia Uloomul Quraan",
+      launcherName: "Jamia Islamia",
       startUrl: "/login?source=app",
       enableNotifications: true,
       fallbackType: "webview",
@@ -111,8 +111,8 @@ describe("Android TWA release configuration", () => {
     expect(config.signingKey.path).not.toMatch(/password|secret|token/i);
   });
 
-  it("locks version 1.0.0 / code 3", () => {
-    expect(config.appVersion).toBe("1.0.0");
-    expect(config.appVersionCode).toBe(3);
+  it("locks client version 1.1.0 / code 4", () => {
+    expect(config.appVersion).toBe("1.1.0");
+    expect(config.appVersionCode).toBe(4);
   });
 });
