@@ -33,7 +33,7 @@ const configured = (role: Role) => Boolean(
 test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
   const provisioned = await provisionStagingRoleUsers(
-    testInfo.project.name + "-worker-" + testInfo.workerIndex
+    testInfo.project.name + "-worker-" + testInfo.parallelIndex
   );
   credentials = provisioned.credentials;
   expect(roles.every((role) => configured(role))).toBe(true);
