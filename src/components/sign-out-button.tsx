@@ -4,36 +4,74 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type UiLocale = "en" | "ur";
+
+const copy = {
+  en: {
+    signOut: "Sign out",
+    signingOut: "Signing out…",
+    error: "Unable to sign out. Please try again."
+  },
+  ur: {
+    signOut: "سائن آؤٹ",
+    signingOut: "سائن آؤٹ ہو رہا ہے…",
+    error: "سائن آؤٹ نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
+  }
+} as const;
+
 export function SignOutButton({
   label,
   initials,
-  title
+  title,
+  locale = "en",
+  afterSignOut = "/login"
 }: {
   label: string;
   initials: string;
   title: string;
+  locale?: UiLocale;
+  afterSignOut?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const text = copy[locale];
 
   async function signOut() {
+    if (busy) return;
     setBusy(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        setError(text.error);
+        return;
+      }
+      router.push(afterSignOut);
+      router.refresh();
+    } catch {
+      setError(text.error);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <button
-      type="button"
-      className="user-button"
-      aria-label={`${label}: ${title}`}
-      title={`${title} — Sign out`}
-      onClick={signOut}
-      disabled={busy}
-    >
-      {busy ? "…" : initials}
-    </button>
+    <>
+      <button
+        type="button"
+        className="user-button"
+        aria-label={`${label}: ${title}. ${busy ? text.signingOut : text.signOut}`}
+        aria-busy={busy || undefined}
+        title={`${title} — ${busy ? text.signingOut : text.signOut}`}
+        onClick={signOut}
+        disabled={busy}
+      >
+        {busy ? <span className="inline-spinner" aria-hidden="true" /> : initials}
+      </button>
+      {error ? <span className="form-message form-error" role="alert">{error}</span> : null}
+    </>
   );
 }

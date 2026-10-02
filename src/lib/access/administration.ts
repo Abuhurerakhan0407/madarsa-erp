@@ -12,7 +12,7 @@ export type AccessCenter={
  branches:Array<{id:number;code:string;name:string;status:string}>;
  permissions:Array<{code:string;description:string}>;
  roles:Array<{id:number;key:string;name:string;status:string;isSystem:boolean;permissions:string[];memberCount:number}>;
- memberships:Array<{id:number;identityId:string;status:string;allBranches:boolean;roles:Array<{id:number;key:string;name:string;isSystem:boolean}>;branchScopes:Array<{id:number;code:string;name:string}>;isCurrentAdmin:boolean}>;
+ memberships:Array<{id:number;identityId:string;displayName:string|null;email:string|null;status:string;allBranches:boolean;roles:Array<{id:number;key:string;name:string;isSystem:boolean}>;branchScopes:Array<{id:number;code:string;name:string}>;isCurrentAdmin:boolean}>;
  adminMembershipId:number;
 };
 async function ws(){const w=await getTenantContext();if(!w)throw new Error("Active institution is required.");return w;}
@@ -20,7 +20,7 @@ export async function getAccessAdministrationCenter():Promise<AccessCenter>{cons
  branches:rows(raw.branches).flatMap(r=>{const id=num(r.id),code=text(r.code),name=text(r.name);return id&&code&&name?[{id,code,name,status:text(r.status)??"active"}]:[]}),
  permissions:rows(raw.permissions).flatMap(r=>{const code=text(r.code),description=text(r.description);return code&&description?[{code,description}]:[]}),
  roles:rows(raw.roles).flatMap(r=>{const id=num(r.id),key=text(r.key),name=text(r.name);return id&&key&&name?[{id,key,name,status:text(r.status)??"active",isSystem:bool(r.is_system),permissions:Array.isArray(r.permissions)?r.permissions.filter((x):x is string=>typeof x==="string"):[],memberCount:num(r.member_count)??0}]:[]}),
- memberships:rows(raw.memberships).flatMap(r=>{const id=num(r.id),identityId=text(r.identity_id);if(!id||!identityId)return[];return[{id,identityId,status:text(r.status)??"active",allBranches:bool(r.all_branches),roles:rows(r.roles).flatMap(x=>{const rid=num(x.id),key=text(x.key),name=text(x.name);return rid&&key&&name?[{id:rid,key,name,isSystem:bool(x.is_system)}]:[]}),branchScopes:rows(r.branch_scopes).flatMap(x=>{const bid=num(x.id),code=text(x.code),name=text(x.name);return bid&&code&&name?[{id:bid,code,name}]:[]}),isCurrentAdmin:bool(r.is_current_admin)}]}),
+ memberships:rows(raw.memberships).flatMap(r=>{const id=num(r.id),identityId=text(r.identity_id);if(!id||!identityId)return[];return[{id,identityId,displayName:text(r.display_name),email:text(r.email),status:text(r.status)??"active",allBranches:bool(r.all_branches),roles:rows(r.roles).flatMap(x=>{const rid=num(x.id),key=text(x.key),name=text(x.name);return rid&&key&&name?[{id:rid,key,name,isSystem:bool(x.is_system)}]:[]}),branchScopes:rows(r.branch_scopes).flatMap(x=>{const bid=num(x.id),code=text(x.code),name=text(x.name);return bid&&code&&name?[{id:bid,code,name}]:[]}),isCurrentAdmin:bool(r.is_current_admin)}]}),
  adminMembershipId:num(raw.admin_membership_id)??0
 };}
 export async function createCustomRole(input:{key:string;name:string}){const w=await ws();const admin=createAdminClient();const{data,error}=await admin.rpc("create_custom_role_v1",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_key:input.key,p_name:input.name});if(error)throw new Error(error.message);return obj(data);}

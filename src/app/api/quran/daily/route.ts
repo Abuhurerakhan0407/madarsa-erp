@@ -13,6 +13,9 @@ function mapRuntimeError(message: string): { status: number; error: string } {
   if (normalized.includes("not actively enrolled")) {
     return { status: 404, error: "Student is not actively enrolled in this Halaqah or group." };
   }
+  if (normalized.includes("later active quran target exists")) {
+    return { status: 409, error: "A later active Qur'an target already exists. Review that later target before entering this older lesson." };
+  }
   if (
     normalized.includes("invalid") ||
     normalized.includes("required") ||
@@ -57,30 +60,7 @@ export async function POST(request: Request) {
   const value = validation.value;
   const admin = createAdminClient();
 
-  if (value.action !== "absent" && value.action !== "no_lesson") {
-    const { data: laterTargets, error: laterTargetError } = await admin
-      .from("quran_student_targets")
-      .select("id")
-      .eq("tenant_id", workspace.tenantId)
-      .eq("branch_id", workspace.branchId)
-      .eq("student_person_id", value.personId)
-      .eq("work_category", value.workCategory)
-      .eq("status", "active")
-      .gt("assigned_on", value.sessionDate)
-      .limit(1);
-
-    if (laterTargetError) {
-      return NextResponse.json({ error: "Unable to verify the student's Qur'an target timeline." }, { status: 500 });
-    }
-    if (laterTargets && laterTargets.length > 0) {
-      return NextResponse.json(
-        { error: "A later active Qur'an target already exists. Review that later target before entering this older lesson." },
-        { status: 409 }
-      );
-    }
-  }
-
-  const { data, error } = await admin.rpc("record_quran_hifz_daily_quick_v1", {
+  const { data, error } = await admin.rpc("record_quran_hifz_daily_quick_v2", {
     p_identity_id: identity.id,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
@@ -95,7 +75,6 @@ export async function POST(request: Request) {
     p_tajweed_score: value.tajweedScore ?? null,
     p_fluency_score: value.fluencyScore ?? null,
     p_mistake_count: value.mistakeCount,
-    p_teacher_person_id: null,
     p_teacher_note: value.teacherNote ?? null,
     p_next_target: value.nextTarget ?? null,
     p_revision_due_on: value.revisionDueOn ?? null
