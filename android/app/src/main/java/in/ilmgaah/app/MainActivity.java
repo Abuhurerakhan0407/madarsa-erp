@@ -803,7 +803,7 @@ public class MainActivity extends Activity {
         addActionCard("حفظ پروگرام", "روزانہ سبق، سبق دَور، revision اور progress");
         addActionCard("عربی پروگرام", "کلاس، مضمون اور نصاب کی بنیاد");
         addActionCard("ٹائم ٹیبل", "برانچ اور کلاس کے روزمرہ اوقات");
-        addActionCard("اساتذہ کی teaching view", "Ustadh کے لیے متعلقہ classes اور students");
+        addActionCard("Ustadh teaching view", "Ustadh کے لیے متعلقہ classes اور Talaba");
     }
 
     private void renderHifz() {
@@ -812,7 +812,7 @@ public class MainActivity extends Activity {
         addActionCard("روزانہ حفظ رجسٹر", "سبق، دَور اور recitation attempt");
         addActionCard("طلبہ کی پیش رفت", "طالب علم کی حفظ progress اور strength");
         addActionCard("Revision due", "جن طلبہ کی مراجعت باقی ہے");
-        addActionCard("Teacher review", "Ustadh کے لیے daily Hifz workflow");
+        addActionCard("Ustadh review", "Ustadh کے لیے daily Hifz workflow");
     }
 
     private void renderExams() {
@@ -924,18 +924,18 @@ public class MainActivity extends Activity {
     }
 
     private void renderDocuments() {
-        titleBlock("ID و دستاویزات", "Documents, ID cards and certificates");
+        titleBlock("ID و دستاویزات", "Talaba ID cards and certificates");
         addActionCard("Talaba ID cards", "ID card batch generation");
-        addActionCard("Certificates", "Student status / certificate workflow");
-        addActionCard("Documents", "Student-linked documents");
+        addActionCard("Certificates", "Talaba status / certificate workflow");
+        addActionCard("Documents", "Talaba-linked documents");
     }
     private void renderReports() {
         titleBlock("رپورٹس", "Operational reports");
         addActionCard("Attendance report", "Student attendance summary");
-        addActionCard("Hifz report", "Qur’an / Hifz progress");
-        addActionCard("Admissions report", "Admission pipeline summary");
-        addActionCard("Hostel report", "Resident and allocation overview");
-        addActionCard("Exam report", "Marks and published results");
+        addActionCard("Hifz report", "Qur’an / Talaba Hifz progress");
+        addActionCard("Admissions report", "Talaba admission pipeline summary");
+        addActionCard("Hostel report", "Talaba resident and allocation overview");
+        addActionCard("Exam report", "Talaba marks and published results");
     }
 
     private void renderMore() {
