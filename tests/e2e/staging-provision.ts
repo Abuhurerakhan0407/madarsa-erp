@@ -295,9 +295,19 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
       p_rules: {},
     });
     if (madeHostel.error || !madeHostel.data?.hostel_id) {
-      throw new Error("Unable to create staging Hostel fixture: " + (madeHostel.error?.message ?? "unknown error"));
+      const racedHostel = await admin.from("hostels")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("branch_id", branchId)
+        .eq("key", hostelKey)
+        .maybeSingle();
+      if (racedHostel.error || !racedHostel.data) {
+        throw new Error("Unable to create staging Hostel fixture: " + (madeHostel.error?.message ?? "unknown error"));
+      }
+      hostelId = racedHostel.data.id;
+    } else {
+      hostelId = Number(madeHostel.data.hostel_id);
     }
-    hostelId = Number(madeHostel.data.hostel_id);
   }
 
   const existingBed = await admin.from("hostel_beds")
@@ -325,9 +335,21 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
       p_category: "standard",
     });
     if (madeBed.error || !madeBed.data?.bed_id) {
-      throw new Error("Unable to create staging bed fixture: " + (madeBed.error?.message ?? "unknown error"));
+      const racedBed = await admin.from("hostel_beds")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("hostel_id", hostelId)
+        .eq("building_key", "A")
+        .eq("room_key", "101")
+        .eq("bed_key", "01")
+        .maybeSingle();
+      if (racedBed.error || !racedBed.data) {
+        throw new Error("Unable to create staging bed fixture: " + (madeBed.error?.message ?? "unknown error"));
+      }
+      bedId = racedBed.data.id;
+    } else {
+      bedId = Number(madeBed.data.bed_id);
     }
-    bedId = Number(madeBed.data.bed_id);
   }
 
   const existingAllocation = await admin.from("hostel_allocations")
