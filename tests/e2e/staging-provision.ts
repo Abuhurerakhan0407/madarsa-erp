@@ -302,7 +302,7 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
     .select("id")
     .eq("tenant_id", tenantId)
     .eq("hostel_id", hostelId)
-    .eq("building_key", "A")
+    .eq("building_key", "a")
     .eq("room_key", "101")
     .eq("bed_key", "01")
     .maybeSingle();
