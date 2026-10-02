@@ -412,8 +412,9 @@ public class MainActivity extends Activity {
 
                     if (chosen == null) {
                         signInButton.setEnabled(true);
-                        signInButton.setText("سائن اِن");
-                        error.setText("اس اکاؤنٹ کے لیے فعال ورک اسپیس نہیں ہے۔");
+                        signInButton.setText(tr("سائن اِن", "Sign in"));
+                        error.setText(tr("اس اکاؤنٹ کے لیے فعال ورک اسپیس نہیں ہے۔",
+                                "This account has no active workspace."));
                         return;
                     }
 
