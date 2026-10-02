@@ -36,6 +36,11 @@ describe("mobile API security contract", () => {
     }
   });
 
+  it("maps the canonical institution owner role to the admin surface", () => {
+    expect(source("src/app/api/mobile/bootstrap/route.ts")).toContain('key === "institution_owner"');
+    expect(source("src/lib/mobile/server-auth.ts")).toContain('key === "institution_owner"');
+  });
+
   it("keeps mobile routes read-only", () => {
     for (const file of routeFiles) {
       const text = source(file);
