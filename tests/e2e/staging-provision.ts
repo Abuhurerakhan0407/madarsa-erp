@@ -314,7 +314,7 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
     .select("id")
     .eq("tenant_id", tenantId)
     .eq("hostel_id", hostelId)
-    .eq("building_key", "A")
+    .eq("building_key", "a")
     .eq("room_key", "101")
     .eq("bed_key", "01")
     .maybeSingle();
@@ -328,7 +328,7 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
       p_tenant_id: tenantId,
       p_branch_id: branchId,
       p_hostel_id: hostelId,
-      p_building_key: "A",
+      p_building_key: "a",
       p_floor_key: "1",
       p_room_key: "101",
       p_bed_key: "01",
@@ -339,7 +339,7 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
         .select("id")
         .eq("tenant_id", tenantId)
         .eq("hostel_id", hostelId)
-        .eq("building_key", "A")
+        .eq("building_key", "a")
         .eq("room_key", "101")
         .eq("bed_key", "01")
         .maybeSingle();
