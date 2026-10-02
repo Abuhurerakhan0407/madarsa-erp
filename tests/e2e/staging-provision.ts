@@ -143,24 +143,41 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
   if (numbering.error) throw new Error("Unable to prepare staging student numbering: " + numbering.error.message);
 
-  const employeeSequence = await admin.from("number_sequences").upsert({
-    tenant_id: tenantId,
-    branch_id: branchId,
-    key: "employee_default",
-    entity_type: "employee",
-    version: 1,
-    pattern: "EMP-{BRANCH}-{SEQ}",
-    next_value: 1,
-    padding: 4,
-    reset_period: "never",
-    reserved_values: [],
-    status: "published",
-    effective_at: new Date().toISOString(),
-    published_at: new Date().toISOString(),
-    created_by_membership_id: membershipId,
-    published_by_membership_id: membershipId,
-  }, { onConflict: "tenant_id,branch_id,key,version" }).select("id").single();
-  if (employeeSequence.error || !employeeSequence.data) throw new Error("Unable to prepare staging employee numbering: " + (employeeSequence.error?.message ?? "unknown error"));
+  const existingEmployeeSequence = await admin.from("number_sequences")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("branch_id", branchId)
+    .eq("key", "employee_default")
+    .eq("status", "published")
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existingEmployeeSequence.error) throw new Error("Unable to prepare staging employee numbering: " + existingEmployeeSequence.error.message);
+
+  let employeeSequenceId = existingEmployeeSequence.data?.id ?? null;
+  if (!employeeSequenceId) {
+    const createdEmployeeSequence = await admin.from("number_sequences").insert({
+      tenant_id: tenantId,
+      branch_id: branchId,
+      key: "employee_default",
+      entity_type: "employee",
+      version: 1,
+      pattern: "EMP-{BRANCH}-{SEQ}",
+      next_value: 1,
+      padding: 4,
+      reset_period: "never",
+      reserved_values: [],
+      status: "published",
+      effective_at: new Date().toISOString(),
+      published_at: new Date().toISOString(),
+      created_by_membership_id: membershipId,
+      published_by_membership_id: membershipId,
+    }).select("id").single();
+    if (createdEmployeeSequence.error || !createdEmployeeSequence.data) {
+      throw new Error("Unable to prepare staging employee numbering: " + (createdEmployeeSequence.error?.message ?? "unknown error"));
+    }
+    employeeSequenceId = createdEmployeeSequence.data.id;
+  }
   const teacherEmployment = await admin.from("hr_employments").select("employee_person_id").eq("tenant_id", tenantId).eq("branch_id", branchId).eq("state", "active").order("id", { ascending: true }).limit(1).maybeSingle();
   let teacherPersonId: number;
   if (teacherEmployment.data) {
