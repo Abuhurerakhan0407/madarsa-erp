@@ -24,6 +24,14 @@ test("protects localized institution routes", async ({ page }) => {
 });
 
 test("protects onboarding until an identity is authenticated", async ({ page }) => {
+  await page.context().addCookies([
+    {
+      name: "NEXT_LOCALE",
+      value: "en",
+      domain: "localhost",
+      path: "/"
+    }
+  ]);
   await page.goto("/onboarding");
 
   await expect(page).toHaveURL(/\/login\?next=%2Fonboarding$/);
@@ -31,6 +39,14 @@ test("protects onboarding until an identity is authenticated", async ({ page }) 
 });
 
 test("renders accessible sign in and signup modes", async ({ page }) => {
+  await page.context().addCookies([
+    {
+      name: "NEXT_LOCALE",
+      value: "en",
+      domain: "localhost",
+      path: "/"
+    }
+  ]);
   await page.goto("/login");
 
   await expect(page.getByLabel("Email address")).toHaveAttribute("type", "email");

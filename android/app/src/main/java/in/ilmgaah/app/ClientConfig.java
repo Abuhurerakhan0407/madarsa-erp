@@ -13,10 +13,6 @@ public final class ClientConfig {
     public static final String ACADEMIC_YEAR = "2026–2027";
     public static final String BRANCH = "Main Campus";
     public static final String API_BASE = "https://www.ilmgaah.in";
-    public static final String SUPABASE_URL =
-            "https://dysfnytqpbfxpmerkyaz.supabase.co";
-    public static final String SUPABASE_PUBLISHABLE_KEY =
-            "sb_publishable_JE-qS9os44gw9TKy4GxYSA_5ZH_17H7";
 
     public static final String[] ACTIVE_MODULES = {
             "admissions", "talaba", "academics", "attendance", "biometric",

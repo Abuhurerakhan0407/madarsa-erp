@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 const apiRoot = resolve(process.cwd(), "src/app/api");
 const machineChannels = new Set([
   "attendance/device-ingest/route.ts",
-  "webhooks/subscriptions/razorpay/route.ts"
+  "webhooks/subscriptions/razorpay/route.ts",
+  "mobile/auth/route.ts"
 ]);
 
 function mutationRoutes(dir: string = apiRoot): string[] {
