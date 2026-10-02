@@ -63,6 +63,32 @@ public class MainActivity extends Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
+    private boolean englishMode() {
+        return getPreferences(Context.MODE_PRIVATE).getBoolean("language_english", false);
+    }
+
+    private String tr(String urdu, String english) {
+        return englishMode() ? english : urdu;
+    }
+
+    private void setEnglishMode(boolean enabled) {
+        getPreferences(Context.MODE_PRIVATE).edit()
+                .putBoolean("language_english", enabled)
+                .apply();
+        showLogin();
+    }
+
+    private TextView languageToggle(boolean english) {
+        TextView toggle = tv(english ? "اردو" : "English", 12, BLUE, true);
+        toggle.setGravity(Gravity.CENTER);
+        toggle.setPadding(dp(14), dp(9), dp(14), dp(9));
+        toggle.setBackground(rounded(Color.WHITE, BLUE, 30));
+        toggle.setClickable(true);
+        toggle.setFocusable(true);
+        toggle.setOnClickListener(v -> setEnglishMode(!english));
+        return toggle;
+    }
+
     private TextView tv(String value, float sp, int color, boolean bold) {
         TextView view = new TextView(this);
         view.setText(value);
@@ -145,6 +171,7 @@ public class MainActivity extends Activity {
     }
     private void showLogin() {
         root.removeAllViews();
+        boolean english = englishMode();
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(BG);
@@ -152,9 +179,24 @@ public class MainActivity extends Activity {
 
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(18), dp(22), dp(18), dp(26));
-        page.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        page.setPadding(dp(18), dp(18), dp(18), dp(26));
+        page.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
         scroll.addView(page);
+
+        LinearLayout languageRow = row();
+        languageRow.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        languageRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView languageLabel = tv(
+                english ? "Language" : "زبان",
+                12, MUTED, true);
+        languageRow.addView(languageLabel,
+                new LinearLayout.LayoutParams(0, -2, 1f));
+        languageRow.addView(languageToggle(english),
+                new LinearLayout.LayoutParams(-2, -2));
+        page.addView(languageRow, new LinearLayout.LayoutParams(-1, -2));
+        addGap(page, 10);
 
         View stripe = new View(this);
         GradientDrawable stripeBg = new GradientDrawable(
@@ -168,6 +210,9 @@ public class MainActivity extends Activity {
         brand.setPadding(dp(18), dp(18), dp(18), dp(18));
         page.addView(brand, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout markRow = row();
+        markRow.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
         brand.addView(markRow, new LinearLayout.LayoutParams(-1, -2));
 
         TextView mark = tv("ج", 24, Color.WHITE, true);
@@ -177,27 +222,37 @@ public class MainActivity extends Activity {
 
         LinearLayout brandCopy = new LinearLayout(this);
         brandCopy.setOrientation(LinearLayout.VERTICAL);
-        brandCopy.setPadding(dp(12), 0, 0, 0);
+        brandCopy.setPadding(
+                english ? dp(12) : 0, 0,
+                english ? 0 : dp(12), 0);
         markRow.addView(brandCopy,
                 new LinearLayout.LayoutParams(0, -2, 1f));
 
-        TextView small = tv(ClientConfig.SHORT_NAME_UR, 13, MUTED, true);
+        TextView small = tv(
+                tr(ClientConfig.SHORT_NAME_UR, "Jamia Islamia"),
+                13, MUTED, true);
         brandCopy.addView(small);
-        TextView name = tv(ClientConfig.INSTITUTION_UR, 23, GREEN_DARK, true);
-        name.setGravity(Gravity.RIGHT);
+        TextView name = tv(
+                tr(ClientConfig.INSTITUTION_UR, ClientConfig.INSTITUTION),
+                23, GREEN_DARK, true);
+        name.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         brandCopy.addView(name, new LinearLayout.LayoutParams(-1, -2));
 
         addGap(brand, 12);
-        TextView descriptor = tv(ClientConfig.DESCRIPTOR_UR, 14, MUTED, false);
-        descriptor.setGravity(Gravity.RIGHT);
+        TextView descriptor = tv(
+                tr(ClientConfig.DESCRIPTOR_UR, "Hifz • Arabic Education • Residential Hostel"),
+                14, MUTED, false);
+        descriptor.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         brand.addView(descriptor);
         LinearLayout chips = row();
-        chips.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        chips.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
         brand.addView(chips, new LinearLayout.LayoutParams(-1, -2));
-        TextView c1 = pill("طلبہ", GREEN_SOFT, GREEN_DARK);
-        TextView c2 = pill("حفظ", GREEN_SOFT, GREEN_DARK);
-        TextView c3 = pill("ہاسٹل", BLUE_SOFT, BLUE);
-        TextView c4 = pill("گارڈین", BLUE_SOFT, BLUE);
+        TextView c1 = pill(tr("طلبہ", "Students"), GREEN_SOFT, GREEN_DARK);
+        TextView c2 = pill(tr("حفظ", "Hifz"), GREEN_SOFT, GREEN_DARK);
+        TextView c3 = pill(tr("ہاسٹل", "Hostel"), BLUE_SOFT, BLUE);
+        TextView c4 = pill(tr("گارڈین", "Guardian"), BLUE_SOFT, BLUE);
         chips.addView(c1);
         chips.addView(c2);
         chips.addView(c3);
@@ -206,7 +261,7 @@ public class MainActivity extends Activity {
         TextView director = tv(
                 ClientConfig.DIRECTOR + "  •  " + ClientConfig.PHONE,
                 12, MUTED, false);
-        director.setGravity(Gravity.RIGHT);
+        director.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams directorParams =
                 new LinearLayout.LayoutParams(-1, -2);
         directorParams.topMargin = dp(12);
@@ -216,43 +271,45 @@ public class MainActivity extends Activity {
         LinearLayout form = card();
         page.addView(form, new LinearLayout.LayoutParams(-1, -2));
 
-        TextView title = tv("سائن اِن", 26, TEXT, true);
-        title.setGravity(Gravity.RIGHT);
+        TextView title = tv(tr("سائن اِن", "Sign in"), 26, TEXT, true);
+        title.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         form.addView(title);
         TextView subtitle = tv(
-                "جامعہ کے محفوظ ورک اسپیس میں داخل ہوں",
+                tr("جامعہ کے محفوظ ورک اسپیس میں داخل ہوں",
+                        "Enter your secure Jamia workspace"),
                 13, MUTED, false);
-        subtitle.setGravity(Gravity.RIGHT);
+        subtitle.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         form.addView(subtitle);
         addGap(form, 12);
-        EditText email = field("ای میل");
+        EditText email = field(tr("ای میل", "Email"));
         email.setTextDirection(View.TEXT_DIRECTION_LTR);
         email.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         form.addView(email, new LinearLayout.LayoutParams(-1, dp(54)));
 
         addGap(form, 10);
-        EditText password = field("پاس ورڈ");
+        EditText password = field(tr("پاس ورڈ", "Password"));
         password.setTextDirection(View.TEXT_DIRECTION_LTR);
         password.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_VARIATION_PASSWORD);
         form.addView(password, new LinearLayout.LayoutParams(-1, dp(54)));
 
         addGap(form, 14);
-        signInButton = primaryButton("سائن اِن");
+        signInButton = primaryButton(tr("سائن اِن", "Sign in"));
         form.addView(signInButton, new LinearLayout.LayoutParams(-1, dp(54)));
 
         TextView error = tv("", 12, Color.rgb(177, 45, 45), true);
-        error.setGravity(Gravity.RIGHT);
+        error.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams errorParams =
                 new LinearLayout.LayoutParams(-1, -2);
         errorParams.topMargin = dp(10);
         form.addView(error, errorParams);
 
         TextView help = tv(
-                "جامعہ • 2026–2027 • اردو ورک اسپیس",
+                tr("جامعہ • 2026–2027 • اردو ورک اسپیس",
+                        "Jamia • 2026–2027 • English workspace"),
                 11, MUTED, false);
-        help.setGravity(Gravity.RIGHT);
+        help.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams helpParams =
                 new LinearLayout.LayoutParams(-1, -2);
         helpParams.topMargin = dp(14);
@@ -261,12 +318,13 @@ public class MainActivity extends Activity {
             String emailValue = email.getText().toString().trim();
             String passwordValue = password.getText().toString();
             if (emailValue.isEmpty() || passwordValue.isEmpty()) {
-                error.setText("ای میل اور پاس ورڈ درج کریں۔");
+                error.setText(tr("ای میل اور پاس ورڈ درج کریں۔",
+                        "Enter your email and password."));
                 return;
             }
 
             signInButton.setEnabled(false);
-            signInButton.setText("چیک ہو رہا ہے…");
+            signInButton.setText(tr("چیک ہو رہا ہے…", "Checking…"));
             error.setText("");
 
             try {
@@ -282,7 +340,7 @@ public class MainActivity extends Activity {
                         result -> {
                             if (!result.ok()) {
                                 signInButton.setEnabled(true);
-                                signInButton.setText("سائن اِن");
+                                signInButton.setText(tr("سائن اِن", "Sign in"));
                                 error.setText(authError(result));
                                 return;
                             }
@@ -290,26 +348,29 @@ public class MainActivity extends Activity {
                             accessToken = payload.optString("access_token", "");
                             if (accessToken.length() < 20) {
                                 signInButton.setEnabled(true);
-                                signInButton.setText("سائن اِن");
-                                error.setText("سائن اِن مکمل نہیں ہو سکا۔");
+                                signInButton.setText(tr("سائن اِن", "Sign in"));
+                                error.setText(tr("سائن اِن مکمل نہیں ہو سکا۔", "Sign-in could not be completed."));
                                 return;
                             }
                             bootstrap(error);
                         });
             } catch (Exception exception) {
                 signInButton.setEnabled(true);
-                signInButton.setText("سائن اِن");
-                error.setText("درخواست تیار نہیں ہو سکی۔");
+                signInButton.setText(tr("سائن اِن", "Sign in"));
+                error.setText(tr("درخواست تیار نہیں ہو سکی۔", "The request could not be prepared."));
             }
         });
     }
 
     private String authError(NativeApi.Result result) {
         if (result.status == 400 || result.status == 401) {
-            return "ای میل یا پاس ورڈ درست نہیں ہے۔";
+            return tr("ای میل یا پاس ورڈ درست نہیں ہے.",
+                    "The email or password is incorrect.");
         }
-        if (result.status == 0) return "انٹرنیٹ کنکشن دستیاب نہیں۔";
-        return "سائن اِن سروس ابھی دستیاب نہیں۔";
+        if (result.status == 0) return tr("انٹرنیٹ کنکشن دستیاب نہیں۔",
+                "No internet connection is available.");
+        return tr("سائن اِن سروس ابھی دستیاب نہیں۔",
+                "The sign-in service is currently unavailable.");
     }
     private void bootstrap(TextView error) {
         NativeApi.get(
@@ -319,10 +380,12 @@ public class MainActivity extends Activity {
                     if (!result.ok()) {
                         accessToken = "";
                         signInButton.setEnabled(true);
-                        signInButton.setText("سائن اِن");
+                        signInButton.setText(tr("سائن اِن", "Sign in"));
                         error.setText(result.status == 401
-                                ? "اس اکاؤنٹ کی ورک اسپیس اجازت موجود نہیں۔"
-                                : "ورک اسپیس کی معلومات حاصل نہیں ہو سکیں۔");
+                                ? tr("اس اکاؤنٹ کی ورک اسپیس اجازت موجود نہیں۔",
+                                        "This account has no workspace access.")
+                                : tr("ورک اسپیس کی معلومات حاصل نہیں ہو سکیں۔",
+                                        "Workspace information could not be loaded."));
                         return;
                     }
 
