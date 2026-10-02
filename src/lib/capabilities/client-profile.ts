@@ -2,13 +2,8 @@ export type ProductCapability =
   | "fees_accounting"
   | "student_lifecycle_import_promotion_renewal"
   | "donations_zakat_sponsorships"
-  | "hostel_mess"
-  | "transport"
-  | "library"
-  | "whatsapp_automation"
   | "ai_assistant"
-  | "branches_roles_ui"
-  | "internal_demo_suite";
+  | "branches_roles_ui";
 
 export type ClientProfileKey = "full-product" | "client-v2";
 
@@ -23,6 +18,11 @@ export type ClientProfileConfig = Readonly<{
   clientV2TenantSlugs?: string | null;
 }>;
 
+// Retired product areas are deliberately not capabilities. Keeping the retired
+// navigation keys here makes older navigation callers fail closed instead of
+// accidentally treating an unknown key as enabled.
+const RETIRED_NAV_KEYS = new Set(["hostel", "transport", "library", "whatsapp", "demo"]);
+
 const fullProductProfile: ClientCapabilityProfile = {
   key: "full-product",
   disabledCapabilities: new Set<ProductCapability>()
@@ -30,18 +30,7 @@ const fullProductProfile: ClientCapabilityProfile = {
 
 const clientV2Profile: ClientCapabilityProfile = {
   key: "client-v2",
-  disabledCapabilities: new Set<ProductCapability>([
-    "fees_accounting",
-    "student_lifecycle_import_promotion_renewal",
-    "donations_zakat_sponsorships",
-    "hostel_mess",
-    "transport",
-    "library",
-    "whatsapp_automation",
-    "ai_assistant",
-    "branches_roles_ui",
-    "internal_demo_suite"
-  ])
+  disabledCapabilities: new Set<ProductCapability>()
 };
 
 export const CLIENT_PROFILES: Record<ClientProfileKey, ClientCapabilityProfile> = {
@@ -53,10 +42,6 @@ export const NAV_CAPABILITY_BY_KEY: Readonly<Record<string, ProductCapability | 
   fees: "fees_accounting",
   operations: "student_lifecycle_import_promotion_renewal",
   donations: "donations_zakat_sponsorships",
-  hostel: "hostel_mess",
-  transport: "transport",
-  library: "library",
-  whatsapp: "whatsapp_automation",
   ai: "ai_assistant",
   branches: "branches_roles_ui"
 };
@@ -81,26 +66,17 @@ export function resolveClientProfileFromConfig(
   config: ClientProfileConfig
 ): ClientCapabilityProfile {
   const override = normalizeProfileValue(config.profileOverride ?? "");
-
   if (override === "client-v2") return clientV2Profile;
   if (override === "full-product") return fullProductProfile;
-
   const tenantProfile = normalizeProfileValue(config.tenantProfile ?? "");
   if (tenantProfile === "client-v2") return clientV2Profile;
   if (tenantProfile === "full-product") return fullProductProfile;
-
   const normalizedTenantSlug = normalizeProfileValue(tenantSlug);
-  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) {
-    return clientV2Profile;
-  }
-
+  if (configuredTenantSlugs(config.clientV2TenantSlugs).some((slug) => slug === normalizedTenantSlug)) return clientV2Profile;
   return fullProductProfile;
 }
 
-export function resolveClientProfile(
-  tenantSlug: string,
-  tenantProfile?: string | null
-): ClientCapabilityProfile {
+export function resolveClientProfile(tenantSlug: string, tenantProfile?: string | null): ClientCapabilityProfile {
   return resolveClientProfileFromConfig(tenantSlug, {
     profileOverride: process.env.MADARSA_CLIENT_PROFILE,
     tenantProfile,
@@ -108,13 +84,11 @@ export function resolveClientProfile(
   });
 }
 
-export function isCapabilityEnabled(
-  profile: ClientCapabilityProfile,
-  capability: ProductCapability | undefined
-): boolean {
+export function isCapabilityEnabled(profile: ClientCapabilityProfile, capability: ProductCapability | undefined): boolean {
   return !capability || !profile.disabledCapabilities.has(capability);
 }
 
 export function isNavItemEnabled(profile: ClientCapabilityProfile, navKey: string): boolean {
+  if (RETIRED_NAV_KEYS.has(navKey)) return false;
   return isCapabilityEnabled(profile, NAV_CAPABILITY_BY_KEY[navKey]);
 }

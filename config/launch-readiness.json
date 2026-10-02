@@ -1,19 +1,113 @@
 {
-  "schemaVersion": 1,
-  "product": "Madarsa ERP",
-  "gates": [
-    { "key": "database_migrations_applied", "owner": "engineering", "required": true, "complete": true },
-    { "key": "security_advisors_clear", "owner": "engineering", "required": true, "complete": false },
-    { "key": "production_build_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "critical_e2e_green", "owner": "engineering", "required": true, "complete": true },
-    { "key": "production_deployment_current", "owner": "engineering", "required": true, "complete": true },
-    { "key": "pricing_approved", "owner": "commercial", "required": true, "complete": true },
-    { "key": "tax_boundary_approved", "owner": "finance_legal", "required": true, "complete": true },
-    { "key": "retention_schedule_approved", "owner": "privacy_legal", "required": true, "complete": true },
-    { "key": "backup_restore_drill_passed", "owner": "operations", "required": true, "complete": true },
-    { "key": "payment_webhooks_verified", "owner": "engineering", "required": true, "complete": false },
-    { "key": "messaging_packaging_approved", "owner": "commercial", "required": true, "complete": true },
-    { "key": "pilot_institution_signed_off", "owner": "product", "required": true, "complete": false },
-    { "key": "support_runbook_ready", "owner": "operations", "required": true, "complete": true }
-  ]
+    "schemaVersion":  1,
+    "product":  "Ilmgaah",
+    "gates":  [
+                  {
+                      "key":  "database_migrations_applied",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  true,
+                      "reason":  "GREEN on isolated Supabase staging. A clean-room rebuild was proven from the three committed Phase 2/3 baseline contracts, the recovered production foundation, the complete production migration history, and all release migrations currently on the RC branch. The biometric auto-apply/arrival migration and targeted arrival lookup index also apply cleanly. Staging remains data-empty after synthetic smoke cleanup, and Security Advisor is zero-lint. Production remains untouched."
+                  },
+                  {
+                      "key":  "security_advisors_clear",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "Staging is zero-lint after the complete clean-room rebuild and current release migrations: 258/258 public tables have RLS, zero policyless RLS tables, zero WhatsApp RPCs, and all SECURITY DEFINER routines have pinned search_path. Production remains intentionally unmigrated and still has pre-release findings. Supabase leaked-password protection is Pro-only, so the Free-plan limitation requires an explicit launch decision/compensating controls."
+                  },
+                  {
+                      "key":  "production_build_green",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  true,
+                      "reason":  "Exact merged RC passes frozen dependency install, release invariants, lint (0 errors), TypeScript, full unit suite, production Next.js build, and the Windows biometric bridge package/outage smoke locally. GitHub Actions remains an external zero-step runner issue and Vercel Git builds remain blocked by Project Collaboration / Team Configuration."
+                  },
+                  {
+                      "key":  "critical_e2e_green",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  true,
+                      "reason":  "Exact merged RC passes the full local Playwright release suite across Desktop Chromium and Android Pixel 7 emulation. GitHub Actions remains an external zero-step runner failure and is not being treated as application test evidence."
+                  },
+                  {
+                      "key":  "production_deployment_current",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "Blocked externally. Every new Git-triggered Vercel preview is BLOCKED before a build starts and links to Vercel Troubleshoot Project Collaboration -\u003e Team configuration. No production deployment or alias change is permitted until the final gates pass and explicit production approval is given."
+                  },
+                  {
+                      "key":  "pricing_approved",
+                      "owner":  "commercial",
+                      "required":  true,
+                      "complete":  true
+                  },
+                  {
+                      "key":  "tax_boundary_approved",
+                      "owner":  "finance_legal",
+                      "required":  true,
+                      "complete":  true
+                  },
+                  {
+                      "key":  "retention_schedule_approved",
+                      "owner":  "privacy_legal",
+                      "required":  true,
+                      "complete":  true
+                  },
+                  {
+                      "key":  "backup_restore_drill_passed",
+                      "owner":  "operations",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "NOT PROVEN. Recovery scripts/contracts are tested, but Supabase Free does not provide downloadable backups and the connected management tools cannot retrieve the database password. A real external pg_dump -\u003e isolated restore -\u003e integrity smoke must be completed before production cutover, or the project must move to a plan/backup setup that provides an equivalent tested recovery path."
+                  },
+                  {
+                      "key":  "payment_webhooks_verified",
+                      "owner":  "engineering",
+                      "required":  false,
+                      "complete":  false,
+                      "reason":  "Launch Fees scope records payments manually; Razorpay subscription webhook belongs to platform subscription billing, not institution fee collection."
+                  },
+                  {
+                      "key":  "messaging_packaging_approved",
+                      "owner":  "commercial",
+                      "required":  true,
+                      "complete":  true
+                  },
+                  {
+                      "key":  "pilot_institution_signed_off",
+                      "owner":  "product",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "Blocked: no recorded pilot institution sign-off evidence."
+                  },
+                  {
+                      "key":  "support_runbook_ready",
+                      "owner":  "operations",
+                      "required":  true,
+                      "complete":  true
+                  },
+                  {
+                      "key":  "biometric_bridge_client_package_ready",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  true,
+                      "reason":  "GREEN. The Windows biometric bridge source is committed, release invariants require it, bridge unit tests pass, the portable package builds with its bundled Node runtime, SHA-256 package verification passes, and the automated package smoke proves successful delivery plus offline queue -\u003e retry -\u003e drain. A client-install ZIP is packaged for handover."
+                  },
+                  {
+                      "key":  "biometric_site_acceptance_passed",
+                      "owner":  "operations",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "Pending physical client-site proof with the actual mBio terminal and vendor software: LAN connectivity, automatic CSV/XLSX export, real column mapping, bridge install/autostart, mapped punch, offline recovery, restart recovery, and client acceptance. The installation procedure is documented in docs/biometric-client-installation-runbook.md."
+                  },
+                  {
+                      "key":  "apk_release_ready",
+                      "owner":  "engineering",
+                      "required":  true,
+                      "complete":  false,
+                      "reason":  "Signed Android APK and AAB v1.0.0 are generated and cryptographically verified with permanent package in.ilmgaah.app and the permanent Ilmgaah release certificate. APK package/version/SDK/TWA host are verified and assetlinks.json matches the signing fingerprint. Remaining blockers: deploy the matching PWA manifest/icons/assetlinks to https://www.ilmgaah.in, verify Digital Asset Links/fullscreen TWA trust, and install/launch/update-test the signed APK on a real Android device. Add the website App Install link only after those checks pass."
+                  }
+              ]
 }

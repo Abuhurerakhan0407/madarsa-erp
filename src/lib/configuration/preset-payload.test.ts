@@ -3,10 +3,11 @@ import { getConfigurationPreset } from "./presets";
 import { buildPresetDraftPayload } from "./preset-payload";
 
 describe("configuration preset draft payload", () => {
-  it("expands every terminology concept into all supported locales", () => {
+  it("expands every terminology concept into release locales only", () => {
     const payload = buildPresetDraftPayload(getConfigurationPreset("maktab"));
-    expect(payload.terminology).toHaveLength(9);
-    expect(payload.terminology.filter((row) => row.concept_key === "student")).toHaveLength(3);
+    expect(payload.terminology).toHaveLength(6);
+    expect(payload.terminology.filter((row) => row.concept_key === "student")).toHaveLength(2);
+    expect(new Set(payload.terminology.map((row) => row.locale))).toEqual(new Set(["en", "ur"]));
   });
 
   it("maps attendance preset keys to explicit semantics", () => {

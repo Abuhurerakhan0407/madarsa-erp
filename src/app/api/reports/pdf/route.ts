@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createOperationalReportPdf, supportsOperationalReportPdf } from "@/lib/reports/report-pdf";
+import { createUnicodeOperationalReportPdf, supportsOperationalReportPdf } from "@/lib/reports/report-pdf";
 import { parseReportResult } from "@/lib/reports/workspace";
 import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     }
     const result = parseReportResult(data);
     if (!result.runId || result.reportKey !== reportKey) return NextResponse.json({ error: "Report runtime returned an invalid result." }, { status: 500 });
-    const pdf = createOperationalReportPdf(result, {
+    const pdf = await createUnicodeOperationalReportPdf(result, {
       institutionName: workspace.tenantName,
       branchName: workspace.branchName || "Main Branch"
     });

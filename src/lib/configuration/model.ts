@@ -1,5 +1,9 @@
+// Arabic remains a legacy internal label key for historical configuration rows.
+// New commercial configuration drafts are emitted only for English and Urdu.
 export const configurationLocales = ["en", "ur", "ar"] as const;
+export const releaseConfigurationLocales = ["en", "ur"] as const;
 export type ConfigurationLocale = (typeof configurationLocales)[number];
+export type ReleaseConfigurationLocale = (typeof releaseConfigurationLocales)[number];
 
 export type LocalizedLabels = Record<ConfigurationLocale, string>;
 
@@ -31,9 +35,7 @@ export const customFieldEntities = [
   "enrollment",
   "donor",
   "donation",
-  "sponsorship",
-  "hostel_resident",
-  "hostel_allocation"
+  "sponsorship"
 ] as const;
 
 export type CustomFieldEntity = (typeof customFieldEntities)[number];

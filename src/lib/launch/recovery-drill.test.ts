@@ -19,16 +19,36 @@ const validPoolerUrl =
 const validLocalRestoreUrl = "postgresql://postgres:secret@127.0.0.1:54329/postgres";
 
 function runValidation(overrides: Record<string, string>) {
+  const validationEnv = {
+    SOURCE_DB_URL: validPoolerUrl,
+    RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
+    RESTORE_DB_URL: validLocalRestoreUrl,
+    RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
+    TARGET_RPO_HOURS: "24",
+    ...overrides
+  };
+
+  if (process.platform === "win32") {
+    return spawnSync(
+      "wsl.exe",
+      [
+        "env",
+        ...Object.entries(validationEnv).map(([key, value]) => `${key}=${value}`),
+        "bash",
+        "scripts/recovery-drill.sh"
+      ],
+      {
+        encoding: "utf8",
+        env: process.env
+      }
+    );
+  }
+
   return spawnSync("bash", ["scripts/recovery-drill.sh"], {
     encoding: "utf8",
     env: {
       ...process.env,
-      SOURCE_DB_URL: validPoolerUrl,
-      RECOVERY_PASSPHRASE: "test-only-recovery-passphrase-32-chars",
-      RESTORE_DB_URL: validLocalRestoreUrl,
-      RECOVERY_OUTPUT_DIR: `/tmp/madarsa-recovery-validation-${process.pid}`,
-      TARGET_RPO_HOURS: "24",
-      ...overrides
+      ...validationEnv
     }
   });
 }

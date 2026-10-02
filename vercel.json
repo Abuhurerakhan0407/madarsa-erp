@@ -1,0 +1,3 @@
+{
+  "buildCommand": "npm run release:invariants && npm run lint && npm run typecheck && npm test && npm run build"
+}

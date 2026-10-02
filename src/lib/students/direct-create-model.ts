@@ -3,7 +3,7 @@ export type DirectStudentCreateInput = {
   nameNative?: string;
   dateOfBirth?: string;
   gender?: "male" | "female" | "other" | "undisclosed";
-  preferredLocale: "en" | "ur" | "ar";
+  preferredLocale: "en" | "ur";
   sessionId: number;
   programId: number;
   groupId?: number;
@@ -59,7 +59,7 @@ export function validateDirectStudentCreateInput(input: unknown): ValidationResu
   if (!programId) errors.push("Program is required.");
 
   const locale = body.preferredLocale;
-  const preferredLocale = locale === "en" || locale === "ur" || locale === "ar" ? locale : undefined;
+  const preferredLocale = locale === "en" || locale === "ur" ? locale : undefined;
   if (!preferredLocale) errors.push("Preferred language is invalid.");
 
   const genderValue = body.gender;

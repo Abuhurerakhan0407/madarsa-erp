@@ -20,7 +20,6 @@ export type QuranAttemptInput = {
   overallScore?: number;
   prompts?: number;
   outcome: QuranOutcome;
-  teacherPersonId?: number;
   teacherRemark?: string;
   parentVisibleRemark?: string;
   privateNote?: string;
@@ -92,7 +91,6 @@ export function validateQuranAttemptInput(input: unknown): ValidationResult {
   }
   const prompts = data.prompts === "" || data.prompts === undefined || data.prompts === null ? undefined : Number(data.prompts);
   if (prompts !== undefined && (!Number.isInteger(prompts) || prompts < 0 || prompts > 999)) errors.push("Prompts must be a non-negative whole number.");
-  const teacherPersonId = positiveInt(data.teacherPersonId);
   const teacherRemark = text(data.teacherRemark,1000);
   const parentVisibleRemark = text(data.parentVisibleRemark,1000);
   const privateNote = text(data.privateNote,1000);
@@ -128,7 +126,6 @@ export function validateQuranAttemptInput(input: unknown): ValidationResult {
     ...(tajweedScore !== undefined ? { tajweedScore } : {}),
     ...(overallScore !== undefined ? { overallScore } : {}),
     ...(prompts !== undefined ? { prompts } : {}),
-    ...(teacherPersonId ? { teacherPersonId } : {}),
     ...(teacherRemark ? { teacherRemark } : {}),
     ...(parentVisibleRemark ? { parentVisibleRemark } : {}),
     ...(privateNote ? { privateNote } : {}),

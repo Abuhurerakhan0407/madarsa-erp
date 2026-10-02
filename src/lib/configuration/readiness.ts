@@ -98,7 +98,7 @@ export async function getConfigurationReadiness(): Promise<ConfigurationReadines
   }
 
   const supportedLocales = institution.data?.supported_locales ?? [];
-  const requiredLocales = ["en", "ur", "ar"];
+  const requiredLocales = ["en", "ur"];
   const states: Record<ConfigurationModuleKey, ConfigurationState> = {
     institution: institution.data ? "complete" : "pending",
     branches: (branches.data ?? []).some((branch) => branch.status === "active")

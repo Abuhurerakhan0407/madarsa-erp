@@ -1,0 +1,118 @@
+.shell {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.contextCard {
+  display: grid;
+  gap: 0.9rem;
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: color-mix(in srgb, var(--surface) 97%, var(--accent-soft));
+}
+
+.contextCard h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+}
+
+.contextActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-block-start: 0.8rem;
+  border-block-start: 1px solid var(--border);
+}
+
+.shell :global(.exam-v2-actions) {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.shell :global(.exam-v2-action) {
+  grid-template-columns: 1.8rem minmax(0, 1fr);
+  min-height: 5.7rem;
+  column-gap: 0.55rem;
+  row-gap: 0.15rem;
+  padding: 0.72rem;
+}
+
+.shell :global(.exam-v2-action > span:first-child) {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.65rem;
+}
+
+.shell :global(.exam-v2-action h2) {
+  font-size: 0.84rem;
+}
+
+.shell :global(.exam-v2-action p) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.hasSelected :global([data-testid="exam-v2-selector"] .form-grid > .field-label:nth-child(-n+3)) {
+  display: none;
+}
+
+.hasSelected :global([data-testid="exam-v2-selector"] .form-grid) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hasSelected :global([data-testid="exam-v2-selector"] .section-heading p) {
+  max-width: 54rem;
+}
+
+.published :global([data-testid="exam-v2-selector"] .quick-actions .action-button-primary),
+.published :global(.exam-v2-action[href*="view=marks"]) {
+  display: none;
+}
+
+.published :global(.exam-v2-action[href*="view=reports"]) {
+  order: -3;
+}
+
+.published :global(.exam-v2-action[href*="view=results"]) {
+  order: -2;
+}
+
+.published :global(.exam-v2-action[href*="view=analysis"]) {
+  order: -1;
+}
+
+@media (max-width: 1180px) {
+  .shell :global(.exam-v2-actions) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .contextActions > :global(.action-button) {
+    flex: 1 1 calc(50% - 0.55rem);
+    justify-content: center;
+  }
+
+  .shell :global(.exam-v2-actions) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .contextActions > :global(.action-button) {
+    flex-basis: 100%;
+  }
+
+  .shell :global(.exam-v2-actions) {
+    grid-template-columns: 1fr;
+  }
+
+  .shell :global(.exam-v2-action) {
+    min-height: 5.1rem;
+  }
+}

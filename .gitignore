@@ -10,3 +10,5 @@ test-results/
 .DS_Store
 *.tsbuildinfo
 pnpm-debug.log*
+tools/biometric-bridge/dist/
+tmp-bridge-smoke/

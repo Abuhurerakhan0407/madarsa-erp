@@ -4,11 +4,10 @@ import { getMessages } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
-import { getDirection, type Locale } from "@/lib/i18n/config";
+import { getDirection, type SupportedLocale } from "@/lib/i18n/config";
 import { getAppFontVariables } from "@/lib/i18n/fonts";
 import { getTenantContext } from "@/lib/tenancy/context";
 import "../globals.css";
-import "../demo.css";
 import "../professional.css";
 import "../professional-flows.css";
 import "../hr.css";
@@ -22,10 +21,10 @@ import "../academics-v2.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Madarsa ERP",
-    template: "%s | Madarsa ERP"
+    default: "Ilmgaah",
+    template: "%s | Ilmgaah"
   },
-  description: "Multi-tenant operating system for Madrasas and Islamic institutions.",
+  description: "Ilmgaah institution operating system for madrasas and Islamic education.",
   other: {
     google: "notranslate"
   }
@@ -53,7 +52,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     redirect("/onboarding");
   }
 
-  const typedLocale = locale as Locale;
+  const typedLocale = locale as SupportedLocale;
   const messages = await getMessages();
 
   return (

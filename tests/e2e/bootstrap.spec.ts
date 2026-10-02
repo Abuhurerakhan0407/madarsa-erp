@@ -8,16 +8,16 @@ test("renders the public Ilmgaah homepage", async ({ page }) => {
     page.getByRole("heading", { name: "Run the institution. Keep the calm." })
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Book a Free Demo on WhatsApp" }).first()
-  ).toHaveAttribute("href", /^https:\/\/wa\.me\/919833001193\?text=/);
+    page.getByRole("link", { name: "Request a Free Demo by email" }).first()
+  ).toHaveAttribute("href", /^mailto:shalconintelligence@gmail\.com\?subject=Ilmgaah%20Free%20Demo%20Request/);
 });
 
 test("protects localized institution routes", async ({ page }) => {
   await page.goto("/ur");
   await expect(page).toHaveURL(/\/login\?next=%2Fur$/);
 
-  await page.goto("/ar/settings/configuration");
-  await expect(page).toHaveURL(/\/login\?next=%2Far%2Fsettings%2Fconfiguration$/);
+  await page.goto("/ur/settings/configuration");
+  await expect(page).toHaveURL(/\/login\?next=%2Fur%2Fsettings%2Fconfiguration$/);
 
   await page.goto("/en/programs");
   await expect(page).toHaveURL(/\/login\?next=%2Fen%2Fprograms$/);
@@ -55,7 +55,7 @@ test("health endpoint remains public", async ({ request }) => {
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toMatchObject({
     status: "ok",
-    service: "madarsa-erp"
+    service: "ilmgaah"
   });
 });
 
@@ -127,11 +127,11 @@ test("admissions foundation rejects anonymous callers", async ({ request }) => {
     headers: { "content-type": "application/json" },
     data: {
       sessionKey: "2026_27",
-      sessionLabels: { en: "2026-27", ur: "تعلیمی سال", ar: "العام الدراسي" },
+      sessionLabels: { en: "2026-27", ur: "تعلیمی سال" },
       startsOn: "2026-06-01",
       endsOn: "2027-05-31",
       programKey: "dars_e_nizami",
-      programLabels: { en: "Dars-e-Nizami", ur: "درس نظامی", ar: "الدرس النظامي" },
+      programLabels: { en: "Dars-e-Nizami", ur: "درس نظامی" },
       programType: "dars_e_nizami"
     }
   });

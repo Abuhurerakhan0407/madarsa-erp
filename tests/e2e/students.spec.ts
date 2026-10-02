@@ -89,3 +89,8 @@ test("student register export is private", async ({ request }) => {
   const response = await request.get("/api/students/export?locale=en");
   expect(response.status()).toBe(401);
 });
+
+test("student document download rejects anonymous callers", async ({ request }) => {
+  const response = await request.get("/api/students/4/documents/7/download");
+  expect(response.status()).toBe(401);
+});

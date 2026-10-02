@@ -2,16 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 type Option = { id: number; label: string };
 const copy = {
   en: { applicant: "Applicant name", guardian: "Guardian name", phone: "Guardian phone", email: "Guardian email", session: "Academic session", program: "Program interest", language: "Preferred language", source: "Source", sourceHint: "Walk-in / referral / website", notes: "Notes", followup: "Next follow-up", consent: "Contact consent recorded", save: "Create enquiry", saving: "Saving…", error: "Unable to create enquiry." },
-  ur: { applicant: "درخواست گزار کا نام", guardian: "سرپرست کا نام", phone: "سرپرست کا فون", email: "سرپرست کا ای میل", session: "تعلیمی سال", program: "پروگرام میں دلچسپی", language: "ترجیحی زبان", source: "ذریعہ", sourceHint: "بالمشافہ / حوالہ / ویب سائٹ", notes: "نوٹس", followup: "اگلا رابطہ", consent: "رابطے کی رضامندی درج ہے", save: "استفسار بنائیں", saving: "محفوظ ہو رہا ہے…", error: "استفسار نہیں بن سکا۔" },
-  ar: { applicant: "اسم المتقدم", guardian: "اسم ولي الأمر", phone: "هاتف ولي الأمر", email: "بريد ولي الأمر", session: "العام الدراسي", program: "البرنامج المطلوب", language: "اللغة المفضلة", source: "المصدر", sourceHint: "زيارة / إحالة / الموقع", notes: "ملاحظات", followup: "المتابعة التالية", consent: "تم تسجيل موافقة التواصل", save: "إنشاء استفسار", saving: "جارٍ الحفظ…", error: "تعذر إنشاء الاستفسار." }
+  ur: { applicant: "درخواست گزار کا نام", guardian: "سرپرست کا نام", phone: "سرپرست کا فون", email: "سرپرست کا ای میل", session: "تعلیمی سال", program: "پروگرام میں دلچسپی", language: "ترجیحی زبان", source: "ذریعہ", sourceHint: "بالمشافہ / حوالہ / ویب سائٹ", notes: "نوٹس", followup: "اگلا رابطہ", consent: "رابطے کی رضامندی درج ہے", save: "استفسار بنائیں", saving: "محفوظ ہو رہا ہے…", error: "استفسار نہیں بن سکا۔" }
 } as const;
 
-export function EnquiryForm({ locale, sessions, programs }: { locale: Locale; sessions: Option[]; programs: Option[] }) {
+export function EnquiryForm({ locale, sessions, programs }: { locale: SupportedLocale; sessions: Option[]; programs: Option[] }) {
   const text = copy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -44,7 +43,7 @@ export function EnquiryForm({ locale, sessions, programs }: { locale: Locale; se
       <label className="field-label">{text.email}<input className="text-field" name="email" type="email" maxLength={320} /></label>
       <label className="field-label">{text.session}<select className="text-field" name="sessionId" required defaultValue=""><option value="" disabled>—</option>{sessions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
       <label className="field-label">{text.program}<select className="text-field" name="programId" required defaultValue=""><option value="" disabled>—</option>{programs.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
-      <label className="field-label">{text.language}<select className="text-field" name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option><option value="ar">العربية</option></select></label>
+      <label className="field-label">{text.language}<select className="text-field" name="preferredLocale" defaultValue={locale}><option value="en">English</option><option value="ur">اردو</option></select></label>
       <label className="field-label">{text.source}<input className="text-field" name="source" maxLength={80} placeholder={text.sourceHint} /></label>
       <label className="field-label">{text.followup}<input className="text-field" name="nextFollowUpAt" type="datetime-local" required /></label>
     </div>

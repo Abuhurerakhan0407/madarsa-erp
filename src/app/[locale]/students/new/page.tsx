@@ -1,16 +1,27 @@
 import { StudentCreateForm } from "@/components/student-create-form";
 import { WorkspacePageHeader } from "@/components/workspace-ui";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { getStudentCreateOptions } from "@/lib/students/register";
 
 const copy = {
-  en: { kicker: "Students · New", title: "Add student", body: "Create the permanent student record, academic placement and primary guardian in one guided workflow.", back: "Back to students", warning: "Academic session and program must already be configured. Class/group assignment is optional and can be added later." },
-  ur: { kicker: "طلبہ · نیا", title: "طالب علم شامل کریں", body: "مستقل طالب علم ریکارڈ، تعلیمی تعیناتی اور بنیادی سرپرست ایک ہی ورک فلو میں بنائیں۔", back: "طلبہ پر واپس", warning: "تعلیمی سال اور پروگرام پہلے سے کنفیگر ہونا ضروری ہے۔ کلاس / گروپ بعد میں بھی شامل کیا جا سکتا ہے۔" },
-  ar: { kicker: "الطلاب · جديد", title: "إضافة طالب", body: "أنشئ سجل الطالب الدائم والتسجيل الأكاديمي وولي الأمر الأساسي في مسار واحد.", back: "العودة للطلاب", warning: "يجب إعداد العام الدراسي والبرنامج مسبقًا. تعيين الفصل أو المجموعة اختياري ويمكن إضافته لاحقًا." }
+  en: {
+    kicker: "Admissions",
+    title: "New Admission",
+    body: "Admit a walk-in student in four simple steps: student, guardian, placement, and review.",
+    back: "Back to Admissions",
+    warning: "The permanent student record is created only after you review and confirm the admission."
+  },
+  ur: {
+    kicker: "داخلہ",
+    title: "نیا داخلہ",
+    body: "چار آسان مراحل میں طالب علم کا داخلہ کریں: طالب علم، سرپرست، تعلیمی تعیناتی اور جائزہ۔",
+    back: "داخلہ پر واپس",
+    warning: "مستقل طالب علم ریکارڈ صرف جائزہ اور تصدیق کے بعد بنایا جاتا ہے۔"
+  }
 } as const;
 
 export default async function NewStudentPage({ params }: { params: Promise<{ locale: string }> }) {
-  const locale = (await params).locale as Locale;
+  const locale = (await params).locale === "ur" ? "ur" : "en" as SupportedLocale;
   const text = copy[locale];
   const options = await getStudentCreateOptions(locale);
   return <>
@@ -18,7 +29,7 @@ export default async function NewStudentPage({ params }: { params: Promise<{ loc
       eyebrow={text.kicker}
       title={text.title}
       description={text.body}
-      actions={[{ label: text.back, href: `/${locale}/students` }]}
+      actions={[{ label: text.back, href: `/${locale}/admissions` }]}
     />
     <div className="workspace-context-strip" data-page-section><p>{text.warning}</p></div>
     <StudentCreateForm locale={locale} sessions={options.sessions} programs={options.programs} groups={options.groups} />

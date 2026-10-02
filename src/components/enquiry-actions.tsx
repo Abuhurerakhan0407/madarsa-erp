@@ -3,15 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { enquiryChannelLabel, enquiryStatusLabel } from "@/lib/admissions/enquiry-labels";
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 
 const copy = {
   en: { title: "Record follow-up", channel: "Channel", outcome: "Outcome", status: "New status", next: "Next follow-up (optional)", save: "Complete follow-up", start: "Start admission application", working: "Working…", duplicate: "Possible duplicate found. Confirm only after checking records.", reason: "Duplicate override reason (20+ characters)", confirm: "I reviewed the possible duplicate", error: "Unable to update enquiry.", token: "Applicant tracking credentials — copy now" },
-  ur: { title: "رابطہ درج کریں", channel: "ذریعہ", outcome: "نتیجہ", status: "نئی حالت", next: "اگلا رابطہ (اختیاری)", save: "رابطہ مکمل کریں", start: "داخلہ درخواست شروع کریں", working: "کارروائی جاری ہے…", duplicate: "ممکنہ نقل ملی۔ ریکارڈ دیکھنے کے بعد ہی تصدیق کریں۔", reason: "نقل کی منظوری کی وجہ (کم از کم 20 حروف)", confirm: "میں نے ممکنہ نقل کا جائزہ لیا", error: "استفسار اپ ڈیٹ نہیں ہوا۔", token: "درخواست گزار کی ٹریکنگ معلومات — ابھی نقل کریں" },
-  ar: { title: "تسجيل المتابعة", channel: "القناة", outcome: "النتيجة", status: "الحالة الجديدة", next: "المتابعة التالية (اختياري)", save: "إكمال المتابعة", start: "بدء طلب القبول", working: "جارٍ التنفيذ…", duplicate: "تم العثور على تطابق محتمل. أكد بعد مراجعة السجلات.", reason: "سبب تجاوز التكرار (20 حرفًا على الأقل)", confirm: "راجعت التطابق المحتمل", error: "تعذر تحديث الاستفسار.", token: "بيانات تتبع المتقدم — انسخها الآن" }
+  ur: { title: "رابطہ درج کریں", channel: "ذریعہ", outcome: "نتیجہ", status: "نئی حالت", next: "اگلا رابطہ (اختیاری)", save: "رابطہ مکمل کریں", start: "داخلہ درخواست شروع کریں", working: "کارروائی جاری ہے…", duplicate: "ممکنہ نقل ملی۔ ریکارڈ دیکھنے کے بعد ہی تصدیق کریں۔", reason: "نقل کی منظوری کی وجہ (کم از کم 20 حروف)", confirm: "میں نے ممکنہ نقل کا جائزہ لیا", error: "استفسار اپ ڈیٹ نہیں ہوا۔", token: "درخواست گزار کی ٹریکنگ معلومات — ابھی نقل کریں" }
 } as const;
 
-export function EnquiryActions({ enquiryId, locale, status, hasOpenFollowUp, applicationId }: { enquiryId: number; locale: Locale; status: string; hasOpenFollowUp: boolean; applicationId: number | null }) {
+export function EnquiryActions({ enquiryId, locale, status, hasOpenFollowUp, applicationId }: { enquiryId: number; locale: SupportedLocale; status: string; hasOpenFollowUp: boolean; applicationId: number | null }) {
   const text = copy[locale]; const router = useRouter(); const [busy, setBusy] = useState(false); const [error, setError] = useState<string | null>(null); const [duplicate, setDuplicate] = useState(false); const [tracking, setTracking] = useState<{ id: string; token: string } | null>(null);
   async function followup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(null); const form = new FormData(event.currentTarget); const next = String(form.get("nextFollowUpAt") || "");
@@ -35,7 +34,7 @@ export function EnquiryActions({ enquiryId, locale, status, hasOpenFollowUp, app
   }
   return <section className="configuration-detail-card"><h2>{text.title}</h2>
     {hasOpenFollowUp && !applicationId ? <form aria-busy={busy} className="configuration-form" onSubmit={followup}>
-      <label className="field-label">{text.channel}<select className="text-field" name="channel" defaultValue="phone"><option value="phone">{enquiryChannelLabel(locale, "phone")}</option><option value="email">{enquiryChannelLabel(locale, "email")}</option><option value="whatsapp">{enquiryChannelLabel(locale, "whatsapp")}</option><option value="in_person">{enquiryChannelLabel(locale, "in_person")}</option></select></label>
+      <label className="field-label">{text.channel}<select className="text-field" name="channel" defaultValue="phone"><option value="phone">{enquiryChannelLabel(locale, "phone")}</option><option value="email">{enquiryChannelLabel(locale, "email")}</option><option value="in_person">{enquiryChannelLabel(locale, "in_person")}</option></select></label>
       <label className="field-label">{text.outcome}<textarea className="text-field" name="outcome" minLength={2} maxLength={2000} required /></label>
       <label className="field-label">{text.status}<select className="text-field" name="newStatus" defaultValue="contacted"><option value="contacted">{enquiryStatusLabel(locale, "contacted")}</option><option value="qualified">{enquiryStatusLabel(locale, "qualified")}</option><option value="lost">{enquiryStatusLabel(locale, "lost")}</option><option value="archived">{enquiryStatusLabel(locale, "archived")}</option></select></label>
       <label className="field-label">{text.next}<input className="text-field" name="nextFollowUpAt" type="datetime-local" /></label>

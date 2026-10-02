@@ -1,4 +1,5 @@
 import { createLayoutPdf, type PdfLayoutCommand } from "../documents/layout-pdf";
+import { createUnicodeLayoutPdf } from "../documents/unicode-layout-pdf";
 import type { ReportResult } from "./workspace";
 
 type ReportPdfContext = {
@@ -74,7 +75,7 @@ function pageHeader(config: { title: string; columns: ColumnConfig[] }, context:
   return commands;
 }
 
-export function createOperationalReportPdf(result: ReportResult, context: ReportPdfContext): Uint8Array {
+function operationalReportPages(result: ReportResult, context: ReportPdfContext): PdfLayoutCommand[][] {
   const config = configs[result.reportKey];
   if (!config) throw new Error("PDF output is not supported for this report.");
   const rows = result.rows;
@@ -97,7 +98,15 @@ export function createOperationalReportPdf(result: ReportResult, context: Report
     pages.push(commands);
   }
 
-  return createLayoutPdf({ pages, pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT });
+  return pages;
+}
+
+export function createOperationalReportPdf(result: ReportResult, context: ReportPdfContext): Uint8Array {
+  return createLayoutPdf({ pages: operationalReportPages(result, context), pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT });
+}
+
+export async function createUnicodeOperationalReportPdf(result: ReportResult, context: ReportPdfContext): Promise<Uint8Array> {
+  return createUnicodeLayoutPdf({ pages: operationalReportPages(result, context), pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT });
 }
 
 export function supportsOperationalReportPdf(reportKey: string): boolean {

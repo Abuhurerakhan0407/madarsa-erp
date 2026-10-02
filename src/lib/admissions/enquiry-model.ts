@@ -77,7 +77,7 @@ export function validateCreateEnquiry(body: unknown, now = new Date()): {
   return { errors: [], value: { applicantName, guardianName, phone, email, sessionId, programId, preferredLocale, source, consent: true, notes, nextFollowUpAt } };
 }
 
-export const enquiryChannels = ["phone", "email", "whatsapp", "in_person"] as const;
+export const enquiryChannels = ["phone", "email", "in_person"] as const;
 export type EnquiryChannel = typeof enquiryChannels[number];
 export const enquiryFollowUpStatuses = ["contacted", "qualified", "lost", "archived"] as const;
 

@@ -1,0 +1,41 @@
+{
+  "packageId": "in.ilmgaah.app",
+  "host": "www.ilmgaah.in",
+  "name": "Ilmgaah",
+  "launcherName": "Ilmgaah",
+  "display": "standalone",
+  "themeColor": "#0a7154",
+  "themeColorDark": "#075943",
+  "navigationColor": "#f8f6ef",
+  "navigationColorDark": "#0b1f19",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#f8f6ef",
+  "enableNotifications": true,
+  "startUrl": "/login?source=app",
+  "iconUrl": "https://www.ilmgaah.in/icons/icon-512.png",
+  "maskableIconUrl": "https://www.ilmgaah.in/icons/maskable-512.png",
+  "splashScreenFadeOutDuration": 250,
+  "signingKey": {
+    "path": "./signing/ilmgaah-release.jks",
+    "alias": "ilmgaah"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://www.ilmgaah.in/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 23,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}

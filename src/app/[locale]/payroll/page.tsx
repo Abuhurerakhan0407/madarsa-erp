@@ -1,0 +1,5 @@
+import {getPayrollWorkspace} from '@/lib/payroll/workspace';
+import {PayrollWorkspaceView} from '@/components/payroll-workspace';
+import {requireOfficeAudience} from '@/lib/navigation/office-gate';
+const copy={en:{kicker:'HR & payroll',title:'Payroll',body:'Set staff salary, prepare a monthly run, adjust simple allowances and deductions, finalize, mark paid and print payslips.'},ur:{kicker:'HR اور پے رول',title:'پے رول',body:'عملے کی تنخواہ مقرر کریں، ماہانہ پے رول تیار کریں، سادہ الاؤنس اور کٹوتی ایڈجسٹ کریں، حتمی کریں، ادا شدہ نشان لگائیں اور پے سلپ پرنٹ کریں۔'}} as const;
+export default async function PayrollPage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{month?:string}>}){const[{locale:raw},{month}]=await Promise.all([params,searchParams]);const locale=raw==='ur'?'ur':'en';await requireOfficeAudience(locale);const data=await getPayrollWorkspace(month);const t=copy[locale];return <><section className="page-heading"><div><p className="state-kicker">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p></div></section><PayrollWorkspaceView locale={locale} data={data}/></>;}

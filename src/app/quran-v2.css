@@ -170,10 +170,16 @@
   font-weight: 700;
 }
 
-.quran-quick-buttons button:first-child {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+.quran-quick-buttons button[aria-pressed="true"] {
+  border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.quran-quick-buttons button[aria-pressed="false"]:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--surface-muted);
 }
 
 .quran-quick-buttons button:disabled,

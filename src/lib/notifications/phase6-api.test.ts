@@ -44,12 +44,12 @@ describe("Phase 6 portal notification API and UI boundaries",()=>{
 
   it("shows unread state priority source time and relevant links in the portal",()=>{
     expect(center).toContain("unreadCount");
-    expect(center).toContain("priorityLabel(item.priority)");
-    expect(center).toContain("item.sourceModule");
-    expect(center).toContain("new Date(item.sentAt).toLocaleString()");
+    expect(center).toContain("priorityLabel(item.priority, locale)");
+    expect(center).toContain("moduleLabel(item.sourceModule, locale)");
+    expect(center).toContain("formatPortalDateTime(item.sentAt, locale)");
     expect(center).toContain("Mark read");
     expect(center).toContain("<Link");
-    expect(portalPage).toContain("<PortalNotificationCenter tenantId={tenantId} initial={notifications}/>");
+    expect(portalPage).toContain("<PortalNotificationCenter tenantId={tenantId} initial={notifications} locale={locale} />");
   });
 
   it("limits push notification clicks to the same application origin",()=>{
@@ -59,7 +59,10 @@ describe("Phase 6 portal notification API and UI boundaries",()=>{
   });
 
   it("validates operator-selected priority before publishing v2 notices",()=>{
-    expect(noticeRoute).toContain('priority!=="normal"&&priority!=="important"&&priority!=="urgent"');
-    expect(noticeRoute).toContain("publishPortalNotice({audienceType,title,body:noticeBody,priority:");
+    expect(noticeRoute).toContain('priority !== undefined');
+    expect(noticeRoute).toContain('priority !== "normal"');
+    expect(noticeRoute).toContain('priority !== "important"');
+    expect(noticeRoute).toContain('priority !== "urgent"');
+    expect(noticeRoute).toContain('priority: (priority ?? "normal") as PortalNoticePriority');
   });
 });

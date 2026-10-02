@@ -3,7 +3,7 @@ export type StudentImportRow = {
   name_native?: string;
   date_of_birth?: string;
   gender?: "male" | "female" | "other" | "undisclosed";
-  preferred_locale?: "en" | "ur" | "ar";
+  preferred_locale?: "en" | "ur";
   guardian?: { name: string; relationship: "father" | "mother" | "guardian"; phone?: string };
 };
 
@@ -55,7 +55,7 @@ export function parseStudentImportCsv(input:string):StudentImportRow[]{
     if(!record.display_name)throw new Error(`Row ${rows.length+2} is missing the student name.`);
     if(record.display_name.length>160)throw new Error(`Row ${rows.length+2} student name is too long.`);
     const gender=record.gender?.toLowerCase();if(gender&&!(["male","female","other","undisclosed"] as string[]).includes(gender))throw new Error(`Row ${rows.length+2} has an invalid gender.`);
-    const locale=record.preferred_locale?.toLowerCase();if(locale&&!(["en","ur","ar"] as string[]).includes(locale))throw new Error(`Row ${rows.length+2} has an invalid preferred locale.`);
+    const locale=record.preferred_locale?.toLowerCase();if(locale&&!(["en","ur"] as string[]).includes(locale))throw new Error(`Row ${rows.length+2} has an invalid preferred locale.`);
     if(record.date_of_birth&&!/^\d{4}-\d{2}-\d{2}$/.test(record.date_of_birth))throw new Error(`Row ${rows.length+2} date_of_birth must use YYYY-MM-DD.`);
     const guardianName=record.guardian_name;const relationship=(record.guardian_relationship||"guardian").toLowerCase();
     if(guardianName&&!(["father","mother","guardian"] as string[]).includes(relationship))throw new Error(`Row ${rows.length+2} has an invalid guardian relationship.`);

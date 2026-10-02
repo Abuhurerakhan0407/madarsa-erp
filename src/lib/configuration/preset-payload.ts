@@ -1,5 +1,5 @@
 import type { AttendanceStatus } from "../attendance/model";
-import { configurationLocales, type ConfigurationPreset } from "./model";
+import { releaseConfigurationLocales, type ConfigurationPreset } from "./model";
 
 export type TerminologyPresetRow = {
   concept_key: string;
@@ -19,7 +19,7 @@ const attendanceStatusTemplates: Readonly<Record<string, AttendanceStatus>> = {
 
 export function buildPresetDraftPayload(preset: ConfigurationPreset) {
   const terminology: TerminologyPresetRow[] = preset.terminology.flatMap((entry) =>
-    configurationLocales.map((locale) => ({
+    releaseConfigurationLocales.map((locale) => ({
       concept_key: entry.conceptKey,
       locale,
       singular_label: entry.singular[locale],

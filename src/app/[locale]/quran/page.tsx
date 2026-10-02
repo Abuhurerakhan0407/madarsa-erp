@@ -1,4 +1,4 @@
-import type { Locale } from "@/lib/i18n/config";
+import type { SupportedLocale } from "@/lib/i18n/config";
 import { QuranDailyRegister } from "@/components/quran-daily-register";
 import { getQuranDailyRegister } from "@/lib/quran/daily-register";
 
@@ -12,11 +12,6 @@ const copy = {
     kicker: "قرآنی تدریس",
     title: "قرآن و حفظ",
     body: "حلقہ اور سبق کی تاریخ ایک بار منتخب کریں، پھر ایک تیز سبق، سبقی، منزل اور نظرِ ثانی رجسٹر سے پوری کلاس درج کریں۔"
-  },
-  ar: {
-    kicker: "تدريس القرآن",
-    title: "القرآن والحفظ",
-    body: "اختر الحلقة وتاريخ الدرس مرة واحدة، ثم سجّل الفصل كله من سجل سريع للسبق والسبقي والمنزل والمراجعة."
   }
 } as const;
 
@@ -38,7 +33,7 @@ export default async function QuranPage({
 }) {
   const { locale: rawLocale } = await params;
   const query = await searchParams;
-  const locale = (rawLocale === "ur" || rawLocale === "ar" ? rawLocale : "en") as Locale;
+  const locale: SupportedLocale = rawLocale === "ur" ? "ur" : "en";
   const parsedGroup = Number(query.group);
   const groupId = Number.isInteger(parsedGroup) && parsedGroup > 0 ? parsedGroup : null;
   const date = validDate(query.date);
