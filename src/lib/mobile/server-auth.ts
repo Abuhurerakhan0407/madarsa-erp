@@ -73,7 +73,7 @@ export async function resolveMobileStaffWorkspace(
     if (roleError) continue;
 
     const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
-    const isAdmin = roleKeys.some((key) => key === "owner" || key === "admin" || key === "accountant");
+    const isAdmin = roleKeys.some((key) => key === "institution_owner" || key === "owner" || key === "admin" || key === "accountant");
     const surface = isAdmin ? "admin" : roleKeys.includes("teacher") ? "teacher" : null;
     if (!surface) continue;
 
