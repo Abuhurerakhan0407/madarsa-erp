@@ -41,9 +41,9 @@ public class MainActivity extends Activity {
     private String surface = "admin";
     private int tenantId = 0;
     private int branchId = 0;
-    private String liveStudents = "تقریباً 350";
+    private String liveStudents = "—";
     private String liveAttendance = "—";
-    private String liveStaff = "30–35";
+    private String liveStaff = "—";
     private String liveAdmissions = "—";
     private int parentChildren = 0;
     private JSONObject guardianPayload;
@@ -455,9 +455,11 @@ public class MainActivity extends Activity {
         headerMeta.setGravity(Gravity.RIGHT);
         headerCopy.addView(headerMeta);
 
-        connectionState = tv("●", 16, GREEN, true);
+        connectionState = tv("لوڈ…", 10, MUTED, true);
         connectionState.setGravity(Gravity.CENTER);
-        header.addView(connectionState, new LinearLayout.LayoutParams(dp(28), dp(46)));
+        connectionState.setPadding(dp(9), dp(7), dp(9), dp(7));
+        connectionState.setBackground(rounded(GREEN_SOFT, GREEN_SOFT, 30));
+        header.addView(connectionState, new LinearLayout.LayoutParams(dp(66), dp(40)));
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         outer.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
@@ -488,11 +490,20 @@ public class MainActivity extends Activity {
         showScreen("home");
     }
 
+    private String navGlyph(String screen) {
+        if ("home".equals(screen)) return "⌂";
+        if ("talaba".equals(screen)) return "▤";
+        if ("attendance".equals(screen)) return "✓";
+        if ("hostel".equals(screen)) return "▣";
+        return "⋯";
+    }
+
     private void navItem(LinearLayout nav, String label, String screen) {
-        TextView item = tv("•\\n" + label, 11, MUTED, true);
+        TextView item = tv(navGlyph(screen) + "\\n" + label, 11, MUTED, true);
         item.setGravity(Gravity.CENTER);
         item.setLineSpacing(0, 0.9f);
         item.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        item.setPadding(dp(4), dp(2), dp(4), dp(2));
         item.setOnClickListener(v -> showScreen(screen));
         nav.addView(item, new LinearLayout.LayoutParams(0, -1, 1f));
     }
@@ -667,7 +678,8 @@ public class MainActivity extends Activity {
         addMetricRow("فعال طلبہ", liveStudents,
                 "بایومیٹرک", "4 × MBio G1", true);
         addMetricRow("اساتذہ", liveStaff,
-                "برانچ", "1", false);
+                "آج کی حاضری", liveAttendance, false);
+        addMetricRow("برانچ", "1", "اوپن درخواستیں", liveAdmissions, false);
         sectionLabel("اہم ورک اسپیسز");
         addTwoLinks("داخلہ", "Admissions", "admissions",
                 "طلبہ", "Talaba", "talaba");
@@ -844,13 +856,160 @@ public class MainActivity extends Activity {
 
     private void renderTalaba() {
         titleBlock("طلبہ", "Talaba register • جامعہ کے طلبہ کا روزمرہ ورک اسپیس");
-        addMetricRow("کل طلبہ", liveStudents, "پروگرام", "Hifz + Arabic", true);
+        addActionCard("طلبہ رجسٹر لوڈ ہو رہا ہے…", "محفوظ live workspace data حاصل کیا جا رہا ہے۔");
 
-        sectionLabel("طلبہ کے کام");
-        addActionCard("طلبہ رجسٹر", "تلاش، پروفائل اور بنیادی طالب علم معلومات");
-        addActionCard("داخلہ سے طالب علم", "نئے طالب علم کو workflow کے ذریعے شامل کریں");
-        addActionCard("شناخت اور دستاویزات", "ID card اور certificate workflows");
-        addActionCard("گروپ / کلاس", "Hifz اور Arabic learning placement");
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/students?tenantId=" + tenantId +
+                "&branchId=" + branchId +
+                "&page=1&pageSize=30";
+        NativeApi.get(url, accessToken, result -> {
+            content.removeAllViews();
+            titleBlock("طلبہ", "Talaba register • live workspace");
+
+            if (!result.ok()) {
+                addActionCard("طلبہ ڈیٹا دستیاب نہیں", "Live register ابھی حاصل نہیں ہو سکا۔ دوبارہ کھولیں۔");
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            int total = payload.optInt("total", 0);
+            int active = payload.optInt("active", 0);
+            addMetricRow("فعال طلبہ", String.valueOf(active), "کل طلبہ", String.valueOf(total), true);
+            sectionLabel("Talaba register");
+
+            JSONArray rows = payload.optJSONArray("rows");
+            if (rows == null || rows.length() == 0) {
+                addActionCard("ابھی کوئی Talaba نہیں", "اس branch میں موجودہ register خالی ہے۔");
+                return;
+            }
+
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i);
+                if (row == null) continue;
+
+                LinearLayout item = card();
+                item.setOnClickListener(v -> renderStudentDetail(row.optInt("personId", 0)));
+                LinearLayout top = row();
+                item.addView(top);
+
+                TextView number = tv(row.optString("studentNumber", "—"), 11, BLUE, true);
+                number.setGravity(Gravity.CENTER);
+                number.setPadding(dp(10), dp(7), dp(10), dp(7));
+                number.setBackground(rounded(BLUE_SOFT, BLUE_SOFT, 12));
+                top.addView(number, new LinearLayout.LayoutParams(dp(88), dp(38)));
+
+                LinearLayout copy = new LinearLayout(this);
+                copy.setOrientation(LinearLayout.VERTICAL);
+                copy.setPadding(dp(10), 0, 0, 0);
+                top.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+                TextView name = tv(row.optString("name", "Talaba"), 15, GREEN_DARK, true);
+                name.setGravity(Gravity.RIGHT);
+                copy.addView(name);
+                String nativeName = row.optString("nativeName", "").trim();
+                if (!nativeName.isEmpty()) {
+                    TextView nativeText = tv(nativeName, 11, MUTED, false);
+                    nativeText.setGravity(Gravity.RIGHT);
+                    copy.addView(nativeText);
+                }
+
+                TextView meta = tv(
+                        row.optString("program", "—") + "  •  " + row.optString("group", "—") +
+                                "  •  " + row.optString("status", "active"),
+                        11, MUTED, false);
+                meta.setGravity(Gravity.RIGHT);
+                LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-1, -2);
+                metaParams.topMargin = dp(7);
+                item.addView(meta, metaParams);
+
+                content.addView(item, new LinearLayout.LayoutParams(-1, -2));
+                addGap(content, 8);
+            }
+        });
+    }
+
+    private void renderStudentDetail(int personId) {
+        content.removeAllViews();
+        TextView back = tv("‹  طلبہ", 13, BLUE, true);
+        back.setGravity(Gravity.RIGHT);
+        back.setPadding(dp(4), dp(6), dp(4), dp(8));
+        back.setOnClickListener(v -> showScreen("talaba"));
+        content.addView(back, new LinearLayout.LayoutParams(-1, -2));
+        titleBlock("طالب علم پروفائل", "Talaba • live profile");
+        addActionCard("پروفائل لوڈ ہو رہی ہے…", "محفوظ live student record حاصل کیا جا رہا ہے۔");
+
+        if (personId <= 0) {
+            content.removeAllViews();
+            titleBlock("طالب علم پروفائل", "Talaba");
+            addActionCard("پروفائل دستیاب نہیں", "Student identifier درست نہیں ہے۔");
+            return;
+        }
+
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/students/" + personId +
+                "?tenantId=" + tenantId + "&branchId=" + branchId;
+        NativeApi.get(url, accessToken, result -> {
+            content.removeAllViews();
+            TextView backLoaded = tv("‹  طلبہ", 13, BLUE, true);
+            backLoaded.setGravity(Gravity.RIGHT);
+            backLoaded.setPadding(dp(4), dp(6), dp(4), dp(8));
+            backLoaded.setOnClickListener(v -> showScreen("talaba"));
+            content.addView(backLoaded, new LinearLayout.LayoutParams(-1, -2));
+            titleBlock("طالب علم پروفائل", "Talaba • live profile");
+
+            if (!result.ok()) {
+                addActionCard("پروفائل دستیاب نہیں", "Live student record ابھی حاصل نہیں ہو سکا۔");
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            JSONObject student = payload.optJSONObject("student");
+            JSONObject attendance = payload.optJSONObject("attendance");
+            if (student == null) {
+                addActionCard("پروفائل خالی ہے", "Student service نے کوئی record واپس نہیں کیا۔");
+                return;
+            }
+
+            LinearLayout identity = card();
+            TextView name = tv(student.optString("name", "Talaba"), 22, GREEN_DARK, true);
+            name.setGravity(Gravity.RIGHT);
+            identity.addView(name);
+            String nativeName = student.optString("nativeName", "").trim();
+            if (!nativeName.isEmpty()) {
+                TextView nativeText = tv(nativeName, 13, MUTED, false);
+                nativeText.setGravity(Gravity.RIGHT);
+                LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
+                np.topMargin = dp(5);
+                identity.addView(nativeText, np);
+            }
+            TextView number = tv(
+                    student.optString("studentNumber", "—") + "  •  " +
+                            student.optString("admissionNumber", "—"),
+                    12, MUTED, false);
+            number.setGravity(Gravity.RIGHT);
+            LinearLayout.LayoutParams nump = new LinearLayout.LayoutParams(-1, -2);
+            nump.topMargin = dp(9);
+            identity.addView(number, nump);
+            content.addView(identity);
+            addGap(content, 10);
+
+            addMetricRow("حاضری", attendance == null ? "—" : String.valueOf(attendance.optInt("present", 0)),
+                    "غیر حاضر", attendance == null ? "—" : String.valueOf(attendance.optInt("absent", 0)), true);
+            addMetricRow("تاخیر", attendance == null ? "—" : String.valueOf(attendance.optInt("late", 0)),
+                    "کل ریکارڈ", attendance == null ? "—" : String.valueOf(attendance.optInt("total", 0)), false);
+
+            sectionLabel("تعلیمی معلومات");
+            addActionCard("پروگرام", student.optString("program", "—"));
+            addActionCard("گروپ / کلاس", student.optString("group", "—"));
+            addActionCard("حیثیت", student.optString("status", "—"));
+            addActionCard("شمولیت", student.optString("joinedOn", "—"));
+
+            sectionLabel("Module summary");
+            int quranAttempts = payload.optInt("quranAttempts", 0);
+            int resultCount = payload.optInt("resultCount", 0);
+            addMetricRow("حفظ attempts", String.valueOf(quranAttempts),
+                    "نتائج", String.valueOf(resultCount), false);
+        });
     }
 
     private void renderAdmissions() {
@@ -885,31 +1044,108 @@ public class MainActivity extends Activity {
         addActionCard("Results", "Published result view");
         addActionCard("Reports", "نتائج کی رپورٹنگ اور export");
     }
+    private String todayIso() {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
+    }
+
+    private String attendanceStatusLabel(JSONObject row) {
+        String category = row.optString("status_category", "").trim();
+        if ("present".equals(category)) return "حاضر";
+        if ("absent".equals(category)) return "غیر حاضر";
+        if ("late".equals(category)) return "تاخیر";
+        if ("leave".equals(category) || "excused".equals(category)) return "رخصت";
+        return "غیر نشان زدہ";
+    }
+
     private void renderAttendance() {
-        titleBlock("حاضری", "صرف بایومیٹرک attendance اور ہنگامی manual punching");
-        addMetricRow("بایومیٹرک", "4 مشینیں", "ڈیوائس", "MBio G1", true);
+        titleBlock("حاضری", "روزانہ student attendance • biometric pipeline");
+        addActionCard("آج کی حاضری لوڈ ہو رہی ہے…", "Live roster اور attendance summary حاصل کی جا رہی ہے۔");
 
-        sectionLabel("Biometric devices");
-        deviceCard("BIO-01", "MBio G1", "Fingerprint device");
-        deviceCard("BIO-02", "MBio G1", "Fingerprint device");
-        deviceCard("BIO-03", "MBio G1", "Fingerprint device");
-        deviceCard("BIO-04", "MBio G1", "Fingerprint device");
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/attendance?tenantId=" + tenantId +
+                "&branchId=" + branchId +
+                "&date=" + todayIso() +
+                "&view=student&page=1&pageSize=50";
+        NativeApi.get(url, accessToken, result -> {
+            content.removeAllViews();
+            titleBlock("حاضری", "روزانہ student attendance • live workspace");
 
-        sectionLabel("Emergency");
-        LinearLayout emergency = card();
-        emergency.setBackground(rounded(BLUE_SOFT, BLUE, 16));
-        TextView emergencyTitle = tv("ہنگامی دستی اندراج", 14, BLUE, true);
-        emergencyTitle.setGravity(Gravity.RIGHT);
-        emergency.addView(emergencyTitle);
-        TextView emergencyBody = tv(
-                "صرف اس وقت استعمال کریں جب biometric punch دستیاب نہ ہو۔",
-                11, MUTED, false);
-        emergencyBody.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams ep =
-                new LinearLayout.LayoutParams(-1, -2);
-        ep.topMargin = dp(5);
-        emergency.addView(emergencyBody, ep);
-        content.addView(emergency);
+            if (!result.ok()) {
+                addActionCard("حاضری ڈیٹا دستیاب نہیں", "Live attendance ابھی حاصل نہیں ہو سکی۔ دوبارہ کھولیں۔");
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            JSONObject attendance = payload.optJSONObject("attendance");
+            if (attendance == null) {
+                addActionCard("حاضری دستیاب نہیں", "Attendance service نے کوئی workspace response نہیں دیا۔");
+                return;
+            }
+
+            JSONObject summary = attendance.optJSONObject("summary");
+            int total = summary == null ? attendance.optInt("total", 0) : summary.optInt("total", 0);
+            int present = summary == null ? 0 : summary.optInt("present", 0);
+            int absent = summary == null ? 0 : summary.optInt("absent", 0);
+            int late = summary == null ? 0 : summary.optInt("late", 0);
+            int leave = summary == null ? 0 : summary.optInt("leave", 0);
+            int unmarked = summary == null ? 0 : summary.optInt("unmarked", 0);
+
+            addMetricRow("کل", String.valueOf(total), "حاضر", String.valueOf(present), true);
+            addMetricRow("غیر حاضر", String.valueOf(absent), "تاخیر / رخصت", String.valueOf(late + leave), false);
+            if (unmarked > 0) addActionCard("باقی غیر نشان زدہ", String.valueOf(unmarked) + " Talaba کی حاضری مکمل نہیں ہوئی۔");
+
+            sectionLabel("Today's roster");
+            JSONArray rows = attendance.optJSONArray("rows");
+            if (rows == null || rows.length() == 0) {
+                boolean started = attendance.optBoolean("started", false);
+                addActionCard(
+                        started ? "آج کا roster خالی ہے" : "آج کی حاضری شروع نہیں ہوئی",
+                        started ? "اس branch کے لیے کوئی Talaba roster member نہیں ملا۔" : "Daily attendance session ابھی open نہیں ہوئی۔"
+                );
+            } else {
+                for (int i = 0; i < rows.length(); i++) {
+                    JSONObject row = rows.optJSONObject(i);
+                    if (row == null) continue;
+                    LinearLayout item = card();
+                    TextView name = tv(row.optString("name", "Talaba"), 15, GREEN_DARK, true);
+                    name.setGravity(Gravity.RIGHT);
+                    item.addView(name);
+
+                    String number = row.optString("student_number", "—");
+                    String source = row.optString("source", "").trim();
+                    String detail = number + "  •  " + attendanceStatusLabel(row);
+                    if (!source.isEmpty()) detail += "  •  " + source;
+                    TextView meta = tv(detail, 11, MUTED, false);
+                    meta.setGravity(Gravity.RIGHT);
+                    LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1, -2);
+                    mp.topMargin = dp(6);
+                    item.addView(meta, mp);
+                    content.addView(item, new LinearLayout.LayoutParams(-1, -2));
+                    addGap(content, 8);
+                }
+            }
+
+            sectionLabel("Biometric devices");
+            deviceCard("BIO-01", "MBio G1", "Fingerprint device");
+            deviceCard("BIO-02", "MBio G1", "Fingerprint device");
+            deviceCard("BIO-03", "MBio G1", "Fingerprint device");
+            deviceCard("BIO-04", "MBio G1", "Fingerprint device");
+
+            sectionLabel("Emergency");
+            LinearLayout emergency = card();
+            emergency.setBackground(rounded(BLUE_SOFT, BLUE_SOFT, 16));
+            TextView emergencyTitle = tv("ہنگامی دستی اندراج", 14, BLUE, true);
+            emergencyTitle.setGravity(Gravity.RIGHT);
+            emergency.addView(emergencyTitle);
+            TextView emergencyBody = tv(
+                    "صرف اس وقت استعمال کریں جب biometric punch دستیاب نہ ہو۔",
+                    11, MUTED, false);
+            emergencyBody.setGravity(Gravity.RIGHT);
+            LinearLayout.LayoutParams ep = new LinearLayout.LayoutParams(-1, -2);
+            ep.topMargin = dp(5);
+            emergency.addView(emergencyBody, ep);
+            content.addView(emergency);
+        });
     }
 
     private void deviceCard(String code, String deviceName, String detail) {
@@ -944,15 +1180,93 @@ public class MainActivity extends Activity {
     }
 
     private void renderHostel() {
-        titleBlock("ہاسٹل", "Residential hostel • رہائشی طلبہ اور room/bed operations");
-        addMetricRow("رہائشی طلبہ", "—", "برانچ", "1", true);
-        addMetricRow("Bed allocation", "—", "Rooms", "—", false);
+        titleBlock("ہاسٹل", "Residential hostel • live room and bed operations");
+        addActionCard("ہاسٹل ڈیٹا لوڈ ہو رہا ہے…", "محفوظ live resident, bed اور security data حاصل کیا جا رہا ہے۔");
 
-        sectionLabel("ہاسٹل ورک اسپیس");
-        addActionCard("Resident register", "رہائشی طلبہ کی موجودہ فہرست");
-        addActionCard("Room & bed allocation", "کمرہ اور بستر allocation workflow");
-        addActionCard("Visitor register", "Visitors اور identity record");
-        addActionCard("Incidents", "Security incidents اور follow-up");
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/hostel?tenantId=" + tenantId + "&branchId=" + branchId;
+        NativeApi.get(url, accessToken, result -> {
+            content.removeAllViews();
+            titleBlock("ہاسٹل", "Residential hostel • live workspace");
+
+            if (!result.ok()) {
+                addActionCard("ہاسٹل ڈیٹا دستیاب نہیں", "Live hostel workspace ابھی حاصل نہیں ہو سکا۔");
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            JSONObject center = payload.optJSONObject("center");
+            if (center == null) {
+                addActionCard("ہاسٹل ورک اسپیس خالی ہے", "Hostel service نے کوئی center response نہیں دیا۔");
+                return;
+            }
+
+            JSONArray beds = center.optJSONArray("beds");
+            JSONArray students = center.optJSONArray("students");
+            JSONArray allocations = center.optJSONArray("allocations");
+            JSONArray visitors = center.optJSONArray("visitors");
+            JSONArray incidents = center.optJSONArray("incidents");
+
+            int bedCount = beds == null ? 0 : beds.length();
+            int available = 0;
+            int occupied = 0;
+            if (beds != null) {
+                for (int i = 0; i < beds.length(); i++) {
+                    JSONObject bed = beds.optJSONObject(i);
+                    if (bed == null) continue;
+                    String state = bed.optString("state", "");
+                    if ("available".equals(state)) {
+                        available++;
+                    } else if ("occupied".equals(state) || "allocated".equals(state) || "temporary_leave".equals(state)) {
+                        occupied++;
+                    }
+                }
+            }
+            int residentCount = students == null ? 0 : students.length();
+            int allocationCount = allocations == null ? 0 : allocations.length();
+            int visitorCount = visitors == null ? 0 : visitors.length();
+            int incidentCount = incidents == null ? 0 : incidents.length();
+
+            addMetricRow("رہائشی طلبہ", String.valueOf(residentCount),
+                    "کل beds", String.valueOf(bedCount), true);
+            addMetricRow("Available", String.valueOf(available),
+                    "Occupied", String.valueOf(occupied), false);
+
+            sectionLabel("موجودہ رہائش");
+            if (allocationCount == 0) {
+                addActionCard("کوئی allocation نہیں", "اس branch میں موجودہ hostel allocation نہیں ملا۔");
+            } else {
+                int shown = Math.min(allocationCount, 12);
+                for (int i = 0; i < shown; i++) {
+                    JSONObject allocation = allocations.optJSONObject(i);
+                    if (allocation == null) continue;
+                    String room = allocation.optString("room_key", "—");
+                    String bed = allocation.optString("bed_key", "—");
+                    String resident = allocation.optString("display_name", "Talaba");
+                    addActionCard(resident,
+                            allocation.optString("student_number", "—") + "  •  " + room + " / " + bed +
+                                    "  •  " + allocation.optString("state", "occupied"));
+                }
+            }
+
+            sectionLabel("Security");
+            addMetricRow("Visitors", String.valueOf(visitorCount),
+                    "Incidents", String.valueOf(incidentCount), false);
+            if (incidentCount > 0) {
+                int shownIncidents = Math.min(incidentCount, 5);
+                for (int i = 0; i < shownIncidents; i++) {
+                    JSONObject incident = incidents.optJSONObject(i);
+                    if (incident == null) continue;
+                    addActionCard(
+                            incident.optString("category", "Incident"),
+                            incident.optString("resident_name", "Hostel resident") +
+                                    "  •  " + incident.optString("severity", "normal") +
+                                    "  •  " + incident.optString("state", "open"));
+                }
+            } else {
+                addActionCard("کوئی active incident نہیں", "Current hostel incident feed میں کوئی record نہیں ملا۔");
+            }
+        });
     }
 
     private void renderPortals() {
@@ -993,12 +1307,60 @@ public class MainActivity extends Activity {
         addActionCard("Documents", "Talaba-linked documents");
     }
     private void renderReports() {
-        titleBlock("رپورٹس", "Operational reports");
-        addActionCard("Attendance report", "Student attendance summary");
-        addActionCard("Hifz report", "Qur’an / Talaba Hifz progress");
-        addActionCard("Admissions report", "Talaba admission pipeline summary");
-        addActionCard("Hostel report", "Talaba resident and allocation overview");
-        addActionCard("Exam report", "Talaba marks and published results");
+        titleBlock("رپورٹس", "Operational reports • live report hub");
+        addActionCard("رپورٹس لوڈ ہو رہی ہیں…", "محفوظ published report catalogue حاصل کیا جا رہا ہے۔");
+
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/reports?tenantId=" + tenantId + "&branchId=" + branchId;
+        NativeApi.get(url, accessToken, result -> {
+            content.removeAllViews();
+            titleBlock("رپورٹس", "Operational reports • live report hub");
+
+            if (!result.ok()) {
+                addActionCard("رپورٹس دستیاب نہیں", "Published report hub ابھی حاصل نہیں ہو سکا۔");
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            JSONObject hub = payload.optJSONObject("reports");
+            if (hub == null) {
+                addActionCard("رپورٹ hub خالی ہے", "Report service نے کوئی response نہیں دیا۔");
+                return;
+            }
+
+            JSONArray reports = hub.optJSONArray("reports");
+            JSONArray recent = hub.optJSONArray("recent_runs");
+            int reportCount = reports == null ? 0 : reports.length();
+            int recentCount = recent == null ? 0 : recent.length();
+            addMetricRow("Published reports", String.valueOf(reportCount),
+                    "Recent runs", String.valueOf(recentCount), true);
+
+            sectionLabel("Available reports");
+            if (reportCount == 0) {
+                addActionCard("کوئی published report نہیں", "اس workspace کے لیے کوئی report definition نہیں ملی۔");
+            } else {
+                for (int i = 0; i < reportCount; i++) {
+                    JSONObject report = reports.optJSONObject(i);
+                    if (report == null) continue;
+                    JSONObject labels = report.optJSONObject("labels");
+                    String label = labels == null ? report.optString("key", "Report") : labels.optString("ur", labels.optString("en", report.optString("key", "Report")));
+                    addActionCard(label, report.optString("domain", "Operational") + "  •  published");
+                }
+            }
+
+            if (recentCount > 0) {
+                sectionLabel("حالیہ رپورٹیں");
+                int shown = Math.min(recentCount, 6);
+                for (int i = 0; i < shown; i++) {
+                    JSONObject run = recent.optJSONObject(i);
+                    if (run == null) continue;
+                    JSONObject labels = run.optJSONObject("labels");
+                    String label = labels == null ? run.optString("report_key", "Report") : labels.optString("ur", labels.optString("en", run.optString("report_key", "Report")));
+                    addActionCard(label,
+                            run.optString("state", "unknown") + "  •  rows: " + run.optInt("row_count", 0));
+                }
+            }
+        });
     }
 
     private void renderMore() {
@@ -1027,25 +1389,49 @@ public class MainActivity extends Activity {
     }
 
     private void addActionCard(String title, String subtitle) {
-        LinearLayout item = card();
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.HORIZONTAL);
+        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setPadding(0, dp(12), 0, dp(12));
+        item.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        item.setBackgroundColor(Color.WHITE);
+
+        View accent = new View(this);
+        accent.setBackground(rounded(GREEN, GREEN, 3));
+        item.addView(accent, new LinearLayout.LayoutParams(dp(4), dp(44)));
+
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(dp(12), 0, dp(8), 0);
+        item.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
         TextView t = tv(title, 14, TEXT, true);
         t.setGravity(Gravity.RIGHT);
-        item.addView(t);
+        copy.addView(t);
 
         TextView s = tv(subtitle, 11, MUTED, false);
         s.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(-1, -2);
-        params.topMargin = dp(5);
-        item.addView(s, params);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.topMargin = dp(4);
+        copy.addView(s, params);
 
-        LinearLayout.LayoutParams itemParams =
-                new LinearLayout.LayoutParams(-1, -2);
-        itemParams.bottomMargin = dp(8);
+        TextView arrow = tv("‹", 22, MUTED, true);
+        arrow.setGravity(Gravity.CENTER);
+        item.addView(arrow, new LinearLayout.LayoutParams(dp(30), dp(44)));
+
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-1, -2);
+        itemParams.bottomMargin = dp(1);
         content.addView(item, itemParams);
+
+        View divider = new View(this);
+        divider.setBackgroundColor(BORDER);
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(-1, dp(1));
+        dividerParams.bottomMargin = dp(7);
+        content.addView(divider, dividerParams);
     }
     private void loadRoleData() {
         if (tenantId <= 0 || accessToken.isEmpty()) {
+            connectionState.setText("آف لائن");
             connectionState.setTextColor(Color.rgb(177, 118, 32));
             return;
         }
@@ -1058,6 +1444,7 @@ public class MainActivity extends Activity {
                     accessToken,
                     result -> {
                         if (!result.ok()) {
+                            connectionState.setText("غلطی");
                             connectionState.setTextColor(Color.rgb(177, 118, 32));
                             return;
                         }
@@ -1065,7 +1452,8 @@ public class MainActivity extends Activity {
                         guardianPayload = payload;
                         JSONArray children = payload.optJSONArray("children");
                         parentChildren = children == null ? 0 : children.length();
-                        connectionState.setTextColor(GREEN);
+                        connectionState.setText("آن لائن");
+                        connectionState.setTextColor(GREEN_DARK);
                         showScreen("home");
                     });
             return;
@@ -1076,6 +1464,7 @@ public class MainActivity extends Activity {
                 "&branchId=" + branchId;
         NativeApi.get(url, accessToken, result -> {
             if (!result.ok()) {
+                connectionState.setText("غلطی");
                 connectionState.setTextColor(Color.rgb(177, 118, 32));
                 return;
             }
@@ -1090,27 +1479,24 @@ public class MainActivity extends Activity {
                 if (students != null) {
                     int total = students.optInt("total", 0);
                     int active = students.optInt("active", 0);
-                    if (total > 0) liveStudents = active + " / " + total;
+                    liveStudents = active + " / " + total;
                 }
                 if (attendance != null) {
                     int present = attendance.optInt("present", 0);
                     int totalAttendance = attendance.optInt("total", 0);
-                    liveAttendance = totalAttendance > 0
-                            ? present + " / " + totalAttendance
-                            : "—";
+                    liveAttendance = present + " / " + totalAttendance;
                 }
                 if (staff != null) {
                     int activeStaff = staff.optInt("active", 0);
                     int totalStaff = staff.optInt("total", 0);
-                    if (totalStaff > 0) {
-                        liveStaff = activeStaff + " / " + totalStaff;
-                    }
+                    liveStaff = activeStaff + " / " + totalStaff;
                 }
                 if (admissions != null) {
                     liveAdmissions = String.valueOf(admissions.optInt("open", 0));
                 }
             }
-            connectionState.setTextColor(GREEN);
+            connectionState.setText("آن لائن");
+            connectionState.setTextColor(GREEN_DARK);
             showScreen("home");
         });
     }

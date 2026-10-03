@@ -46,8 +46,10 @@ function nullablePositiveInt(value: string | null) {
 }
 function localizedLabel(labels: unknown, fallback: string) {
   const map = object(labels);
-  const value = map.en;
-  return typeof value === "string" && value.trim() ? value : fallback;
+  const urdu = map.ur;
+  if (typeof urdu === "string" && urdu.trim()) return urdu;
+  const english = map.en;
+  return typeof english === "string" && english.trim() ? english : fallback;
 }
 
 export function OPTIONS(request: NextRequest) {
