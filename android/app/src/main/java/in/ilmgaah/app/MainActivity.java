@@ -1,6 +1,7 @@
 package in.ilmgaah.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -20,9 +21,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
-    private static final int GREEN = Color.rgb(20, 115, 79);
-    private static final int GREEN_DARK = Color.rgb(13, 90, 61);
-    private static final int GREEN_SOFT = Color.rgb(234, 246, 240);
+    private static final int GREEN = Color.rgb(22, 132, 90);
+    private static final int GREEN_DARK = Color.rgb(8, 67, 47);
+    private static final int GREEN_DEEP = Color.rgb(5, 49, 35);
+    private static final int GREEN_SOFT = Color.rgb(231, 245, 238);
+    private static final int MINT = Color.rgb(244, 249, 246);
     private static final int BLUE = Color.rgb(23, 105, 168);
     private static final int BLUE_SOFT = Color.rgb(234, 243, 251);
     private static final int BG = Color.rgb(247, 250, 248);
@@ -75,7 +78,25 @@ public class MainActivity extends Activity {
         getPreferences(Context.MODE_PRIVATE).edit()
                 .putBoolean("language_english", enabled)
                 .apply();
-        showLogin();
+        if (accessToken.isEmpty()) {
+            showLogin();
+        } else {
+            showWorkspace();
+            loadRoleData();
+        }
+    }
+
+    private void chooseLanguage() {
+        boolean english = englishMode();
+        String[] options = {"اردو", "English"};
+        new AlertDialog.Builder(this)
+                .setTitle(tr("زبان منتخب کریں", "Choose language"))
+                .setSingleChoiceItems(options, english ? 1 : 0, (dialog, which) -> {
+                    dialog.dismiss();
+                    setEnglishMode(which == 1);
+                })
+                .setNegativeButton(tr("منسوخ", "Cancel"), null)
+                .show();
     }
 
     private TextView languageToggle(boolean english) {
@@ -85,7 +106,7 @@ public class MainActivity extends Activity {
         toggle.setBackground(rounded(Color.WHITE, BLUE, 30));
         toggle.setClickable(true);
         toggle.setFocusable(true);
-        toggle.setOnClickListener(v -> setEnglishMode(!english));
+        toggle.setOnClickListener(v -> chooseLanguage());
         return toggle;
     }
 
@@ -112,7 +133,23 @@ public class MainActivity extends Activity {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(18), dp(16), dp(18), dp(16));
         card.setBackground(rounded(Color.WHITE, BORDER, 18));
+        card.setElevation(dp(2));
         return card;
+    }
+
+    private GradientDrawable gradient(int start, int end, float radiusDp) {
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{start, end});
+        drawable.setCornerRadius(dp(radiusDp));
+        return drawable;
+    }
+
+    private TextView iconBubble(String glyph, int fill, int color) {
+        TextView icon = tv(glyph, 18, color, true);
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackground(rounded(fill, 0, 14));
+        return icon;
     }
 
     private LinearLayout row() {
@@ -426,85 +463,120 @@ public class MainActivity extends Activity {
     }
     private void showWorkspace() {
         root.removeAllViews();
+        boolean english = englishMode();
+
         LinearLayout outer = new LinearLayout(this);
         outer.setOrientation(LinearLayout.VERTICAL);
         outer.setBackgroundColor(BG);
         root.addView(outer, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout header = row();
-        header.setPadding(dp(16), dp(12), dp(16), dp(10));
-        header.setBackgroundColor(Color.WHITE);
-        header.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        outer.addView(header, new LinearLayout.LayoutParams(-1, dp(76)));
+        header.setPadding(dp(14), dp(10), dp(14), dp(10));
+        header.setBackground(rounded(Color.WHITE, BORDER, 0));
+        header.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
+        header.setElevation(dp(4));
+        outer.addView(header, new LinearLayout.LayoutParams(-1, dp(78)));
 
-        TextView headerMark = tv("ج", 18, Color.WHITE, true);
+        TextView headerMark = tv("ج", 19, Color.WHITE, true);
         headerMark.setGravity(Gravity.CENTER);
-        headerMark.setBackground(rounded(GREEN, GREEN, 12));
+        headerMark.setBackground(gradient(GREEN, GREEN_DARK, 14));
         header.addView(headerMark, new LinearLayout.LayoutParams(dp(46), dp(46)));
 
         LinearLayout headerCopy = new LinearLayout(this);
         headerCopy.setOrientation(LinearLayout.VERTICAL);
-        headerCopy.setPadding(dp(12), 0, 0, 0);
+        headerCopy.setPadding(dp(11), 0, dp(10), 0);
         header.addView(headerCopy, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        headerTitle = tv(ClientConfig.SHORT_NAME_UR, 17, TEXT, true);
-        headerTitle.setGravity(Gravity.RIGHT);
+        headerTitle = tv(tr(ClientConfig.SHORT_NAME_UR, "Jamia Islamia"), 16, TEXT, true);
+        headerTitle.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         headerCopy.addView(headerTitle);
-        headerMeta = tv(ClientConfig.BRANCH + "  •  " + ClientConfig.ACADEMIC_YEAR,
-                11, MUTED, false);
-        headerMeta.setGravity(Gravity.RIGHT);
-        headerCopy.addView(headerMeta);
 
-        connectionState = tv("لوڈ…", 10, MUTED, true);
+        headerMeta = tv(
+                ClientConfig.BRANCH + "  •  " + ClientConfig.ACADEMIC_YEAR +
+                        "  •  " + roleLabel(),
+                10, MUTED, false);
+        headerMeta.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-1, -2);
+        metaParams.topMargin = dp(3);
+        headerCopy.addView(headerMeta, metaParams);
+
+        LinearLayout headerActions = row();
+        headerActions.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        headerActions.setGravity(Gravity.CENTER_VERTICAL);
+        TextView language = languageToggle(english);
+        LinearLayout.LayoutParams languageParams = new LinearLayout.LayoutParams(-2, dp(40));
+        languageParams.setMargins(dp(5), 0, dp(5), 0);
+        headerActions.addView(language, languageParams);
+
+        connectionState = tv(english ? "Loading" : "لوڈ…", 9, GREEN_DARK, true);
         connectionState.setGravity(Gravity.CENTER);
-        connectionState.setPadding(dp(9), dp(7), dp(9), dp(7));
-        connectionState.setBackground(rounded(GREEN_SOFT, GREEN_SOFT, 30));
-        header.addView(connectionState, new LinearLayout.LayoutParams(dp(66), dp(40)));
+        connectionState.setPadding(dp(10), dp(7), dp(10), dp(7));
+        connectionState.setBackground(rounded(GREEN_SOFT, 0, 30));
+        headerActions.addView(connectionState, new LinearLayout.LayoutParams(dp(70), dp(38)));
+        header.addView(headerActions, new LinearLayout.LayoutParams(-2, -2));
+
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         outer.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
 
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(16), dp(16), dp(16), dp(24));
-        content.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        content.setPadding(dp(16), dp(18), dp(16), dp(28));
+        content.setLayoutDirection(englishMode()
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
         scroll.addView(content);
 
         LinearLayout nav = row();
-        nav.setPadding(dp(8), dp(5), dp(8), dp(7));
-        nav.setBackgroundColor(Color.WHITE);
-        outer.addView(nav, new LinearLayout.LayoutParams(-1, dp(74)));
+        nav.setPadding(dp(7), dp(6), dp(7), dp(8));
+        nav.setBackground(rounded(Color.WHITE, BORDER, 0));
+        nav.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        nav.setElevation(dp(8));
+        outer.addView(nav, new LinearLayout.LayoutParams(-1, dp(78)));
 
-        navItem(nav, "ہوم", "home");
+        navItem(nav, tr("ہوم", "Home"), "home");
+        navItem(nav, "Talaba", "talaba");
+        navItem(nav, tr("حاضری", "Attendance"), "attendance");
         if ("parent".equals(surface)) {
-            navItem(nav, "Talaba", "talaba");
-            navItem(nav, "حاضری", "attendance");
-            navItem(nav, "حفظ", "hifz");
+            navItem(nav, tr("حفظ", "Hifz"), "hifz");
         } else {
-            navItem(nav, "Talaba", "talaba");
-            navItem(nav, "حاضری", "attendance");
-            navItem(nav, "ہاسٹل", "hostel");
+            navItem(nav, tr("ہاسٹل", "Hostel"), "hostel");
         }
-        navItem(nav, "مزید", "more");
+        navItem(nav, tr("مزید", "More"), "more");
 
         showScreen("home");
     }
 
     private String navGlyph(String screen) {
         if ("home".equals(screen)) return "⌂";
-        if ("talaba".equals(screen)) return "▤";
+        if ("talaba".equals(screen)) return "◫";
         if ("attendance".equals(screen)) return "✓";
-        if ("hostel".equals(screen)) return "▣";
-        return "⋯";
+        if ("hostel".equals(screen)) return "▦";
+        if ("hifz".equals(screen)) return "◒";
+        return "•••";
     }
 
     private void navItem(LinearLayout nav, String label, String screen) {
-        TextView item = tv(navGlyph(screen) + "\\n" + label, 11, MUTED, true);
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
         item.setGravity(Gravity.CENTER);
-        item.setLineSpacing(0, 0.9f);
-        item.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        item.setPadding(dp(4), dp(2), dp(4), dp(2));
+        item.setPadding(dp(4), dp(3), dp(4), dp(3));
+        item.setBackground(rounded(MINT, 0, 15));
+        item.setClickable(true);
+        item.setFocusable(true);
         item.setOnClickListener(v -> showScreen(screen));
+
+        TextView glyph = iconBubble(navGlyph(screen), GREEN_SOFT, GREEN_DARK);
+        item.addView(glyph, new LinearLayout.LayoutParams(dp(34), dp(30)));
+
+        TextView caption = tv(label, 10, MUTED, true);
+        caption.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams captionParams = new LinearLayout.LayoutParams(-1, dp(24));
+        captionParams.topMargin = dp(2);
+        item.addView(caption, captionParams);
+
         nav.addView(item, new LinearLayout.LayoutParams(0, -1, 1f));
     }
 
@@ -550,21 +622,30 @@ public class MainActivity extends Activity {
     }
 
     private void titleBlock(String title, String subtitle) {
+        boolean english = englishMode();
         headerTitle.setText(title);
-        TextView h = tv(title, 26, TEXT, true);
-        h.setGravity(Gravity.RIGHT);
+        TextView h = tv(title, 27, TEXT, true);
+        h.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         content.addView(h);
+
         TextView s = tv(subtitle, 12, MUTED, false);
-        s.setGravity(Gravity.RIGHT);
+        s.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
         params.topMargin = dp(5);
         content.addView(s, params);
-        addGap(content, 14);
+
+        View rule = new View(this);
+        rule.setBackgroundColor(BORDER);
+        LinearLayout.LayoutParams ruleParams = new LinearLayout.LayoutParams(dp(48), dp(3));
+        ruleParams.gravity = english ? Gravity.LEFT : Gravity.RIGHT;
+        ruleParams.topMargin = dp(11);
+        content.addView(rule, ruleParams);
+        addGap(content, 13);
     }
     private void sectionLabel(String text) {
         TextView view = tv(text, 14, GREEN_DARK, true);
-        view.setGravity(Gravity.RIGHT);
+        view.setGravity(englishMode() ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
         params.topMargin = dp(8);
@@ -573,20 +654,23 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout metricCard(String label, String value, int fill, int valueColor) {
+        boolean english = englishMode();
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(15), dp(14), dp(15), dp(14));
-        card.setBackground(rounded(fill, fill == Color.WHITE ? BORDER : fill, 16));
+        card.setBackground(rounded(fill, fill == Color.WHITE ? BORDER : 0, 17));
+        card.setElevation(dp(1));
 
-        TextView small = tv(label, 11, fill == GREEN ? Color.WHITE : MUTED, true);
-        small.setGravity(Gravity.RIGHT);
+        TextView small = tv(label, 10,
+                fill == Color.WHITE ? MUTED : Color.rgb(205, 238, 222), true);
+        small.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         card.addView(small);
 
-        TextView large = tv(value, 25, valueColor, true);
-        large.setGravity(Gravity.RIGHT);
+        TextView large = tv(value, 24, valueColor, true);
+        large.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
-        params.topMargin = dp(4);
+        params.topMargin = dp(5);
         card.addView(large, params);
         return card;
     }
@@ -609,104 +693,145 @@ public class MainActivity extends Activity {
         line.addView(second, p2);
         addGap(content, 8);
     }
-    private TextView workspaceLink(String label, String subtitle, String screen) {
-        TextView link = tv("", 14, TEXT, true);
-        link.setPadding(dp(14), dp(13), dp(14), dp(13));
-        link.setBackground(rounded(Color.WHITE, BORDER, 16));
-        link.setGravity(Gravity.RIGHT);
+    private LinearLayout workspaceLink(String label, String subtitle, String screen) {
+        boolean english = englishMode();
+        LinearLayout link = row();
+        link.setGravity(Gravity.CENTER_VERTICAL);
+        link.setPadding(dp(13), dp(12), dp(10), dp(12));
+        link.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
+        link.setBackground(rounded(Color.WHITE, BORDER, 17));
+        link.setElevation(dp(2));
+        link.setClickable(true);
+        link.setFocusable(true);
         link.setOnClickListener(v -> showScreen(screen));
 
-        String text = label + "\\n" + subtitle + "   ↗";
-        link.setText(text);
+        TextView bubble = iconBubble(navGlyph(screen), GREEN_SOFT, GREEN_DARK);
+        link.addView(bubble, new LinearLayout.LayoutParams(dp(40), dp(40)));
+
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(dp(10), 0, dp(7), 0);
+        link.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView title = tv(label, 14, TEXT, true);
+        title.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        copy.addView(title);
+
+        TextView detail = tv(subtitle, 10, MUTED, false);
+        detail.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(4);
+        copy.addView(detail, detailParams);
+
+        TextView arrow = tv(english ? "→" : "←", 17, GREEN_DARK, true);
+        arrow.setGravity(Gravity.CENTER);
+        link.addView(arrow, new LinearLayout.LayoutParams(dp(25), dp(40)));
+
         return link;
     }
 
     private void addTwoLinks(String label1, String sub1, String screen1,
                              String label2, String sub2, String screen2) {
         LinearLayout line = row();
-        TextView one = workspaceLink(label1, sub1, screen1);
-        TextView two = workspaceLink(label2, sub2, screen2);
+        line.setLayoutDirection(englishMode()
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
+        LinearLayout one = workspaceLink(label1, sub1, screen1);
+        LinearLayout two = workspaceLink(label2, sub2, screen2);
 
-        LinearLayout.LayoutParams p1 = new LinearLayout.LayoutParams(0, -2, 1f);
-        LinearLayout.LayoutParams p2 = new LinearLayout.LayoutParams(0, -2, 1f);
-        p1.setMargins(0, 0, dp(6), 0);
-        p2.setMargins(dp(6), 0, 0, 0);
+        LinearLayout.LayoutParams p1 = new LinearLayout.LayoutParams(0, dp(86), 1f);
+        LinearLayout.LayoutParams p2 = new LinearLayout.LayoutParams(0, dp(86), 1f);
+        p1.setMargins(0, 0, dp(5), 0);
+        p2.setMargins(dp(5), 0, 0, 0);
         line.addView(one, p1);
         line.addView(two, p2);
         content.addView(line);
-        addGap(content, 8);
+        addGap(content, 9);
     }
     private void renderHome() {
         if ("parent".equals(surface)) {
             renderGuardianHome();
             return;
         }
-        LinearLayout hero = card();
-        hero.setBackground(rounded(Color.WHITE, BORDER, 20));
+
+        boolean english = englishMode();
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(20), dp(20), dp(20), dp(20));
+        hero.setBackground(gradient(GREEN_DARK, GREEN, 24));
+        hero.setElevation(dp(4));
+
         TextView kicker = tv(
-                roleLabel() + "  •  " + ClientConfig.ACADEMIC_YEAR,
-                11, GREEN, true);
-        kicker.setGravity(Gravity.RIGHT);
+                tr("آج کا ورک اسپیس", "TODAY'S WORKSPACE") +
+                        "  •  " + roleLabel(),
+                10, Color.rgb(193, 233, 212), true);
+        kicker.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         hero.addView(kicker);
 
-        TextView name = tv(ClientConfig.INSTITUTION_UR, 25, GREEN_DARK, true);
-        name.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams nameParams =
-                new LinearLayout.LayoutParams(-1, -2);
-        nameParams.topMargin = dp(6);
+        TextView name = tv(
+                tr("جامعہ اسلامیہ علوم القرآن", "Jamia Islamia Uloomul Quraan"),
+                24, Color.WHITE, true);
+        name.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1, -2);
+        nameParams.topMargin = dp(7);
         hero.addView(name, nameParams);
 
         TextView desc = tv(
-                "حفظ، عربی، طلبہ، حاضری اور رہائشی ہاسٹل کے لیے جامعہ ورک اسپیس",
-                12, MUTED, false);
-        desc.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams descParams =
-                new LinearLayout.LayoutParams(-1, -2);
+                tr("حفظ، عربی، طلبہ، حاضری اور رہائشی ہاسٹل ایک جگہ",
+                        "Hifz, Arabic, students, attendance and hostel in one workspace"),
+                11, Color.rgb(221, 240, 230), false);
+        desc.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
         descParams.topMargin = dp(7);
         hero.addView(desc, descParams);
 
-        TextView addr = tv(ClientConfig.ADDRESS, 10, MUTED, false);
-        addr.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams addrParams =
-                new LinearLayout.LayoutParams(-1, -2);
-        addrParams.topMargin = dp(10);
-        hero.addView(addr, addrParams);
+        TextView year = tv(
+                ClientConfig.BRANCH + "  •  " + ClientConfig.ACADEMIC_YEAR,
+                10, Color.rgb(190, 222, 207), false);
+        year.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams yearParams = new LinearLayout.LayoutParams(-1, -2);
+        yearParams.topMargin = dp(12);
+        hero.addView(year, yearParams);
 
         content.addView(hero);
         addGap(content, 14);
 
-        addMetricRow("فعال طلبہ", liveStudents,
-                "بایومیٹرک", "4 × MBio G1", true);
-        addMetricRow("اساتذہ", liveStaff,
-                "آج کی حاضری", liveAttendance, false);
-        addMetricRow("برانچ", "1", "اوپن درخواستیں", liveAdmissions, false);
-        sectionLabel("اہم ورک اسپیسز");
-        addTwoLinks("داخلہ", "Admissions", "admissions",
-                "طلبہ", "Talaba", "talaba");
-        addTwoLinks("حاضری", "Biometric + emergency", "attendance",
-                "ہاسٹل", "Hostel", "hostel");
-        addTwoLinks("قرآن و حفظ", "Hifz register", "hifz",
-                "اکیڈمکس", "Arabic + learning", "academics");
-        addTwoLinks("امتحانات", "Results", "exams",
-                "دستاویزات", "IDs + certificates", "documents");
-        addTwoLinks("گارڈین و اساتذہ", "Portals", "portals",
-                "رپورٹس", "Operational reports", "reports");
+        sectionLabel(tr("آج کا خلاصہ", "AT A GLANCE"));
+        addMetricRow(tr("فعال طلبہ", "Active Talaba"), liveStudents,
+                tr("اساتذہ", "Ustadh"), liveStaff, true);
+        addMetricRow(tr("آج کی حاضری", "Today's attendance"), liveAttendance,
+                tr("اوپن داخلے", "Open admissions"), liveAdmissions, false);
 
-        LinearLayout info = card();
-        info.setBackground(rounded(GREEN_SOFT, GREEN_SOFT, 16));
-        TextView infoTitle = tv("صرف ضروری ماڈیولز", 14, GREEN_DARK, true);
-        infoTitle.setGravity(Gravity.RIGHT);
-        info.addView(infoTitle);
+        sectionLabel(tr("فوری رسائی", "QUICK ACCESS"));
+        addTwoLinks(tr("داخلہ", "Admissions"), "New + pending", "admissions",
+                tr("طلبہ", "Talaba"), "Register + profiles", "talaba");
+        addTwoLinks(tr("حاضری", "Attendance"), "Biometric + daily", "attendance",
+                tr("ہاسٹل", "Hostel"), "Beds + residents", "hostel");
+        addTwoLinks(tr("قرآن و حفظ", "Qur’an & Hifz"), "Progress", "hifz",
+                tr("اکیڈمکس", "Academic"), "Arabic + learning", "academics");
+        addTwoLinks(tr("امتحانات", "Exams & results"), "Results", "exams",
+                tr("دستاویزات", "Documents"), "IDs + certificates", "documents");
+        addTwoLinks(tr("پورٹلز", "Portals"), "Guardian + Ustadh", "portals",
+                tr("رپورٹس", "Reports"), "Operational reports", "reports");
 
-        TextView infoBody = tv(
-                "Fees، Contributions، Payroll، Mess، AI اور WhatsApp اس client app میں شامل نہیں ہیں۔",
-                11, MUTED, false);
-        infoBody.setGravity(Gravity.RIGHT);
-        LinearLayout.LayoutParams bodyParams =
-                new LinearLayout.LayoutParams(-1, -2);
-        bodyParams.topMargin = dp(6);
-        info.addView(infoBody, bodyParams);
-        content.addView(info);
+        LinearLayout scope = card();
+        scope.setBackground(rounded(MINT, MINT, 18));
+        TextView scopeTitle = tv(tr("کلائنٹ ایپ کا دائرہ", "CLIENT APP SCOPE"),
+                10, GREEN_DARK, true);
+        scopeTitle.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        scope.addView(scopeTitle);
+
+        TextView scopeBody = tv(
+                tr("صرف فعال ضروری ماڈیولز۔ Fees، Contributions، Payroll، Mess، AI اور WhatsApp شامل نہیں۔",
+                        "Only the required active modules. Fees, Contributions, Payroll, Mess, AI and WhatsApp are not included."),
+                10, MUTED, false);
+        scopeBody.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams scopeBodyParams = new LinearLayout.LayoutParams(-1, -2);
+        scopeBodyParams.topMargin = dp(6);
+        scope.addView(scopeBody, scopeBodyParams);
+        content.addView(scope);
     }
     private JSONArray guardianChildren() {
         if (guardianPayload == null) return new JSONArray();
@@ -1364,70 +1489,99 @@ public class MainActivity extends Activity {
     }
 
     private void renderMore() {
-        titleBlock("مزید", "جامعہ کے باقی فعال ورک اسپیسز");
-        addTwoLinks("داخلہ", "Admissions", "admissions",
-                "اکیڈمکس", "Academic", "academics");
-        addTwoLinks("حفظ", "Qur’an & Hifz", "hifz",
-                "امتحانات", "Exams & Results", "exams");
-        addTwoLinks("دستاویزات", "IDs + certificates", "documents",
-                "گارڈین / اساتذہ", "Portals", "portals");
-        addTwoLinks("اساتذہ", "Ustadh", "ustadh",
-                "رپورٹس", "Reports", "reports");
-        addTwoLinks("سیٹنگز", "Institution settings", "settings",
-                "Logout", "Sign out", "logout");
+        boolean english = englishMode();
+        titleBlock(tr("مزید", "More"), tr("جامعہ کے باقی فعال ورک اسپیسز",
+                "Everything else that is active in the workspace"));
+
+        LinearLayout languageCard = card();
+        languageCard.setBackground(gradient(GREEN_DARK, GREEN, 18));
+        languageCard.setOnClickListener(v -> chooseLanguage());
+
+        LinearLayout languageRow = row();
+        languageRow.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        TextView langIcon = iconBubble("Aa", Color.rgb(225, 244, 234), GREEN_DARK);
+        languageRow.addView(langIcon, new LinearLayout.LayoutParams(dp(40), dp(40)));
+
+        LinearLayout langCopy = new LinearLayout(this);
+        langCopy.setOrientation(LinearLayout.VERTICAL);
+        langCopy.setPadding(dp(10), 0, 0, 0);
+        languageRow.addView(langCopy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView langTitle = tv(tr("زبان", "Language"), 14, Color.WHITE, true);
+        langCopy.addView(langTitle);
+        TextView langValue = tv(
+                english ? "English" : "اردو",
+                10, Color.rgb(199, 233, 214), false);
+        LinearLayout.LayoutParams langValueParams = new LinearLayout.LayoutParams(-1, -2);
+        langValueParams.topMargin = dp(3);
+        langCopy.addView(langValue, langValueParams);
+
+        TextView langArrow = tv("→", 18, Color.WHITE, true);
+        langArrow.setGravity(Gravity.CENTER);
+        languageRow.addView(langArrow, new LinearLayout.LayoutParams(dp(28), dp(40)));
+        languageCard.addView(languageRow);
+        content.addView(languageCard);
+        addGap(content, 10);
+
+        addTwoLinks(tr("داخلہ", "Admissions"), "Admissions", "admissions",
+                tr("اکیڈمکس", "Academic"), "Arabic + learning", "academics");
+        addTwoLinks(tr("حفظ", "Qur’an & Hifz"), "Progress", "hifz",
+                tr("امتحانات", "Exams & results"), "Results", "exams");
+        addTwoLinks(tr("دستاویزات", "Documents"), "IDs + certificates", "documents",
+                tr("گارڈین / اساتذہ", "Portals"), "Guardian + Ustadh", "portals");
+        addTwoLinks(tr("اساتذہ", "Ustadh"), "Teacher workspace", "ustadh",
+                tr("رپورٹس", "Reports"), "Operational reports", "reports");
+        addTwoLinks(tr("سیٹنگز", "Settings"), "Institution", "settings",
+                tr("Logout", "Sign out"), "Sign out from this device", "logout");
     }
     private void renderSettings() {
-        titleBlock("سیٹنگز", "Client configuration");
+        boolean english = englishMode();
+        titleBlock(tr("سیٹنگز", "Settings"), tr("کلائنٹ کنفیگریشن", "Client configuration"));
         addActionCard(ClientConfig.INSTITUTION_UR,
                 ClientConfig.INSTITUTION + " • " + ClientConfig.ACADEMIC_YEAR);
         addActionCard("ڈائریکٹر",
                 ClientConfig.DIRECTOR + " • " + ClientConfig.PHONE);
         addActionCard("پتہ", ClientConfig.ADDRESS);
-        addActionCard("Programs", "Hifz • Arabic");
-        addActionCard("Language", "Urdu primary");
-        addActionCard("Branch", "1 • " + ClientConfig.BRANCH);
+        addActionCard(tr("پروگرامز", "Programs"), "Hifz • Arabic");
+        addActionCard(tr("زبان", "Language"), english ? "English" : "اردو");
+        addActionCard(tr("برانچ", "Branch"), "1 • " + ClientConfig.BRANCH);
     }
 
     private void addActionCard(String title, String subtitle) {
-        LinearLayout item = new LinearLayout(this);
-        item.setOrientation(LinearLayout.HORIZONTAL);
+        boolean english = englishMode();
+        LinearLayout item = row();
         item.setGravity(Gravity.CENTER_VERTICAL);
-        item.setPadding(0, dp(12), 0, dp(12));
-        item.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        item.setBackgroundColor(Color.WHITE);
+        item.setPadding(dp(14), dp(13), dp(12), dp(13));
+        item.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
+        item.setBackground(rounded(Color.WHITE, BORDER, 18));
+        item.setElevation(dp(1));
 
-        View accent = new View(this);
-        accent.setBackground(rounded(GREEN, GREEN, 3));
-        item.addView(accent, new LinearLayout.LayoutParams(dp(4), dp(44)));
+        TextView bubble = iconBubble("•", GREEN_SOFT, GREEN_DARK);
+        item.addView(bubble, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         LinearLayout copy = new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
-        copy.setPadding(dp(12), 0, dp(8), 0);
+        copy.setPadding(dp(10), 0, dp(7), 0);
         item.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
 
         TextView t = tv(title, 14, TEXT, true);
-        t.setGravity(Gravity.RIGHT);
+        t.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         copy.addView(t);
 
-        TextView s = tv(subtitle, 11, MUTED, false);
-        s.setGravity(Gravity.RIGHT);
+        TextView s = tv(subtitle, 10, MUTED, false);
+        s.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.topMargin = dp(4);
         copy.addView(s, params);
 
-        TextView arrow = tv("‹", 22, MUTED, true);
+        TextView arrow = tv(english ? "→" : "←", 17, GREEN_DARK, true);
         arrow.setGravity(Gravity.CENTER);
-        item.addView(arrow, new LinearLayout.LayoutParams(dp(30), dp(44)));
+        item.addView(arrow, new LinearLayout.LayoutParams(dp(25), dp(38)));
 
-        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-1, -2);
-        itemParams.bottomMargin = dp(1);
-        content.addView(item, itemParams);
-
-        View divider = new View(this);
-        divider.setBackgroundColor(BORDER);
-        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(-1, dp(1));
-        dividerParams.bottomMargin = dp(7);
-        content.addView(divider, dividerParams);
+        content.addView(item, new LinearLayout.LayoutParams(-1, -2));
+        addGap(content, 8);
     }
     private void loadRoleData() {
         if (tenantId <= 0 || accessToken.isEmpty()) {
