@@ -5,141 +5,382 @@
   padding-bottom: 1.5rem;
 }
 
-.root :global(.page-heading) {
-  margin-bottom: 0;
-  border-radius: 1.1rem;
-  background:
-    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent-soft) 70%, transparent), transparent 42%),
-    var(--surface);
+.hero,
+.addPanel,
+.filterPanel,
+.registerPanel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  background: var(--surface);
   box-shadow: var(--shadow);
 }
 
-.root :global(.page-heading > div) {
-  min-width: 0;
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent-soft) 70%, transparent), transparent 42%),
+    var(--surface);
 }
 
-.root :global(.page-heading h1) {
+.hero h1,
+.sectionHeading h2,
+.addPanel h2 {
   letter-spacing: -0.03em;
 }
 
-.root :global(.professional-grid) {
-  align-items: stretch;
+.hero > div:first-child {
+  min-width: 0;
+}
+
+.hero p:not(.state-kicker),
+.addPanel > div:first-child > p:last-child {
+  margin: 0.35rem 0 0;
+  max-width: 68rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  flex: 0 0 auto;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.summaryCard,
+.summaryCardPrimary {
+  min-width: 0;
+  padding: 1.05rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.summaryCardPrimary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.summaryCard span,
+.summaryCardPrimary span {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: inherit;
+  opacity: 0.78;
+}
+
+.summaryCard strong,
+.summaryCardPrimary strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: inherit;
+}
+
+.addPanel,
+.filterPanel,
+.registerPanel {
+  padding: 1.1rem;
+}
+
+.addPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.addPanel > div:first-child {
+  min-width: 0;
+}
+
+.addPanel h2 {
+  margin: 0.18rem 0 0;
+}
+
+.addPanel > div:first-child > p:last-child {
+  margin-bottom: 0;
+}
+
+.addForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.addForm select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+}
+
+.inlineNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.inlineNote span {
+  min-width: 0;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
 }
 
-.root :global(.professional-card) {
-  min-width: 0;
-  border-radius: 1rem;
-}
-
-.root :global(.professional-card h2) {
-  letter-spacing: -0.02em;
-}
-
-.root :global(.professional-form) {
-  gap: 0.7rem;
-}
-
-.root :global(.professional-form label) {
+.sectionHeading > div {
   min-width: 0;
 }
 
-.root :global(.professional-form input),
-.root :global(.professional-form select) {
+.sectionHeading h2 {
+  margin: 0.15rem 0 0;
+}
+
+.sectionHeading > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.filterForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  align-items: end;
+}
+
+.filterForm label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.filterForm select {
+  min-width: 0;
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.root :global(.action-button) {
   min-height: 2.75rem;
-  max-width: 100%;
 }
 
-.root :global(.data-table-wrap) {
+.programStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.9rem 0 1rem;
+}
+
+.programChip {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 8.7rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface-muted);
+  color: inherit;
+  text-decoration: none;
+}
+
+.programChip strong {
+  font-size: 0.86rem;
+}
+
+.programChip span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.programChipActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dataTableWrap {
   max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  border-radius: 0.85rem;
+  border-radius: 0.9rem;
 }
 
-.root :global(.data-table) {
-  min-width: 42rem;
+.dataTable {
+  width: 100%;
+  min-width: 54rem;
+  border-collapse: collapse;
 }
 
-.root :global(.data-table td),
-.root :global(.data-table th) {
+.dataTable th,
+.dataTable td {
+  padding: 0.72rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: middle;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 980px) {
-  .root :global(.professional-grid) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.dataTable th {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dataTable td {
+  font-size: 0.82rem;
+}
+
+.dataTable td a {
+  display: grid;
+  gap: 0.18rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dataTable td a:hover strong,
+.dataTable td a:focus-visible strong {
+  text-decoration: underline;
+}
+
+.dataTable td small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.dataTable .action-button {
+  white-space: nowrap;
+}
+
+.emptyState {
+  margin-top: 0.85rem;
+  padding: 1.1rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heroActions > * {
+    flex: 1 1 12rem;
+    justify-content: center;
+  }
+
+  .addPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .filterForm {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 620px) {
   .root {
     gap: 0.8rem;
     padding-bottom: 0.8rem;
   }
 
-  .root :global(.page-heading) {
-    padding: 1rem;
+  .hero,
+  .addPanel,
+  .filterPanel,
+  .registerPanel {
+    padding: 0.9rem;
+    border-radius: 1rem;
   }
 
-  .root :global(.professional-grid) {
+  .summaryGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .summaryGrid > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .summaryCard,
+  .summaryCardPrimary {
+    padding: 0.9rem;
+  }
+
+  .summaryCard strong,
+  .summaryCardPrimary strong {
+    font-size: 1.6rem;
+  }
+
+  .addForm {
     grid-template-columns: 1fr;
   }
 
-  .root :global(.professional-card) {
-    padding: 1rem;
-  }
-
-  .root :global(.professional-form) {
+  .inlineNote,
+  .filterForm {
     grid-template-columns: 1fr;
   }
 
-  .root :global(.professional-form label) {
+  .inlineNote {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inlineNote .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filterForm {
+    display: grid;
+  }
+
+  .filterForm > * {
     width: 100%;
   }
 
-  .root :global(.professional-form input),
-  .root :global(.professional-form select),
-  .root :global(.professional-form textarea),
-  .root :global(.action-button),
-  .root :global(.inline-form input),
-  .root :global(.inline-form select),
-  .root :global(.inline-form .action-button) {
-    min-height: 2.75rem;
-    min-width: 0;
-    max-width: 100%;
+  .programStrip {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.2rem;
   }
 
-  .root :global(.inline-form) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.5rem;
-    min-width: 0;
-  }
-
-  .root :global(.data-table-wrap) {
-    margin-inline: -0.1rem;
-  }
-
-  .root :global(.data-table) {
-    min-width: 38rem;
-  }
-}
-
-@media (max-width: 460px) {
-  .root :global(.inline-form) {
-    grid-template-columns: 1fr;
-  }
-
-  .root :global(.page-heading > span) {
-    display: inline-flex;
-    width: fit-content;
-    margin-top: 0.25rem;
+  .programChip {
+    flex: 0 0 auto;
   }
 }
