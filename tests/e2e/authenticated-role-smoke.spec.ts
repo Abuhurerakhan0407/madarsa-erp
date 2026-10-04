@@ -61,6 +61,28 @@ async function getJson(request: APIRequestContext, path: string, token: string) 
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+async function exerciseParentUsernameLogin(request: APIRequestContext) {
+  const parentEmail = credentials.parent.email;
+  const [username, domain] = parentEmail.split("@");
+  expect(domain).toBe("parents.ilmgaah.in");
+  expect(username).toMatch(/^[abcdefghjkmnpqrstuvwxyz23456789]{3,8}-[abcdefghjkmnpqrstuvwxyz23456789]{6}$/);
+
+  const response = await request.post(url("/api/auth/login"), {
+    headers: {
+      origin: url("/"),
+      referer: url("/login"),
+      "content-type": "application/json",
+    },
+    data: {
+      identifier: username,
+      password: credentials.parent.password,
+    },
+  });
+
+  expect(response.status(), "parent username login endpoint rejected valid staging credentials").toBe(200);
+  await expect(response.json()).resolves.toMatchObject({ signedIn: true });
+}
+
 async function bootstrap(request: APIRequestContext, token: string, role: Role) {
   const body = await getJson(request, "/api/mobile/bootstrap", token);
   const workspaces = Array.isArray(body.workspaces) ? body.workspaces as Workspace[] : [];
@@ -72,6 +94,10 @@ async function bootstrap(request: APIRequestContext, token: string, role: Role) 
 for (const role of roles) {
   test(`${role} authenticated mobile workspace stays scoped and read-only`, async ({ request }) => {
     test.skip(!configured(role), `Set dedicated E2E_${role.toUpperCase()}_EMAIL/PASSWORD credentials to run this smoke.`);
+
+    if (role === "parent") {
+      await exerciseParentUsernameLogin(request);
+    }
 
     const token = await accessToken(request, role);
     const workspace = await bootstrap(request, token, role);
