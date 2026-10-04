@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { provisionStagingRoleUsers } from "./staging-provision";
 
 type Role = "admin" | "teacher" | "parent";
 type Workspace = {
@@ -9,18 +10,34 @@ type Workspace = {
 };
 
 const stripQuotes = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
-const supabaseUrl = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/$/, "");
-const supabaseKey = stripQuotes(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+const supabaseUrl = stripQuotes(process.env.E2E_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/$/, "");
+const supabaseKey = stripQuotes(process.env.E2E_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
-const credentials: Record<Role, { email: string; password: string }> = {
-  admin: { email: stripQuotes(process.env.E2E_ADMIN_EMAIL), password: stripQuotes(process.env.E2E_ADMIN_PASSWORD) },
-  teacher: { email: stripQuotes(process.env.E2E_TEACHER_EMAIL), password: stripQuotes(process.env.E2E_TEACHER_PASSWORD) },
-  parent: { email: stripQuotes(process.env.E2E_PARENT_EMAIL), password: stripQuotes(process.env.E2E_PARENT_PASSWORD) },
+let credentials: Record<Role, { email: string; password: string }> = {
+  admin: { email: "", password: "" },
+  teacher: { email: "", password: "" },
+  parent: { email: "", password: "" },
 };
 
+const roles = ["admin", "teacher", "parent"] as const;
 const url = (path: string) => appBaseUrl ? `${appBaseUrl}${path}` : path;
-const configured = (role: Role) => Boolean(supabaseUrl && supabaseKey && credentials[role].email && credentials[role].password);
+const configured = (role: Role) => Boolean(
+  supabaseUrl &&
+  supabaseKey &&
+  credentials[role].email &&
+  credentials[role].password
+);
+
+test.beforeAll(async ({}, testInfo) => {
+  if (!process.env.CI) return;
+  const provisioned = await provisionStagingRoleUsers(
+    testInfo.project.name + "-worker-" + testInfo.workerIndex
+  );
+  credentials = provisioned.credentials;
+  expect(roles.every((role) => configured(role))).toBe(true);
+});
+
 async function accessToken(request: APIRequestContext, role: Role) {
   const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     headers: { apikey: supabaseKey, "content-type": "application/json" },
@@ -50,7 +67,8 @@ async function bootstrap(request: APIRequestContext, token: string, role: Role) 
   expect(workspace, `${role} workspace missing`).toBeTruthy();
   return workspace as Workspace;
 }
-for (const role of ["admin", "teacher", "parent"] as const) {
+
+for (const role of roles) {
   test(`${role} authenticated mobile workspace stays scoped and read-only`, async ({ request }) => {
     test.skip(!configured(role), `Set dedicated E2E_${role.toUpperCase()}_EMAIL/PASSWORD credentials to run this smoke.`);
 
