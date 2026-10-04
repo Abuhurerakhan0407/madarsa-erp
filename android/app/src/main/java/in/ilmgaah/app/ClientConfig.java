@@ -12,7 +12,11 @@ public final class ClientConfig {
             "Martinganj Road, Kuriyawan, Phulpur, Uttar Pradesh, India";
     public static final String ACADEMIC_YEAR = "2026–2027";
     public static final String BRANCH = "Main Campus";
-    public static final String API_BASE = "https://www.ilmgaah.in";
+
+    // Debug/QA builds use the public stable QA alias. Production stays on the real domain.
+    public static final String API_BASE = BuildConfig.DEBUG
+            ? "https://madarsa-erp-qa.vercel.app"
+            : "https://www.ilmgaah.in";
 
     public static final String[] ACTIVE_MODULES = {
             "admissions", "talaba", "academics", "attendance", "biometric",
