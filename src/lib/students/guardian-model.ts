@@ -5,6 +5,7 @@ export type StudentGuardianInput = {
   occupation?: string;
   education?: string;
   canCollect: boolean;
+  guardianPersonId?: number;
 };
 
 type ValidationResult = { value?: StudentGuardianInput; errors: string[] };
@@ -30,6 +31,12 @@ export function validateStudentGuardianInput(input: unknown): ValidationResult {
   const education = body.education === undefined || body.education === null || body.education === "" ? undefined : text(body.education, 160);
   if (body.education && !education) errors.push("Guardian education is invalid.");
   if (body.canCollect !== undefined && typeof body.canCollect !== "boolean") errors.push("Pickup authority is invalid.");
+  let guardianPersonId: number | undefined;
+  if (body.guardianPersonId !== undefined && body.guardianPersonId !== null && body.guardianPersonId !== "") {
+    const parsed = Number(body.guardianPersonId);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) errors.push("Selected guardian is invalid.");
+    else guardianPersonId = parsed;
+  }
   if (errors.length || !name || !relationship) return { errors };
-  return { value: { name, relationship, phone, occupation, education, canCollect: body.canCollect !== false }, errors: [] };
+  return { value: { name, relationship, phone, occupation, education, canCollect: body.canCollect !== false, guardianPersonId }, errors: [] };
 }

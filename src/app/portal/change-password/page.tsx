@@ -40,6 +40,8 @@ export default async function PortalChangePasswordPage({
     redirect(portalHref("/portal", locale, { tenant }));
   }
 
+  const usernameParent = current.data.user.app_metadata?.portal_login_method === "username"
+    && current.data.user.app_metadata?.portal_account === true;
   const t = copy[locale];
   return (
     <section
@@ -50,7 +52,7 @@ export default async function PortalChangePasswordPage({
       <p className="state-kicker">{t.kicker}</p>
       <h1>{t.title}</h1>
       <p>{t.body}</p>
-      <PortalPasswordChangeForm locale={locale} tenant={tenant} />
+      <PortalPasswordChangeForm locale={locale} tenant={tenant} usernameParent={usernameParent} />
     </section>
   );
 }

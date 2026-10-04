@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { JAMIA_CLIENT } from "@/lib/client-branding";
 
 type Mode = "signin" | "signup";
-type FieldErrors = { email?: string; password?: string };
+type FieldErrors = { identifier?: string; password?: string };
 
 const copy = {
   en: {
@@ -23,6 +23,7 @@ const copy = {
     signUpTitle: "Create your institution account",
     signInBody: "Sign in to continue to the Jamia workspace.",
     signUpBody: "Create an account. Institution setup continues after sign in.",
+    identifier: "Email or username",
     email: "Email address",
     password: "Password",
     signIn: "Sign in",
@@ -31,6 +32,7 @@ const copy = {
     creating: "Creating account…",
     newInstitution: "New institution? Create an account",
     existing: "Already have an account? Sign in",
+    identifierRequired: "Enter your email or username.",
     emailRequired: "Enter a valid email address.",
     passwordRequired: "Use 12–128 characters with uppercase, lowercase, number, and symbol.",
     invalidCredentials: "Email or password is incorrect.",
@@ -50,6 +52,7 @@ const copy = {
     signUpTitle: "ادارے کا اکاؤنٹ بنائیں",
     signInBody: "جامعہ کے ورک اسپیس میں جانے کے لیے سائن اِن کریں۔",
     signUpBody: "اکاؤنٹ بنائیں۔ سائن اِن کے بعد ادارے کا سیٹ اپ جاری رہے گا۔",
+    identifier: "ای میل یا یوزرنیم",
     email: "ای میل",
     password: "پاس ورڈ",
     signIn: "سائن اِن",
@@ -58,6 +61,7 @@ const copy = {
     creating: "اکاؤنٹ بن رہا ہے…",
     newInstitution: "نیا ادارہ؟ اکاؤنٹ بنائیں",
     existing: "اکاؤنٹ موجود ہے؟ سائن اِن کریں",
+    identifierRequired: "اپنی ای میل یا یوزرنیم درج کریں۔",
     emailRequired: "درست ای میل درج کریں۔",
     passwordRequired: "پاس ورڈ 12 سے 128 حروف کا ہو اور اس میں بڑا حرف، چھوٹا حرف، نمبر اور علامت شامل ہو۔",
     invalidCredentials: "ای میل یا پاس ورڈ درست نہیں۔",
@@ -74,6 +78,7 @@ function isValidEmail(value: string) {
 function authErrorMessage(message: string, locale: SupportedLocale) {
   const text = copy[locale];
   const normalized = message.toLowerCase();
+  if (normalized.includes("invalid credentials")) return text.invalidCredentials;
   if (normalized.includes("invalid login credentials")) return text.invalidCredentials;
   if (
     normalized.includes("rate limit") ||
@@ -97,7 +102,7 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
   const supabase = useState(() => createClient())[0];
   const [locale, setLocale] = useState<SupportedLocale>(initialLocale);
   const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -128,7 +133,8 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
 
   function validate(): boolean {
     const nextErrors: FieldErrors = {};
-    if (!isValidEmail(email.trim())) nextErrors.email = text.emailRequired;
+    if (mode === "signup" && !isValidEmail(identifier.trim())) nextErrors.identifier = text.emailRequired;
+    if (mode === "signin" && !identifier.trim()) nextErrors.identifier = text.identifierRequired;
     if (mode === "signup" ? !(password.length >= 12 && password.length <= 128 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) : password.length < 8) nextErrors.password = text.passwordRequired;
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -144,11 +150,16 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
     try {
       const next = requestedDestination();
       if (mode === "signin") {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ identifier: identifier.trim(), password })
         });
-        if (signInError) throw signInError;
+        const payload = await response.json().catch(() => ({})) as { error?: string };
+        if (!response.ok) {
+          const reason = response.status === 429 ? text.rateLimited : payload.error || text.genericError;
+          throw new Error(reason);
+        }
         continueTo(next);
         return;
       }
@@ -156,7 +167,7 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password })
+        body: JSON.stringify({ email: identifier.trim(), password })
       });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
@@ -164,7 +175,7 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: identifier.trim(),
         password
       });
       if (signInError) throw signInError;
@@ -234,25 +245,25 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
 
           <form onSubmit={submit} noValidate aria-busy={busy || undefined}>
             <label className="field-label">
-              {text.email}
+              {mode === "signin" ? text.identifier : text.email}
               <input
                 className="text-field"
-                type="email"
-                inputMode="email"
+                type={mode === "signin" ? "text" : "email"}
+                inputMode={mode === "signin" ? "text" : "email"}
                 autoCapitalize="none"
                 autoCorrect="off"
-                autoComplete="email"
+                autoComplete={mode === "signin" ? "username" : "email"}
                 required
-                value={email}
-                aria-invalid={Boolean(fieldErrors.email)}
-                aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
+                value={identifier}
+                aria-invalid={Boolean(fieldErrors.identifier)}
+                aria-describedby={fieldErrors.identifier ? "login-identifier-error" : undefined}
                 onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined }));
+                  setIdentifier(event.target.value);
+                  if (fieldErrors.identifier) setFieldErrors((current) => ({ ...current, identifier: undefined }));
                 }}
               />
-              {fieldErrors.email ? (
-                <small id="login-email-error" className="field-error">{fieldErrors.email}</small>
+              {fieldErrors.identifier ? (
+                <small id="login-identifier-error" className="field-error">{fieldErrors.identifier}</small>
               ) : null}
             </label>
 
