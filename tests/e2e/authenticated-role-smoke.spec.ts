@@ -67,10 +67,11 @@ async function exerciseParentUsernameLogin(request: APIRequestContext) {
   expect(domain).toBe("parents.ilmgaah.in");
   expect(username).toMatch(/^[abcdefghjkmnpqrstuvwxyz23456789]{3,8}-[abcdefghjkmnpqrstuvwxyz23456789]{6}$/);
 
+  const requestOrigin = appBaseUrl || "http://localhost:3000";
   const response = await request.post(url("/api/auth/login"), {
     headers: {
-      origin: url("/"),
-      referer: url("/login"),
+      origin: requestOrigin,
+      referer: requestOrigin + "/login",
       "content-type": "application/json",
     },
     data: {
