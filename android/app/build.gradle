@@ -6,6 +6,10 @@ android {
     namespace 'in.ilmgaah.app'
     compileSdk 36
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId 'in.ilmgaah.app'
         minSdk 23
