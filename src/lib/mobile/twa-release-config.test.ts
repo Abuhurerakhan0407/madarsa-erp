@@ -22,8 +22,10 @@ describe("Android native release configuration", () => {
     expect(manifest).toContain('android:name=".MainActivity"');
     expect(manifest).toContain('android.permission.INTERNET');
   });
-  it("binds the client to the live Ilmgaah API", () => {
-    expect(clientConfig).toContain('public static final String API_BASE = "https://www.ilmgaah.in";');
+  it("binds release builds to the live Ilmgaah API", () => {
+    expect(clientConfig).toContain("public static final String API_BASE = BuildConfig.DEBUG");
+    expect(clientConfig).toContain('? "https://madarsa-erp-qa.vercel.app"');
+    expect(clientConfig).toContain(': "https://www.ilmgaah.in";');
     expect(clientConfig).toContain('Jamia Islamia Uloomul Quraan');
     expect(clientConfig).toContain('public static final String ACADEMIC_YEAR = "2026–2027";');
   });
