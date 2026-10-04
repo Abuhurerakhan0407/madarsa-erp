@@ -35,7 +35,7 @@ export type StudentDetail = {
   academicSession: string;
   program: string;
   group: string;
-  guardian: { name: string; relationship: string; phone: string | null; occupation: string | null; education: string | null; canCollect: boolean } | null;
+  guardian: { personId: number; name: string; relationship: string; phone: string | null; occupation: string | null; education: string | null; canCollect: boolean } | null;
   attendance: AttendanceSummary | null;
   finance: FinanceSummary | null;
   quranAttempts: number | null;
@@ -145,6 +145,7 @@ export async function getStudentDetail(personId: number, locale: string): Promis
     if (guardianContact.error) throw new Error(`Unable to load guardian contact: ${guardianContact.error.message}`);
     if (guardianProfile.error) throw new Error(`Unable to load guardian profile: ${guardianProfile.error.message}`);
     if (guardianPerson.data) guardian = {
+      personId: Number(relationship.data.source_person_id),
       name: guardianPerson.data.display_name,
       relationship: relationship.data.relationship_type,
       phone: guardianContact.data?.value ?? null,

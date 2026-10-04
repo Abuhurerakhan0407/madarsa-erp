@@ -16,6 +16,17 @@ describe("validateStudentGuardianInput", () => {
     expect(result.value?.canCollect).toBe(true);
   });
 
+  it("accepts an explicit existing guardian link", () => {
+    const result = validateStudentGuardianInput({
+      name: "Existing Guardian",
+      relationship: "father",
+      guardianPersonId: 42,
+      canCollect: true
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.value?.guardianPersonId).toBe(42);
+  });
+
   it("rejects invalid relationship and malformed fields", () => {
     const result = validateStudentGuardianInput({
       name: "A",

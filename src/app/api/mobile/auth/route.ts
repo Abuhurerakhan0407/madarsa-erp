@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
+import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
+import { consumeParentLoginRateLimit } from "@/lib/portal/parent-login-server";
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
 
@@ -54,11 +56,22 @@ export async function POST(request: NextRequest) {
     ? payload as Record<string, unknown>
     : {};
 
-  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const rawIdentifier = typeof body.identifier === "string"
+    ? body.identifier
+    : typeof body.email === "string" ? body.email : "";
+  const identifier = normalizeLoginIdentifier(rawIdentifier);
   const password = typeof body.password === "string" ? body.password : "";
 
-  if (!email || !password) {
-    return json(request, { error: "missing_credentials" }, { status: 400 });
+  const usernameForLimit = identifier.kind === "email"
+    ? null
+    : rawIdentifier.trim().toLowerCase().slice(0, 128);
+
+  if (!(await consumeParentLoginRateLimit(request, usernameForLimit))) {
+    return json(request, { error: "invalid_credentials" }, { status: 429 });
+  }
+
+  if (identifier.kind === "invalid" || !password) {
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
   const { url, publishableKey } = getSupabasePublicEnv();
@@ -69,7 +82,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: identifier.email, password });
 
   if (error || !data.session || !data.user) {
     const status = error?.status === 429 ? 429 : 401;

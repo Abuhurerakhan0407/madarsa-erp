@@ -9,7 +9,7 @@ const text=(value:unknown):string|null=>typeof value==="string"&&value.trim()?va
 const number=(value:unknown):number|null=>Number.isFinite(Number(value))?Number(value):null;
 
 export type PortalNoticePriority="normal"|"important"|"urgent";
-export type PortalAccessCandidate={personId:number;name:string;kind:"guardian"|"employee";email:string|null;reference:string|null;accountStatus:"active"|"disabled"|"not_created"|"email_required";lastLogin:string|null;erpManaged:boolean;linkedScope:Raw[];lastCodeAt:string|null};
+export type PortalAccessCandidate={personId:number;name:string;kind:"guardian"|"employee";email:string|null;portalUsername:string|null;loginMethod:"username"|"email"|null;reference:string|null;accountStatus:"active"|"disabled"|"not_created"|"email_required";lastLogin:string|null;erpManaged:boolean;linkedScope:Raw[];lastCodeAt:string|null};
 export type PortalAccessHistory={id:number;personId:number;name:string;linkType:"guardian"|"employee";state:string;expiresAt:string;claimedAt:string|null;createdAt:string};
 export type PortalNotice={id:number;audienceType:string;title:string;body:string;priority:PortalNoticePriority;state:string;publishedAt:string|null;expiresAt:string|null;isRead?:boolean;readAt?:string|null};
 export type PortalOperatorCenter={parents:PortalAccessCandidate[];teachers:PortalAccessCandidate[];accessCodes:PortalAccessHistory[];notices:PortalNotice[]};
@@ -17,7 +17,7 @@ export type PortalOperatorCenter={parents:PortalAccessCandidate[];teachers:Porta
 function label(value:unknown){const row=object(value);return text(row.en)??text(row.ur)??text(row.ar)??"";}
 function priority(value:unknown):PortalNoticePriority{return value==="important"||value==="urgent"?value:"normal";}
 async function operatorWorkspace(){const w=await getTenantContext();if(!w||!w.branchId)throw new Error("Active institution branch required.");return w;}
-function mapCandidate(r:Raw,kind:"guardian"|"employee"):PortalAccessCandidate|null{const personId=number(r.person_id),name=text(r.name),status=text(r.account_status);if(!personId||!name)return null;return{personId,name,kind,email:text(r.email),reference:text(r.reference),accountStatus:(status==="active"||status==="disabled"||status==="not_created"||status==="email_required"?status:"not_created") as PortalAccessCandidate["accountStatus"],lastLogin:text(r.last_login),erpManaged:r.erp_managed===true,linkedScope:rows(r.linked_scope),lastCodeAt:text(r.last_code_at)};}
+function mapCandidate(r:Raw,kind:"guardian"|"employee"):PortalAccessCandidate|null{const personId=number(r.person_id),name=text(r.name),status=text(r.account_status),loginMethod=text(r.login_method);if(!personId||!name)return null;return{personId,name,kind,email:text(r.email),portalUsername:text(r.portal_username),loginMethod:loginMethod==="username"||loginMethod==="email"?loginMethod:null,reference:text(r.reference),accountStatus:(status==="active"||status==="disabled"||status==="not_created"||status==="email_required"?status:"not_created") as PortalAccessCandidate["accountStatus"],lastLogin:text(r.last_login),erpManaged:r.erp_managed===true,linkedScope:rows(r.linked_scope),lastCodeAt:text(r.last_code_at)};}
 
 export async function getPortalOperatorCenter():Promise<PortalOperatorCenter>{
  const w=await operatorWorkspace();const admin=createAdminClient();const{data,error}=await admin.rpc("get_portal_access_center_v2",{p_identity_id:w.identityId,p_tenant_id:w.tenantId,p_branch_id:w.branchId});if(error)throw new Error(error.message);const raw=object(data);
