@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const STAGING_REF = "loihcxyblzdfiogrdihm";
@@ -56,14 +56,23 @@ async function findUser(admin: SupabaseClient, email: string) {
   return null;
 }
 
-async function ensureUser(admin: SupabaseClient, email: string, portalAccount: boolean) {
+async function ensureUser(
+  admin: SupabaseClient,
+  email: string,
+  portalAccount: boolean,
+  appMetadata?: Record<string, unknown>,
+) {
   const nextPassword = password();
   const existing = await findUser(admin, email);
   if (existing) {
     const updated = await admin.auth.admin.updateUserById(existing.id, {
       password: nextPassword,
       email_confirm: true,
-      app_metadata: { ...existing.app_metadata, ...(portalAccount ? { portal_account: true } : {}) },
+      app_metadata: {
+        ...existing.app_metadata,
+        ...(portalAccount ? { portal_account: true } : {}),
+        ...appMetadata,
+      },
     });
     if (updated.error || !updated.data.user) throw new Error("Unable to reset staging E2E user: " + email);
     return { id: updated.data.user.id, email, password: nextPassword };
@@ -73,7 +82,10 @@ async function ensureUser(admin: SupabaseClient, email: string, portalAccount: b
     email,
     password: nextPassword,
     email_confirm: true,
-    app_metadata: portalAccount ? { portal_account: true } : {},
+    app_metadata: {
+      ...(portalAccount ? { portal_account: true } : {}),
+      ...(appMetadata ?? {}),
+    },
   });
   if (created.error || !created.data.user) throw new Error("Unable to create staging E2E user: " + email);
   return { id: created.data.user.id, email, password: nextPassword };
@@ -91,10 +103,23 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
 
   const suffix = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const domain = "example.com";
+  const usernameAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+  const usernameDigest = createHash("sha256").update(suffix).digest();
+  const parentUsername = "e2e-" +
+    Array.from({ length: 6 }, (_, index) => usernameAlphabet[usernameDigest[index] % usernameAlphabet.length]).join("");
   const accounts = {
     admin: await ensureUser(admin, "ilmgaah-e2e-admin-" + suffix + "@" + domain, false),
     teacher: await ensureUser(admin, "ilmgaah-e2e-teacher-" + suffix + "@" + domain, true),
-    parent: await ensureUser(admin, "ilmgaah-e2e-parent-" + suffix + "@" + domain, true),
+    parent: await ensureUser(
+      admin,
+      parentUsername + "@parents.ilmgaah.in",
+      true,
+      {
+        must_change_password: true,
+        portal_login_method: "username",
+        portal_username: parentUsername,
+      },
+    ),
   };
 
   const existingMembership = await admin.from("memberships")
