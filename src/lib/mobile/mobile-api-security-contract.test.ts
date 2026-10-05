@@ -43,10 +43,15 @@ describe("mobile API security contract", () => {
     expect(source("src/lib/mobile/server-auth.ts")).toContain('key === "institution_owner"');
   });
 
-  it("keeps mobile routes read-only", () => {
+  it("keeps mobile read routes read-only and scopes the hostel mutation", () => {
     for (const [file, text] of routeSources) {
       expect(text, file).toContain("function GET");
+      if (file === "src/app/api/mobile/hostel/route.ts") continue;
       expect(text, file).not.toMatch(/export async function (POST|PUT|PATCH|DELETE)/);
     }
+
+    const hostel = source("src/app/api/mobile/hostel/route.ts");
+    expect(hostel).toContain("export async function POST");
+    expect(hostel).toContain("set_student_residence_v1");
   });
 });

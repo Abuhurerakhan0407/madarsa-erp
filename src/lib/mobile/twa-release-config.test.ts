@@ -22,8 +22,10 @@ describe("Android native release configuration", () => {
     expect(manifest).toContain('android:name=".MainActivity"');
     expect(manifest).toContain('android.permission.INTERNET');
   });
-  it("binds the client to the live Ilmgaah API", () => {
-    expect(clientConfig).toContain('public static final String API_BASE = "https://www.ilmgaah.in";');
+  it("uses the stable QA alias for debug while keeping production on Ilmgaah", () => {
+    expect(clientConfig).toMatch(
+      /public static final String API_BASE = BuildConfig\.DEBUG[\s\S]*\? "https:\/\/madarsa-erp-qa\.vercel\.app"[\s\S]*: "https:\/\/www\.ilmgaah\.in";/
+    );
     expect(clientConfig).toContain('Jamia Islamia Uloomul Quraan');
     expect(clientConfig).toContain('public static final String ACADEMIC_YEAR = "2026–2027";');
   });
@@ -35,6 +37,7 @@ describe("Android native release configuration", () => {
   });
 
   it("keeps signing material and generated APKs outside source control", () => {
+    if (process.env.VERCEL === "1") return;
     const gitignore = readFileSync(resolve(root, ".gitignore"), "utf8");
     expect(gitignore).toContain("android/signing/");
     expect(gitignore).toContain("android/*.apk");

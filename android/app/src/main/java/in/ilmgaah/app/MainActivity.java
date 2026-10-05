@@ -2,25 +2,52 @@ package in.ilmgaah.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 
 public class MainActivity extends Activity {
     private static final int GREEN = Color.rgb(22, 132, 90);
@@ -34,16 +61,90 @@ public class MainActivity extends Activity {
     private static final int TEXT = Color.rgb(23, 33, 27);
     private static final int MUTED = Color.rgb(101, 115, 107);
     private static final int BORDER = Color.rgb(220, 229, 223);
+    private static final int ADMISSION_PHOTO_REQUEST = 701;
+    private static final int MAX_ADMISSION_PHOTO_BYTES = 5 * 1024 * 1024;
+    private static final String AUTH_PREFS = "ilmgaah_auth";
+    private static final String REMEMBERED_SESSION_KEY = "remembered_session";
+    private static final String REMEMBERED_LAST_OPEN_KEY = "remembered_last_open_ms";
+    private static final String REMEMBERED_KEY_ALIAS = "ilmgaah_remembered_session_v1";
+    private static final int GCM_TAG_LENGTH = 128;
+    private static final long TOKEN_EXPIRY_SKEW_SECONDS = 60L;
 
     private FrameLayout root;
     private LinearLayout content;
+    private LinearLayout bottomNav;
+    private String currentScreen = "home";
     private TextView headerTitle;
     private TextView headerMeta;
     private TextView connectionState;
     private Button signInButton;
+    private CheckBox rememberMeToggle;
+    private TextView loginError;
+    private long sessionGeneration = 0L;
 
     private String accessToken = "";
+    private JSONObject authSession;
     private String surface = "admin";
+    private Uri admissionPhotoUri;
+    private String admissionPhotoToken = "";
+    private int admissionDraftId = 0;
+    private TextView admissionPhotoStatus;
+
+    private static final class AdmissionOption {
+        final int id;
+        final String label;
+        final int sessionId;
+        final int programId;
+
+        AdmissionOption(int id, String label) {
+            this(id, label, 0, 0);
+        }
+
+        AdmissionOption(int id, String label, int sessionId, int programId) {
+            this.id = id;
+            this.label = label;
+            this.sessionId = sessionId;
+            this.programId = programId;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    private String admissionCookie() {
+        if (authSession == null || accessToken.isEmpty()) return "";
+        try {
+            JSONObject session = new JSONObject();
+            session.put("access_token", accessToken);
+            session.put("refresh_token", authSession.optString("refresh_token", ""));
+            session.put("token_type", authSession.optString("token_type", "bearer"));
+            session.put("expires_in", authSession.optLong("expires_in", 3600));
+            session.put("expires_at", authSession.optLong("expires_at", 0));
+            JSONObject user = authSession.optJSONObject("user");
+            if (user != null) session.put("user", user);
+            String encoded = Base64.encodeToString(
+                    session.toString().getBytes(StandardCharsets.UTF_8),
+                    Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+            return NativeApi.chunkedCookie("supabase.auth.token", "base64-" + encoded);
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    private String localizedOptionLabel(JSONObject row, String fallback) {
+        JSONObject labels = row.optJSONObject("labels");
+        if (labels == null) return fallback;
+        String locale = englishMode() ? "en" : "ur";
+        String value = labels.optString(locale, "");
+        if (value.isEmpty()) value = labels.optString("en", "");
+        return value.isEmpty() ? fallback : value;
+    }
+
+    private String isoToday() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+    }
     private int tenantId = 0;
     private int branchId = 0;
     private String liveStudents = "—";
@@ -62,6 +163,20 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(BG);
         setContentView(root);
         showLogin();
+        restoreRememberedSession();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (accessToken.isEmpty() || !authPreferences().contains(REMEMBERED_SESSION_KEY)) return;
+        long lastOpen = authPreferences().getLong(REMEMBERED_LAST_OPEN_KEY, 0L);
+        if (!rememberWindowValid(lastOpen)) {
+            clearRememberedSession();
+            showLogin();
+            return;
+        }
+        touchRememberedSession();
     }
 
     private int dp(float value) {
@@ -74,6 +189,193 @@ public class MainActivity extends Activity {
 
     private String tr(String urdu, String english) {
         return englishMode() ? english : urdu;
+    }
+
+
+    private android.content.SharedPreferences authPreferences() {
+        return getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private SecretKey rememberedSessionKey() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        if (!keyStore.containsAlias(REMEMBERED_KEY_ALIAS)) {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+            keyGenerator.init(new KeyGenParameterSpec.Builder(
+                    REMEMBERED_KEY_ALIAS,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .build());
+            keyGenerator.generateKey();
+        }
+        return (SecretKey) keyStore.getKey(REMEMBERED_KEY_ALIAS, null);
+    }
+
+    private String encryptRememberedSession(JSONObject session) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, rememberedSessionKey());
+        JSONObject envelope = new JSONObject();
+        envelope.put("iv", Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP));
+        envelope.put("data", Base64.encodeToString(
+                cipher.doFinal(session.toString().getBytes(StandardCharsets.UTF_8)),
+                Base64.NO_WRAP));
+        return envelope.toString();
+    }
+
+    private JSONObject decryptRememberedSession(String encoded) throws Exception {
+        JSONObject envelope = new JSONObject(encoded);
+        byte[] iv = Base64.decode(envelope.optString("iv", ""), Base64.NO_WRAP);
+        byte[] data = Base64.decode(envelope.optString("data", ""), Base64.NO_WRAP);
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, rememberedSessionKey(),
+                new GCMParameterSpec(GCM_TAG_LENGTH, iv));
+        return new JSONObject(new String(
+                cipher.doFinal(data), StandardCharsets.UTF_8));
+    }
+
+    private void clearRememberedSession() {
+        authPreferences().edit()
+                .remove(REMEMBERED_SESSION_KEY)
+                .remove(REMEMBERED_LAST_OPEN_KEY)
+                .apply();
+    }
+
+    private boolean rememberWindowValid(long lastOpenMs) {
+        if (lastOpenMs <= 0) return false;
+        Calendar cutoff = Calendar.getInstance();
+        cutoff.add(Calendar.MONTH, -5);
+        return lastOpenMs > cutoff.getTimeInMillis();
+    }
+
+    private void touchRememberedSession() {
+        if (!authPreferences().contains(REMEMBERED_SESSION_KEY)) return;
+        authPreferences().edit()
+                .putLong(REMEMBERED_LAST_OPEN_KEY, System.currentTimeMillis())
+                .apply();
+    }
+
+    private JSONObject rememberedSession() {
+        android.content.SharedPreferences prefs = authPreferences();
+        String encoded = prefs.getString(REMEMBERED_SESSION_KEY, "");
+        long lastOpen = prefs.getLong(REMEMBERED_LAST_OPEN_KEY, 0L);
+        if (encoded.isEmpty() || !rememberWindowValid(lastOpen)) {
+            if (!encoded.isEmpty()) clearRememberedSession();
+            return null;
+        }
+        try {
+            return decryptRememberedSession(encoded);
+        } catch (Exception ignored) {
+            clearRememberedSession();
+            return null;
+        }
+    }
+
+    private boolean accessTokenFresh(JSONObject session) {
+        long expiresAt = session.optLong("expires_at", 0L);
+        return expiresAt > (System.currentTimeMillis() / 1000L) + TOKEN_EXPIRY_SKEW_SECONDS;
+    }
+
+    private void persistRememberedSession() {
+        if (authSession == null || accessToken.length() < 20) return;
+        try {
+            JSONObject stored = new JSONObject(authSession.toString());
+            stored.put("workspaceTenantId", tenantId);
+            stored.put("workspaceBranchId", branchId);
+            stored.put("workspaceSurface", surface);
+            String encrypted = encryptRememberedSession(stored);
+            authPreferences().edit()
+                    .putString(REMEMBERED_SESSION_KEY, encrypted)
+                    .putLong(REMEMBERED_LAST_OPEN_KEY, System.currentTimeMillis())
+                    .apply();
+        } catch (Exception ignored) {
+            clearRememberedSession();
+        }
+    }
+
+    private void restoreRememberedSession() {
+        JSONObject stored = rememberedSession();
+        if (stored == null) return;
+
+        accessToken = stored.optString("access_token", "");
+        authSession = stored;
+        tenantId = stored.optInt("workspaceTenantId", 0);
+        branchId = stored.optInt("workspaceBranchId", 0);
+        surface = stored.optString("workspaceSurface", "admin");
+        if (accessToken.length() < 20) {
+            clearRememberedSession();
+            showLogin();
+            return;
+        }
+
+        if (rememberMeToggle != null) rememberMeToggle.setChecked(true);
+        if (signInButton != null) {
+            signInButton.setEnabled(false);
+            signInButton.setText(tr("سیشن بحال ہو رہا ہے…", "Restoring session…"));
+        }
+
+        if (accessTokenFresh(stored)) {
+            touchRememberedSession();
+            bootstrap(loginError, true);
+            return;
+        }
+
+        String refreshToken = stored.optString("refresh_token", "");
+        if (refreshToken.isEmpty()) {
+            clearRememberedSession();
+            showLogin();
+            return;
+        }
+
+        try {
+            JSONObject body = new JSONObject();
+            body.put("refresh_token", refreshToken);
+            NativeApi.postJson(
+                    BuildConfig.SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token",
+                    body.toString(),
+                    BuildConfig.SUPABASE_PUBLISHABLE_KEY,
+                    result -> {
+                        if (!result.ok()) {
+                            if (result.status == 400 || result.status == 401) {
+                                clearRememberedSession();
+                            }
+                            accessToken = "";
+                            authSession = null;
+                            if (rememberMeToggle != null) rememberMeToggle.setChecked(false);
+                            showLogin();
+                            if (loginError != null) {
+                                loginError.setText(tr(
+                                        "سیشن بحال نہیں ہو سکا۔ دوبارہ سائن اِن کریں۔",
+                                        "Your saved session could not be restored. Please sign in again."));
+                            }
+                            return;
+                        }
+
+                        JSONObject payload = NativeApi.json(result.body);
+                        String refreshedAccessToken = payload.optString("access_token", "");
+                        String refreshedToken = payload.optString("refresh_token", "");
+                        if (refreshedAccessToken.length() < 20 || refreshedToken.isEmpty()) {
+                            clearRememberedSession();
+                            accessToken = "";
+                            authSession = null;
+                            showLogin();
+                            return;
+                        }
+
+                        accessToken = refreshedAccessToken;
+                        authSession = payload;
+                        persistRememberedSession();
+                        bootstrap(loginError, true);
+                    });
+        } catch (Exception ignored) {
+            showLogin();
+            if (loginError != null) {
+                loginError.setText(tr(
+                        "سیشن بحال نہیں ہو سکا۔ دوبارہ سائن اِن کریں۔",
+                        "Your saved session could not be restored. Please sign in again."));
+            }
+        }
     }
 
     private void setEnglishMode(boolean enabled) {
@@ -104,10 +406,12 @@ public class MainActivity extends Activity {
     }
 
     private TextView languageToggle(boolean english) {
-        TextView toggle = tv(english ? "Urdu" : "English", 12, BLUE, true);
+        TextView toggle = tv(english ? "Urdu" : "English", 12, GREEN_DARK, true);
         toggle.setGravity(Gravity.CENTER);
         toggle.setPadding(dp(14), dp(9), dp(14), dp(9));
-        toggle.setBackground(rounded(Color.WHITE, BLUE, 30));
+        toggle.setMinHeight(dp(48));
+        toggle.setBackground(interactiveRounded(
+                Color.WHITE, GREEN_SOFT, GREEN, 30));
         toggle.setClickable(true);
         toggle.setFocusable(true);
         toggle.setContentDescription(english ? "Switch to Urdu" : "Switch to English");
@@ -131,6 +435,95 @@ public class MainActivity extends Activity {
         if (stroke != 0) drawable.setStroke(dp(1), stroke);
         drawable.setCornerRadius(dp(radiusDp));
         return drawable;
+    }
+
+    private StateListDrawable interactiveRounded(
+            int normalFill,
+            int pressedFill,
+            int stroke,
+            float radiusDp
+    ) {
+        StateListDrawable states = new StateListDrawable();
+        states.addState(
+                new int[]{android.R.attr.state_pressed},
+                rounded(pressedFill, stroke, radiusDp));
+        states.addState(
+                new int[]{android.R.attr.state_focused},
+                rounded(pressedFill, stroke, radiusDp));
+        states.addState(
+                new int[]{},
+                rounded(normalFill, stroke, radiusDp));
+        return states;
+    }
+
+    private ImageView iconBubbleIcon(int resourceId, int fill, int tint) {
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(resourceId);
+        icon.setColorFilter(tint);
+        icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        icon.setPadding(dp(8), dp(8), dp(8), dp(8));
+        icon.setBackground(rounded(fill, 0, 12));
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        return icon;
+    }
+
+    private int moduleIcon(String path) {
+        if ("home".equals(path)) return R.drawable.il_icon_home;
+        if ("talaba".equals(path) || "students".equals(path)
+                || "ustadh".equals(path) || "staff".equals(path)
+                || "my-students".equals(path) || "portals".equals(path)) {
+            return R.drawable.il_icon_people;
+        }
+        if ("attendance".equals(path) || "staff/attendance".equals(path)
+                || "exams".equals(path)) {
+            return R.drawable.il_icon_check;
+        }
+        if ("hostel".equals(path)) return R.drawable.il_icon_people;
+        if ("hifz".equals(path) || "quran".equals(path)
+                || "quran/revision".equals(path) || "academics".equals(path)
+                || "programs".equals(path) || "people-academics".equals(path)) {
+            return R.drawable.il_icon_book;
+        }
+        if ("documents".equals(path) || "admissions".equals(path)
+                || "admission-new".equals(path) || "reports".equals(path)) {
+            return R.drawable.il_icon_document;
+        }
+        if ("settings".equals(path)) return R.drawable.il_icon_settings;
+        if ("logout".equals(path)) return R.drawable.il_icon_logout;
+        return R.drawable.il_icon_more;
+    }
+
+    private void updateNavSelection() {
+        if (bottomNav == null) return;
+        for (int i = 0; i < bottomNav.getChildCount(); i++) {
+            View child = bottomNav.getChildAt(i);
+            String screen = String.valueOf(child.getTag());
+            boolean selected = currentScreen.equals(screen);
+            child.setSelected(selected);
+            child.setBackground(rounded(
+                    selected ? GREEN_SOFT : Color.TRANSPARENT,
+                    0,
+                    15));
+            if (child instanceof LinearLayout) {
+                LinearLayout childLayout = (LinearLayout) child;
+                if (childLayout.getChildCount() > 0) {
+                    View icon = childLayout.getChildAt(0);
+                    if (icon instanceof ImageView) {
+                        icon.setBackground(rounded(
+                                selected ? GREEN : MINT,
+                                0,
+                                12));
+                        ((ImageView) icon).setColorFilter(
+                                selected ? Color.WHITE : GREEN_DARK);
+                    }
+                    if (childLayout.getChildCount() > 1
+                            && childLayout.getChildAt(1) instanceof TextView) {
+                        ((TextView) childLayout.getChildAt(1)).setTextColor(
+                                selected ? GREEN_DARK : MUTED);
+                    }
+                }
+            }
+        }
     }
 
     private LinearLayout card() {
@@ -196,7 +589,8 @@ public class MainActivity extends Activity {
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         button.setGravity(Gravity.CENTER);
         button.setPadding(dp(16), dp(8), dp(16), dp(8));
-        button.setBackground(rounded(GREEN, GREEN, 14));
+        button.setMinHeight(dp(48));
+        button.setBackground(interactiveRounded(GREEN, GREEN_DARK, GREEN_DARK, 14));
         return button;
     }
 
@@ -212,6 +606,15 @@ public class MainActivity extends Activity {
         return field;
     }
     private void showLogin() {
+        sessionGeneration++;
+        accessToken = "";
+        authSession = null;
+        tenantId = 0;
+        branchId = 0;
+        surface = "admin";
+        guardianPayload = null;
+        parentChildren = 0;
+        currentScreen = "home";
         root.removeAllViews();
         boolean english = englishMode();
         ScrollView scroll = new ScrollView(this);
@@ -243,7 +646,7 @@ public class MainActivity extends Activity {
         View stripe = new View(this);
         GradientDrawable stripeBg = new GradientDrawable(
                 GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{GREEN, GREEN, BLUE});
+                new int[]{GREEN_DARK, GREEN});
         stripe.setBackground(stripeBg);
         page.addView(stripe, new LinearLayout.LayoutParams(-1, dp(4)));
         addGap(page, 14);
@@ -293,12 +696,10 @@ public class MainActivity extends Activity {
         brand.addView(chips, new LinearLayout.LayoutParams(-1, -2));
         TextView c1 = pill(tr("طلبہ", "Students"), GREEN_SOFT, GREEN_DARK);
         TextView c2 = pill(tr("حفظ", "Hifz"), GREEN_SOFT, GREEN_DARK);
-        TextView c3 = pill(tr("ہاسٹل", "Hostel"), BLUE_SOFT, BLUE);
-        TextView c4 = pill(tr("گارڈین", "Guardian"), BLUE_SOFT, BLUE);
+        TextView c3 = pill(tr("ہاسٹل", "Hostel"), GREEN_SOFT, GREEN_DARK);
         chips.addView(c1);
         chips.addView(c2);
         chips.addView(c3);
-        chips.addView(c4);
 
         TextView director = tv(
                 ClientConfig.DIRECTOR + "  •  " + ClientConfig.PHONE,
@@ -336,11 +737,25 @@ public class MainActivity extends Activity {
                 InputType.TYPE_TEXT_VARIATION_PASSWORD);
         form.addView(password, new LinearLayout.LayoutParams(-1, dp(54)));
 
-        addGap(form, 14);
+        addGap(form, 5);
+        LinearLayout rememberRow = row();
+        rememberRow.setGravity(Gravity.CENTER_VERTICAL);
+        rememberRow.setLayoutDirection(english
+                ? View.LAYOUT_DIRECTION_LTR
+                : View.LAYOUT_DIRECTION_RTL);
+        rememberMeToggle = new CheckBox(this);
+        rememberMeToggle.setText(tr("مجھے یاد رکھیں", "Remember me"));
+        rememberMeToggle.setTextSize(13);
+        rememberMeToggle.setTextColor(TEXT);
+        rememberRow.addView(rememberMeToggle, new LinearLayout.LayoutParams(-1, -2));
+        form.addView(rememberRow, new LinearLayout.LayoutParams(-1, -2));
+
+        addGap(form, 9);
         signInButton = primaryButton(tr("سائن اِن", "Sign in"));
         form.addView(signInButton, new LinearLayout.LayoutParams(-1, dp(54)));
 
         TextView error = tv("", 12, Color.rgb(177, 45, 45), true);
+        loginError = error;
         error.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         LinearLayout.LayoutParams errorParams =
                 new LinearLayout.LayoutParams(-1, -2);
@@ -359,12 +774,14 @@ public class MainActivity extends Activity {
         signInButton.setOnClickListener(v -> {
             String emailValue = email.getText().toString().trim();
             String passwordValue = password.getText().toString();
+            boolean rememberSession = rememberMeToggle != null && rememberMeToggle.isChecked();
             if (emailValue.isEmpty() || passwordValue.isEmpty()) {
                 error.setText(tr("ای میل اور پاس ورڈ درج کریں۔",
                         "Enter your email and password."));
                 return;
             }
 
+            clearRememberedSession();
             signInButton.setEnabled(false);
             signInButton.setText(tr("چیک ہو رہا ہے…", "Checking…"));
             error.setText("");
@@ -387,13 +804,14 @@ public class MainActivity extends Activity {
                             }
                             JSONObject payload = NativeApi.json(result.body);
                             accessToken = payload.optString("access_token", "");
+                            authSession = payload;
                             if (accessToken.length() < 20) {
                                 signInButton.setEnabled(true);
                                 signInButton.setText(tr("سائن اِن", "Sign in"));
                                 error.setText(tr("سائن اِن مکمل نہیں ہو سکا۔", "Sign-in could not be completed."));
                                 return;
                             }
-                            bootstrap(error);
+                            bootstrap(error, rememberSession);
                         });
             } catch (Exception exception) {
                 signInButton.setEnabled(true);
@@ -413,13 +831,21 @@ public class MainActivity extends Activity {
         return tr("سائن اِن سروس ابھی دستیاب نہیں۔",
                 "The sign-in service is currently unavailable.");
     }
-    private void bootstrap(TextView error) {
+    private void bootstrap(TextView error, boolean rememberSession) {
+        final long requestGeneration = sessionGeneration;
+        final String requestAccessToken = accessToken;
         NativeApi.get(
                 ClientConfig.API_BASE + "/api/mobile/bootstrap",
-                accessToken,
+                requestAccessToken,
                 result -> {
+                    if (requestGeneration != sessionGeneration) return;
+
                     if (!result.ok()) {
+                        if (rememberSession && (result.status == 400 || result.status == 401)) {
+                            clearRememberedSession();
+                        }
                         accessToken = "";
+                        authSession = null;
                         signInButton.setEnabled(true);
                         signInButton.setText(tr("سائن اِن", "Sign in"));
                         error.setText(result.status == 401
@@ -452,6 +878,7 @@ public class MainActivity extends Activity {
                     }
 
                     if (chosen == null) {
+                        if (rememberSession) clearRememberedSession();
                         signInButton.setEnabled(true);
                         signInButton.setText(tr("سائن اِن", "Sign in"));
                         error.setText(tr("اس اکاؤنٹ کے لیے فعال ورک اسپیس نہیں ہے۔",
@@ -462,6 +889,8 @@ public class MainActivity extends Activity {
                     surface = chosen.optString("surface", fallbackSurface);
                     tenantId = chosen.optInt("tenantId", 0);
                     branchId = chosen.optInt("branchId", 0);
+                    if (rememberSession) persistRememberedSession();
+                    else clearRememberedSession();
                     showWorkspace();
                     loadRoleData();
                 });
@@ -539,6 +968,7 @@ public class MainActivity extends Activity {
         nav.setBackground(rounded(Color.WHITE, BORDER, 0));
         nav.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
         nav.setElevation(dp(8));
+        bottomNav = nav;
         outer.addView(nav, new LinearLayout.LayoutParams(-1, dp(78)));
 
         navItem(nav, tr("ہوم", "Home"), "home");
@@ -554,27 +984,25 @@ public class MainActivity extends Activity {
         showScreen("home");
     }
 
-    private String navGlyph(String screen) {
-        if ("home".equals(screen)) return "⌂";
-        if ("talaba".equals(screen)) return "◫";
-        if ("attendance".equals(screen)) return "✓";
-        if ("hostel".equals(screen)) return "▦";
-        if ("hifz".equals(screen)) return "◒";
-        return "•••";
+    private int navIcon(String screen) {
+        return moduleIcon(screen);
     }
 
     private void navItem(LinearLayout nav, String label, String screen) {
         LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
         item.setGravity(Gravity.CENTER);
-        item.setPadding(dp(4), dp(3), dp(4), dp(3));
-        item.setBackground(rounded(MINT, 0, 15));
+        item.setPadding(dp(4), dp(4), dp(4), dp(4));
+        item.setBackground(rounded(Color.TRANSPARENT, 0, 15));
         item.setClickable(true);
         item.setFocusable(true);
+        item.setSelected("home".equals(screen));
+        item.setTag(screen);
+        item.setContentDescription(label);
         item.setOnClickListener(v -> showScreen(screen));
 
-        TextView glyph = iconBubble(navGlyph(screen), GREEN_SOFT, GREEN_DARK);
-        item.addView(glyph, new LinearLayout.LayoutParams(dp(34), dp(30)));
+        ImageView icon = iconBubbleIcon(navIcon(screen), MINT, GREEN_DARK);
+        item.addView(icon, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         TextView caption = tv(label, 10, MUTED, true);
         caption.setGravity(Gravity.CENTER);
@@ -591,20 +1019,168 @@ public class MainActivity extends Activity {
         return tr("آفس", "Office");
     }
 
-    private void openModule(String path) {
-        String locale = englishMode() ? "en" : "ur";
-        try {
-            Intent intent = new Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse(ClientConfig.API_BASE + "/" + locale + "/" + path));
-            startActivity(intent);
-        } catch (Exception ignored) {
-            // Keep the native workspace available even without a browser.
+    private void handleNativeAction(String path) {
+        if ("admission-new".equals(path)) {
+            renderAdmissionForm();
+            return;
         }
+        if ("admissions".equals(path)) {
+            showScreen("admissions");
+            return;
+        }
+        if ("students".equals(path)) {
+            showScreen("talaba");
+            return;
+        }
+        if ("programs".equals(path) || "people-academics".equals(path)) {
+            showScreen("academics");
+            return;
+        }
+        if ("attendance".equals(path) || "staff/attendance".equals(path)) {
+            showScreen("attendance");
+            return;
+        }
+        if ("hostel".equals(path)) {
+            showScreen("hostel");
+            return;
+        }
+        if ("hostel-add".equals(path)) {
+            showHostelAddDialog();
+            return;
+        }
+        if ("quran".equals(path) || "quran/revision".equals(path)) {
+            showScreen("hifz");
+            return;
+        }
+        if ("exams".equals(path)) {
+            showScreen("exams");
+            return;
+        }
+        if ("documents".equals(path) || "students/id-cards".equals(path)) {
+            showScreen("documents");
+            return;
+        }
+        if ("staff".equals(path)
+                || "staff/leave".equals(path)
+                || "my-students".equals(path)) {
+            showScreen("ustadh");
+            return;
+        }
+        if ("reports".equals(path)) {
+            showScreen("reports");
+            return;
+        }
+        if ("portals".equals(path)) {
+            showScreen("portals");
+            return;
+        }
+        if ("settings".equals(path)) {
+            showScreen("settings");
+            return;
+        }
+        if ("logout".equals(path)) {
+            showScreen("logout");
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(tr("یہ کارروائی دستیاب نہیں", "Action unavailable"))
+                .setMessage(tr(
+                        "یہ native workflow ابھی دستیاب نہیں ہے۔",
+                        "This native workflow is not available yet."))
+                .setPositiveButton(tr("ٹھیک ہے", "OK"), null)
+                .show();
+    }
+
+    private void setHostelResidenceNative(int personId, String residenceType) {
+        if (personId <= 0 || accessToken.isEmpty()) return;
+        try {
+            JSONObject body = new JSONObject();
+            body.put("studentPersonId", personId);
+            body.put("residenceType", residenceType);
+            body.put("reason", "Updated from Hostel Boys workspace");
+
+            String url = ClientConfig.API_BASE +
+                    "/api/mobile/hostel?tenantId=" + tenantId + "&branchId=" + branchId;
+            NativeApi.postJsonWithBearer(url, body.toString(), accessToken, result -> {
+                if (!result.ok()) {
+                    new AlertDialog.Builder(this)
+                            .setTitle(tr("ہاسٹل اپ ڈیٹ نہیں ہو سکا", "Hostel update failed"))
+                            .setMessage(tr(
+                                    "رہائشی حیثیت تبدیل نہیں ہو سکی۔",
+                                    "The student's residence status could not be updated."))
+                            .setPositiveButton(tr("ٹھیک ہے", "OK"), null)
+                            .show();
+                    return;
+                }
+                renderHostel();
+            });
+        } catch (Exception ignored) {
+            new AlertDialog.Builder(this)
+                    .setTitle(tr("ہاسٹل اپ ڈیٹ نہیں ہو سکا", "Hostel update failed"))
+                    .setPositiveButton(tr("ٹھیک ہے", "OK"), null)
+                    .show();
+        }
+    }
+
+    private void showHostelAddDialog() {
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/hostel?tenantId=" + tenantId + "&branchId=" + branchId;
+        NativeApi.get(url, accessToken, result -> {
+            if (!result.ok()) {
+                new AlertDialog.Builder(this)
+                        .setTitle(tr("طلبہ دستیاب نہیں", "Students unavailable"))
+                        .setPositiveButton(tr("ٹھیک ہے", "OK"), null)
+                        .show();
+                return;
+            }
+
+            JSONObject center = NativeApi.json(result.body).optJSONObject("center");
+            JSONArray available = center == null ? null : center.optJSONArray("available_students");
+            if (available == null || available.length() == 0) {
+                new AlertDialog.Builder(this)
+                        .setTitle(tr("کوئی ڈے اسٹوڈنٹ نہیں", "No day students"))
+                        .setMessage(tr(
+                                "نئے طالب علم کو پہلے Students میں بنائیں۔",
+                                "Create the student in Students first."))
+                        .setPositiveButton(tr("ٹھیک ہے", "OK"), null)
+                        .show();
+                return;
+            }
+
+            String[] labels = new String[available.length()];
+            int[] personIds = new int[available.length()];
+            for (int i = 0; i < available.length(); i++) {
+                JSONObject student = available.optJSONObject(i);
+                if (student == null) continue;
+                personIds[i] = student.optInt("person_id", 0);
+                String program = englishMode()
+                        ? student.optString("program_label", "Program")
+                        : student.optString("program_label_ur", student.optString("program_label", "پروگرام"));
+                String group = englishMode()
+                        ? student.optString("group_label", "—")
+                        : student.optString("group_label_ur", student.optString("group_label", "—"));
+                labels[i] = student.optString("display_name", "Student") +
+                        "  •  " + program + "  •  " + group;
+            }
+
+            new AlertDialog.Builder(this)
+                    .setTitle(tr("موجودہ طالب علم شامل کریں", "Add existing student"))
+                    .setItems(labels, (dialog, which) -> {
+                        int personId = personIds[which];
+                        if (personId > 0) {
+                            setHostelResidenceNative(personId, "hostel");
+                        }
+                    })
+                    .setNegativeButton(tr("منسوخ", "Cancel"), null)
+                    .show();
+        });
     }
 
     private void showScreen(String screen) {
         if (content == null) return;
+        currentScreen = screen;
+        updateNavSelection();
         content.removeAllViews();
 
         if ("home".equals(screen)) {
@@ -638,7 +1214,10 @@ public class MainActivity extends Activity {
         else if ("ustadh".equals(screen)) renderUstadh();
         else if ("reports".equals(screen)) renderReports();
         else if ("settings".equals(screen)) renderSettings();
-        else if ("logout".equals(screen)) showLogin();
+        else if ("logout".equals(screen)) {
+            clearRememberedSession();
+            showLogin();
+        }
     }
 
     private void titleBlock(String title, String subtitle) {
@@ -655,13 +1234,7 @@ public class MainActivity extends Activity {
         params.topMargin = dp(5);
         content.addView(s, params);
 
-        View rule = new View(this);
-        rule.setBackgroundColor(BORDER);
-        LinearLayout.LayoutParams ruleParams = new LinearLayout.LayoutParams(dp(48), dp(3));
-        ruleParams.gravity = english ? Gravity.LEFT : Gravity.RIGHT;
-        ruleParams.topMargin = dp(11);
-        content.addView(rule, ruleParams);
-        addGap(content, 13);
+        addGap(content, 12);
     }
     private void sectionLabel(String text) {
         TextView view = tv(text, 14, GREEN_DARK, true);
@@ -721,13 +1294,14 @@ public class MainActivity extends Activity {
         link.setLayoutDirection(english
                 ? View.LAYOUT_DIRECTION_LTR
                 : View.LAYOUT_DIRECTION_RTL);
-        link.setBackground(rounded(Color.WHITE, BORDER, 17));
-        link.setElevation(dp(2));
+        link.setBackground(interactiveRounded(Color.WHITE, GREEN_SOFT, BORDER, 17));
+        link.setElevation(dp(1));
         link.setClickable(true);
         link.setFocusable(true);
+        link.setContentDescription(label);
         link.setOnClickListener(v -> showScreen(screen));
 
-        TextView bubble = iconBubble(navGlyph(screen), GREEN_SOFT, GREEN_DARK);
+        ImageView bubble = iconBubbleIcon(moduleIcon(screen), GREEN_SOFT, GREEN_DARK);
         link.addView(bubble, new LinearLayout.LayoutParams(dp(40), dp(40)));
 
         LinearLayout copy = new LinearLayout(this);
@@ -745,9 +1319,12 @@ public class MainActivity extends Activity {
         detailParams.topMargin = dp(4);
         copy.addView(detail, detailParams);
 
-        TextView arrow = tv(english ? "→" : "←", 17, GREEN_DARK, true);
-        arrow.setGravity(Gravity.CENTER);
-        link.addView(arrow, new LinearLayout.LayoutParams(dp(25), dp(40)));
+        ImageView arrow = new ImageView(this);
+        arrow.setImageResource(R.drawable.il_icon_chevron);
+        arrow.setColorFilter(GREEN_DARK);
+        arrow.setScaleType(ImageView.ScaleType.CENTER);
+        arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        link.addView(arrow, new LinearLayout.LayoutParams(dp(38), dp(40)));
 
         return link;
     }
@@ -828,7 +1405,7 @@ public class MainActivity extends Activity {
         addTwoLinks(tr("داخلہ", "Admissions"), "New + pending", "admissions",
                 tr("طلبہ", "Talaba"), "Register + profiles", "talaba");
         addTwoLinks(tr("حاضری", "Attendance"), "Biometric + daily", "attendance",
-                tr("ہاسٹل", "Hostel"), "Beds + residents", "hostel");
+                tr("ہاسٹل", "Hostel"), "Programs + hostel boys", "hostel");
         addTwoLinks(tr("قرآن و حفظ", "Qur’an & Hifz"), "Progress", "hifz",
                 tr("اکیڈمکس", "Academic"), "Arabic + learning", "academics");
         addTwoLinks(tr("امتحانات", "Exams & results"), "Results", "exams",
@@ -990,21 +1567,18 @@ public class MainActivity extends Activity {
     private void renderGuardianMore() {
         titleBlock(tr("مزید", "More"), "Guardian Portal");
         addActionCard(tr("اطلاعات", "Notices"),
-                tr("جامعہ کی اہم اطلاعات", "Important institution notices"),
-                "portals");
+                tr("جامعہ کی اہم اطلاعات", "Important institution notices"));
         addActionCard(tr("ہوم ورک", "Homework"),
-                tr("Assigned homework from the portal", "Assigned homework from the portal"),
-                "portals");
+                tr("Assigned homework from the portal", "Assigned homework from the portal"));
         addActionCard(tr("نتائج", "Results"),
                 tr("Published examination results", "Published examination results"),
                 "exams");
         addActionCard(tr("پروفائل", "Profile"),
                 englishMode() ? ClientConfig.INSTITUTION + " • " + ClientConfig.ACADEMIC_YEAR
-                        : ClientConfig.INSTITUTION_UR + " • " + ClientConfig.ACADEMIC_YEAR,
-                "portals");
+                        : ClientConfig.INSTITUTION_UR + " • " + ClientConfig.ACADEMIC_YEAR);
         addActionCard(tr("لاگ آؤٹ", "Logout"),
                 tr("Guardian Portal سے سائن آؤٹ", "Sign out from Guardian Portal"),
-                "portals");
+                "logout");
     }
 
     private void renderTalaba() {
@@ -1186,6 +1760,851 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void loadAdmissionOptions(
+            Spinner sessionSpinner,
+            Spinner programSpinner,
+            Spinner groupSpinner,
+            TextView status,
+            ArrayList<AdmissionOption> sessions,
+            ArrayList<AdmissionOption> programs,
+            ArrayList<AdmissionOption> groups,
+            Button complete
+    ) {
+        if (tenantId <= 0 || branchId <= 0 || accessToken.isEmpty()) {
+            status.setText(tr("ورک اسپیس دستیاب نہیں۔", "Workspace is unavailable."));
+            return;
+        }
+
+        String url = ClientConfig.API_BASE +
+                "/api/mobile/admission/options?tenantId=" + tenantId +
+                "&branchId=" + branchId;
+
+        NativeApi.get(url, accessToken, result -> {
+            if (!result.ok()) {
+                status.setText(tr(
+                        "اکیڈمک اختیارات لوڈ نہیں ہو سکے۔",
+                        "Could not load academic options."));
+                return;
+            }
+
+            JSONObject payload = NativeApi.json(result.body);
+            JSONArray sessionRows = payload.optJSONArray("sessions");
+            JSONArray programRows = payload.optJSONArray("programs");
+            JSONArray groupRows = payload.optJSONArray("groups");
+
+            if (sessionRows != null) {
+                for (int i = 0; i < sessionRows.length(); i++) {
+                    JSONObject row = sessionRows.optJSONObject(i);
+                    if (row == null) continue;
+                    sessions.add(new AdmissionOption(
+                            row.optInt("id", 0),
+                            localizedOptionLabel(row, row.optString("key", "Session"))));
+                }
+            }
+
+            if (programRows != null) {
+                for (int i = 0; i < programRows.length(); i++) {
+                    JSONObject row = programRows.optJSONObject(i);
+                    if (row == null) continue;
+                    programs.add(new AdmissionOption(
+                            row.optInt("id", 0),
+                            localizedOptionLabel(row, row.optString("key", "Program"))));
+                }
+            }
+
+            if (groupRows != null) {
+                for (int i = 0; i < groupRows.length(); i++) {
+                    JSONObject row = groupRows.optJSONObject(i);
+                    if (row == null) continue;
+                    groups.add(new AdmissionOption(
+                            row.optInt("id", 0),
+                            localizedOptionLabel(row, row.optString("key", "Class/group")),
+                            row.optInt("session_id", 0),
+                            row.optInt("program_id", 0)));
+                }
+            }
+
+            bindAdmissionSpinner(sessionSpinner, sessions);
+            bindAdmissionSpinner(programSpinner, programs);
+            updateAdmissionGroups(groupSpinner, sessions, programs, groups, 0, 0);
+            complete.setEnabled(!sessions.isEmpty() && !programs.isEmpty() && !groups.isEmpty());
+            status.setText(
+                    groups.isEmpty()
+                            ? tr("فعال کلاس / گروپ دستیاب نہیں۔", "No active classes / groups are available.")
+                            : tr("اکیڈمک اختیارات تیار ہیں۔", "Academic options loaded."));
+        });
+    }
+
+    private void bindAdmissionSpinner(Spinner spinner, ArrayList<AdmissionOption> options) {
+        ArrayAdapter<AdmissionOption> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, options);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void updateAdmissionGroups(
+            Spinner groupSpinner,
+            ArrayList<AdmissionOption> sessions,
+            ArrayList<AdmissionOption> programs,
+            ArrayList<AdmissionOption> allGroups,
+            int sessionId,
+            int programId
+    ) {
+        ArrayList<AdmissionOption> filtered = new ArrayList<>();
+        for (AdmissionOption option : allGroups) {
+            if ((sessionId == 0 || option.sessionId == sessionId)
+                    && (programId == 0 || option.programId == programId)) {
+                filtered.add(option);
+            }
+        }
+        bindAdmissionSpinner(groupSpinner, filtered);
+        if (filtered.isEmpty() && !allGroups.isEmpty()) {
+            bindAdmissionSpinner(groupSpinner, allGroups);
+        }
+    }
+
+    private void formSectionLabel(LinearLayout parent, String text) {
+        TextView view = tv(text, 14, GREEN_DARK, true);
+        view.setGravity(englishMode() ? Gravity.LEFT : Gravity.RIGHT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.topMargin = dp(18);
+        params.bottomMargin = dp(8);
+        parent.addView(view, params);
+    }
+
+    private void bindStringSpinner(Spinner spinner, ArrayList<String> options) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, options);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void pickDate(EditText target, boolean todayByDefault) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        String existing = target.getText().toString().trim();
+        if (existing.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            try {
+                Date parsed = new SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(existing);
+                if (parsed != null) calendar.setTime(parsed);
+            } catch (Exception ignored) {
+                // Use today when the current value is invalid.
+            }
+        } else if (!todayByDefault) {
+            calendar.setTime(new Date());
+        }
+        new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) ->
+                        target.setText(String.format(
+                                Locale.US, "%04d-%02d-%02d",
+                                year, month + 1, dayOfMonth)),
+                calendar.get(java.util.Calendar.YEAR),
+                calendar.get(java.util.Calendar.MONTH),
+                calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        ).show();
+    }
+
+    private void chooseAdmissionPhoto() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        startActivityForResult(intent, ADMISSION_PHOTO_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != ADMISSION_PHOTO_REQUEST || resultCode != RESULT_OK || data == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (uri == null) return;
+        admissionPhotoUri = uri;
+        admissionPhotoToken = "";
+        try {
+            getContentResolver().takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {
+            // Temporary read permission remains valid for the current flow.
+        }
+        if (admissionPhotoStatus != null) {
+            admissionPhotoStatus.setText(
+                    tr("منتخب: " + admissionPhotoName(uri),
+                            "Selected: " + admissionPhotoName(uri)));
+        }
+    }
+
+    private String admissionPhotoName(Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = getContentResolver().query(
+                    uri,
+                    new String[]{OpenableColumns.DISPLAY_NAME},
+                    null,
+                    null,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.trim().isEmpty()) return name.trim();
+                }
+            }
+        } catch (Exception ignored) {
+            // Use a safe fallback name.
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "student-photo.jpg";
+    }
+
+    private byte[] readAdmissionPhotoBytes(Uri uri) throws Exception {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) throw new IllegalStateException("photo_unreadable");
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                total += count;
+                if (total > MAX_ADMISSION_PHOTO_BYTES) {
+                    throw new IllegalArgumentException("photo_too_large");
+                }
+                output.write(buffer, 0, count);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    private String detectAdmissionPhotoType(byte[] bytes) {
+        if (bytes.length >= 3
+                && (bytes[0] & 0xff) == 0xff
+                && (bytes[1] & 0xff) == 0xd8
+                && (bytes[2] & 0xff) == 0xff) {
+            return "image/jpeg";
+        }
+        if (bytes.length >= 8
+                && (bytes[0] & 0xff) == 0x89
+                && (bytes[1] & 0xff) == 0x50
+                && (bytes[2] & 0xff) == 0x4e
+                && (bytes[3] & 0xff) == 0x47
+                && (bytes[4] & 0xff) == 0x0d
+                && (bytes[5] & 0xff) == 0x0a
+                && (bytes[6] & 0xff) == 0x1a
+                && (bytes[7] & 0xff) == 0x0a) {
+            return "image/png";
+        }
+        if (bytes.length >= 12
+                && bytes[0] == 'R' && bytes[1] == 'I'
+                && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E'
+                && bytes[10] == 'B' && bytes[11] == 'P') {
+            return "image/webp";
+        }
+        return null;
+    }
+
+    private String safePhotoFilename(Uri uri, String contentType) {
+        String name = admissionPhotoName(uri)
+                .replaceAll("[^A-Za-z0-9._-]", "_");
+        if (name.length() > 90) name = name.substring(name.length() - 90);
+        if (!name.contains(".")) {
+            name += contentType.endsWith("png") ? ".png"
+                    : contentType.endsWith("webp") ? ".webp" : ".jpg";
+        }
+        return name;
+    }
+
+    private interface AdmissionUploadCallback {
+        void done(String token, String error);
+    }
+
+    private void uploadAdmissionPhoto(AdmissionUploadCallback callback) {
+        if (admissionPhotoUri == null) {
+            admissionUploadDone(callback, null,
+                    tr("طالب علم کی تصویر مطلوب ہے۔", "Student photo is required."));
+            return;
+        }
+        String cookie = admissionCookie();
+        if (cookie.isEmpty()) {
+            admissionUploadDone(callback, null, tr(
+                    "سیشن دستیاب نہیں۔ دوبارہ سائن اِن کریں۔",
+                    "Session unavailable. Please sign in again."));
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                byte[] bytes = readAdmissionPhotoBytes(admissionPhotoUri);
+                String contentType = detectAdmissionPhotoType(bytes);
+                if (contentType == null) {
+                    admissionUploadDone(callback, null, tr(
+                            "صرف درست JPEG، PNG یا WebP تصویر استعمال کریں۔",
+                            "Use a genuine JPEG, PNG, or WebP image."));
+                    return;
+                }
+                String filename = safePhotoFilename(admissionPhotoUri, contentType);
+                NativeApi.postMultipartWithCookie(
+                        ClientConfig.API_BASE + "/api/admissions/staff-photo",
+                        cookie,
+                        "photo",
+                        filename,
+                        contentType,
+                        bytes,
+                        result -> {
+                            JSONObject payload = NativeApi.json(result.body);
+                            String token = payload.optString("photoToken", "");
+                            if (!result.ok() || token.isEmpty()) {
+                                admissionUploadDone(callback, null,
+                                        payload.optString("error",
+                                                tr("تصویر اپ لوڈ نہیں ہو سکی۔",
+                                                        "Student photo could not be prepared.")));
+                                return;
+                            }
+                            admissionPhotoToken = token;
+                            if (admissionPhotoStatus != null) {
+                                admissionPhotoStatus.setText(
+                                        tr("تصویر تیار ہے۔", "Photo ready."));
+                            }
+                            admissionUploadDone(callback, token, null);
+                        });
+            } catch (IllegalArgumentException exception) {
+                admissionUploadDone(callback, null, tr(
+                        "تصویر 5 MB یا اس سے کم ہونی چاہیے۔",
+                        "Student photo must be 5 MB or smaller."));
+            } catch (Exception exception) {
+                admissionUploadDone(callback, null, tr(
+                        "تصویر پڑھ نہیں سکی۔ دوبارہ کوشش کریں۔",
+                        "Student photo could not be read. Try again."));
+            }
+        }).start();
+    }
+
+    private void admissionUploadDone(
+            AdmissionUploadCallback callback,
+            String token,
+            String error
+    ) {
+        runOnUiThread(() -> callback.done(token, error));
+    }
+
+    private void submitAdmission(
+            EditText displayName,
+            EditText nativeName,
+            Spinner genderSpinner,
+            EditText dobField,
+            EditText joinedOn,
+            EditText guardianName,
+            Spinner relationshipSpinner,
+            EditText guardianEmail,
+            EditText guardianPhone,
+            Spinner sessionSpinner,
+            Spinner programSpinner,
+            Spinner groupSpinner,
+            TextView status,
+            Button complete
+    ) {
+        String studentName = displayName.getText().toString().trim();
+        String studentNativeName = nativeName.getText().toString().trim();
+        int genderPosition = genderSpinner.getSelectedItemPosition();
+        int relationshipPosition = relationshipSpinner.getSelectedItemPosition();
+        int sessionPosition = sessionSpinner.getSelectedItemPosition();
+        int programPosition = programSpinner.getSelectedItemPosition();
+        int groupPosition = groupSpinner.getSelectedItemPosition();
+
+        String gender = genderPosition == 1 ? "male"
+                : genderPosition == 2 ? "female"
+                : genderPosition == 3 ? "other"
+                : genderPosition == 4 ? "undisclosed" : "";
+        String relationship = relationshipPosition == 1 ? "father"
+                : relationshipPosition == 2 ? "mother"
+                : relationshipPosition == 3 ? "guardian"
+                : relationshipPosition == 4 ? "other" : "";
+
+        AdmissionOption session = sessionPosition >= 0 && sessionPosition < 10000
+                && sessionSpinner.getSelectedItem() instanceof AdmissionOption
+                ? (AdmissionOption) sessionSpinner.getSelectedItem() : null;
+        AdmissionOption program = programPosition >= 0 && programPosition < 10000
+                && programSpinner.getSelectedItem() instanceof AdmissionOption
+                ? (AdmissionOption) programSpinner.getSelectedItem() : null;
+        AdmissionOption group = groupPosition >= 0 && groupSpinner.getSelectedItem() instanceof AdmissionOption
+                ? (AdmissionOption) groupSpinner.getSelectedItem() : null;
+
+        String email = guardianEmail.getText().toString().trim();
+        String joined = joinedOn.getText().toString().trim();
+
+        if (studentName.length() < 2 || studentNativeName.length() < 2 || gender.isEmpty()) {
+            status.setText(tr(
+                    "طالب علم کا نام، اردو نام اور جنس درست درج کریں۔",
+                    "Enter the student name, native name, and gender."));
+            return;
+        }
+        if (guardianName.getText().toString().trim().length() < 2
+                || relationship.isEmpty()
+                || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            status.setText(tr(
+                    "سرپرست کا نام، رشتہ اور درست ای میل ضروری ہے۔",
+                    "Guardian name, relationship, and valid email are required."));
+            return;
+        }
+        if (session == null || session.id <= 0
+                || program == null || program.id <= 0
+                || group == null || group.id <= 0
+                || !joined.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            status.setText(tr(
+                    "تعلیمی سال، پروگرام، کلاس / گروپ اور شمولیت کی تاریخ منتخب کریں۔",
+                    "Choose academic year, program, class / group, and joining date."));
+            return;
+        }
+        if (accessToken.isEmpty() || admissionCookie().isEmpty()) {
+            status.setText(tr(
+                    "سیشن ختم ہو چکا ہے۔ دوبارہ سائن اِن کریں۔",
+                    "Your session has expired. Please sign in again."));
+            return;
+        }
+        if (admissionPhotoUri == null && admissionPhotoToken.isEmpty()) {
+            status.setText(tr(
+                    "طالب علم کی تصویر مطلوب ہے۔",
+                    "Student photo is required."));
+            return;
+        }
+
+        complete.setEnabled(false);
+        complete.setText(tr("جمع ہو رہا ہے…", "Submitting…"));
+        status.setText(tr("داخلہ محفوظ کیا جا رہا ہے…", "Preparing admission…"));
+
+        AdmissionUploadCallback continueWithPhoto = (photoToken, photoError) -> {
+            if (photoError != null || photoToken == null || photoToken.isEmpty()) {
+                complete.setEnabled(true);
+                complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                status.setText(photoError != null ? photoError
+                        : tr("تصویر تیار نہیں ہو سکی۔", "Student photo could not be prepared."));
+                return;
+            }
+            saveAndFinalizeAdmission(
+                    studentName,
+                    studentNativeName,
+                    gender,
+                    dobField.getText().toString().trim(),
+                    joined,
+                    guardianName.getText().toString().trim(),
+                    email,
+                    guardianPhone.getText().toString().trim(),
+                    relationship,
+                    session.id,
+                    program.id,
+                    group.id,
+                    photoToken,
+                    status,
+                    complete);
+        };
+
+        if (!admissionPhotoToken.isEmpty()) {
+            continueWithPhoto.done(admissionPhotoToken, null);
+        } else {
+            uploadAdmissionPhoto(continueWithPhoto);
+        }
+    }
+
+    private void saveAndFinalizeAdmission(
+            String studentName,
+            String studentNativeName,
+            String gender,
+            String dob,
+            String joinedOn,
+            String guardianName,
+            String guardianEmail,
+            String guardianPhone,
+            String relationship,
+            int sessionId,
+            int programId,
+            int groupId,
+            String photoToken,
+            TextView status,
+            Button complete
+    ) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("displayName", studentName);
+            body.put("nameNative", studentNativeName);
+            body.put("dateOfBirth", dob);
+            body.put("gender", gender);
+            body.put("preferredLocale", englishMode() ? "en" : "ur");
+            body.put("sessionId", sessionId);
+            body.put("programId", programId);
+            body.put("groupId", groupId);
+            body.put("joinedOn", joinedOn);
+            body.put("guardianName", guardianName);
+            body.put("guardianEmail", guardianEmail);
+            body.put("guardianPhone", guardianPhone);
+            body.put("guardianRelationship", relationship);
+            body.put("photoToken", photoToken);
+            body.put("confirmNewPerson", false);
+
+            if (admissionDraftId > 0) {
+                body.put("draftId", admissionDraftId);
+            }
+
+            status.setText(tr("ڈرافٹ محفوظ ہو رہا ہے…", "Saving admission draft…"));
+            NativeApi.postJsonWithCookie(
+                    ClientConfig.API_BASE + "/api/admissions/staff-draft",
+                    body.toString(),
+                    admissionCookie(),
+                    result -> {
+                        JSONObject payload = NativeApi.json(result.body);
+                        if (!result.ok()) {
+                            complete.setEnabled(true);
+                            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                            status.setText(payload.optString(
+                                    "error",
+                                    tr("داخلہ ڈرافٹ محفوظ نہیں ہو سکا۔",
+                                            "Admission draft could not be saved.")));
+                            return;
+                        }
+
+                        JSONObject saved = payload.optJSONObject("result");
+                        int savedDraftId = saved == null
+                                ? 0 : saved.optInt("application_id", 0);
+                        if (savedDraftId <= 0) {
+                            complete.setEnabled(true);
+                            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                            status.setText(tr(
+                                    "ڈرافٹ آئی ڈی موصول نہیں ہوئی۔",
+                                    "No admission draft ID was returned."));
+                            return;
+                        }
+                        admissionDraftId = savedDraftId;
+                        finalizeAdmissionDraft(
+                                body,
+                                savedDraftId,
+                                status,
+                                complete,
+                                false);
+                    });
+        } catch (Exception exception) {
+            complete.setEnabled(true);
+            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+            status.setText(tr(
+                    "درخواست تیار نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
+                    "The admission request could not be prepared. Try again."));
+        }
+    }
+
+    private void finalizeAdmissionDraft(
+            JSONObject draftBody,
+            int draftId,
+            TextView status,
+            Button complete,
+            boolean confirmNewPerson
+    ) {
+        try {
+            JSONObject body = new JSONObject(draftBody.toString());
+            body.put("draftId", draftId);
+            body.put("confirmNewPerson", confirmNewPerson);
+            status.setText(tr("داخلہ مکمل ہو رہا ہے…", "Creating admission…"));
+
+            NativeApi.postJsonWithCookie(
+                    ClientConfig.API_BASE + "/api/admissions/finalize",
+                    body.toString(),
+                    admissionCookie(),
+                    result -> {
+                        JSONObject payload = NativeApi.json(result.body);
+                        if (result.status == 409
+                                && payload.optBoolean("duplicateReviewRequired", false)
+                                && !confirmNewPerson) {
+                            complete.setEnabled(true);
+                            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                            int candidates = payload.optInt("candidateCount", 0);
+                            String message = payload.optString(
+                                    "error",
+                                    tr("ممکنہ ڈپلیکیٹ طالب علم ملا۔",
+                                            "A possible duplicate student was found."));
+                            if (candidates > 0) {
+                                message += "\n\n" + candidates + " "
+                                        + tr("ممکنہ ریکارڈ۔", "possible matching record(s).");
+                            }
+                            status.setText(message);
+                            new AlertDialog.Builder(this)
+                                    .setTitle(tr("ممکنہ ڈپلیکیٹ", "Possible duplicate"))
+                                    .setMessage(message)
+                                    .setNegativeButton(tr("منسوخ", "Cancel"),
+                                            (dialog, which) -> complete.setEnabled(true))
+                                    .setPositiveButton(
+                                            tr("الگ طالب علم بنائیں", "Create separate student"),
+                                            (dialog, which) -> {
+                                                complete.setEnabled(false);
+                                                complete.setText(tr(
+                                                        "جمع ہو رہا ہے…", "Submitting…"));
+                                                finalizeAdmissionDraft(
+                                                        draftBody,
+                                                        draftId,
+                                                        status,
+                                                        complete,
+                                                        true);
+                                            })
+                                    .show();
+                            return;
+                        }
+
+                        if (!result.ok()) {
+                            complete.setEnabled(true);
+                            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                            status.setText(payload.optString(
+                                    "error",
+                                    tr("داخلہ مکمل نہیں ہو سکا۔",
+                                            "Admission could not be completed.")));
+                            return;
+                        }
+
+                        JSONObject saved = payload.optJSONObject("result");
+                        int personId = saved == null ? 0 : saved.optInt("personId", 0);
+                        String studentNumber = saved == null
+                                ? "" : saved.optString("studentNumber", "");
+                        if (personId <= 0 || studentNumber.isEmpty()) {
+                            complete.setEnabled(true);
+                            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+                            status.setText(tr(
+                                    "طالب علم لنک موصول نہیں ہوا۔",
+                                    "A valid student linkage was not returned."));
+                            return;
+                        }
+
+                        admissionDraftId = 0;
+                        admissionPhotoToken = "";
+                        complete.setEnabled(false);
+                        complete.setText(tr("داخلہ مکمل ہو گیا", "Admission completed"));
+                        status.setText(
+                                tr("طالب علم نمبر: ", "Student number: ") + studentNumber);
+
+                        new AlertDialog.Builder(this)
+                                .setTitle(tr(
+                                        "داخلہ کامیابی سے مکمل",
+                                        "Admission created successfully"))
+                                .setMessage(
+                                        tr("طالب علم نمبر: ", "Student number: ") + studentNumber)
+                                .setPositiveButton(tr("طلبہ کھولیں", "Open students"),
+                                        (dialog, which) -> {
+                                            loadRoleData();
+                                            showScreen("talaba");
+                                        })
+                                .setNegativeButton(tr("یہاں رہیں", "Stay"), null)
+                                .show();
+                    });
+        } catch (Exception exception) {
+            complete.setEnabled(true);
+            complete.setText(tr("داخلہ مکمل کریں", "Complete admission"));
+            status.setText(tr(
+                    "داخلہ درخواست تیار نہیں ہو سکی۔",
+                    "The admission request could not be prepared."));
+        }
+    }
+
+    private void renderAdmissionForm() {
+        content.removeAllViews();
+        admissionPhotoUri = null;
+        admissionPhotoToken = "";
+        admissionDraftId = 0;
+        admissionPhotoStatus = null;
+        boolean english = englishMode();
+
+        TextView back = tv(english ? "← Admissions" : "→ داخلہ", 14, GREEN_DARK, true);
+        back.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
+        back.setClickable(true);
+        back.setFocusable(true);
+        back.setOnClickListener(v -> showScreen("admissions"));
+        content.addView(back, new LinearLayout.LayoutParams(-1, dp(38)));
+
+        titleBlock(
+                tr("نیا داخلہ", "New admission"),
+                tr("Talaba، سرپرست اور تعلیمی تعیناتی درج کریں",
+                        "Enter student, guardian and academic placement"));
+
+        LinearLayout form = card();
+        content.addView(form, new LinearLayout.LayoutParams(-1, -2));
+
+        formSectionLabel(form, tr("طالب علم", "Student"));
+        TextView displayLabel = tv(tr("نام", "Name"), 12, MUTED, true);
+        form.addView(displayLabel);
+        EditText displayName = field(tr("طالب علم کا نام", "Student name"));
+        form.addView(displayName, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView nativeLabel = tv(tr("مقامی نام", "Native name"), 12, MUTED, true);
+        form.addView(nativeLabel);
+        EditText nativeName = field(tr("اردو / مقامی نام", "Urdu / native name"));
+        nativeName.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        form.addView(nativeName, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView genderLabel = tv(tr("جنس", "Gender"), 12, MUTED, true);
+        form.addView(genderLabel);
+        Spinner genderSpinner = new Spinner(this);
+        ArrayList<String> genderOptions = new ArrayList<>();
+        if (english) {
+            genderOptions.add("Select gender");
+            genderOptions.add("Male");
+            genderOptions.add("Female");
+            genderOptions.add("Other");
+            genderOptions.add("Undisclosed");
+        } else {
+            genderOptions.add("جنس منتخب کریں");
+            genderOptions.add("مرد");
+            genderOptions.add("خاتون");
+            genderOptions.add("دیگر");
+            genderOptions.add("ظاہر نہیں کرنا");
+        }
+        bindStringSpinner(genderSpinner, genderOptions);
+        form.addView(genderSpinner, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView dobLabel = tv(tr("تاریخ پیدائش", "Date of birth"), 12, MUTED, true);
+        form.addView(dobLabel);
+        EditText dobField = field(tr("اختیاری", "Optional"));
+        dobField.setFocusable(false);
+        dobField.setClickable(true);
+        form.addView(dobField, new LinearLayout.LayoutParams(-1, dp(54)));
+        dobField.setOnClickListener(v -> pickDate(dobField, false));
+
+        addGap(form, 10);
+        TextView joinLabel = tv(tr("شمولیت کی تاریخ", "Joining date"), 12, MUTED, true);
+        form.addView(joinLabel);
+        EditText joinedOn = field(isoToday());
+        joinedOn.setText(isoToday());
+        joinedOn.setFocusable(false);
+        joinedOn.setClickable(true);
+        form.addView(joinedOn, new LinearLayout.LayoutParams(-1, dp(54)));
+        joinedOn.setOnClickListener(v -> pickDate(joinedOn, true));
+
+        addGap(form, 10);
+        TextView photoLabel = tv(tr("طالب علم کی تصویر", "Student photo"), 12, MUTED, true);
+        form.addView(photoLabel);
+        Button choosePhoto = primaryButton(tr("تصویر منتخب کریں", "Choose photo"));
+        form.addView(choosePhoto, new LinearLayout.LayoutParams(-1, dp(50)));
+        admissionPhotoStatus = tv(
+                tr("تصویر مطلوب ہے۔", "Photo required."),
+                11, MUTED, false);
+        LinearLayout.LayoutParams photoStatusParams = new LinearLayout.LayoutParams(-1, -2);
+        photoStatusParams.topMargin = dp(6);
+        form.addView(admissionPhotoStatus, photoStatusParams);
+        choosePhoto.setOnClickListener(v -> chooseAdmissionPhoto());
+
+        formSectionLabel(form, tr("سرپرست", "Guardian"));
+        TextView guardianNameLabel = tv(tr("سرپرست کا نام", "Guardian name"), 12, MUTED, true);
+        form.addView(guardianNameLabel);
+        EditText guardianName = field(tr("پورا نام", "Full name"));
+        form.addView(guardianName, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView relationshipLabel = tv(tr("رشتہ", "Relationship"), 12, MUTED, true);
+        form.addView(relationshipLabel);
+        Spinner relationshipSpinner = new Spinner(this);
+        ArrayList<String> relationshipOptions = new ArrayList<>();
+        if (english) {
+            relationshipOptions.add("Select relationship");
+            relationshipOptions.add("Father");
+            relationshipOptions.add("Mother");
+            relationshipOptions.add("Guardian");
+            relationshipOptions.add("Other");
+        } else {
+            relationshipOptions.add("رشتہ منتخب کریں");
+            relationshipOptions.add("والد");
+            relationshipOptions.add("والدہ");
+            relationshipOptions.add("سرپرست");
+            relationshipOptions.add("دیگر");
+        }
+        bindStringSpinner(relationshipSpinner, relationshipOptions);
+        form.addView(relationshipSpinner, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView guardianEmailLabel = tv(tr("ای میل", "Email"), 12, MUTED, true);
+        form.addView(guardianEmailLabel);
+        EditText guardianEmail = field(tr("سرپرست کی ای میل", "Guardian email"));
+        guardianEmail.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        guardianEmail.setTextDirection(View.TEXT_DIRECTION_LTR);
+        form.addView(guardianEmail, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView guardianPhoneLabel = tv(tr("فون", "Phone"), 12, MUTED, true);
+        form.addView(guardianPhoneLabel);
+        EditText guardianPhone = field(tr("اختیاری", "Optional"));
+        guardianPhone.setInputType(InputType.TYPE_CLASS_PHONE);
+        guardianPhone.setTextDirection(View.TEXT_DIRECTION_LTR);
+        form.addView(guardianPhone, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        formSectionLabel(form, tr("تعلیمی تعیناتی", "Academic placement"));
+        TextView sessionLabel = tv(tr("تعلیمی سیشن", "Academic session"), 12, MUTED, true);
+        form.addView(sessionLabel);
+        Spinner sessionSpinner = new Spinner(this);
+        form.addView(sessionSpinner, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView programLabel = tv(tr("پروگرام", "Program"), 12, MUTED, true);
+        form.addView(programLabel);
+        Spinner programSpinner = new Spinner(this);
+        form.addView(programSpinner, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        addGap(form, 10);
+        TextView groupLabel = tv(tr("کلاس / گروپ", "Class / group"), 12, MUTED, true);
+        form.addView(groupLabel);
+        Spinner groupSpinner = new Spinner(this);
+        form.addView(groupSpinner, new LinearLayout.LayoutParams(-1, dp(54)));
+
+        TextView status = tv("", 12, MUTED, true);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, -2);
+        statusParams.topMargin = dp(12);
+        form.addView(status, statusParams);
+
+        Button complete = primaryButton(tr("داخلہ مکمل کریں", "Complete admission"));
+        LinearLayout.LayoutParams completeParams = new LinearLayout.LayoutParams(-1, dp(54));
+        completeParams.topMargin = dp(14);
+        form.addView(complete, completeParams);
+
+        TextView safeNote = tv(
+                tr("جمع کرانے سے پہلے تمام معلومات دوبارہ چیک کریں۔",
+                        "Review all information before submitting."),
+                11, MUTED, false);
+        LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(-1, -2);
+        noteParams.topMargin = dp(8);
+        form.addView(safeNote, noteParams);
+
+        ArrayList<AdmissionOption> sessions = new ArrayList<>();
+        ArrayList<AdmissionOption> programs = new ArrayList<>();
+        ArrayList<AdmissionOption> groups = new ArrayList<>();
+
+        sessionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                AdmissionOption session = position < sessions.size() ? sessions.get(position) : null;
+                AdmissionOption program = programSpinner.getSelectedItem() instanceof AdmissionOption
+                        ? (AdmissionOption) programSpinner.getSelectedItem() : null;
+                updateAdmissionGroups(groupSpinner, sessions, programs, groups,
+                        session == null ? 0 : session.id,
+                        program == null ? 0 : program.id);
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+        programSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                AdmissionOption session = sessionSpinner.getSelectedItem() instanceof AdmissionOption
+                        ? (AdmissionOption) sessionSpinner.getSelectedItem() : null;
+                AdmissionOption program = position < programs.size() ? programs.get(position) : null;
+                updateAdmissionGroups(groupSpinner, sessions, programs, groups,
+                        session == null ? 0 : session.id,
+                        program == null ? 0 : program.id);
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        complete.setEnabled(false);
+        loadAdmissionOptions(sessionSpinner, programSpinner, groupSpinner, status,
+                sessions, programs, groups, complete);
+
+        complete.setOnClickListener(v -> submitAdmission(
+                displayName, nativeName, genderSpinner, dobField, joinedOn,
+                guardianName, relationshipSpinner, guardianEmail, guardianPhone,
+                sessionSpinner, programSpinner, groupSpinner, status, complete));
+    }
+
     private void renderAdmissions() {
         titleBlock(tr("داخلہ", "Admissions"), tr("داخلہ ورک فلو", "Admissions workflow"));
         addMetricRow(tr("اوپن درخواستیں", "Open applications"), liveAdmissions,
@@ -1193,10 +2612,9 @@ public class MainActivity extends Activity {
         sectionLabel(tr("اہم مراحل", "Key stages"));
         addActionCard(tr("نیا داخلہ", "New admission"),
                 tr("Walk-in یا online admission record", "Walk-in or online admission record"),
-                "admissions");
+                "admission-new");
         addActionCard(tr("درخواست کی جانچ", "Application review"),
-                tr("Review، decision اور follow-up", "Review, decision and follow-up"),
-                "admissions");
+                tr("Review، decision اور follow-up", "Review, decision and follow-up"));
         addActionCard(tr("Talaba میں تبدیل کریں", "Convert to Talaba"),
                 tr("Accepted admission → Talaba record", "Accepted admission → Talaba record"),
                 "students");
@@ -1288,8 +2706,7 @@ public class MainActivity extends Activity {
         addActionCard(
                 tr("مکمل حاضری ورک اسپیس", "Open full attendance"),
                 tr("روزانہ roster، devices اور attendance management.",
-                        "Daily roster, devices and attendance management."),
-                "attendance");
+                        "Daily roster, devices and attendance management."));
         addActionCard(
                 tr("حاضری لوڈ ہو رہی ہے…", "Loading attendance…"),
                 tr("Live roster اور attendance summary حاصل کی جا رہی ہے۔",
@@ -1431,29 +2848,28 @@ public class MainActivity extends Activity {
     }
 
     private void renderHostel() {
-        titleBlock(tr("ہاسٹل", "Hostel"),
-                tr("Residential hostel • live room and bed operations",
-                        "Residential hostel • live room and bed operations"));
-        addActionCard(tr("مکمل ہاسٹل ورک اسپیس", "Open full hostel"),
-                tr("Residents، rooms، beds اور security management.",
-                        "Residents, rooms, beds and security management."),
-                "hostel");
-        addActionCard(tr("ہاسٹل ڈیٹا لوڈ ہو رہا ہے…", "Loading hostel…"),
-                tr("محفوظ live resident, bed اور security data حاصل کیا جا رہا ہے۔",
-                        "Loading live residents, beds and security data."));
+        boolean english = englishMode();
+        titleBlock(tr("ہاسٹل بوائز", "Hostel Boys"),
+                tr("Learning program اور class / group کے ساتھ رہائشی طلبہ کا رجسٹر",
+                        "Residential student register with learning program and class / group"));
+
+        addActionCard(tr("طلبہ رجسٹر", "Students register"),
+                tr("ہاسٹل کے طلبہ اسی permanent student records میں رہتے ہیں۔",
+                        "Hostel boys remain the same permanent student records used by the Students section."),
+                "talaba");
 
         String url = ClientConfig.API_BASE +
                 "/api/mobile/hostel?tenantId=" + tenantId + "&branchId=" + branchId;
         NativeApi.get(url, accessToken, result -> {
             content.removeAllViews();
-            titleBlock(tr("ہاسٹل", "Hostel"),
-                    tr("Residential hostel • live workspace",
-                            "Residential hostel • live workspace"));
+            titleBlock(tr("ہاسٹل بوائز", "Hostel Boys"),
+                    tr("Learning program • class / group • student register",
+                            "Learning program • class / group • student register"));
 
             if (!result.ok()) {
                 addActionCard(tr("ہاسٹل ڈیٹا دستیاب نہیں", "Hostel data unavailable"),
-                        tr("Live hostel workspace ابھی حاصل نہیں ہو سکا۔",
-                                "Live hostel data could not be loaded."));
+                        tr("رہائشی طلبہ کا live رجسٹر ابھی حاصل نہیں ہو سکا۔",
+                                "The live hostel boys register could not be loaded."));
                 return;
             }
 
@@ -1461,80 +2877,162 @@ public class MainActivity extends Activity {
             JSONObject center = payload.optJSONObject("center");
             if (center == null) {
                 addActionCard(tr("ہاسٹل ورک اسپیس خالی ہے", "Hostel workspace is empty"),
-                        tr("Hostel service نے کوئی center response نہیں دیا۔",
-                                "The hostel service returned no workspace data."));
+                        tr("کوئی student register response نہیں ملا۔",
+                                "No student register response was returned."));
                 return;
             }
 
-            JSONArray beds = center.optJSONArray("beds");
             JSONArray students = center.optJSONArray("students");
-            JSONArray allocations = center.optJSONArray("allocations");
-            JSONArray visitors = center.optJSONArray("visitors");
-            JSONArray incidents = center.optJSONArray("incidents");
+            int studentCount = students == null ? 0 : students.length();
 
-            int bedCount = beds == null ? 0 : beds.length();
-            int available = 0;
-            int occupied = 0;
-            if (beds != null) {
-                for (int i = 0; i < beds.length(); i++) {
-                    JSONObject bed = beds.optJSONObject(i);
-                    if (bed == null) continue;
-                    String state = bed.optString("state", "");
-                    if ("available".equals(state)) {
-                        available++;
-                    } else if ("occupied".equals(state) || "allocated".equals(state) || "temporary_leave".equals(state)) {
-                        occupied++;
+            ArrayList<String> programNames = new ArrayList<>();
+            ArrayList<String> programNamesUr = new ArrayList<>();
+            ArrayList<Integer> programCounts = new ArrayList<>();
+            ArrayList<String> groupNames = new ArrayList<>();
+            ArrayList<String> groupNamesUr = new ArrayList<>();
+            ArrayList<Integer> groupCounts = new ArrayList<>();
+
+            if (students != null) {
+                for (int i = 0; i < students.length(); i++) {
+                    JSONObject student = students.optJSONObject(i);
+                    if (student == null) continue;
+
+                    String program = student.optString("program_label", "Program");
+                    String programUr = student.optString("program_label_ur", program);
+                    int programIndex = programNames.indexOf(program);
+                    if (programIndex < 0) {
+                        programNames.add(program);
+                        programNamesUr.add(programUr);
+                        programCounts.add(1);
+                    } else {
+                        programCounts.set(programIndex, programCounts.get(programIndex) + 1);
+                    }
+
+                    String group = student.optString("group_label", "—");
+                    String groupUr = student.optString("group_label_ur", group);
+                    int groupIndex = groupNames.indexOf(group);
+                    if (groupIndex < 0) {
+                        groupNames.add(group);
+                        groupNamesUr.add(groupUr);
+                        groupCounts.add(1);
+                    } else {
+                        groupCounts.set(groupIndex, groupCounts.get(groupIndex) + 1);
                     }
                 }
             }
-            int residentCount = students == null ? 0 : students.length();
-            int allocationCount = allocations == null ? 0 : allocations.length();
-            int visitorCount = visitors == null ? 0 : visitors.length();
-            int incidentCount = incidents == null ? 0 : incidents.length();
 
-            addMetricRow(tr("رہائشی طلبہ", "Residents"), String.valueOf(residentCount),
-                    tr("کل beds", "Total beds"), String.valueOf(bedCount), true);
-            addMetricRow(tr("Available", "Available"), String.valueOf(available),
-                    tr("Occupied", "Occupied"), String.valueOf(occupied), false);
+            addMetricRow(tr("ہاسٹل طلبہ", "Hostel boys"), String.valueOf(studentCount),
+                    tr("پروگرامز", "Learning programs"), String.valueOf(programNames.size()), true);
+            addMetricRow(tr("کلاسز / گروپس", "Classes / groups"), String.valueOf(groupNames.size()),
+                    tr("Students رجسٹر", "Students register"), String.valueOf(studentCount), false);
 
-            sectionLabel(tr("موجودہ رہائش", "Current allocations"));
-            if (allocationCount == 0) {
-                addActionCard(tr("کوئی allocation نہیں", "No current allocations"),
-                        tr("اس branch میں موجودہ hostel allocation نہیں ملا.",
-                                "No current hostel allocations were found."));
+            JSONArray availableStudents = center.optJSONArray("available_students");
+            if (availableStudents != null && availableStudents.length() > 0) {
+                addActionCard(tr("موجودہ طالب علم شامل کریں", "Add existing student"),
+                        tr("پہلے سے موجود Student کو Hostel Boys میں شامل کریں۔",
+                                "Mark an existing student as a hostel boy without creating a duplicate."),
+                        "hostel-add");
+            }
+
+            sectionLabel(tr("تعلیمی پروگرامز", "Learning programs"));
+            if (programNames.isEmpty()) {
+                addActionCard(tr("کوئی ہاسٹل طالب علم نہیں", "No hostel boys yet"),
+                        tr("پہلے طالب علم کو Hostel Boys میں شامل کریں۔",
+                                "Add a student to Hostel Boys to see the learning program here."));
             } else {
-                int shown = Math.min(allocationCount, 12);
-                for (int i = 0; i < shown; i++) {
-                    JSONObject allocation = allocations.optJSONObject(i);
-                    if (allocation == null) continue;
-                    String room = allocation.optString("room_key", "—");
-                    String bed = allocation.optString("bed_key", "—");
-                    String resident = allocation.optString("display_name", "Talaba");
-                    addActionCard(resident,
-                            allocation.optString("student_number", "—") + "  •  " + room + " / " + bed +
-                                    "  •  " + allocation.optString("state", "occupied"));
+                for (int i = 0; i < programNames.size(); i++) {
+                    String label = english ? programNames.get(i) : programNamesUr.get(i);
+                    addActionCard(label,
+                            programCounts.get(i) + " " + tr("طلبہ", "students"));
                 }
             }
 
-            sectionLabel(tr("سیکیورٹی", "Security"));
-            addMetricRow(tr("Visitors", "Visitors"), String.valueOf(visitorCount),
-                    tr("Incidents", "Incidents"), String.valueOf(incidentCount), false);
-            if (incidentCount > 0) {
-                int shownIncidents = Math.min(incidentCount, 5);
-                for (int i = 0; i < shownIncidents; i++) {
-                    JSONObject incident = incidents.optJSONObject(i);
-                    if (incident == null) continue;
-                    addActionCard(
-                            incident.optString("category", "Incident"),
-                            incident.optString("resident_name", "Hostel resident") +
-                                    "  •  " + incident.optString("severity", "normal") +
-                                    "  •  " + incident.optString("state", "open"));
+            sectionLabel(tr("کلاسز / گروپس", "Classes / groups"));
+            for (int i = 0; i < groupNames.size(); i++) {
+                String label = english ? groupNames.get(i) : groupNamesUr.get(i);
+                addActionCard(label,
+                        groupCounts.get(i) + " " + tr("طلبہ", "students"));
+            }
+
+            sectionLabel(tr("ہاسٹل طلبہ رجسٹر", "Hostel boys register"));
+            if (studentCount == 0) {
+                addActionCard(tr("رجسٹر خالی ہے", "Register is empty"),
+                        tr("ابھی کوئی hostel student موجود نہیں۔",
+                                "There are no hostel students in the current register."));
+                return;
+            }
+
+            for (int i = 0; i < students.length(); i++) {
+                JSONObject student = students.optJSONObject(i);
+                if (student == null) continue;
+
+                int personId = student.optInt("person_id", 0);
+                LinearLayout item = card();
+                if (personId > 0) {
+                    item.setOnClickListener(v -> renderStudentDetail(personId));
                 }
-            } else {
-                addActionCard(
-                        tr("کوئی active incident نہیں", "No active incidents"),
-                        tr("Current hostel incident feed میں کوئی record نہیں ملا۔",
-                                "No records were found in the current incident feed."));
+
+                LinearLayout top = row();
+                item.addView(top);
+
+                TextView number = tv(student.optString("student_number", "—"), 10, BLUE, true);
+                number.setGravity(Gravity.CENTER);
+                number.setPadding(dp(8), dp(6), dp(8), dp(6));
+                number.setBackground(rounded(BLUE_SOFT, BLUE_SOFT, 10));
+                top.addView(number, new LinearLayout.LayoutParams(dp(86), dp(36)));
+
+                LinearLayout copy = new LinearLayout(this);
+                copy.setOrientation(LinearLayout.VERTICAL);
+                copy.setPadding(dp(10), 0, 0, 0);
+                top.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+                String name = student.optString("display_name", english ? "Student" : "طالب علم");
+                TextView nameText = tv(name, 15, GREEN_DARK, true);
+                nameText.setGravity(Gravity.RIGHT);
+                copy.addView(nameText);
+
+                String nativeName = student.optString("name_native", "").trim();
+                if (!nativeName.isEmpty()) {
+                    TextView nativeText = tv(nativeName, 11, MUTED, false);
+                    nativeText.setGravity(Gravity.RIGHT);
+                    copy.addView(nativeText);
+                }
+
+                String program = english
+                        ? student.optString("program_label", "Program")
+                        : student.optString("program_label_ur", student.optString("program_label", "پروگرام"));
+                String group = english
+                        ? student.optString("group_label", "—")
+                        : student.optString("group_label_ur", student.optString("group_label", "—"));
+
+                TextView meta = tv(program + "  •  " + group, 11, MUTED, false);
+                meta.setGravity(Gravity.RIGHT);
+                LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-1, -2);
+                metaParams.topMargin = dp(6);
+                item.addView(meta, metaParams);
+                Button remove = new Button(this);
+                remove.setText(tr("ہاسٹل سے نکالیں", "Remove from hostel"));
+                remove.setTextSize(11);
+                remove.setTextColor(GREEN_DARK);
+                remove.setAllCaps(false);
+                remove.setMinHeight(dp(42));
+                remove.setBackground(interactiveRounded(Color.WHITE, GREEN_SOFT, BORDER, 12));
+                remove.setOnClickListener(v -> new AlertDialog.Builder(this)
+                        .setTitle(tr("ہاسٹل سے نکالیں؟", "Remove from hostel?"))
+                        .setMessage(tr(
+                                "طالب علم Students میں موجود رہے گا، صرف رہائش Day ہو جائے گی۔",
+                                "The student remains in Students; only the residence type changes to day."
+                        ))
+                        .setNegativeButton(tr("منسوخ", "Cancel"), null)
+                        .setPositiveButton(tr("ہٹا دیں", "Remove"), (dialog, which) ->
+                                setHostelResidenceNative(personId, "day"))
+                        .show());
+                LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(-1, -2);
+                removeParams.topMargin = dp(8);
+                item.addView(remove, removeParams);
+
+                content.addView(item, new LinearLayout.LayoutParams(-1, -2));
+                addGap(content, 8);
             }
         });
     }
@@ -1564,8 +3062,7 @@ public class MainActivity extends Activity {
                 "staff");
         addActionCard(tr("گارڈین اطلاعات", "Guardian notices"),
                 tr("اہم اطلاع اور student updates",
-                        "Important notices and student updates"),
-                "portals");
+                        "Important notices and student updates"));
         addActionCard(tr("Talaba attendance", "Talaba attendance"),
                 tr("حاضری اور حالیہ status", "Attendance and current status"),
                 "attendance");
@@ -1618,8 +3115,7 @@ public class MainActivity extends Activity {
                 tr("Operational reports • live report hub",
                         "Operational reports • live report hub"));
         addActionCard(tr("مکمل رپورٹس کھولیں", "Open full reports"),
-                tr("محفوظ report workspace میں جائیں.", "Open the full reports workspace."),
-                "reports");
+                tr("محفوظ report workspace میں جائیں.", "Open the full reports workspace."));
         addActionCard(tr("رپورٹس لوڈ ہو رہی ہیں…", "Loading reports…"),
                 tr("محفوظ published report catalogue حاصل کیا جا رہا ہے۔",
                         "Loading the published report catalogue."));
@@ -1755,19 +3251,19 @@ public class MainActivity extends Activity {
         boolean english = englishMode();
         LinearLayout item = row();
         item.setGravity(Gravity.CENTER_VERTICAL);
-        item.setPadding(dp(14), dp(13), dp(12), dp(13));
+        item.setPadding(dp(14), dp(13), dp(14), dp(13));
         item.setLayoutDirection(english
                 ? View.LAYOUT_DIRECTION_LTR
                 : View.LAYOUT_DIRECTION_RTL);
         item.setBackground(rounded(Color.WHITE, BORDER, 18));
         item.setElevation(dp(1));
 
-        TextView bubble = iconBubble("•", GREEN_SOFT, GREEN_DARK);
+        ImageView bubble = iconBubbleIcon(R.drawable.il_icon_info, GREEN_SOFT, GREEN_DARK);
         item.addView(bubble, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         LinearLayout copy = new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
-        copy.setPadding(dp(10), 0, dp(7), 0);
+        copy.setPadding(dp(10), 0, 0, 0);
         item.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
 
         TextView t = tv(title, 14, TEXT, true);
@@ -1780,15 +3276,31 @@ public class MainActivity extends Activity {
         params.topMargin = dp(4);
         copy.addView(s, params);
 
-        TextView arrow = tv(english ? "→" : "←", 17, GREEN_DARK, true);
-        arrow.setGravity(Gravity.CENTER);
-        item.addView(arrow, new LinearLayout.LayoutParams(dp(25), dp(38)));
-
         content.addView(item, new LinearLayout.LayoutParams(-1, -2));
         addGap(content, 8);
     }
 
+    private boolean isSameScreenNativeAction(String path) {
+        if ("exams".equals(currentScreen) && "exams".equals(path)) return true;
+        if ("documents".equals(currentScreen)
+                && ("documents".equals(path) || "students/id-cards".equals(path))) return true;
+        if ("reports".equals(currentScreen) && "reports".equals(path)) return true;
+        if ("hifz".equals(currentScreen)
+                && ("quran".equals(path) || "quran/revision".equals(path))) return true;
+        if ("academics".equals(currentScreen)
+                && ("programs".equals(path) || "people-academics".equals(path))) return true;
+        return "ustadh".equals(currentScreen)
+                && ("staff".equals(path)
+                || "staff/leave".equals(path)
+                || "staff/attendance".equals(path)
+                || "my-students".equals(path));
+    }
+
     private void addActionCard(String title, String subtitle, String path) {
+        if (isSameScreenNativeAction(path)) {
+            addActionCard(title, subtitle);
+            return;
+        }
         boolean english = englishMode();
         LinearLayout item = row();
         item.setGravity(Gravity.CENTER_VERTICAL);
@@ -1796,13 +3308,14 @@ public class MainActivity extends Activity {
         item.setLayoutDirection(english
                 ? View.LAYOUT_DIRECTION_LTR
                 : View.LAYOUT_DIRECTION_RTL);
-        item.setBackground(rounded(Color.WHITE, BORDER, 18));
+        item.setBackground(interactiveRounded(Color.WHITE, GREEN_SOFT, BORDER, 18));
         item.setElevation(dp(1));
         item.setClickable(true);
         item.setFocusable(true);
-        item.setOnClickListener(v -> openModule(path));
+        item.setContentDescription(title);
+        item.setOnClickListener(v -> handleNativeAction(path));
 
-        TextView bubble = iconBubble("↗", GREEN_SOFT, GREEN_DARK);
+        ImageView bubble = iconBubbleIcon(moduleIcon(path), GREEN_SOFT, GREEN_DARK);
         item.addView(bubble, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         LinearLayout copy = new LinearLayout(this);
@@ -1820,9 +3333,12 @@ public class MainActivity extends Activity {
         params.topMargin = dp(4);
         copy.addView(s, params);
 
-        TextView arrow = tv("→", 17, GREEN_DARK, true);
-        arrow.setGravity(Gravity.CENTER);
-        item.addView(arrow, new LinearLayout.LayoutParams(dp(25), dp(38)));
+        ImageView arrow = new ImageView(this);
+        arrow.setImageResource(R.drawable.il_icon_chevron);
+        arrow.setColorFilter(GREEN_DARK);
+        arrow.setScaleType(ImageView.ScaleType.CENTER);
+        arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        item.addView(arrow, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
         content.addView(item, new LinearLayout.LayoutParams(-1, -2));
         addGap(content, 8);

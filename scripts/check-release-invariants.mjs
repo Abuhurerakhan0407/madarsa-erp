@@ -100,7 +100,7 @@ const i18n = await source("src/lib/i18n/config.ts");
 requireMatch("src/lib/i18n/config.ts", i18n, /locales\s*=\s*\["en",\s*"ur"\]/, "release locales must be EN/UR only");
 
 const nav = await source("src/lib/navigation/client-v3-navigation.ts");
-requireMatch("src/lib/navigation/client-v3-navigation.ts", nav, /item\("hostel",\s*"Hostel & Mess"/i, "Hostel & Mess must be present in release navigation");
+requireMatch("src/lib/navigation/client-v3-navigation.ts", nav, /item\("hostel",\s*"Hostel Boys"/i, "Hostel Boys must be present in release navigation");
 forbidMatch("src/lib/navigation/client-v3-navigation.ts", nav, /whatsapp|transport|library|student\s+portal/i, "retired module leaked into release navigation");
 
 const publicHome = await source("public/ilmgaah-home.html");
