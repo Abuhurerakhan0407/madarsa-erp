@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
-import { consumeParentLoginRateLimit } from "@/lib/portal/parent-login-server";
+import {
+  checkParentLoginRateLimit,
+  recordParentLoginFailure,
+} from "@/lib/portal/parent-login-server";
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
 
@@ -63,15 +66,29 @@ export async function POST(request: NextRequest) {
   const password = typeof body.password === "string" ? body.password : "";
 
   const usernameForLimit = identifier.kind === "email"
-    ? null
+    ? identifier.email
     : rawIdentifier.trim().toLowerCase().slice(0, 128);
 
-  if (!(await consumeParentLoginRateLimit(request, usernameForLimit))) {
-    return json(request, { error: "invalid_credentials" }, { status: 429 });
+  const rateLimit = await checkParentLoginRateLimit(request, usernameForLimit);
+  if (rateLimit.infrastructureError) {
+    return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+  }
+  if (!rateLimit.allowed) {
+    return json(request, { error: "rate_limited" }, {
+      status: 429,
+      headers: { "Retry-After": String(Math.max(1, rateLimit.retryAfterSeconds || 600)) },
+    });
   }
 
   if (identifier.kind === "invalid" || !password) {
-    return json(request, { error: "invalid_credentials" }, { status: 401 });
+    const recorded = await recordParentLoginFailure(request, usernameForLimit);
+    if (recorded.infrastructureError) {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    return json(request, { error: recorded.allowed ? "invalid_credentials" : "rate_limited" }, {
+      status: recorded.allowed ? 401 : 429,
+      headers: recorded.allowed ? undefined : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) },
+    });
   }
 
   const { url, publishableKey } = getSupabasePublicEnv();
@@ -85,10 +102,23 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithPassword({ email: identifier.email, password });
 
   if (error || !data.session || !data.user) {
-    const status = error?.status === 429 ? 429 : 401;
-    return json(request, {
-      error: "invalid_credentials",
-    }, { status });
+    if (error?.status === 429) {
+      return json(request, { error: "rate_limited" }, {
+        status: 429,
+        headers: { "Retry-After": "600" },
+      });
+    }
+    if (error && (error.status == null || error.status >= 500)) {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    const recorded = await recordParentLoginFailure(request, usernameForLimit);
+    if (recorded.infrastructureError) {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    return json(request, { error: recorded.allowed ? "invalid_credentials" : "rate_limited" }, {
+      status: recorded.allowed ? 401 : 429,
+      headers: recorded.allowed ? undefined : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) },
+    });
   }
 
   return json(request, {

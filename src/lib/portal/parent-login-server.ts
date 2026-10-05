@@ -39,12 +39,46 @@ export function generateParentTemporaryPassword(): string {
     + "!";
 }
 
-export async function consumeParentLoginRateLimit(request: Request, username?: string | null): Promise<boolean> {
+export type ParentLoginRateLimitResult = {
+  allowed: boolean;
+  infrastructureError: boolean;
+  retryAfterSeconds: number;
+};
+
+export async function checkParentLoginRateLimit(
+  request: Request,
+  username?: string | null
+): Promise<ParentLoginRateLimitResult> {
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("consume_parent_portal_login_rate_limit_v1", {
+  const { data, error } = await admin.rpc("check_parent_portal_login_rate_limit_v2", {
     p_source_key: getClientIp(request),
     p_username: username || null
   });
-  if (error) return false;
-  return data?.allowed === true;
+  if (error) {
+    return { allowed: false, infrastructureError: true, retryAfterSeconds: 0 };
+  }
+  return {
+    allowed: data?.allowed === true,
+    infrastructureError: false,
+    retryAfterSeconds: Number(data?.retry_after_seconds) || 0,
+  };
+}
+
+export async function recordParentLoginFailure(
+  request: Request,
+  username?: string | null
+): Promise<ParentLoginRateLimitResult> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("record_parent_portal_login_failure_v2", {
+    p_source_key: getClientIp(request),
+    p_username: username || null
+  });
+  if (error) {
+    return { allowed: false, infrastructureError: true, retryAfterSeconds: 0 };
+  }
+  return {
+    allowed: data?.allowed === true,
+    infrastructureError: false,
+    retryAfterSeconds: Number(data?.retry_after_seconds) || 0,
+  };
 }

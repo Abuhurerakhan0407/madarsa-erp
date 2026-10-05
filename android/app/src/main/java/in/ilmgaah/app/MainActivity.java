@@ -162,20 +162,18 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(BG);
         setContentView(root);
-        showLogin();
-        restoreRememberedSession();
+        if (authPreferences().contains(REMEMBERED_SESSION_KEY)) {
+            showSessionRestoring();
+            restoreRememberedSession();
+        } else {
+            showLogin();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (accessToken.isEmpty() || !authPreferences().contains(REMEMBERED_SESSION_KEY)) return;
-        long lastOpen = authPreferences().getLong(REMEMBERED_LAST_OPEN_KEY, 0L);
-        if (!rememberWindowValid(lastOpen)) {
-            clearRememberedSession();
-            showLogin();
-            return;
-        }
         touchRememberedSession();
     }
 
@@ -242,13 +240,6 @@ public class MainActivity extends Activity {
                 .apply();
     }
 
-    private boolean rememberWindowValid(long lastOpenMs) {
-        if (lastOpenMs <= 0) return false;
-        Calendar cutoff = Calendar.getInstance();
-        cutoff.add(Calendar.MONTH, -5);
-        return lastOpenMs > cutoff.getTimeInMillis();
-    }
-
     private void touchRememberedSession() {
         if (!authPreferences().contains(REMEMBERED_SESSION_KEY)) return;
         authPreferences().edit()
@@ -257,13 +248,8 @@ public class MainActivity extends Activity {
     }
 
     private JSONObject rememberedSession() {
-        android.content.SharedPreferences prefs = authPreferences();
-        String encoded = prefs.getString(REMEMBERED_SESSION_KEY, "");
-        long lastOpen = prefs.getLong(REMEMBERED_LAST_OPEN_KEY, 0L);
-        if (encoded.isEmpty() || !rememberWindowValid(lastOpen)) {
-            if (!encoded.isEmpty()) clearRememberedSession();
-            return null;
-        }
+        String encoded = authPreferences().getString(REMEMBERED_SESSION_KEY, "");
+        if (encoded.isEmpty()) return null;
         try {
             return decryptRememberedSession(encoded);
         } catch (Exception ignored) {
@@ -296,7 +282,10 @@ public class MainActivity extends Activity {
 
     private void restoreRememberedSession() {
         JSONObject stored = rememberedSession();
-        if (stored == null) return;
+        if (stored == null) {
+            showLogin();
+            return;
+        }
 
         accessToken = stored.optString("access_token", "");
         authSession = stored;
@@ -309,15 +298,9 @@ public class MainActivity extends Activity {
             return;
         }
 
-        if (rememberMeToggle != null) rememberMeToggle.setChecked(true);
-        if (signInButton != null) {
-            signInButton.setEnabled(false);
-            signInButton.setText(tr("سیشن بحال ہو رہا ہے…", "Restoring session…"));
-        }
-
         if (accessTokenFresh(stored)) {
             touchRememberedSession();
-            bootstrap(loginError, true);
+            bootstrap(null, true);
             return;
         }
 
@@ -328,6 +311,7 @@ public class MainActivity extends Activity {
             return;
         }
 
+        final long requestGeneration = sessionGeneration;
         try {
             JSONObject body = new JSONObject();
             body.put("refresh_token", refreshToken);
@@ -336,19 +320,20 @@ public class MainActivity extends Activity {
                     body.toString(),
                     BuildConfig.SUPABASE_PUBLISHABLE_KEY,
                     result -> {
+                        if (requestGeneration != sessionGeneration) return;
                         if (!result.ok()) {
                             if (result.status == 400 || result.status == 401) {
                                 clearRememberedSession();
+                                accessToken = "";
+                                authSession = null;
+                                showLogin();
+                                return;
                             }
-                            accessToken = "";
-                            authSession = null;
-                            if (rememberMeToggle != null) rememberMeToggle.setChecked(false);
-                            showLogin();
-                            if (loginError != null) {
-                                loginError.setText(tr(
-                                        "سیشن بحال نہیں ہو سکا۔ دوبارہ سائن اِن کریں۔",
-                                        "Your saved session could not be restored. Please sign in again."));
-                            }
+                            showSessionRecovery(
+                                    result.status == 0
+                                            ? tr("انٹرنیٹ کنکشن درکار ہے۔", "An internet connection is required to restore your session.")
+                                            : tr("سروس عارضی طور پر دستیاب نہیں۔", "The service is temporarily unavailable. Your session remains saved."),
+                                    true);
                             return;
                         }
 
@@ -366,15 +351,13 @@ public class MainActivity extends Activity {
                         accessToken = refreshedAccessToken;
                         authSession = payload;
                         persistRememberedSession();
-                        bootstrap(loginError, true);
+                        bootstrap(null, true);
                     });
         } catch (Exception ignored) {
-            showLogin();
-            if (loginError != null) {
-                loginError.setText(tr(
-                        "سیشن بحال نہیں ہو سکا۔ دوبارہ سائن اِن کریں۔",
-                        "Your saved session could not be restored. Please sign in again."));
-            }
+            showSessionRecovery(
+                    tr("سیشن محفوظ ہے۔ کنکشن بحال ہونے پر دوبارہ کوشش کریں۔",
+                            "Your session is saved. Retry when the connection is available."),
+                    true);
         }
     }
 
@@ -605,6 +588,86 @@ public class MainActivity extends Activity {
         field.setBackground(rounded(Color.rgb(251, 252, 251), BORDER, 12));
         return field;
     }
+
+    private void showSessionRestoring() {
+        root.removeAllViews();
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setGravity(Gravity.CENTER);
+        page.setPadding(dp(28), dp(28), dp(28), dp(28));
+        page.setBackgroundColor(BG);
+
+        TextView mark = tv("JI", 24, Color.WHITE, true);
+        mark.setGravity(Gravity.CENTER);
+        mark.setBackground(rounded(GREEN, GREEN, 18));
+        page.addView(mark, new LinearLayout.LayoutParams(dp(72), dp(72)));
+
+        TextView title = tv(
+                tr("محفوظ سیشن بحال ہو رہا ہے…", "Restoring your secure session…"),
+                20, TEXT, true);
+        title.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
+        titleParams.topMargin = dp(18);
+        page.addView(title, titleParams);
+
+        TextView subtitle = tv(
+                tr("براہِ کرم انتظار کریں۔ سائن اِن اسکرین دوبارہ نہیں کھلے گی۔",
+                        "Please wait. Your sign-in session is being restored."),
+                12, MUTED, false);
+        subtitle.setGravity(Gravity.CENTER);
+        subtitle.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(-1, -2);
+        subtitleParams.topMargin = dp(7);
+        page.addView(subtitle, subtitleParams);
+
+        root.addView(page, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void showSessionRecovery(String message, boolean canRetry) {
+        root.removeAllViews();
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setGravity(Gravity.CENTER);
+        page.setPadding(dp(28), dp(28), dp(28), dp(28));
+        page.setBackgroundColor(BG);
+
+        TextView mark = tv("JI", 24, Color.WHITE, true);
+        mark.setGravity(Gravity.CENTER);
+        mark.setBackground(rounded(GREEN, GREEN, 18));
+        page.addView(mark, new LinearLayout.LayoutParams(dp(72), dp(72)));
+
+        TextView title = tv(
+                tr("سیشن محفوظ ہے", "Your session is saved"),
+                20, TEXT, true);
+        title.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
+        titleParams.topMargin = dp(18);
+        page.addView(title, titleParams);
+
+        TextView detail = tv(message, 12, MUTED, false);
+        detail.setGravity(Gravity.CENTER);
+        detail.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(8);
+        page.addView(detail, detailParams);
+
+        if (canRetry) {
+            Button retry = primaryButton(tr("دوبارہ کوشش کریں", "Retry"));
+            LinearLayout.LayoutParams retryParams = new LinearLayout.LayoutParams(-1, dp(54));
+            retryParams.topMargin = dp(20);
+            page.addView(retry, retryParams);
+            retry.setOnClickListener(v -> bootstrap(null, true));
+        }
+
+        Button logout = primaryButton(tr("سائن آؤٹ کریں", "Sign out"));
+        LinearLayout.LayoutParams logoutParams = new LinearLayout.LayoutParams(-1, dp(54));
+        logoutParams.topMargin = dp(canRetry ? 10 : 20);
+        page.addView(logout, logoutParams);
+        logout.setOnClickListener(v -> performLogout());
+
+        root.addView(page, new FrameLayout.LayoutParams(-1, -1));
+    }
+
     private void showLogin() {
         sessionGeneration++;
         accessToken = "";
@@ -781,7 +844,6 @@ public class MainActivity extends Activity {
                 return;
             }
 
-            clearRememberedSession();
             signInButton.setEnabled(false);
             signInButton.setText(tr("چیک ہو رہا ہے…", "Checking…"));
             error.setText("");
@@ -811,6 +873,8 @@ public class MainActivity extends Activity {
                                 error.setText(tr("سائن اِن مکمل نہیں ہو سکا۔", "Sign-in could not be completed."));
                                 return;
                             }
+                            if (rememberSession) persistRememberedSession();
+                            else clearRememberedSession();
                             bootstrap(error, rememberSession);
                         });
             } catch (Exception exception) {
@@ -826,10 +890,14 @@ public class MainActivity extends Activity {
             return tr("ای میل یا پاس ورڈ درست نہیں ہے.",
                     "The email or password is incorrect.");
         }
+        if (result.status == 429) {
+            return tr("کئی سائن اِن کوششوں کے بعد عارضی حد لگ گئی ہے۔ چند منٹ بعد دوبارہ کوشش کریں۔",
+                    "Too many sign-in attempts. Please wait a few minutes and try again.");
+        }
         if (result.status == 0) return tr("انٹرنیٹ کنکشن دستیاب نہیں۔",
                 "No internet connection is available.");
-        return tr("سائن اِن سروس ابھی دستیاب نہیں۔",
-                "The sign-in service is currently unavailable.");
+        return tr("سائن اِن سروس عارضی طور پر دستیاب نہیں۔",
+                "The sign-in service is temporarily unavailable.");
     }
     private void bootstrap(TextView error, boolean rememberSession) {
         final long requestGeneration = sessionGeneration;
@@ -843,16 +911,33 @@ public class MainActivity extends Activity {
                     if (!result.ok()) {
                         if (rememberSession && (result.status == 400 || result.status == 401)) {
                             clearRememberedSession();
+                            accessToken = "";
+                            authSession = null;
+                            showLogin();
+                            return;
+                        }
+                        if (rememberSession) {
+                            showSessionRecovery(
+                                    result.status == 0
+                                            ? tr("انٹرنیٹ کنکشن درکار ہے۔", "An internet connection is required to restore your workspace.")
+                                            : tr("ورک اسپیس عارضی طور پر دستیاب نہیں۔ آپ کا سیشن محفوظ ہے۔",
+                                                    "Your workspace is temporarily unavailable. Your session remains saved."),
+                                    true);
+                            return;
                         }
                         accessToken = "";
                         authSession = null;
-                        signInButton.setEnabled(true);
-                        signInButton.setText(tr("سائن اِن", "Sign in"));
-                        error.setText(result.status == 401
-                                ? tr("اس اکاؤنٹ کی ورک اسپیس اجازت موجود نہیں۔",
-                                        "This account has no workspace access.")
-                                : tr("ورک اسپیس کی معلومات حاصل نہیں ہو سکیں۔",
-                                        "Workspace information could not be loaded."));
+                        if (signInButton != null) {
+                            signInButton.setEnabled(true);
+                            signInButton.setText(tr("سائن اِن", "Sign in"));
+                        }
+                        if (error != null) {
+                            error.setText(result.status == 401
+                                    ? tr("اس اکاؤنٹ کی ورک اسپیس اجازت موجود نہیں۔",
+                                            "This account has no workspace access.")
+                                    : tr("ورک اسپیس کی معلومات حاصل نہیں ہو سکیں۔",
+                                            "Workspace information could not be loaded."));
+                        }
                         return;
                     }
 
@@ -1177,6 +1262,11 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void performLogout() {
+        clearRememberedSession();
+        showLogin();
+    }
+
     private void showScreen(String screen) {
         if (content == null) return;
         currentScreen = screen;
@@ -1215,8 +1305,7 @@ public class MainActivity extends Activity {
         else if ("reports".equals(screen)) renderReports();
         else if ("settings".equals(screen)) renderSettings();
         else if ("logout".equals(screen)) {
-            clearRememberedSession();
-            showLogin();
+            performLogout();
         }
     }
 
