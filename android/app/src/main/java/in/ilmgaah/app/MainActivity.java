@@ -656,7 +656,7 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams retryParams = new LinearLayout.LayoutParams(-1, dp(54));
             retryParams.topMargin = dp(20);
             page.addView(retry, retryParams);
-            retry.setOnClickListener(v -> bootstrap(null, true));
+            retry.setOnClickListener(v -> restoreRememberedSession());
         }
 
         Button logout = primaryButton(tr("سائن آؤٹ کریں", "Sign out"));
