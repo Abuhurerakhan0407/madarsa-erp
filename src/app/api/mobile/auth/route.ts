@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
-import {
-  checkParentLoginRateLimit,
-  recordParentLoginFailure,
-} from "@/lib/portal/parent-login-server";
+
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
 
@@ -65,30 +62,8 @@ export async function POST(request: NextRequest) {
   const identifier = normalizeLoginIdentifier(rawIdentifier);
   const password = typeof body.password === "string" ? body.password : "";
 
-  const usernameForLimit = identifier.kind === "email"
-    ? identifier.email
-    : rawIdentifier.trim().toLowerCase().slice(0, 128);
-
-  const rateLimit = await checkParentLoginRateLimit(request, usernameForLimit);
-  if (rateLimit.infrastructureError) {
-    return json(request, { error: "auth_service_unavailable" }, { status: 503 });
-  }
-  if (!rateLimit.allowed) {
-    return json(request, { error: "rate_limited" }, {
-      status: 429,
-      headers: { "Retry-After": String(Math.max(1, rateLimit.retryAfterSeconds || 600)) },
-    });
-  }
-
   if (identifier.kind === "invalid" || !password) {
-    const recorded = await recordParentLoginFailure(request, usernameForLimit);
-    if (recorded.infrastructureError) {
-      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
-    }
-    return json(request, { error: recorded.allowed ? "invalid_credentials" : "rate_limited" }, {
-      status: recorded.allowed ? 401 : 429,
-      headers: recorded.allowed ? undefined : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) },
-    });
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
   const { url, publishableKey } = getSupabasePublicEnv();
@@ -111,14 +86,7 @@ export async function POST(request: NextRequest) {
     if (error && (error.status == null || error.status >= 500)) {
       return json(request, { error: "auth_service_unavailable" }, { status: 503 });
     }
-    const recorded = await recordParentLoginFailure(request, usernameForLimit);
-    if (recorded.infrastructureError) {
-      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
-    }
-    return json(request, { error: recorded.allowed ? "invalid_credentials" : "rate_limited" }, {
-      status: recorded.allowed ? 401 : 429,
-      headers: recorded.allowed ? undefined : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) },
-    });
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
   return json(request, {
