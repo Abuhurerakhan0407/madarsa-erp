@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   checkParentLoginRateLimit,
   recordParentLoginFailure,
+  resolvePortalLoginEmail,
 } from "@/lib/portal/parent-login-server";
 import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
 import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
@@ -72,9 +73,61 @@ export async function POST(request: Request) {
     );
   }
 
+  let authEmail = identifier.email;
+  if (identifier.kind === "username") {
+    try {
+      authEmail = await resolvePortalLoginEmail(identifier.username);
+    } catch {
+      return NextResponse.json(
+        { error: "auth_service_unavailable" },
+        { status: 503, headers: { "cache-control": "no-store" } }
+      );
+    }
+
+    if (!authEmail) {
+      const recorded = await recordParentLoginFailure(request, usernameForLimit);
+      if (recorded.infrastructureError) {
+        return NextResponse.json(
+          { error: "auth_service_unavailable" },
+          { status: 503, headers: { "cache-control": "no-store" } }
+        );
+      }
+      return NextResponse.json(
+        { error: recorded.allowed ? INVALID_CREDENTIALS : "rate_limited" },
+        {
+          status: recorded.allowed ? 401 : 429,
+          headers: {
+            "cache-control": "no-store",
+            ...(recorded.allowed ? {} : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) }),
+          },
+        }
+      );
+    }
+  }
+
+  if (!authEmail) {
+    const recorded = await recordParentLoginFailure(request, usernameForLimit);
+    if (recorded.infrastructureError) {
+      return NextResponse.json(
+        { error: "auth_service_unavailable" },
+        { status: 503, headers: { "cache-control": "no-store" } }
+      );
+    }
+    return NextResponse.json(
+      { error: recorded.allowed ? INVALID_CREDENTIALS : "rate_limited" },
+      {
+        status: recorded.allowed ? 401 : 429,
+        headers: {
+          "cache-control": "no-store",
+          ...(recorded.allowed ? {} : { "Retry-After": String(Math.max(1, recorded.retryAfterSeconds || 600)) }),
+        },
+      }
+    );
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
-    email: identifier.email,
+    email: authEmail,
     password
   });
 

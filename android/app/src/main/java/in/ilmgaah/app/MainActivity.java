@@ -787,11 +787,12 @@ public class MainActivity extends Activity {
         subtitle.setGravity(english ? Gravity.LEFT : Gravity.RIGHT);
         form.addView(subtitle);
         addGap(form, 12);
-        EditText email = field(tr("ای میل", "Email"));
-        email.setTextDirection(View.TEXT_DIRECTION_LTR);
-        email.setInputType(InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        form.addView(email, new LinearLayout.LayoutParams(-1, dp(54)));
+        EditText username = field(tr("یوزرنیم", "Username"));
+        username.setTextDirection(View.TEXT_DIRECTION_LTR);
+        username.setInputType(InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_NORMAL);
+        username.setSingleLine(true);
+        form.addView(username, new LinearLayout.LayoutParams(-1, dp(54)));
 
         addGap(form, 10);
         EditText password = field(tr("پاس ورڈ", "Password"));
@@ -835,12 +836,12 @@ public class MainActivity extends Activity {
         helpParams.topMargin = dp(14);
         form.addView(help, helpParams);
         signInButton.setOnClickListener(v -> {
-            String emailValue = email.getText().toString().trim();
+            String usernameValue = username.getText().toString().trim();
             String passwordValue = password.getText().toString();
             boolean rememberSession = rememberMeToggle != null && rememberMeToggle.isChecked();
-            if (emailValue.isEmpty() || passwordValue.isEmpty()) {
-                error.setText(tr("ای میل اور پاس ورڈ درج کریں۔",
-                        "Enter your email and password."));
+            if (usernameValue.isEmpty() || passwordValue.isEmpty()) {
+                error.setText(tr("یوزرنیم اور پاس ورڈ درج کریں۔",
+                        "Enter your username and password."));
                 return;
             }
 
@@ -850,7 +851,7 @@ public class MainActivity extends Activity {
 
             try {
                 JSONObject body = new JSONObject();
-                body.put("email", emailValue);
+                body.put("identifier", usernameValue);
                 body.put("password", passwordValue);
 
                 NativeApi.postJson(
@@ -887,8 +888,8 @@ public class MainActivity extends Activity {
 
     private String authError(NativeApi.Result result) {
         if (result.status == 400 || result.status == 401) {
-            return tr("ای میل یا پاس ورڈ درست نہیں ہے.",
-                    "The email or password is incorrect.");
+            return tr("یوزرنیم یا پاس ورڈ درست نہیں ہے۔",
+                    "The username or password is incorrect.");
         }
         if (result.status == 429) {
             return tr("کئی سائن اِن کوششوں کے بعد عارضی حد لگ گئی ہے۔ چند منٹ بعد دوبارہ کوشش کریں۔",

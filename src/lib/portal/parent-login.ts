@@ -1,27 +1,37 @@
 export const PARENT_PORTAL_EMAIL_DOMAIN = "parents.ilmgaah.in";
+export const TEACHER_PORTAL_EMAIL_DOMAIN = "teachers.ilmgaah.in";
 export const PARENT_USERNAME_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
-export const PARENT_USERNAME_PATTERN = /^[abcdefghjkmnpqrstuvwxyz23456789]{3,8}-[abcdefghjkmnpqrstuvwxyz23456789]{6}$/;
+export const PARENT_USERNAME_PATTERN = /^PAR-[0-9]{6}$/i;
+export const TEACHER_USERNAME_PATTERN = /^UST-[0-9]{6}$/i;
+export const LEGACY_PARENT_USERNAME_PATTERN = /^[abcdefghjkmnpqrstuvwxyz23456789]{3,8}-[abcdefghjkmnpqrstuvwxyz23456789]{6}$/i;
+export const PORTAL_USERNAME_PATTERN = /^(?:PAR|UST)-[0-9]{6}$/i;
 
 export type ParentLoginIdentifier =
   | { kind: "email"; value: string; email: string; username: null }
-  | { kind: "username"; value: string; email: string; username: string }
+  | { kind: "username"; value: string; email: null; username: string }
   | { kind: "invalid"; value: string; email: null; username: string | null };
 
 export function normalizeLoginIdentifier(value: unknown): ParentLoginIdentifier {
   const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (!raw || raw.length > 320) return { kind: "invalid", value: raw, email: null, username: null };
   if (raw.includes("@")) return { kind: "email", value: raw, email: raw, username: null };
-  if (!PARENT_USERNAME_PATTERN.test(raw)) return { kind: "invalid", value: raw, email: null, username: raw };
+  if (!PORTAL_USERNAME_PATTERN.test(raw) && !LEGACY_PARENT_USERNAME_PATTERN.test(raw)) {
+    return { kind: "invalid", value: raw, email: null, username: raw };
+  }
   return {
     kind: "username",
     value: raw,
-    email: buildParentSyntheticEmail(raw),
+    email: null,
     username: raw
   };
 }
 
 export function buildParentSyntheticEmail(username: string): string {
   return username.toLowerCase() + "@" + PARENT_PORTAL_EMAIL_DOMAIN;
+}
+
+export function buildTeacherSyntheticEmail(username: string): string {
+  return username.toLowerCase() + "@" + TEACHER_PORTAL_EMAIL_DOMAIN;
 }
 
 export function isParentSyntheticEmail(value: unknown): boolean {

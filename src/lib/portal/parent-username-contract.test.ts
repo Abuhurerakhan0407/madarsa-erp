@@ -12,11 +12,23 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 
 describe("parent username portal contracts", () => {
   it("normalizes email and username without a database lookup", () => {
-    expect(normalizeLoginIdentifier(" Parent-abc234 ")).toEqual({
+    expect(normalizeLoginIdentifier(" PAR-000137 ")).toEqual({
+      kind: "username",
+      value: "par-000137",
+      username: "par-000137",
+      email: null
+    });
+    expect(normalizeLoginIdentifier(" UST-000123 ")).toEqual({
+      kind: "username",
+      value: "ust-000123",
+      username: "ust-000123",
+      email: null
+    });
+    expect(normalizeLoginIdentifier(" parent-abc234 ")).toEqual({
       kind: "username",
       value: "parent-abc234",
       username: "parent-abc234",
-      email: "parent-abc234@parents.ilmgaah.in"
+      email: null
     });
     expect(normalizeLoginIdentifier("USER@Example.COM")).toMatchObject({
       kind: "email",
@@ -25,7 +37,7 @@ describe("parent username portal contracts", () => {
       username: null
     });
     expect(normalizeLoginIdentifier("bad username")).toMatchObject({ kind: "invalid" });
-    expect(buildParentSyntheticEmail("ABC-abc234")).toBe("abc-abc234@parents.ilmgaah.in");
+    expect(buildParentSyntheticEmail("PAR-000137")).toBe("par-000137@parents.ilmgaah.in");
   });
 
   it("keeps parent password policy separate from staff policy", () => {

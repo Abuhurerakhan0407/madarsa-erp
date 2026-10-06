@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
+import { resolvePortalLoginEmail } from "@/lib/portal/parent-login-server";
 
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
@@ -66,6 +67,22 @@ export async function POST(request: NextRequest) {
     return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
+  let authEmail = identifier.email;
+  if (identifier.kind === "username") {
+    try {
+      authEmail = await resolvePortalLoginEmail(identifier.username);
+    } catch {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    if (!authEmail) {
+      return json(request, { error: "invalid_credentials" }, { status: 401 });
+    }
+  }
+
+  if (!authEmail) {
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
+  }
+
   const { url, publishableKey } = getSupabasePublicEnv();
   const supabase = createClient(url, publishableKey, {
     auth: {
@@ -74,7 +91,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email: identifier.email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
 
   if (error || !data.session || !data.user) {
     if (error?.status === 429) {

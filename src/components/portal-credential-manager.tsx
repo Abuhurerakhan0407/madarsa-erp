@@ -27,7 +27,7 @@ const value = (input: unknown) => typeof input === "string" ? input : "";
 const copy = {
   en: {
     title: "Create portal access",
-    body: "Choose a parent or teacher, confirm their saved email, then set a temporary password for first sign-in.",
+    body: "Choose a parent or teacher, then create or manage username credentials. Generated passwords appear once.",
     parents: "Parent",
     teachers: "Teacher / Staff",
     choose: "Choose person",
@@ -37,6 +37,7 @@ const copy = {
     temporaryPassword: "Temporary password",
     confirmPassword: "Confirm temporary password",
     showPassword: "Show password",
+    hidePassword: "Hide password",
     username: "Username",
     createWithoutEmail: "Create login without email",
     createWithoutEmailBusy: "Creating username login…",
@@ -93,7 +94,7 @@ const copy = {
   },
   ur: {
     title: "پورٹل رسائی بنائیں",
-    body: "والدین یا استاد منتخب کریں، محفوظ ای میل کی تصدیق کریں، پھر پہلی لاگ اِن کے لیے عارضی پاس ورڈ مقرر کریں۔",
+    body: "والدین یا استاد منتخب کریں، پھر یوزرنیم رسائی بنائیں یا منظم کریں۔ تیار شدہ پاس ورڈ صرف ایک بار دکھے گا۔",
     parents: "والدین",
     teachers: "استاد / عملہ",
 
@@ -104,6 +105,7 @@ const copy = {
     temporaryPassword: "عارضی پاس ورڈ",
     confirmPassword: "عارضی پاس ورڈ کی تصدیق",
     showPassword: "پاس ورڈ دکھائیں",
+    hidePassword: "پاس ورڈ چھپائیں",
     username: "یوزرنیم",
     createWithoutEmail: "ای میل کے بغیر لاگ اِن بنائیں",
     createWithoutEmailBusy: "یوزرنیم لاگ اِن بن رہا ہے…",
@@ -219,6 +221,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
   const [personId, setPersonId] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [handoff, setHandoff] = useState<Handoff | null>(null);
+  const [showHandoffPassword, setShowHandoffPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string | null>(null);
@@ -278,17 +281,18 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
   }
 
   async function createUsernameLogin(candidate: PortalAccessCandidate) {
-    if (lock.current || candidate.kind !== "guardian" || candidate.accountStatus !== "not_created") return;
+    if (lock.current || candidate.accountStatus !== "not_created" || !candidate.portalUsername) return;
     lock.current = true;
     setBusy("username:" + candidate.personId);
     setError(null);
     setHandoff(null);
+    setShowHandoffPassword(false);
     setCopied(false);
     try {
       const response = await fetch("/api/portals/credentials", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ personId: candidate.personId, kind: "guardian", action: "provision_username" })
+        body: JSON.stringify({ personId: candidate.personId, kind: candidate.kind, action: "provision_username" })
       });
       const payload = await response.json().catch(() => ({})) as {
         error?: string;
@@ -306,6 +310,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
         state: payload.credentialState || "username_account",
         auditWarning: payload.auditWarning
       });
+      setShowHandoffPassword(false);
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t.createError);
@@ -316,18 +321,19 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
   }
 
   async function resetUsernameLogin(candidate: PortalAccessCandidate) {
-    if (lock.current || candidate.kind !== "guardian" || candidate.loginMethod !== "username") return;
+    if (lock.current || candidate.loginMethod !== "username" || !candidate.portalUsername) return;
     if (!window.confirm(t.resetConfirm)) return;
     lock.current = true;
     setBusy("username-reset:" + candidate.personId);
     setError(null);
     setHandoff(null);
+    setShowHandoffPassword(false);
     setCopied(false);
     try {
       const response = await fetch("/api/portals/credentials", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ personId: candidate.personId, kind: "guardian", action: "reset" })
+        body: JSON.stringify({ personId: candidate.personId, kind: candidate.kind, action: "reset" })
       });
       const payload = await response.json().catch(() => ({})) as {
         error?: string;
@@ -544,6 +550,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
         state: payload.credentialState || "existing_account",
         auditWarning: payload.auditWarning
       });
+      setShowHandoffPassword(false);
       form.reset();
       router.refresh();
     } catch (caught) {
@@ -590,7 +597,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
               <h2>{handoff.name}</h2>
               <p>{handoff.password ? t.handoffBody : t.noPasswordBody}</p>
             </div>
-            <button className="action-button" type="button" onClick={() => { setHandoff(null); setCopied(false); }}>
+            <button className="action-button" type="button" onClick={() => { setHandoff(null); setShowHandoffPassword(false); setCopied(false); }}>
               {t.done}
             </button>
           </div>
@@ -598,7 +605,19 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
           <div className="portal-handoff-grid">
             {handoff.username ? <div><span>{t.username}</span><strong className="code-block" dir="ltr">{handoff.username}</strong></div> : null}
             {handoff.email ? <div><span>{t.savedEmail}</span><strong dir="ltr">{handoff.email}</strong></div> : null}
-            {handoff.password ? <div><span>{t.temporaryPassword}</span><strong className="code-block" dir="ltr">{handoff.password}</strong></div> : null}
+            {handoff.password ? (
+              <div>
+                <span>{t.temporaryPassword}</span>
+                <strong className="code-block" dir="ltr">{showHandoffPassword ? handoff.password : "••••••••••••"}</strong>
+                <button
+                  className="action-button"
+                  type="button"
+                  onClick={() => setShowHandoffPassword((current) => !current)}
+                >
+                  {showHandoffPassword ? t.hidePassword : t.showPassword}
+                </button>
+              </div>
+            ) : null}
           </div>
           {handoff.auditWarning ? <p className="form-message form-error">{handoff.auditWarning}</p> : null}
           <div className="quick-actions">
@@ -746,7 +765,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
                     ? (busy?.startsWith("access:") ? t.enabling : t.enable)
                     : (busy?.startsWith("access:") ? t.disabling : t.disable)}
                 </button>
-                {selected.kind === "guardian" && selected.loginMethod === "username" ? (
+                {selected.loginMethod === "username" ? (
                   <button
                     className="action-button"
                     type="button"
@@ -759,7 +778,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
               </div>
             ) : null}
 
-            {selected.kind === "guardian" && selected.accountStatus === "not_created" ? (
+            {selected.accountStatus === "not_created" && selected.portalUsername ? (
               <button
                 className="action-button action-button-primary"
                 type="button"
@@ -770,12 +789,12 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
               </button>
             ) : null}
 
-            {!selected.email && selected.kind !== "guardian" ? <p className="form-message form-error">{t.emailMissing}</p> : null}
-            {selected.accountStatus !== "not_created" && !selected.erpManaged ? (
+            {!selected.email && selected.kind === "employee" && selected.loginMethod !== "username" && selected.accountStatus !== "not_created" ? <p className="form-message form-error">{t.emailMissing}</p> : null}
+            {selected.accountStatus !== "not_created" && !selected.erpManaged && selected.loginMethod !== "username" ? (
               <p className="form-message">{t.existingManagedElsewhere}</p>
             ) : null}
 
-            {selected.kind === "employee" || Boolean(selected.email) ? (
+            {selected.loginMethod !== "username" && (selected.kind === "employee" || Boolean(selected.email)) ? (
               <PortalCredentialForm
                 key={`${selected.kind}:${selected.personId}:${selected.accountStatus}:${selected.email ?? ""}:${selected.loginMethod ?? ""}`}
                 candidate={selected}

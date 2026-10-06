@@ -39,6 +39,16 @@ export function generateParentTemporaryPassword(): string {
     + "!";
 }
 
+export async function resolvePortalLoginEmail(username: string): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("resolve_portal_username_login_v1", {
+    p_username: username
+  });
+  if (error) throw new Error("portal_login_resolution_failed");
+  if (typeof data !== "string" || !data) return null;
+  return data.toLowerCase();
+}
+
 export type ParentLoginRateLimitResult = {
   allowed: boolean;
   infrastructureError: boolean;

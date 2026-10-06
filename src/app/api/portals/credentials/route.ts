@@ -4,7 +4,11 @@ import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/secur
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
 import { getTenantContext } from "@/lib/tenancy/context";
-import { buildParentSyntheticEmail, validUsernameParentPassword } from "@/lib/portal/parent-login";
+import {
+  buildParentSyntheticEmail,
+  buildTeacherSyntheticEmail,
+  validUsernameParentPassword
+} from "@/lib/portal/parent-login";
 import { generateParentTemporaryPassword } from "@/lib/portal/parent-login-server";
 
 type Kind = "guardian" | "employee";
@@ -51,8 +55,8 @@ export async function POST(request: Request) {
   if (!Number.isSafeInteger(personId) || personId <= 0 || !["guardian", "employee"].includes(kind) || !["provision", "provision_username", "reset"].includes(action)) {
     return NextResponse.json({ error: "Portal credential request is invalid." }, { status: 400 });
   }
-  if (action === "provision_username" && kind !== "guardian") {
-    return NextResponse.json({ error: "Username login is available only for guardians." }, { status: 400 });
+  if (action === "provision_username" && !["guardian", "employee"].includes(kind)) {
+    return NextResponse.json({ error: "Unsupported username login kind." }, { status: 400 });
   }
 
   const actorIdentityId = identity.id;
@@ -73,10 +77,10 @@ export async function POST(request: Request) {
   if (!target) return NextResponse.json({ error: "Portal person is not eligible in this branch." }, { status: 404 });
 
   const usernameAction = action === "provision_username";
-  const usernameAccount = kind === "guardian" && target.loginMethod === "username";
+  const usernameAccount = target.loginMethod === "username";
   const targetUsername = target.portalUsername ?? null;
   if (usernameAction && !targetUsername) {
-    return NextResponse.json({ error: "Unable to allocate this guardian's username." }, { status: 503 });
+    return NextResponse.json({ error: "Unable to allocate this portal username." }, { status: 503 });
   }
 
   if (!usernameAction && action === "provision" && (!validEmail(email) || email !== confirmEmail)) {
@@ -169,16 +173,16 @@ export async function POST(request: Request) {
       await audit("failed").catch(() => {});
       return NextResponse.json({ error: "Portal account not found." }, { status: 404 });
     }
-    if (user.data.user.app_metadata?.portal_account !== true) {
+    const isUsernameLogin = target.loginMethod === "username";
+    if (user.data.user.app_metadata?.portal_account !== true && !(isUsernameLogin && kind === "employee")) {
       await audit("failed").catch(() => {});
       return NextResponse.json({ error: "This login is not an Ilmgaah-managed portal account, so its password cannot be reset here." }, { status: 409 });
     }
 
-    const isUsernameLogin = target.loginMethod === "username";
     if (isUsernameLogin) {
-      if (!targetUsername || normalizeEmail(user.data.user.email ?? "") !== normalizeEmail(buildParentSyntheticEmail(targetUsername))) {
+      if (!targetUsername) {
         await audit("failed").catch(() => {});
-        return NextResponse.json({ error: "Portal username no longer matches this guardian." }, { status: 409 });
+        return NextResponse.json({ error: "Portal username is missing." }, { status: 409 });
       }
     } else if (normalizeEmail(user.data.user.email ?? "") !== email) {
       await audit("failed").catch(() => {});
@@ -191,6 +195,10 @@ export async function POST(request: Request) {
         ...user.data.user.app_metadata,
         portal_account: true,
         must_change_password: true,
+        ...(isUsernameLogin ? {
+          portal_login_method: "username",
+          portal_username: targetUsername,
+        } : {}),
         password_reset_from: "portal_access_center",
         password_reset_at: new Date().toISOString()
       }
@@ -232,7 +240,9 @@ export async function POST(request: Request) {
   let portalIdentityId = "";
   let created = false;
   const authEmail = usernameAction
-    ? buildParentSyntheticEmail(targetUsername as string)
+    ? (kind === "guardian"
+        ? buildParentSyntheticEmail(targetUsername as string)
+        : buildTeacherSyntheticEmail(targetUsername as string))
     : email;
 
   const existing = await admin.rpc("find_auth_identity_by_email_v1", { p_email: authEmail });
@@ -252,7 +262,7 @@ export async function POST(request: Request) {
     const existingMetadata = existingUser.data.user.app_metadata ?? {};
     if (usernameAction && existingMetadata.portal_account !== true) {
       await audit("failed").catch(() => {});
-      return NextResponse.json({ error: "Synthetic parent login identifier is already occupied." }, { status: 409 });
+      return NextResponse.json({ error: "Synthetic portal login identifier is already occupied." }, { status: 409 });
     }
 
     const metadata = usernameAction
