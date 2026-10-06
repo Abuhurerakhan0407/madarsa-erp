@@ -49,6 +49,31 @@ export async function resolvePortalLoginEmail(username: string): Promise<string 
   return data.toLowerCase();
 }
 
+export async function isPortalEmailLogin(email: string): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+  if (
+    normalized.endsWith("@parents.ilmgaah.in")
+    || normalized.endsWith("@teachers.ilmgaah.in")
+  ) return true;
+
+  const admin = createAdminClient();
+  const identity = await admin.rpc("find_auth_identity_by_email_v1", {
+    p_email: normalized
+  });
+  if (identity.error) throw new Error("portal_email_classification_failed");
+  if (typeof identity.data !== "string" || !identity.data) return false;
+
+  const links = await admin
+    .from("identity_person_links")
+    .select("link_type")
+    .eq("identity_id", identity.data)
+    .eq("status", "verified")
+    .in("link_type", ["guardian", "employee"])
+    .limit(1);
+  if (links.error) throw new Error("portal_email_classification_failed");
+  return (links.data?.length ?? 0) > 0;
+}
+
 export type ParentLoginRateLimitResult = {
   allowed: boolean;
   infrastructureError: boolean;

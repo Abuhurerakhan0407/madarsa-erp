@@ -39,8 +39,11 @@ const copy = {
     showPassword: "Show password",
     hidePassword: "Hide password",
     username: "Username",
-    createWithoutEmail: "Create login without email",
+    createWithoutEmail: "Save username & create login",
     createWithoutEmailBusy: "Creating username login…",
+    setUsername: "Manual username",
+    usernameHint: "Parent: PAR-###### · Teacher: UST-######",
+    usernameInvalid: "Use PAR-###### for parents or UST-###### for teachers.",
     usernameReset: "Reset username password",
     bulkTitle: "Bulk parent login handout",
     bulkBody: "Create username logins for guardians linked to one class. New passwords appear only in this print view.",
@@ -107,8 +110,11 @@ const copy = {
     showPassword: "پاس ورڈ دکھائیں",
     hidePassword: "پاس ورڈ چھپائیں",
     username: "یوزرنیم",
-    createWithoutEmail: "ای میل کے بغیر لاگ اِن بنائیں",
+    createWithoutEmail: "یوزرنیم محفوظ کریں اور لاگ اِن بنائیں",
     createWithoutEmailBusy: "یوزرنیم لاگ اِن بن رہا ہے…",
+    setUsername: "دستی یوزرنیم",
+    usernameHint: "والدین: PAR-###### · استاد: UST-######",
+    usernameInvalid: "والدین کے لیے PAR-###### یا استاد کے لیے UST-###### استعمال کریں۔",
     usernameReset: "یوزرنیم پاس ورڈ ری سیٹ کریں",
     bulkTitle: "والدین کے بلک لاگ اِن",
     bulkBody: "ایک کلاس کے سرپرستوں کے لیے یوزرنیم لاگ اِن بنائیں۔ نئے پاس ورڈ صرف پرنٹ ویو میں دکھیں گے۔",
@@ -219,6 +225,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
   const t = copy[locale];
   const [tab, setTab] = useState<"parents" | "teachers">(initialTab);
   const [personId, setPersonId] = useState<number | null>(null);
+  const [manualUsername, setManualUsername] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [handoff, setHandoff] = useState<Handoff | null>(null);
   const [showHandoffPassword, setShowHandoffPassword] = useState(false);
@@ -254,6 +261,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
     if (busy) return;
     setTab(next);
     setPersonId(null);
+    setManualUsername("");
     setSelectedClassId(null);
     setSelectedBulkGuardians(new Set());
 
@@ -280,8 +288,13 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
     setBulkStatus(null);
   }
 
-  async function createUsernameLogin(candidate: PortalAccessCandidate) {
-    if (lock.current || candidate.accountStatus !== "not_created" || !candidate.portalUsername) return;
+  async function createUsernameLogin(candidate: PortalAccessCandidate, username: string) {
+    const normalizedUsername = username.trim().toUpperCase();
+    const usernamePattern = candidate.kind === "guardian" ? /^PAR-[0-9]{6}$/ : /^UST-[0-9]{6}$/;
+    if (lock.current || candidate.accountStatus !== "not_created" || !usernamePattern.test(normalizedUsername)) {
+      setError(t.usernameInvalid);
+      return;
+    }
     lock.current = true;
     setBusy("username:" + candidate.personId);
     setError(null);
@@ -292,7 +305,7 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
       const response = await fetch("/api/portals/credentials", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ personId: candidate.personId, kind: candidate.kind, action: "provision_username" })
+        body: JSON.stringify({ personId: candidate.personId, kind: candidate.kind, action: "provision_username", username: normalizedUsername })
       });
       const payload = await response.json().catch(() => ({})) as {
         error?: string;
@@ -728,7 +741,10 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
         <label className="field-label portal-person-select">
           {t.choose}
           <select className="text-field" value={personId ?? ""} disabled={busy !== null} onChange={(event) => {
-            setPersonId(event.target.value ? Number(event.target.value) : null);
+            const nextId = event.target.value ? Number(event.target.value) : null;
+            setPersonId(nextId);
+            const next = nextId ? list.find((candidate) => candidate.personId === nextId) : null;
+            setManualUsername(next?.portalUsername ?? "");
             setError(null);
           }}>
 
@@ -779,11 +795,30 @@ export function PortalCredentialManager({ center, initialTab, locale }: Props) {
             ) : null}
 
             {selected.accountStatus === "not_created" && selected.portalUsername ? (
+              <label className="field-label">
+                {t.setUsername}
+                <input
+                  className="text-field"
+                  name="portalUsername"
+                  value={manualUsername}
+                  onChange={(event) => setManualUsername(event.target.value.toUpperCase())}
+                  autoComplete="off"
+                  inputMode="text"
+                  placeholder={selected.kind === "guardian" ? "PAR-000001" : "UST-000001"}
+                  aria-describedby="portal-username-hint"
+                  disabled={busy !== null}
+                  required
+                />
+                <small id="portal-username-hint">{t.usernameHint}</small>
+              </label>
+            ) : null}
+
+            {selected.accountStatus === "not_created" && selected.portalUsername ? (
               <button
                 className="action-button action-button-primary"
                 type="button"
                 disabled={busy !== null}
-                onClick={() => void createUsernameLogin(selected)}
+                onClick={() => void createUsernameLogin(selected, manualUsername)}
               >
                 {busy === "username:" + selected.personId ? t.createWithoutEmailBusy : t.createWithoutEmail}
               </button>

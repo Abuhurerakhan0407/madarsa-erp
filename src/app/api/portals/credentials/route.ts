@@ -50,6 +50,7 @@ export async function POST(request: Request) {
   const action = body.action as Action;
   const email = normalizeEmail(typeof body.email === "string" ? body.email : "");
   const confirmEmail = normalizeEmail(typeof body.confirmEmail === "string" ? body.confirmEmail : "");
+  const requestedUsername = typeof body.username === "string" ? body.username.trim().toUpperCase() : "";
   let temporaryPassword = typeof body.temporaryPassword === "string" ? body.temporaryPassword : "";
 
   if (!Number.isSafeInteger(personId) || personId <= 0 || !["guardian", "employee"].includes(kind) || !["provision", "provision_username", "reset"].includes(action)) {
@@ -78,7 +79,28 @@ export async function POST(request: Request) {
 
   const usernameAction = action === "provision_username";
   const usernameAccount = target.loginMethod === "username";
-  const targetUsername = target.portalUsername ?? null;
+  const usernamePattern = kind === "guardian" ? /^PAR-[0-9]{6}$/ : /^UST-[0-9]{6}$/;
+  let targetUsername = target.portalUsername ? target.portalUsername.trim().toUpperCase() : null;
+
+  if (usernameAction && requestedUsername && requestedUsername !== targetUsername) {
+    if (target.accountStatus !== "not_created") {
+      return NextResponse.json({ error: "Existing portal accounts keep their current username. Reset its password instead." }, { status: 409 });
+    }
+    if (!usernamePattern.test(requestedUsername)) {
+      return NextResponse.json({ error: kind === "guardian" ? "Parent username must match PAR-######." : "Teacher username must match UST-######." }, { status: 400 });
+    }
+    const update = kind === "guardian"
+      ? await admin.from("guardian_profiles").update({ portal_username: requestedUsername }).eq("tenant_id", tenantId).eq("person_id", personId)
+      : await admin.from("employee_profiles").update({ portal_username: requestedUsername }).eq("tenant_id", tenantId).eq("person_id", personId);
+    if (update.error) {
+      if (update.error.code === "23505") {
+        return NextResponse.json({ error: "That username is already assigned. Choose another." }, { status: 409 });
+      }
+      return NextResponse.json({ error: "Unable to save portal username." }, { status: 503 });
+    }
+    targetUsername = requestedUsername;
+  }
+
   if (usernameAction && !targetUsername) {
     return NextResponse.json({ error: "Unable to allocate this portal username." }, { status: 503 });
   }

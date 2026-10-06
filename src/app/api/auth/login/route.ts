@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   checkParentLoginRateLimit,
+  isPortalEmailLogin,
   recordParentLoginFailure,
   resolvePortalLoginEmail,
 } from "@/lib/portal/parent-login-server";
@@ -71,6 +72,22 @@ export async function POST(request: Request) {
         },
       }
     );
+  }
+
+  if (identifier.kind === "email") {
+    try {
+      if (await isPortalEmailLogin(identifier.email)) {
+        return NextResponse.json(
+          { error: INVALID_CREDENTIALS },
+          { status: 401, headers: { "cache-control": "no-store" } }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "auth_service_unavailable" },
+        { status: 503, headers: { "cache-control": "no-store" } }
+      );
+    }
   }
 
   let authEmail = identifier.email;

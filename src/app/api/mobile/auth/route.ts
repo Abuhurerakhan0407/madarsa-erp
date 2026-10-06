@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
-import { resolvePortalLoginEmail } from "@/lib/portal/parent-login-server";
+import { isPortalEmailLogin, resolvePortalLoginEmail } from "@/lib/portal/parent-login-server";
 
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
 
   if (identifier.kind === "invalid" || !password) {
     return json(request, { error: "invalid_credentials" }, { status: 401 });
+  }
+
+  if (identifier.kind === "email") {
+    try {
+      if (await isPortalEmailLogin(identifier.email)) {
+        return json(request, { error: "invalid_credentials" }, { status: 401 });
+      }
+    } catch {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
   }
 
   let authEmail = identifier.email;

@@ -65,11 +65,15 @@ describe("parent username portal contracts", () => {
     const credentialRoute = read("src/app/api/portals/credentials/route.ts");
     expect(loginRoute).toContain("normalizeLoginIdentifier");
     expect(loginRoute).toContain("invalid_credentials");
+    expect(loginRoute).toContain("isPortalEmailLogin");
     expect(loginRoute).not.toContain("find_auth_identity_by_email_v1");
     expect(mobileRoute).toContain("normalizeLoginIdentifier");
     expect(mobileRoute).toContain("invalid_credentials");
+    expect(mobileRoute).toContain("isPortalEmailLogin");
     expect(credentialRoute).toContain("email_confirm: true");
     expect(credentialRoute).toContain("portal_login_method: \"username\"");
+    expect(credentialRoute).toContain("requestedUsername");
+    expect(credentialRoute).toContain("usernamePattern");
     expect(credentialRoute).not.toContain("resetPasswordForEmail");
     expect(credentialRoute).not.toContain("inviteUserByEmail");
     expect(credentialRoute).not.toContain("signInWithOtp");
