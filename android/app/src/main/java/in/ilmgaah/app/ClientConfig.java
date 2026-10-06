@@ -12,9 +12,9 @@ public final class ClientConfig {
             "Martinganj Road, Kuriyawan, Phulpur, Uttar Pradesh, India";
     public static final String ACADEMIC_YEAR = "2026–2027";
     public static final String BRANCH = "Main Campus";
-    // Debug/QA builds use the stable QA alias. Production stays on the real domain.
+    // Debug/QA builds use the current Vercel branch QA deployment. Production stays on the real domain.
     public static final String API_BASE = BuildConfig.DEBUG
-            ? "https://madarsa-erp-qa.vercel.app"
+            ? "https://madarsa-erp-git-qa-hoste-75a40a-iamabuhurerakhan-1107s-projects.vercel.app"
             : "https://www.ilmgaah.in";
     public static final String DEPLOYMENT_ACCESS_QUERY = "";
 
