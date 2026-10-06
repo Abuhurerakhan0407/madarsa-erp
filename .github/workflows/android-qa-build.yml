@@ -1,0 +1,54 @@
+name: Android QA APK
+
+on:
+  push:
+    branches: [qa/hostel-boys-20261004]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Prepare Android QA environment
+        run: |
+          cat > .env.development.local <<'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=https://loihcxyblzdfiogrdihm.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
+          EOF
+          chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew :app:assembleDebug --no-daemon --console=plain
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          apk="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$apk"
+          sha256sum "$apk" | tee android-qa-apk.sha256
+
+      - name: Upload QA APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ilmgaah-qa-debug-apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android-qa-apk.sha256
+          if-no-files-found: error
+          retention-days: 7
