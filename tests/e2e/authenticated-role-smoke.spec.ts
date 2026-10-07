@@ -62,10 +62,8 @@ async function getJson(request: APIRequestContext, path: string, token: string) 
 }
 
 async function exerciseParentUsernameLogin(request: APIRequestContext) {
-  const parentEmail = credentials.parent.email;
-  const [username, domain] = parentEmail.split("@");
-  expect(domain).toBe("parents.ilmgaah.in");
-  expect(username).toMatch(/^[abcdefghjkmnpqrstuvwxyz23456789]{3,8}-[abcdefghjkmnpqrstuvwxyz23456789]{6}$/);
+  const username = credentials.parent.username;
+  expect(username).toMatch(/^PAR-[0-9]{6}$/);
 
   const requestOrigin = appBaseUrl || "http://localhost:3000";
   const response = await request.post(url("/api/auth/login"), {
