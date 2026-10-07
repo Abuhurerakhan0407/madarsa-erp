@@ -22,9 +22,9 @@ describe("Android native release configuration", () => {
     expect(manifest).toContain('android:name=".MainActivity"');
     expect(manifest).toContain('android.permission.INTERNET');
   });
-  it("uses the stable QA alias for debug while keeping production on Ilmgaah", () => {
+  it("uses the stable ERP QA alias for debug while keeping production on Ilmgaah", () => {
     expect(clientConfig).toMatch(
-      /public static final String API_BASE = BuildConfig\.DEBUG[\s\S]*\? "https:\/\/madarsa-erp-qa\.vercel\.app"[\s\S]*: "https:\/\/www\.ilmgaah\.in";/
+      /public static final String API_BASE = BuildConfig\.DEBUG[\s\S]*\? "https:\/\/madarsa-erp-git-qa-hoste-75a40a-iamabuhurerakhan-1107s-projects\.vercel\.app"[\s\S]*: "https:\/\/www\.ilmgaah\.in";/
     );
     expect(clientConfig).toContain('Jamia Islamia Uloomul Quraan');
     expect(clientConfig).toContain('public static final String ACADEMIC_YEAR = "2026–2027";');
