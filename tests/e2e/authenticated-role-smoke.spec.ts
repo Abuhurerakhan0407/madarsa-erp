@@ -15,7 +15,7 @@ const supabaseUrl = STAGING_SUPABASE_URL;
 const supabaseKey = stripQuotes(process.env.E2E_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
-let credentials: Record<Role, { email: string; password: string }> = {
+let credentials: Record<Role, { email: string; password: string; username?: string }> = {
   admin: { email: "", password: "" },
   teacher: { email: "", password: "" },
   parent: { email: "", password: "" },
