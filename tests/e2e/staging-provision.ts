@@ -5,7 +5,8 @@ const STAGING_REF = "loihcxyblzdfiogrdihm";
 const STAGING_SUPABASE_URL = `https://${STAGING_REF}.supabase.co`;
 
 type Role = "admin" | "teacher" | "parent";
-type Credentials = Record<Role, { email: string; password: string }>;
+type PortalCredential = { email: string; password: string; username?: string };
+type Credentials = Record<Role, PortalCredential>;
 type Provisioned = { credentials: Credentials };
 
 const clean = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
@@ -297,6 +298,24 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
   if (parentLink.error) throw new Error("Unable to link staging parent portal: " + parentLink.error.message);
 
+  const parentProfile = await admin.from("guardian_profiles")
+    .select("portal_username")
+    .eq("tenant_id", tenantId)
+    .eq("person_id", guardianPersonId)
+    .maybeSingle();
+  if (parentProfile.error || !parentProfile.data?.portal_username) {
+    throw new Error("Unable to resolve canonical staging parent username: " + (parentProfile.error?.message ?? "missing username"));
+  }
+
+  const teacherProfile = await admin.from("employee_profiles")
+    .select("portal_username")
+    .eq("tenant_id", tenantId)
+    .eq("person_id", teacherPersonId)
+    .maybeSingle();
+  if (teacherProfile.error || !teacherProfile.data?.portal_username) {
+    throw new Error("Unable to resolve canonical staging teacher username: " + (teacherProfile.error?.message ?? "missing username"));
+  }
+
   const today = new Date().toISOString().slice(0, 10);
   const hostelKey = "e2e-hostel-" + suffix;
   const existingHostel = await admin.from("hostels")
@@ -511,5 +530,11 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
   if (attendance.error) throw new Error("Unable to prepare staging meal attendance fixture: " + attendance.error.message);
 
-  return { credentials: { admin: accounts.admin, teacher: accounts.teacher, parent: accounts.parent } };
+  return {
+    credentials: {
+      admin: accounts.admin,
+      teacher: { ...accounts.teacher, username: teacherProfile.data.portal_username },
+      parent: { ...accounts.parent, username: parentProfile.data.portal_username },
+    },
+  };
 }
