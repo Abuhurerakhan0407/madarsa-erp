@@ -114,17 +114,19 @@ for (const role of roles) {
     }
 
     if (role === "teacher") {
-      expect(workspace.branchId).toBeGreaterThan(0);
+      if (!workspace.branchId) throw new Error("Teacher workspace branch missing.");
+      const teacherBranchId = workspace.branchId;
+      expect(teacherBranchId).toBeGreaterThan(0);
       const path = workspace.accessMode === "portal"
-        ? `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId}&surface=teacher`
-        : `/api/mobile/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId}`;
+        ? `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId}&surface=teacher`
+        : `/api/mobile/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId}`;
       const body = await getJson(request, path, token);
       expect(body.readOnly).toBe(true);
       expect(body.surface).toBe("teacher");
 
       // The same verified teacher identity must not read another/unassigned branch.
       const outsideBranch = await request.get(url(
-        `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId + 987654321}&surface=teacher`
+        `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId + 987654321}&surface=teacher`
       ), { headers: { authorization: `Bearer ${token}` } });
       expect(outsideBranch.status()).toBe(403);
       await expect(outsideBranch.json()).resolves.toMatchObject({ error: "portal_scope_denied" });
