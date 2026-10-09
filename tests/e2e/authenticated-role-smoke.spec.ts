@@ -44,14 +44,31 @@ test.beforeAll(async ({}, testInfo) => {
 });
 
 async function accessToken(request: APIRequestContext, role: Role) {
-  const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: supabaseKey, "content-type": "application/json" },
-    data: credentials[role],
+  const credential = credentials[role];
+  const identifier = credential.username ?? credential.email;
+  const response = await request.post(url("/api/mobile/auth"), {
+    headers: { "content-type": "application/json" },
+    data: {
+      identifier,
+      password: credential.password,
+    },
   });
-  expect(response.status(), `${role} authentication failed`).toBe(200);
-  const body = await response.json() as { access_token?: unknown };
+  expect(
+    response.status(),
+    `${role} app mobile-auth endpoint rejected valid ${credential.username ? "username" : "email"} credentials`
+  ).toBe(200);
+  expect(response.headers()["cache-control"] ?? "").toMatch(/no-store/i);
+
+  const body = await response.json() as {
+    access_token?: unknown;
+    refresh_token?: unknown;
+    token_type?: unknown;
+    user?: unknown;
+  };
   expect(typeof body.access_token).toBe("string");
   expect((body.access_token as string).length).toBeGreaterThan(20);
+  expect(typeof body.refresh_token).toBe("string");
+  expect(typeof body.user).toBe("object");
   return body.access_token as string;
 }
 
