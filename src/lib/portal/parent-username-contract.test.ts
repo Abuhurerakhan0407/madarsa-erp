@@ -112,4 +112,11 @@ describe("parent username portal contracts", () => {
     expect(manager).toContain("Portal URL");
     expect(manager).toContain("پرنٹ");
   });
+  it("keeps CI-generated credentials isolated from manually used QA accounts", () => {
+    const provisioner = read("tests/e2e/staging-provision.ts");
+    const roleSmoke = read("tests/e2e/authenticated-role-smoke.spec.ts");
+    expect(provisioner).toContain('if (!suffix.startsWith("ci-"))');
+    expect(roleSmoke).toContain('"ci-" + testInfo.project.name + "-worker-"');
+  });
+
 });
