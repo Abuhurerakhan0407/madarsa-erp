@@ -34,10 +34,11 @@ test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
   const runId = process.env.GITHUB_RUN_ID || "local";
   const runAttempt = process.env.GITHUB_RUN_ATTEMPT || "1";
-  const provisioned = await provisionStagingRoleUsers(
-    "ci-" + runId + "-attempt-" + runAttempt + "-" +
-    testInfo.project.name + "-retry-" + testInfo.retry + "-worker-" + testInfo.workerIndex
-  );
+  const projectKey = testInfo.project.name === "chromium" ? "chr" : "and";
+  const fixtureSuffix =
+    "ci-" + runId + "-a" + runAttempt + "-" + projectKey +
+    "-r" + testInfo.retry + "-w" + testInfo.workerIndex;
+  const provisioned = await provisionStagingRoleUsers(fixtureSuffix);
   credentials = provisioned.credentials;
   expect(roles.every((role) => configured(role))).toBe(true);
 });
