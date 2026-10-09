@@ -47,7 +47,7 @@ test.describe("deployed QA username authentication", () => {
     const attempt = process.env.GITHUB_RUN_ATTEMPT || "1";
     const projectKey = testInfo.project.name === "chromium" ? "chr" : "and";
     const suffix =
-      "ci-" + runId + "-a" + attempt + "-" + projectKey +
+      "ci-" + runId + "-a" + attempt + "-la-" + projectKey +
       "-r" + testInfo.retry + "-w" + testInfo.workerIndex;
 
     const provisioned = await provisionStagingRoleUsers(suffix);
