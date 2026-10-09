@@ -34,29 +34,9 @@ async function signInOnQA(page: Page, role: "Parent" | "Teacher", username: stri
   expect(response.status(), "deployed login API rejected the valid QA credential").toBe(200);
   await expect(response.json()).resolves.toEqual({ signedIn: true });
 
-  const responseCookieNames = (await response.headersArray())
-    .filter(({ name }) => name.toLowerCase() === "set-cookie")
-    .map(({ value }) => ({
-      name: value.split("=", 1)[0],
-      length: value.length
-    }));
-  const browserCookieMetadata = (await page.context().cookies(QA_URL))
-    .filter((cookie) => cookie.name.toLowerCase().startsWith("sb-"))
-    .map((cookie) => ({
-      name: cookie.name,
-      path: cookie.path,
-      httpOnly: cookie.httpOnly,
-      secure: cookie.secure,
-      sameSite: cookie.sameSite,
-      valueLength: cookie.value.length
-    }));
-  console.log("[auth-live-diagnostic] " + JSON.stringify({
-    role,
-    responseStatus: response.status(),
-    responseCookieNames,
-    browserCookieMetadata,
-    pathAfterSubmit: new URL(page.url()).pathname
-  }));
+  // The API response and client-side router navigation are separate async steps.
+  // Wait for the protected route transition before the role-specific assertions.
+  await page.waitForURL((url) => url.pathname !== "/login");
 }
 
 test.describe("deployed QA username authentication", () => {
