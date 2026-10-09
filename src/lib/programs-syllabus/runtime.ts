@@ -66,7 +66,7 @@ export async function getProgramsSyllabusWorkspace(locale: string): Promise<Prog
   const supabase = await createClient();
 
   const [programsResult, levelsResult, versionsResult, subjectsResult, itemsResult, unitsResult, sessionsResult, groupsResult, employeesResult, enrollmentsResult, assignmentsResult] = await Promise.all([
-    supabase.from("programs").select("id,key,labels,descriptions,program_type,template_key,status").eq("tenant_id", workspace.tenantId).order("id"),
+    supabase.from("programs").select("id,key,labels,descriptions,program_type,template_key,status").eq("tenant_id", workspace.tenantId).eq("status", "active").order("id"),
     supabase.from("academic_levels").select("id,program_id,key,labels,sequence,status").eq("tenant_id", workspace.tenantId).eq("status", "active").order("program_id").order("sequence"),
     supabase.from("curriculum_versions").select("id,program_id,version,state,published_at").eq("tenant_id", workspace.tenantId).order("program_id").order("version", { ascending: false }),
     supabase.from("subjects").select("id,key,labels,status").eq("tenant_id", workspace.tenantId).eq("status", "active"),

@@ -9,10 +9,6 @@ export default async function HostelLayout({
   children: ReactNode;
 }) {
   const { locale } = await params;
-  await requireOfficeSurface(
-    locale,
-    ["hostel.resident.manage", "hostel.security.manage", "mess.service.manage"],
-    "any"
-  );
+  await requireOfficeSurface(locale, ["hostel.resident.manage"], "any");
   return children;
 }

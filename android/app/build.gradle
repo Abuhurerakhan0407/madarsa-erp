@@ -2,6 +2,24 @@ plugins {
     id 'com.android.application'
 }
 
+def readDotenvValue = { String name ->
+    File envFile = rootProject.file("../.env.development.local")
+    if (!envFile.exists()) return ""
+    String prefix = name + "="
+    def line = envFile.readLines().find { it.startsWith(prefix) }
+    if (line == null) return ""
+    line.substring(prefix.length()).trim().replaceAll(/^[\"']|[\"']$/, "")
+}
+
+def javaString = { String value ->
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
+}
+
+def supabaseUrl = readDotenvValue("NEXT_PUBLIC_SUPABASE_URL")
+def supabasePublishableKey = readDotenvValue("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+def isDebugBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains("debug") }
+def deploymentAccessQuery = isDebugBuild ? readDotenvValue("ILMGAAH_DEPLOYMENT_ACCESS_QUERY") : ""
+
 android {
     namespace 'in.ilmgaah.app'
     compileSdk 36
@@ -16,6 +34,9 @@ android {
         targetSdk 36
         versionCode 5
         versionName '1.2.0'
+        buildConfigField 'String', 'SUPABASE_URL', javaString(supabaseUrl)
+        buildConfigField 'String', 'SUPABASE_PUBLISHABLE_KEY', javaString(supabasePublishableKey)
+        buildConfigField 'String', 'DEPLOYMENT_ACCESS_QUERY', javaString(deploymentAccessQuery)
     }
 
     buildTypes {

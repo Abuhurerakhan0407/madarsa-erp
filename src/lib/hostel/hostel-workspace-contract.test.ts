@@ -5,20 +5,29 @@ const read = (path: string) => readFileSync(new URL("../../" + path, import.meta
 
 const page = read("app/[locale]/hostel/page.tsx");
 const layout = read("app/[locale]/hostel/layout.tsx");
-const operations = read("lib/hostel/operations.ts");
+const boys = read("lib/hostel/boys.ts");
+const mobile = read("app/api/mobile/hostel/route.ts");
+const navigation = read("lib/navigation/client-v3-navigation.ts");
 
-describe("Hostel & Mess workspace contract", () => {
-  it("restores the current route with any governed Hostel or Mess permission", () => {
+describe("Hostel Boys workspace contract", () => {
+  it("uses the hostel resident permission only", () => {
     expect(layout).toContain("hostel.resident.manage");
-    expect(layout).toContain("hostel.security.manage");
-    expect(layout).toContain("mess.service.manage");
-    expect(layout).toContain('"any"');
-    expect(page).toContain("data.permissions.resident");
-    expect(page).toContain("data.permissions.security");
-    expect(page).toContain("data.permissions.mess");
+    expect(layout).not.toContain("hostel.security.manage");
+    expect(layout).not.toContain("mess.service.manage");
   });
 
-  it("keeps the complete restored workflow wired to the existing server layer", () => {
+  it("models Hostel Boys as the existing student record plus residence state", () => {
+    expect(page).toContain("getHostelBoysWorkspace");
+    expect(page).toContain("setStudentResidence");
+    expect(boys).toContain("get_hostel_boys_center_v1");
+    expect(boys).toContain("set_student_residence_v1");
+    expect(page).toContain("/students/");
+  });
+
+  it("shows learning program and class / group instead of physical bed operations", () => {
+    expect(page).toContain("Learning programs");
+    expect(page).toContain("Classes / groups");
+    expect(page).toContain("Hostel boys register");
     for (const value of [
       "createHostel",
       "addHostelBed",
@@ -29,38 +38,38 @@ describe("Hostel & Mess workspace contract", () => {
       "recordHostelIncident",
       "createMessUnit",
       "createMealService",
-      "recordMealAttendance",
-      "closeMealService"
+      "recordMealAttendance"
     ]) {
-      expect(page).toContain(value);
-      expect(operations).toContain(value);
+      expect(page).not.toContain(value);
     }
   });
 
-  it("preserves the recorded visitor identity in the register", () => {
-    expect(operations).toContain("visitorName:string");
-    expect(operations).toContain("visitorName:text(obj(x.visitor_identity_snapshot).name)");
-    expect(page).toContain("v.visitorName");
+  it("supports adding an existing student without creating a duplicate", () => {
+    expect(page).toContain("Add existing student");
+    expect(page).toContain('name="studentPersonId"');
+    expect(page).toContain('value="hostel"');
+    expect(page).toContain("same record in Students");
   });
 
-  it("renders a governed incident register without exposing restricted details", () => {
-    expect(page).toContain("data.incidents.length");
-    expect(page).toContain("i.category");
-    expect(page).toContain("i.severity");
-    expect(page).not.toContain("i.restrictedDetails");
+  it("supports removing a student from Hostel Boys without deleting the student", () => {
+    expect(page).toContain("Remove from hostel");
+    expect(page).toContain('value="day"');
+    expect(page).toContain("The student remains");
   });
 
-  it("keeps Hostel & Mess out of the Teacher navigation", () => {
-    const navigation = read("lib/navigation/client-v3-navigation.ts");
-    expect(navigation).toContain('item("hostel", "Hostel & Mess"');
-    const teacherBlock = navigation.slice(navigation.indexOf("const teacherPrimary"), navigation.indexOf("function enabled"));
+  it("exposes the same model to the mobile app", () => {
+    expect(mobile).toContain("get_hostel_boys_center_v1");
+    expect(mobile).toContain("set_student_residence_v1");
+    expect(mobile).toContain('export async function POST');
+    expect(mobile).not.toContain("get_hostel_mess_center_v1");
+  });
+
+  it("renames the navigation entry to Hostel Boys", () => {
+    expect(navigation).toContain('item("hostel", "Hostel Boys", "ہاسٹل بوائز"');
+    const teacherBlock = navigation.slice(
+      navigation.indexOf("const teacherPrimary"),
+      navigation.indexOf("function enabled")
+    );
     expect(teacherBlock).not.toContain('item("hostel"');
-  });
-
-  it("keeps the restored route on English and Urdu release copy", () => {
-    expect(page).toContain(" en:{");
-    expect(page).toContain(" ur:{");
-    expect(page).toContain("Hostel operations");
-    expect(page).toContain("ہاسٹل آپریشنز");
   });
 });

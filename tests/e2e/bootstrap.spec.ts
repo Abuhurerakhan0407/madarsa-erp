@@ -49,7 +49,7 @@ test("renders accessible sign in and signup modes", async ({ page }) => {
   ]);
   await page.goto("/login");
 
-  await expect(page.getByLabel("Email address")).toHaveAttribute("type", "email");
+  await expect(page.getByLabel("Email or username")).toHaveAttribute("type", "text");
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
   await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
 
@@ -61,7 +61,7 @@ test("renders accessible sign in and signup modes", async ({ page }) => {
   await page.getByRole("button", { name: "اردو" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "ur");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByLabel("ای میل")).toBeVisible();
+  await expect(page.getByLabel("ای میل یا یوزرنیم")).toBeVisible();
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");

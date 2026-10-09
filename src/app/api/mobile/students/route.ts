@@ -44,10 +44,12 @@ function nullablePositiveInt(value: string | null) {
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
-function localizedLabel(labels: unknown, fallback: string) {
+function localizedLabel(labels: unknown, fallback: string, locale: "ur" | "en") {
   const map = object(labels);
-  const value = map.en;
-  return typeof value === "string" && value.trim() ? value : fallback;
+  const preferred = locale === "en" ? map.en : map.ur;
+  if (typeof preferred === "string" && preferred.trim()) return preferred;
+  const alternate = locale === "en" ? map.ur : map.en;
+  return typeof alternate === "string" && alternate.trim() ? alternate : fallback;
 }
 
 export function OPTIONS(request: NextRequest) {
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
 
   const tenantId = positiveInt(request.nextUrl.searchParams.get("tenantId"), 0);
   const branchId = nullablePositiveInt(request.nextUrl.searchParams.get("branchId"));
+  const locale = request.nextUrl.searchParams.get("locale") === "en" ? "en" : "ur";
   if (!tenantId) return json(request, { error: "invalid_request" }, { status: 400 });
 
   const workspace = await resolveMobileStaffWorkspace(request, { tenantId, branchId });
@@ -112,8 +115,8 @@ export async function GET(request: NextRequest) {
         nativeName: text(row.native_name),
         status: text(row.status) ?? "active",
         joinedOn: text(row.joined_on),
-        program: programKey ? localizedLabel(row.program_labels, programKey) : "—",
-        group: groupKey ? localizedLabel(row.group_labels, groupKey) : "—",
+        program: programKey ? localizedLabel(row.program_labels, programKey, locale) : "—",
+        group: groupKey ? localizedLabel(row.group_labels, groupKey, locale) : "—",
       }];
     }),
   });

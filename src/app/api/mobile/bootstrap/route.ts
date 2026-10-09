@@ -111,13 +111,61 @@ export async function GET(request: NextRequest) {
 
     const roleIds = (roleLinks ?? []).map((row) => row.role_id);
     if (!roleIds.length) continue;
-    const { data: roles, error: roleError } = await admin
-      .from("roles")
-      .select("key")
-      .eq("tenant_id", membership.tenant_id)
-      .eq("status", "active")
-      .in("id", roleIds);
-    if (roleError) continue;
+
+    if (membership.all_branches) {
+      const [{ data: roles, error: roleError }, { data: branches, error: branchError }] = await Promise.all([
+        admin
+          .from("roles")
+          .select("key")
+          .eq("tenant_id", membership.tenant_id)
+          .eq("status", "active")
+          .in("id", roleIds),
+        admin
+          .from("branches")
+          .select("id, name, status")
+          .eq("tenant_id", membership.tenant_id)
+          .eq("status", "active")
+          .order("id", { ascending: true })
+      ]);
+      if (roleError || branchError) continue;
+
+      const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
+      const surface: MobileSurface | null = roleKeys.some((key) => key === "institution_owner" || key === "owner" || key === "admin" || key === "accountant")
+        ? "admin"
+        : roleKeys.includes("teacher")
+          ? "teacher"
+          : null;
+      if (!surface || !branches?.length) continue;
+
+      for (const branch of branches) {
+        pushWorkspace({
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          tenantSlug: tenant.slug,
+          branchId: branch.id,
+          branchName: branch.name,
+          surface,
+          roleKeys,
+          accessMode: "membership"
+        });
+      }
+      continue;
+    }
+
+    const [{ data: roles, error: roleError }, { data: scopes, error: scopeError }] = await Promise.all([
+      admin
+        .from("roles")
+        .select("key")
+        .eq("tenant_id", membership.tenant_id)
+        .eq("status", "active")
+        .in("id", roleIds),
+      admin
+        .from("membership_branch_scopes")
+        .select("branch_id")
+        .eq("tenant_id", membership.tenant_id)
+        .eq("membership_id", membership.id)
+    ]);
+    if (roleError || scopeError) continue;
 
     const roleKeys = (roles ?? []).map((row) => row.key).filter(Boolean);
     const surface: MobileSurface | null = roleKeys.some((key) => key === "institution_owner" || key === "owner" || key === "admin" || key === "accountant")
@@ -127,25 +175,7 @@ export async function GET(request: NextRequest) {
         : null;
     if (!surface) continue;
 
-    let branchIds: number[] = [];
-    if (membership.all_branches) {
-      const { data: branches, error: branchError } = await admin
-        .from("branches")
-        .select("id")
-        .eq("tenant_id", membership.tenant_id)
-        .eq("status", "active")
-        .order("id", { ascending: true });
-      if (branchError) continue;
-      branchIds = (branches ?? []).map((branch) => branch.id);
-    } else {
-      const { data: scopes, error: scopeError } = await admin
-        .from("membership_branch_scopes")
-        .select("branch_id")
-        .eq("tenant_id", membership.tenant_id)
-        .eq("membership_id", membership.id);
-      if (scopeError) continue;
-      branchIds = [...new Set((scopes ?? []).map((scope) => scope.branch_id))];
-    }
+    const branchIds = [...new Set((scopes ?? []).map((scope) => scope.branch_id))];
     if (!branchIds.length) continue;
 
     const { data: branches, error: branchError } = await admin

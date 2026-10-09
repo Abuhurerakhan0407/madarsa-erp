@@ -85,12 +85,10 @@ export async function GET(request: NextRequest) {
     }),
     admin.rpc("get_student_attendance_workspace", {
       ...common,
-      p_view: "student",
-      p_date: date,
+      p_attendance_date: date,
+      p_search: null,
       p_page: 1,
       p_page_size: 1,
-      p_search: null,
-      p_group_id: null,
     }),
     workspace.surface === "admin"
       ? admin.rpc("get_hr_employees_workspace_v1", {

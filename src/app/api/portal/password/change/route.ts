@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { isJsonRequest, isSameOriginRequest, readBoundedJson } from "@/lib/security/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/identity";
+import { validUsernameParentPassword } from "@/lib/portal/parent-login";
 
-function validPassword(value: string): boolean {
+function validStaffPassword(value: string): boolean {
   return value.length >= 12
     && value.length <= 128
     && /[a-z]/.test(value)
@@ -33,12 +34,6 @@ export async function POST(request: Request) {
     ? body.value as Record<string, unknown>
     : {};
   const password = typeof input.password === "string" ? input.password : "";
-  if (!validPassword(password)) {
-    return NextResponse.json(
-      { error: "Use 12–128 characters with uppercase, lowercase, number, and symbol." },
-      { status: 400 }
-    );
-  }
 
   const admin = createAdminClient();
   const current = await admin.auth.admin.getUserById(identity.id);
@@ -47,6 +42,19 @@ export async function POST(request: Request) {
   }
   if (current.data.user.app_metadata?.portal_account !== true || current.data.user.app_metadata?.must_change_password !== true) {
     return NextResponse.json({ error: "A mandatory ERP portal password change is not pending." }, { status: 409 });
+  }
+
+  const usernameParent = current.data.user.app_metadata?.portal_login_method === "username"
+    && current.data.user.app_metadata?.portal_account === true;
+  if (usernameParent ? !validUsernameParentPassword(password) : !validStaffPassword(password)) {
+    return NextResponse.json(
+      {
+        error: usernameParent
+          ? "Use 10–128 characters with uppercase, lowercase and number. Avoid common passwords."
+          : "Use 12–128 characters with uppercase, lowercase, number, and symbol."
+      },
+      { status: 400 }
+    );
   }
 
   const updated = await admin.auth.admin.updateUserById(identity.id, {

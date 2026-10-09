@@ -1,11 +1,12 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const STAGING_REF = "loihcxyblzdfiogrdihm";
 const STAGING_SUPABASE_URL = `https://${STAGING_REF}.supabase.co`;
 
 type Role = "admin" | "teacher" | "parent";
-type Credentials = Record<Role, { email: string; password: string }>;
+type PortalCredential = { email: string; password: string; username?: string };
+type Credentials = Record<Role, PortalCredential>;
 type Provisioned = { credentials: Credentials };
 
 const clean = (value: string | undefined) => (value ?? "").trim().replace(/^['"]|['"]$/g, "");
@@ -56,14 +57,23 @@ async function findUser(admin: SupabaseClient, email: string) {
   return null;
 }
 
-async function ensureUser(admin: SupabaseClient, email: string, portalAccount: boolean) {
+async function ensureUser(
+  admin: SupabaseClient,
+  email: string,
+  portalAccount: boolean,
+  appMetadata?: Record<string, unknown>,
+) {
   const nextPassword = password();
   const existing = await findUser(admin, email);
   if (existing) {
     const updated = await admin.auth.admin.updateUserById(existing.id, {
       password: nextPassword,
       email_confirm: true,
-      app_metadata: { ...existing.app_metadata, ...(portalAccount ? { portal_account: true } : {}) },
+      app_metadata: {
+        ...existing.app_metadata,
+        ...(portalAccount ? { portal_account: true } : {}),
+        ...appMetadata,
+      },
     });
     if (updated.error || !updated.data.user) throw new Error("Unable to reset staging E2E user: " + email);
     return { id: updated.data.user.id, email, password: nextPassword };
@@ -73,7 +83,10 @@ async function ensureUser(admin: SupabaseClient, email: string, portalAccount: b
     email,
     password: nextPassword,
     email_confirm: true,
-    app_metadata: portalAccount ? { portal_account: true } : {},
+    app_metadata: {
+      ...(portalAccount ? { portal_account: true } : {}),
+      ...(appMetadata ?? {}),
+    },
   });
   if (created.error || !created.data.user) throw new Error("Unable to create staging E2E user: " + email);
   return { id: created.data.user.id, email, password: nextPassword };
@@ -90,11 +103,28 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
 
   const suffix = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  // CI fixtures must never share the interactive QA account namespace.
+  if (!suffix.startsWith("ci-")) {
+    throw new Error("Staging E2E role provisioning requires the isolated ci- namespace.");
+  }
   const domain = "example.com";
+  const usernameAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+  const usernameDigest = createHash("sha256").update(suffix).digest();
+  const parentUsername = "e2e-" +
+    Array.from({ length: 6 }, (_, index) => usernameAlphabet[usernameDigest[index] % usernameAlphabet.length]).join("");
   const accounts = {
     admin: await ensureUser(admin, "ilmgaah-e2e-admin-" + suffix + "@" + domain, false),
     teacher: await ensureUser(admin, "ilmgaah-e2e-teacher-" + suffix + "@" + domain, true),
-    parent: await ensureUser(admin, "ilmgaah-e2e-parent-" + suffix + "@" + domain, true),
+    parent: await ensureUser(
+      admin,
+      parentUsername + "@parents.ilmgaah.in",
+      true,
+      {
+        must_change_password: true,
+        portal_login_method: "username",
+        portal_username: parentUsername,
+      },
+    ),
   };
 
   const existingMembership = await admin.from("memberships")
@@ -202,7 +232,32 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   const teacherEmployment = await admin.from("hr_employments").select("employee_person_id").eq("tenant_id", tenantId).eq("branch_id", branchId).eq("state", "active").order("id", { ascending: true }).limit(1).maybeSingle();
   let teacherPersonId: number;
   if (teacherEmployment.data) {
-    teacherPersonId = teacherEmployment.data.employee_person_id;
+    const existingTeacherLink = await admin.from("identity_person_links")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("person_id", teacherEmployment.data.employee_person_id)
+      .eq("link_type", "employee")
+      .eq("status", "verified")
+      .limit(1);
+    if (existingTeacherLink.error) throw new Error("Unable to inspect staging teacher portal link: " + existingTeacherLink.error.message);
+    if (existingTeacherLink.data?.length) {
+      const made = await admin.rpc("create_hr_employee_v1", {
+        p_identity_id: accounts.admin.id,
+        p_tenant_id: tenantId,
+        p_branch_id: branchId,
+        p_display_name: "E2E Teacher " + suffix,
+        p_preferred_locale: "en",
+        p_department_key: "academics",
+        p_designation: "Teacher",
+        p_contract_type: "permanent",
+        p_joined_on: "2026-01-01",
+        p_payroll_eligible: false,
+      });
+      if (made.error || !made.data) throw new Error("Unable to create dedicated staging teacher: " + (made.error?.message ?? "unknown error"));
+      teacherPersonId = Number(made.data.person_id);
+    } else {
+      teacherPersonId = teacherEmployment.data.employee_person_id;
+    }
   } else {
     const made = await admin.rpc("create_hr_employee_v1", {
       p_identity_id: accounts.admin.id,
@@ -228,29 +283,51 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
     .maybeSingle();
   let studentPersonId: number;
   let guardianPersonId: number;
-  if (student.data) {
-    studentPersonId = Number(student.data.person_id);
-    const guardian = await admin.from("person_relationships").select("source_person_id").eq("tenant_id", tenantId).eq("target_person_id", studentPersonId).eq("status", "verified").eq("portal_visibility", "standard").order("id").limit(1).maybeSingle();
-    if (guardian.error || !guardian.data) throw new Error("Existing staging student has no verified guardian.");
-    guardianPersonId = guardian.data.source_person_id;
-  } else {
+  const createDedicatedStudent = async () => {
     const created = await admin.rpc("create_student_direct", {
       p_identity_id: accounts.admin.id,
       p_tenant_id: tenantId,
       p_branch_id: branchId,
-      p_display_name: "E2E Student",
+      p_display_name: "E2E Student " + suffix,
       p_preferred_locale: "en",
       p_session_id: session.data.id,
       p_program_id: program.data.id,
       p_joined_on: "2026-01-02",
-      p_guardian: { name: "E2E Parent", relationship: "father", phone: "+919900000001" },
+      p_guardian: { name: "E2E Parent " + suffix, relationship: "father", phone: "+919900000001" },
       p_confirm_new_person: true,
     });
     if (created.error || !created.data?.guardian_person_id || !created.data?.person_id) {
       throw new Error("Unable to create staging student/guardian: " + (created.error?.message ?? "unknown error"));
     }
-    studentPersonId = Number(created.data.person_id);
-    guardianPersonId = Number(created.data.guardian_person_id);
+    return {
+      studentPersonId: Number(created.data.person_id),
+      guardianPersonId: Number(created.data.guardian_person_id),
+    };
+  };
+  if (student.data) {
+    const existingStudentPersonId = Number(student.data.person_id);
+    const guardian = await admin.from("person_relationships").select("source_person_id").eq("tenant_id", tenantId).eq("target_person_id", existingStudentPersonId).eq("status", "verified").eq("portal_visibility", "standard").order("id").limit(1).maybeSingle();
+    if (guardian.error) throw new Error("Unable to resolve staging guardian fixture: " + guardian.error.message);
+    if (guardian.data) {
+      const existingGuardianLink = await admin.from("identity_person_links")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("person_id", guardian.data.source_person_id)
+        .eq("link_type", "guardian")
+        .eq("status", "verified")
+        .limit(1);
+      if (existingGuardianLink.error) throw new Error("Unable to inspect staging guardian portal link: " + existingGuardianLink.error.message);
+      if (existingGuardianLink.data?.length) {
+        ({ studentPersonId, guardianPersonId } = await createDedicatedStudent());
+      } else {
+        studentPersonId = existingStudentPersonId;
+        guardianPersonId = guardian.data.source_person_id;
+      }
+    } else {
+      ({ studentPersonId, guardianPersonId } = await createDedicatedStudent());
+    }
+  } else {
+    ({ studentPersonId, guardianPersonId } = await createDedicatedStudent());
   }
 
   const teacherLink = await admin.rpc("link_portal_identity_v1", {
@@ -271,6 +348,24 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
     p_portal_identity_id: accounts.parent.id,
   });
   if (parentLink.error) throw new Error("Unable to link staging parent portal: " + parentLink.error.message);
+
+  const parentProfile = await admin.from("guardian_profiles")
+    .select("portal_username")
+    .eq("tenant_id", tenantId)
+    .eq("person_id", guardianPersonId)
+    .maybeSingle();
+  if (parentProfile.error || !parentProfile.data?.portal_username) {
+    throw new Error("Unable to resolve canonical staging parent username: " + (parentProfile.error?.message ?? "missing username"));
+  }
+
+  const teacherProfile = await admin.from("employee_profiles")
+    .select("portal_username")
+    .eq("tenant_id", tenantId)
+    .eq("person_id", teacherPersonId)
+    .maybeSingle();
+  if (teacherProfile.error || !teacherProfile.data?.portal_username) {
+    throw new Error("Unable to resolve canonical staging teacher username: " + (teacherProfile.error?.message ?? "missing username"));
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const hostelKey = "e2e-hostel-" + suffix;
@@ -486,5 +581,11 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
   if (attendance.error) throw new Error("Unable to prepare staging meal attendance fixture: " + attendance.error.message);
 
-  return { credentials: { admin: accounts.admin, teacher: accounts.teacher, parent: accounts.parent } };
+  return {
+    credentials: {
+      admin: accounts.admin,
+      teacher: { ...accounts.teacher, username: teacherProfile.data.portal_username },
+      parent: { ...accounts.parent, username: parentProfile.data.portal_username },
+    },
+  };
 }

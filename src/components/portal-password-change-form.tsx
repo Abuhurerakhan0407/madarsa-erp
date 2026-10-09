@@ -10,6 +10,7 @@ const copy = {
     password: "New password",
     confirm: "Confirm new password",
     show: "Show password",
+    parentRule: "Parent password: 10+ characters with uppercase, lowercase and number. Symbols are optional.",
     rule: "Use at least 12 characters with uppercase, lowercase, a number, and a symbol.",
     mismatch: "Passwords do not match.",
     error: "Unable to change password.",
@@ -20,6 +21,7 @@ const copy = {
     password: "نیا پاس ورڈ",
     confirm: "نئے پاس ورڈ کی تصدیق",
     show: "پاس ورڈ دکھائیں",
+    parentRule: "والدین پاس ورڈ: کم از کم 10 حروف، بڑا حرف، چھوٹا حرف اور نمبر۔ علامت ضروری نہیں۔",
     rule: "کم از کم 12 حروف، بڑے اور چھوٹے حروف، عدد اور علامت استعمال کریں۔",
     mismatch: "دونوں پاس ورڈ ایک جیسے نہیں ہیں۔",
 
@@ -31,10 +33,12 @@ const copy = {
 
 export function PortalPasswordChangeForm({
   locale,
-  tenant
+  tenant,
+  usernameParent = false
 }: {
   locale: SupportedLocale;
   tenant?: string;
+  usernameParent?: boolean;
 }) {
   const router = useRouter();
   const t = copy[locale];
@@ -92,7 +96,7 @@ export function PortalPasswordChangeForm({
           name="password"
           type={show ? "text" : "password"}
           autoComplete="new-password"
-          minLength={12}
+          minLength={usernameParent ? 10 : 12}
           maxLength={128}
           required
           disabled={busy}
@@ -106,7 +110,7 @@ export function PortalPasswordChangeForm({
           type={show ? "text" : "password"}
 
           autoComplete="new-password"
-          minLength={12}
+          minLength={usernameParent ? 10 : 12}
           maxLength={128}
           required
           disabled={busy}
@@ -121,7 +125,7 @@ export function PortalPasswordChangeForm({
         />
         <span>{t.show}</span>
       </label>
-      <p className="portal-password-rule">{t.rule}</p>
+      <p className="portal-password-rule">{usernameParent ? t.parentRule : t.rule}</p>
       {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
       <button className="action-button action-button-primary" type="submit" disabled={busy}>
         {busy ? t.changing : t.submit}

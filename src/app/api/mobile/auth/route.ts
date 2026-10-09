@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicEnv } from "@/lib/env";
+import { normalizeLoginIdentifier } from "@/lib/portal/parent-login";
+import { isPortalEmailLogin, resolvePortalLoginEmail } from "@/lib/portal/parent-login-server";
+
 
 const NATIVE_ORIGINS = new Set(["https://localhost", "capacitor://localhost"]);
 
@@ -54,11 +57,40 @@ export async function POST(request: NextRequest) {
     ? payload as Record<string, unknown>
     : {};
 
-  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const rawIdentifier = typeof body.identifier === "string"
+    ? body.identifier
+    : typeof body.email === "string" ? body.email : "";
+  const identifier = normalizeLoginIdentifier(rawIdentifier);
   const password = typeof body.password === "string" ? body.password : "";
 
-  if (!email || !password) {
-    return json(request, { error: "missing_credentials" }, { status: 400 });
+  if (identifier.kind === "invalid" || !password) {
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
+  }
+
+  if (identifier.kind === "email") {
+    try {
+      if (await isPortalEmailLogin(identifier.email)) {
+        return json(request, { error: "invalid_credentials" }, { status: 401 });
+      }
+    } catch {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+  }
+
+  let authEmail = identifier.email;
+  if (identifier.kind === "username") {
+    try {
+      authEmail = await resolvePortalLoginEmail(identifier.username);
+    } catch {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    if (!authEmail) {
+      return json(request, { error: "invalid_credentials" }, { status: 401 });
+    }
+  }
+
+  if (!authEmail) {
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
   const { url, publishableKey } = getSupabasePublicEnv();
@@ -69,13 +101,19 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
 
   if (error || !data.session || !data.user) {
-    const status = error?.status === 429 ? 429 : 401;
-    return json(request, {
-      error: "invalid_credentials",
-    }, { status });
+    if (error?.status === 429) {
+      return json(request, { error: "rate_limited" }, {
+        status: 429,
+        headers: { "Retry-After": "600" },
+      });
+    }
+    if (error && (error.status == null || error.status >= 500)) {
+      return json(request, { error: "auth_service_unavailable" }, { status: 503 });
+    }
+    return json(request, { error: "invalid_credentials" }, { status: 401 });
   }
 
   return json(request, {

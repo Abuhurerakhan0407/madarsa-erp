@@ -68,23 +68,19 @@ export async function GET(request: NextRequest) {
   const workspace = await resolveMobileStaffWorkspace(request, { tenantId, branchId });
   if (!workspace) return json(request, { error: "unauthorized" }, { status: 401 });
 
-  const view = request.nextUrl.searchParams.get("view") === "group" ? "group" : "student";
   const page = positiveInt(request.nextUrl.searchParams.get("page"), 1, 100000);
   const pageSize = positiveInt(request.nextUrl.searchParams.get("pageSize"), 50, 100);
   const search = request.nextUrl.searchParams.get("search")?.trim().slice(0, 120) || null;
-  const groupId = request.nextUrl.searchParams.get("groupId")?.trim().slice(0, 120) || null;
 
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("get_student_attendance_workspace", {
     p_identity_id: workspace.identityId,
     p_tenant_id: workspace.tenantId,
     p_branch_id: workspace.branchId,
-    p_view: view,
-    p_date: date,
+    p_attendance_date: date,
+    p_search: search,
     p_page: page,
     p_page_size: pageSize,
-    p_search: search,
-    p_group_id: groupId,
   });
 
   if (error) {

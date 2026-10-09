@@ -33,10 +33,12 @@ function json(request: NextRequest, body: unknown, init?: ResponseInit) {
   response.headers.set("Cache-Control", "no-store, private");
   return response;
 }
-function localizedLabel(labels: unknown, fallback: string) {
+function localizedLabel(labels: unknown, fallback: string, locale: "ur" | "en") {
   const map = object(labels);
-  const value = map.en;
-  return typeof value === "string" && value.trim() ? value : fallback;
+  const preferred = locale === "en" ? map.en : map.ur;
+  if (typeof preferred === "string" && preferred.trim()) return preferred;
+  const alternate = locale === "en" ? map.ur : map.en;
+  return typeof alternate === "string" && alternate.trim() ? alternate : fallback;
 }
 
 export function OPTIONS(request: NextRequest) {
@@ -110,6 +112,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ per
   }
   if (!person.data || !profile.data) return json(request, { error: "not_found" }, { status: 404 });
 
+  const locale = request.nextUrl.searchParams.get("locale") === "en" ? "en" : "ur";
   const modules = object(moduleResult.data);
   const attendance = object(modules.attendance);
   const programKey = text(program.data?.key);
@@ -125,8 +128,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ per
       nativeName: person.data.name_native,
       status: profile.data.status,
       joinedOn: profile.data.joined_on,
-      program: programKey ? localizedLabel(program.data?.labels, programKey) : "—",
-      group: groupKey ? localizedLabel(group.data?.labels, groupKey) : "—",
+      program: programKey ? localizedLabel(program.data?.labels, programKey, locale) : "—",
+      group: groupKey ? localizedLabel(group.data?.labels, groupKey, locale) : "—",
     },
     attendance: {
       present: number(attendance.present),

@@ -15,7 +15,7 @@ const supabaseUrl = STAGING_SUPABASE_URL;
 const supabaseKey = stripQuotes(process.env.E2E_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 const appBaseUrl = stripQuotes(process.env.E2E_APP_URL).replace(/\/$/, "");
 
-let credentials: Record<Role, { email: string; password: string }> = {
+let credentials: Record<Role, { email: string; password: string; username?: string }> = {
   admin: { email: "", password: "" },
   teacher: { email: "", password: "" },
   parent: { email: "", password: "" },
@@ -33,7 +33,7 @@ const configured = (role: Role) => Boolean(
 test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
   const provisioned = await provisionStagingRoleUsers(
-    testInfo.project.name + "-worker-" + testInfo.workerIndex
+    "ci-" + testInfo.project.name + "-worker-" + testInfo.workerIndex
   );
   credentials = provisioned.credentials;
   expect(roles.every((role) => configured(role))).toBe(true);
@@ -61,6 +61,27 @@ async function getJson(request: APIRequestContext, path: string, token: string) 
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+async function exerciseParentUsernameLogin(request: APIRequestContext) {
+  const username = credentials.parent.username;
+  expect(username).toMatch(/^PAR-[0-9]{6}$/);
+
+  const requestOrigin = appBaseUrl || "http://localhost:3000";
+  const response = await request.post(url("/api/auth/login"), {
+    headers: {
+      origin: requestOrigin,
+      referer: requestOrigin + "/login",
+      "content-type": "application/json",
+    },
+    data: {
+      identifier: username,
+      password: credentials.parent.password,
+    },
+  });
+
+  expect(response.status(), "parent username login endpoint rejected valid staging credentials").toBe(200);
+  await expect(response.json()).resolves.toMatchObject({ signedIn: true });
+}
+
 async function bootstrap(request: APIRequestContext, token: string, role: Role) {
   const body = await getJson(request, "/api/mobile/bootstrap", token);
   const workspaces = Array.isArray(body.workspaces) ? body.workspaces as Workspace[] : [];
@@ -72,6 +93,10 @@ async function bootstrap(request: APIRequestContext, token: string, role: Role) 
 for (const role of roles) {
   test(`${role} authenticated mobile workspace stays scoped and read-only`, async ({ request }) => {
     test.skip(!configured(role), `Set dedicated E2E_${role.toUpperCase()}_EMAIL/PASSWORD credentials to run this smoke.`);
+
+    if (role === "parent") {
+      await exerciseParentUsernameLogin(request);
+    }
 
     const token = await accessToken(request, role);
     const workspace = await bootstrap(request, token, role);
