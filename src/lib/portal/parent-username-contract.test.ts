@@ -118,7 +118,8 @@ describe("parent username portal contracts", () => {
     expect(provisioner).toContain('if (!suffix.startsWith("ci-"))');
     expect(roleSmoke).toContain('process.env.GITHUB_RUN_ID || "local"');
     expect(roleSmoke).toContain('process.env.GITHUB_RUN_ATTEMPT || "1"');
-    expect(roleSmoke).toContain('"ci-" + runId + "-attempt-"');
+    expect(roleSmoke).toContain('"ci-" + runId + "-a"');
+    expect(roleSmoke).toContain('"-r" + testInfo.retry + "-w"');
   });
 
 });
