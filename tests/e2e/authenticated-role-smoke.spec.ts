@@ -32,22 +32,43 @@ const configured = (role: Role) => Boolean(
 
 test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
-  const provisioned = await provisionStagingRoleUsers(
-    "ci-" + testInfo.project.name + "-worker-" + testInfo.workerIndex
-  );
+  const runId = process.env.GITHUB_RUN_ID || "local";
+  const runAttempt = process.env.GITHUB_RUN_ATTEMPT || "1";
+  const projectKey = testInfo.project.name === "chromium" ? "chr" : "and";
+  const fixtureSuffix =
+    "ci-" + runId + "-a" + runAttempt + "-rs-" + projectKey +
+    "-r" + testInfo.retry + "-w" + testInfo.workerIndex;
+  const provisioned = await provisionStagingRoleUsers(fixtureSuffix);
   credentials = provisioned.credentials;
   expect(roles.every((role) => configured(role))).toBe(true);
 });
 
 async function accessToken(request: APIRequestContext, role: Role) {
-  const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: supabaseKey, "content-type": "application/json" },
-    data: credentials[role],
+  const credential = credentials[role];
+  const identifier = credential.username ?? credential.email;
+  const response = await request.post(url("/api/mobile/auth"), {
+    headers: { "content-type": "application/json" },
+    data: {
+      identifier,
+      password: credential.password,
+    },
   });
-  expect(response.status(), `${role} authentication failed`).toBe(200);
-  const body = await response.json() as { access_token?: unknown };
+  expect(
+    response.status(),
+    `${role} app mobile-auth endpoint rejected valid ${credential.username ? "username" : "email"} credentials`
+  ).toBe(200);
+  expect(response.headers()["cache-control"] ?? "").toMatch(/no-store/i);
+
+  const body = await response.json() as {
+    access_token?: unknown;
+    refresh_token?: unknown;
+    token_type?: unknown;
+    user?: unknown;
+  };
   expect(typeof body.access_token).toBe("string");
   expect((body.access_token as string).length).toBeGreaterThan(20);
+  expect(typeof body.refresh_token).toBe("string");
+  expect(typeof body.user).toBe("object");
   return body.access_token as string;
 }
 
@@ -111,13 +132,22 @@ for (const role of roles) {
     }
 
     if (role === "teacher") {
-      expect(workspace.branchId).toBeGreaterThan(0);
+      if (!workspace.branchId) throw new Error("Teacher workspace branch missing.");
+      const teacherBranchId = workspace.branchId;
+      expect(teacherBranchId).toBeGreaterThan(0);
       const path = workspace.accessMode === "portal"
-        ? `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId}&surface=teacher`
-        : `/api/mobile/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId}`;
+        ? `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId}&surface=teacher`
+        : `/api/mobile/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId}`;
       const body = await getJson(request, path, token);
       expect(body.readOnly).toBe(true);
       expect(body.surface).toBe("teacher");
+
+      // The same verified teacher identity must not read another/unassigned branch.
+      const outsideBranch = await request.get(url(
+        `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${teacherBranchId + 987654321}&surface=teacher`
+      ), { headers: { authorization: `Bearer ${token}` } });
+      expect(outsideBranch.status()).toBe(403);
+      await expect(outsideBranch.json()).resolves.toMatchObject({ error: "portal_scope_denied" });
       return;
     }
 
@@ -125,5 +155,13 @@ for (const role of roles) {
     expect(body.readOnly).toBe(true);
     expect(body.surface).toBe("parent");
     expect(Array.isArray(body.children)).toBe(true);
+    expect((body.children as unknown[]).length).toBeGreaterThan(0);
+
+    // A parent token must not resolve another tenant's parent-home data.
+    const outsideTenant = await request.get(url(
+      `/api/mobile/portal/home?tenantId=${workspace.tenantId + 987654321}&surface=parent`
+    ), { headers: { authorization: `Bearer ${token}` } });
+    expect(outsideTenant.status()).toBe(403);
+    await expect(outsideTenant.json()).resolves.toMatchObject({ error: "portal_scope_denied" });
   });
 }

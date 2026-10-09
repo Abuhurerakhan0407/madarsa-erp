@@ -115,8 +115,14 @@ describe("parent username portal contracts", () => {
   it("keeps CI-generated credentials isolated from manually used QA accounts", () => {
     const provisioner = read("tests/e2e/staging-provision.ts");
     const roleSmoke = read("tests/e2e/authenticated-role-smoke.spec.ts");
+    const liveSmoke = read("tests/e2e/auth-live-deployment.spec.ts");
     expect(provisioner).toContain('if (!suffix.startsWith("ci-"))');
-    expect(roleSmoke).toContain('"ci-" + testInfo.project.name + "-worker-"');
+    expect(roleSmoke).toContain('process.env.GITHUB_RUN_ID || "local"');
+    expect(roleSmoke).toContain('process.env.GITHUB_RUN_ATTEMPT || "1"');
+    expect(roleSmoke).toContain('"ci-" + runId + "-a"');
+    expect(roleSmoke).toContain('"-rs-" + projectKey');
+    expect(roleSmoke).toContain('"-r" + testInfo.retry + "-w"');
+    expect(liveSmoke).toContain('"-la-" + projectKey');
   });
 
 });

@@ -47,6 +47,8 @@ jobs:
     timeout-minutes: 30
     env:
       # Authenticated E2E must never target the production Supabase project.
+      # Hit the fixed deployed QA alias only when this PR targets the QA branch.
+      E2E_APP_URL: ${{ github.base_ref == 'qa/hostel-boys-20261004' && 'https://madarsa-erp-git-qa-hoste-75a40a-iamabuhurerakhan-1107s-projects.vercel.app' || '' }}
       E2E_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
       E2E_SUPABASE_PUBLISHABLE_KEY: sb_publishable_pUJuPWGhQXCHR3qDiTxVCQ_ZycfAzpn
       NEXT_PUBLIC_SUPABASE_URL: https://loihcxyblzdfiogrdihm.supabase.co
