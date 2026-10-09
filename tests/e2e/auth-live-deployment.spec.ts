@@ -45,9 +45,10 @@ test.describe("deployed QA username authentication", () => {
   test.beforeAll(async ({}, testInfo) => {
     const runId = process.env.GITHUB_RUN_ID || "local";
     const attempt = process.env.GITHUB_RUN_ATTEMPT || "1";
+    const projectKey = testInfo.project.name === "chromium" ? "chr" : "and";
     const suffix =
-      "ci-live-auth-" + runId + "-attempt-" + attempt + "-" +
-      testInfo.project.name + "-retry-" + testInfo.retry + "-worker-" + testInfo.workerIndex;
+      "ci-" + runId + "-a" + attempt + "-" + projectKey +
+      "-r" + testInfo.retry + "-w" + testInfo.workerIndex;
 
     const provisioned = await provisionStagingRoleUsers(suffix);
     credentials = provisioned.credentials;
