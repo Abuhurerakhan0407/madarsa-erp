@@ -16,7 +16,7 @@ let credentials: Record<Role, Credential> = {
   parent: { email: "", password: "" },
 };
 
-async function signInOnQA(page: Page, username: string, password: string) {
+async function signInOnQA(page: Page, role: "Parent" | "Teacher", username: string, password: string) {
   await page.context().addCookies([
     { name: "NEXT_LOCALE", value: "en", url: QA_URL },
   ]);
@@ -33,6 +33,30 @@ async function signInOnQA(page: Page, username: string, password: string) {
   ]);
   expect(response.status(), "deployed login API rejected the valid QA credential").toBe(200);
   await expect(response.json()).resolves.toEqual({ signedIn: true });
+
+  const responseCookieNames = (await response.headersArray())
+    .filter(({ name }) => name.toLowerCase() === "set-cookie")
+    .map(({ value }) => ({
+      name: value.split("=", 1)[0],
+      length: value.length
+    }));
+  const browserCookieMetadata = (await page.context().cookies(QA_URL))
+    .filter((cookie) => cookie.name.toLowerCase().startsWith("sb-"))
+    .map((cookie) => ({
+      name: cookie.name,
+      path: cookie.path,
+      httpOnly: cookie.httpOnly,
+      secure: cookie.secure,
+      sameSite: cookie.sameSite,
+      valueLength: cookie.value.length
+    }));
+  console.log("[auth-live-diagnostic] " + JSON.stringify({
+    role,
+    responseStatus: response.status(),
+    responseCookieNames,
+    browserCookieMetadata,
+    pathAfterSubmit: new URL(page.url()).pathname
+  }));
 }
 
 test.describe("deployed QA username authentication", () => {
@@ -88,7 +112,7 @@ test.describe("deployed QA username authentication", () => {
   });
 
   test("Parent username login creates a server session and enforces the first-login password-change gate", async ({ page }) => {
-    await signInOnQA(page, credentials.parent.username ?? "", credentials.parent.password);
+    await signInOnQA(page, "Parent", credentials.parent.username ?? "", credentials.parent.password);
     await expect.poll(() => new URL(page.url()).pathname).toContain("/portal/change-password");
     await expect.poll(() => new URL(page.url()).pathname).not.toContain("/login");
 
@@ -98,7 +122,7 @@ test.describe("deployed QA username authentication", () => {
   });
 
   test("Teacher username login persists across reload and logout clears the browser session", async ({ page }) => {
-    await signInOnQA(page, credentials.teacher.username ?? "", credentials.teacher.password);
+    await signInOnQA(page, "Teacher", credentials.teacher.username ?? "", credentials.teacher.password);
     await expect.poll(() => new URL(page.url()).pathname).toBe("/portal");
     await expect(page.locator("details.account-menu")).toBeVisible();
 
