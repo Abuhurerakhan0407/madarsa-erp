@@ -103,6 +103,10 @@ export async function provisionStagingRoleUsers(projectName: string): Promise<Pr
   });
 
   const suffix = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  // CI fixtures must never share the interactive QA account namespace.
+  if (!suffix.startsWith("ci-")) {
+    throw new Error("Staging E2E role provisioning requires the isolated ci- namespace.");
+  }
   const domain = "example.com";
   const usernameAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
   const usernameDigest = createHash("sha256").update(suffix).digest();
