@@ -36,7 +36,7 @@ test.beforeAll(async ({}, testInfo) => {
   const runAttempt = process.env.GITHUB_RUN_ATTEMPT || "1";
   const projectKey = testInfo.project.name === "chromium" ? "chr" : "and";
   const fixtureSuffix =
-    "ci-" + runId + "-a" + runAttempt + "-" + projectKey +
+    "ci-" + runId + "-a" + runAttempt + "-rs-" + projectKey +
     "-r" + testInfo.retry + "-w" + testInfo.workerIndex;
   const provisioned = await provisionStagingRoleUsers(fixtureSuffix);
   credentials = provisioned.credentials;
