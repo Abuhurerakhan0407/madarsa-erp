@@ -84,6 +84,9 @@ describe("parent username portal contracts", () => {
     expect(route).toContain("provision_username");
     expect(route).toContain("record_portal_credential_audit_v1");
     expect(route).toContain("cache-control");
+    expect(route).toContain('links.data?.find((link) => link.status === "verified")');
+    expect(route).toContain('getUserById(String(verifiedLinked.identity_id))');
+    expect(route).toContain('isUsernameLogin && kind === "guardian" && verifiedLinked.status === "verified"');
     expect(route).not.toMatch(/p_password|p_temporary_password/);
   });
 
