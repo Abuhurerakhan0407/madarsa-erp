@@ -32,8 +32,11 @@ const configured = (role: Role) => Boolean(
 
 test.beforeAll(async ({}, testInfo) => {
   if (!process.env.CI) return;
+  const runId = process.env.GITHUB_RUN_ID || "local";
+  const runAttempt = process.env.GITHUB_RUN_ATTEMPT || "1";
   const provisioned = await provisionStagingRoleUsers(
-    "ci-" + testInfo.project.name + "-worker-" + testInfo.workerIndex
+    "ci-" + runId + "-attempt-" + runAttempt + "-" +
+    testInfo.project.name + "-retry-" + testInfo.retry + "-worker-" + testInfo.workerIndex
   );
   credentials = provisioned.credentials;
   expect(roles.every((role) => configured(role))).toBe(true);
@@ -118,6 +121,13 @@ for (const role of roles) {
       const body = await getJson(request, path, token);
       expect(body.readOnly).toBe(true);
       expect(body.surface).toBe("teacher");
+
+      // The same verified teacher identity must not read another/unassigned branch.
+      const outsideBranch = await request.get(url(
+        `/api/mobile/portal/home?tenantId=${workspace.tenantId}&branchId=${workspace.branchId + 987654321}&surface=teacher`
+      ), { headers: { authorization: `Bearer ${token}` } });
+      expect(outsideBranch.status()).toBe(403);
+      await expect(outsideBranch.json()).resolves.toMatchObject({ error: "portal_scope_denied" });
       return;
     }
 
@@ -125,5 +135,13 @@ for (const role of roles) {
     expect(body.readOnly).toBe(true);
     expect(body.surface).toBe("parent");
     expect(Array.isArray(body.children)).toBe(true);
+    expect((body.children as unknown[]).length).toBeGreaterThan(0);
+
+    // A parent token must not resolve another tenant's parent-home data.
+    const outsideTenant = await request.get(url(
+      `/api/mobile/portal/home?tenantId=${workspace.tenantId + 987654321}&surface=parent`
+    ), { headers: { authorization: `Bearer ${token}` } });
+    expect(outsideTenant.status()).toBe(403);
+    await expect(outsideTenant.json()).resolves.toMatchObject({ error: "portal_scope_denied" });
   });
 }
