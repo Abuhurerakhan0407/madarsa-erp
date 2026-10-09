@@ -178,25 +178,32 @@ export async function POST(request: Request) {
     .eq("person_id", personId)
     .eq("link_type", kind)
     .order("updated_at", { ascending: false })
-    .limit(1);
+    .limit(50);
   if (links.error) {
     await audit("failed").catch(() => {});
     return NextResponse.json({ error: "Unable to resolve portal identity." }, { status: 500 });
   }
   const linked = links.data?.[0];
+  const verifiedLinked = links.data?.find((link) => link.status === "verified");
 
   if (action === "reset") {
-    if (!linked?.identity_id) {
+    if (!verifiedLinked?.identity_id) {
       await audit("failed").catch(() => {});
-      return NextResponse.json({ error: "Create this portal account before resetting its password." }, { status: 409 });
+      return NextResponse.json({ error: "No verified portal account is linked to this person. Enable or create access before resetting its password." }, { status: 409 });
     }
-    const user = await admin.auth.admin.getUserById(String(linked.identity_id));
+    const user = await admin.auth.admin.getUserById(String(verifiedLinked.identity_id));
     if (user.error || !user.data.user) {
       await audit("failed").catch(() => {});
       return NextResponse.json({ error: "Portal account not found." }, { status: 404 });
     }
     const isUsernameLogin = target.loginMethod === "username";
-    if (user.data.user.app_metadata?.portal_account !== true && !(isUsernameLogin && kind === "employee")) {
+    const canResetVerifiedGuardianUsername =
+      isUsernameLogin && kind === "guardian" && verifiedLinked.status === "verified";
+    if (
+      user.data.user.app_metadata?.portal_account !== true
+      && !(isUsernameLogin && kind === "employee")
+      && !canResetVerifiedGuardianUsername
+    ) {
       await audit("failed").catch(() => {});
       return NextResponse.json({ error: "This login is not an Ilmgaah-managed portal account, so its password cannot be reset here." }, { status: 409 });
     }
