@@ -116,7 +116,9 @@ describe("parent username portal contracts", () => {
     const provisioner = read("tests/e2e/staging-provision.ts");
     const roleSmoke = read("tests/e2e/authenticated-role-smoke.spec.ts");
     expect(provisioner).toContain('if (!suffix.startsWith("ci-"))');
-    expect(roleSmoke).toContain('"ci-" + testInfo.project.name + "-worker-"');
+    expect(roleSmoke).toContain('process.env.GITHUB_RUN_ID || "local"');
+    expect(roleSmoke).toContain('process.env.GITHUB_RUN_ATTEMPT || "1"');
+    expect(roleSmoke).toContain('"ci-" + runId + "-attempt-"');
   });
 
 });
