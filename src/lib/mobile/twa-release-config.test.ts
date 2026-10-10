@@ -33,10 +33,10 @@ describe("Android native release configuration", () => {
   });
 
   it("requires the existing release key via local environment and fails closed without it", () => {
-    expect(buildGradle).toContain('System.getenv("ILMGAH_RELEASE_STORE_FILE")');
-    expect(buildGradle).toContain('System.getenv("ILMGAH_RELEASE_STORE_PASSWORD")');
-    expect(buildGradle).toContain('System.getenv("ILMGAH_RELEASE_KEY_ALIAS") ?: "ilmgaah"');
-    expect(buildGradle).toContain('System.getenv("ILMGAH_RELEASE_KEY_PASSWORD")');
+    expect(buildGradle).toContain('System.getenv("ILMGAAH_RELEASE_STORE_FILE")');
+    expect(buildGradle).toContain('System.getenv("ILMGAAH_RELEASE_STORE_PASSWORD")');
+    expect(buildGradle).toContain('System.getenv("ILMGAAH_RELEASE_KEY_ALIAS") ?: "ilmgaah"');
+    expect(buildGradle).toContain('System.getenv("ILMGAAH_RELEASE_KEY_PASSWORD")');
     expect(buildGradle).toContain("signingConfig signingConfigs.release");
     expect(buildGradle).toContain('throw new GradleException("Release signing key missing');
     expect(buildGradle).not.toMatch(/storePassword\s+["']/);

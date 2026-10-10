@@ -2,11 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
-def releaseStoreFilePath = System.getenv("ILMGAH_RELEASE_STORE_FILE") ?: "../signing/ilmgaah-release.jks"
+def releaseStoreFilePath = System.getenv("ILMGAAH_RELEASE_STORE_FILE") ?: "../signing/ilmgaah-release.jks"
 def releaseStoreFile = file(releaseStoreFilePath)
-def releaseStorePassword = System.getenv("ILMGAH_RELEASE_STORE_PASSWORD")
-def releaseKeyAlias = System.getenv("ILMGAH_RELEASE_KEY_ALIAS") ?: "ilmgaah"
-def releaseKeyPassword = System.getenv("ILMGAH_RELEASE_KEY_PASSWORD")
+def releaseStorePassword = System.getenv("ILMGAAH_RELEASE_STORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ILMGAAH_RELEASE_KEY_ALIAS") ?: "ilmgaah"
+def releaseKeyPassword = System.getenv("ILMGAAH_RELEASE_KEY_PASSWORD")
 
 android {
     namespace 'in.ilmgaah.app'
@@ -54,10 +54,10 @@ tasks.configureEach {
     if (name in ["validateSigningRelease", "packageRelease", "bundleRelease"]) {
         doFirst {
             if (!releaseStoreFile.isFile()) {
-                throw new GradleException("Release signing key missing. Supply the existing key via ILMGAH_RELEASE_STORE_FILE or android/signing/ilmgaah-release.jks.")
+                throw new GradleException("Release signing key missing. Supply the existing key via ILMGAAH_RELEASE_STORE_FILE or android/signing/ilmgaah-release.jks.")
             }
             if (!releaseStorePassword || !releaseKeyPassword) {
-                throw new GradleException("Release signing requires ILMGAH_RELEASE_STORE_PASSWORD and ILMGAH_RELEASE_KEY_PASSWORD environment variables. Do not store signing passwords in source control.")
+                throw new GradleException("Release signing requires ILMGAAH_RELEASE_STORE_PASSWORD and ILMGAAH_RELEASE_KEY_PASSWORD environment variables. Do not store signing passwords in source control.")
             }
         }
     }
