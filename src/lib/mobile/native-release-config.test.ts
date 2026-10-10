@@ -13,12 +13,14 @@ const mainActivity = readFileSync(
   resolve(root, "android/app/src/main/java/in/ilmgaah/app/MainActivity.java"),
   "utf8"
 );
+const releaseScript = readFileSync(resolve(root, "android/build-native-release.ps1"), "utf8");
+const androidReadme = readFileSync(resolve(root, "android/README.md"), "utf8");
 
 describe("Android native release configuration", () => {
   it("locks the Jamia native application identity", () => {
     expect(buildGradle).toContain("applicationId 'in.ilmgaah.app'");
-    expect(buildGradle).toContain("versionCode 5");
-    expect(buildGradle).toContain("versionName '1.2.0'");
+    expect(buildGradle).toContain("versionCode 6");
+    expect(buildGradle).toContain("versionName '1.2.1'");
     expect(manifest).toContain('android:name=".MainActivity"');
     expect(manifest).toContain('android.permission.INTERNET');
   });
@@ -41,6 +43,25 @@ describe("Android native release configuration", () => {
     expect(buildGradle).toContain('throw new GradleException("Release signing key missing');
     expect(buildGradle).not.toMatch(/storePassword\s+["']/);
     expect(buildGradle).not.toMatch(/keyPassword\s+["']/);
+  });
+
+  it("builds only a release APK from secure prompts and verifies the historic certificate", () => {
+    expect(releaseScript).toContain("-AsSecureString");
+    expect(releaseScript).toContain("--no-daemon");
+    expect(releaseScript).toContain(":app:assembleRelease");
+    expect(releaseScript).toContain('expectedSignerSha256 = "118fa8ea1549c3b2c9addf45a7f0055cf2775e4e6a86ecc16589aa4a697020a7"');
+    expect(releaseScript).toContain('BUILD_TYPE:Ljava/lang/String; = "release"');
+    expect(releaseScript).toContain("https://www.ilmgaah.in");
+    expect(releaseScript).toContain("APK signature verification failed");
+    expect(releaseScript).not.toMatch(/(?:^|\\s)adb(?:\\.exe)?\\s+install\\b/i);
+    expect(releaseScript).not.toMatch(/keytool\\b[\\s\\S]{0,80}-genkeypair\\b/i);
+  });
+
+  it("documents one native application and forbids replacement signing keys", () => {
+    expect(androidReadme).toContain("native Android app");
+    expect(androidReadme).toContain("Do not generate another key");
+    expect(androidReadme).toContain("historic signing certificate");
+    expect(androidReadme).toContain("stop-ship issue #151");
   });
 
   it("keeps the native client self-contained", () => {
