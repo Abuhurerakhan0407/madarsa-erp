@@ -61,6 +61,18 @@ export default async function proxy(request: NextRequest) {
     );
   }
 
+  if (pathname === "/forgot-password") {
+    if (!identityId) return sessionResponse;
+    return copySessionState(
+      sessionResponse,
+      NextResponse.redirect(new URL(safeAuthRedirect(null), request.url))
+    );
+  }
+
+  if (pathname === "/reset-password") {
+    return sessionResponse;
+  }
+
   if (pathname === "/app-entry") {
     if (identityId) return sessionResponse;
     const loginUrl = new URL("/login", request.url);

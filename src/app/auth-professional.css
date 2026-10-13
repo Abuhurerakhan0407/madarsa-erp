@@ -658,3 +658,36 @@
     display: none;
   }
 }
+
+.auth-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-block: -0.25rem 0.75rem;
+}
+
+.auth-forgot-link {
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-forgot-link:hover {
+  color: var(--accent);
+}
+
+.auth-card-success {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.auth-card-success p {
+  margin: 0;
+  color: var(--accent-strong);
+  line-height: 1.5;
+}
