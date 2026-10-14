@@ -1,192 +1,59 @@
-# Ilmgaah Android Release
+# Ilmgaah Android — Native Client Release
 
-This directory contains the Trusted Web Activity (TWA) release configuration for the Ilmgaah Android app.
+## Canonical application
 
-## Release identity
+This project currently uses the **native Android app** in `android/app` (`MainActivity`, `NativeApi`, and `ClientConfig`). Do not regenerate a Trusted Web Activity with Bubblewrap or create a second Android package.
 
-- Android package: `in.ilmgaah.app`
-- Trusted origin: `https://www.ilmgaah.in`
-- App name: `Ilmgaah`
-- Current version: `1.0.0`
-- Version code: `3`
-- Start URL: `/login?source=app`
-- Notifications: enabled
-- Minimum Android SDK: 23
+- Package ID: `in.ilmgaah.app`
+- Release candidate: `1.2.1` (`versionCode 6`)
+- Minimum Android version: API 23
+- Debug builds: QA API only; **never distribute**
+- Release builds: `https://www.ilmgaah.in`
 
-## Security rules
+The installed Redmi build inspected during release triage is version `1.2.0` / code `5`, marked debuggable, and signed with an Android debug certificate. A correctly signed release has a different certificate, so Android will not update that install in place. Do not uninstall or replace it until its local data/recovery needs are understood and the owner approves the installation plan. Keep the package ID unchanged.
 
-- Never commit the release keystore.
-- Never commit keystore passwords.
-- Never expose signing fingerprints except where required for Digital Asset Links.
-- Never replace the release keystore after customers have installed the app. Future updates must be signed with the same key.
-- Do not build a production APK from a different package ID.
-- Do not publish `assetlinks.json` until the release key fingerprint is known and verified.
+## Existing release key — do not replace
 
-The signing directory is ignored by Git:
+Use only the existing keystore and alias:
 
-`android/signing/`
+- Keystore filename: `ilmgaah-release.jks`
+- Alias: `ilmgaah`
+- Expected release certificate SHA-256: `11:8F:A8:EA:15:49:C3:B2:C9:AD:DF:45:A7:F0:05:5C:F2:77:5E:4E:6A:86:EC:C1:65:89:AA:4A:69:70:20:A7`
 
-Expected release key:
+The keystore is intentionally outside Git. Do not generate another key, add the keystore/passwords to the repository, upload them to chat, or place passwords in command history. The build script prompts for passwords as secure input and clears the temporary environment variables.
 
-`android/signing/ilmgaah-release.jks`
+## Build the signed release candidate
 
-Expected alias:
-
-`ilmgaah`
-
-## Prerequisites
-
-1. Node.js / pnpm
-2. JDK 17
-3. Android command line tools / SDK
-4. Bubblewrap CLI (invoked through `pnpm dlx @bubblewrap/cli`)
-5. the final Ilmgaah PWA manifest and icon assets deployed to `ilmgaah.in`
-
-Bubblewrap currently requires JDK 17. Do not substitute a different Java version without re-validating the current Bubblewrap requirements.
-
-## Before building
-
-From the repository root, validate:
+On the authorized Windows build machine, use the existing keystore path. If the key is not at `android/signing/ilmgaah-release.jks`, pass its protected path explicitly:
 
 ```powershell
-pnpm install --frozen-lockfile
-pnpm exec vitest run src/lib/mobile/android-install-manifest.test.ts src/lib/mobile/twa-release-config.test.ts
-pnpm build
+.\android\build-native-release.ps1 -KeystorePath "C:\secure\path\ilmgaah-release.jks"
 ```
 
-The live site must serve:
+The script uses Gradle `--no-daemon`, builds only `:app:assembleRelease`, then verifies the package, version, non-debug build, production API configuration and exact historic signing certificate. It prints the resulting APK SHA-256 only after those checks pass. It does **not** install the APK, copy it to a public download location, deploy the website, or change tenant data.
 
-- `https://www.ilmgaah.in/manifest.webmanifest`
-- `https://www.ilmgaah.in/icons/icon-512.png`
-- `https://www.ilmgaah.in/icons/maskable-512.png`
+Expected local artifact (not automatically shipped):
+`android/app/build/outputs/apk/release/app-release.apk`
 
-Do not proceed with final TWA validation if these URLs are missing or return non-2xx responses.
+A missing/wrong key or password, unexpected certificate fingerprint, debug build type, package/version mismatch, or invalid signature must stop release. Never “fix” a signing failure by using the debug key or creating a replacement key.
 
-## Generate the release keystore
-
-Generate the key once and preserve it securely.
-
-Example using the JDK 17 `keytool`:
+## Local development build (QA only)
 
 ```powershell
-New-Item -ItemType Directory -Force .\android\signing | Out-Null
-
-keytool -genkeypair `
-  -keystore .\android\signing\ilmgaah-release.jks `
-  -alias ilmgaah `
-  -keyalg RSA `
-  -keysize 2048 `
-  -validity 10000
+.\android\gradlew.bat -p .\android :app:assembleDebug
 ```
 
-Use a strong unique keystore password and key password.
+The resulting `app-debug.apk` uses the QA API and is for development only. It is not the client deliverable and must not be installed over the client build as a workaround for login errors.
 
-Store the passwords outside the repository.
+## Client release acceptance — still required
 
-## Build
+A signed artifact is not sufficient by itself. Before handover:
 
-Open PowerShell in the `android` directory.
+1. Resolve the authoritative Jamia tenant using approved onboarding evidence. Tenant 5 versus tenant 7 is still a release blocker; do not import until this is resolved.
+2. Test the owner's valid sign-in against production and verify membership bootstrap selects the approved tenant. The inspected debug APK was pointed at a different QA Supabase project; do not reset the owner's password based on that failure.
+3. Reconcile the supplied roster, approve branch/session/program/group/numbering mappings, run a dry run, and import only into the approved tenant. Current import count is **0/376**.
+4. Verify APK package/version, release certificate fingerprint and SHA-256 against the build output. Do not share or ship a debug APK.
+5. Agree on a backup/recovery plan before removing the currently installed debug-signed package; package-signature mismatch prevents an in-place update.
+6. On the physical device, verify login, dashboard zero/empty states, navigation, attendance, Urdu/RTL, document/PDF flows, sign-out and reopen. Re-test the app after install; do not infer acceptance from unit tests.
 
-Set the signing passwords only in the current process:
-
-```powershell
-$env:BUBBLEWRAP_KEYSTORE_PASSWORD = "<release-keystore-password>"
-$env:BUBBLEWRAP_KEY_PASSWORD = "<release-key-password>"
-```
-
-Run:
-
-```powershell
-.\build-release.ps1 `
-  -JdkPath "<JDK-17-root>" `
-  -AndroidSdkPath "<Android-SDK-root>"
-```
-
-The script performs:
-
-1. Bubblewrap toolchain configuration
-2. Bubblewrap doctor
-3. Android project regeneration from `twa-manifest.json`
-4. signed APK build
-5. signed Android App Bundle build
-6. Digital Asset Links generation
-7. SHA-256 output for release artifacts
-
-Expected artifacts:
-
-- `app-release-signed.apk`
-- `app-release-bundle.aab`
-- `assetlinks.json`
-
-## Digital Asset Links
-
-The TWA will only run as a fully trusted fullscreen app after the domain serves the correct Digital Asset Links file.
-
-After the release key fingerprint is generated, copy the generated file to:
-
-`public/.well-known/assetlinks.json`
-
-Then deploy the matching website commit.
-
-Verify:
-
-`https://www.ilmgaah.in/.well-known/assetlinks.json`
-
-The published file must reference:
-
-- package `in.ilmgaah.app`
-- the exact SHA-256 fingerprint of the final release signing key
-
-Do not use a debug signing fingerprint.
-
-## Device acceptance
-
-Install the signed APK on at least two Android devices if available.
-
-Required checks:
-
-1. installation succeeds without Android package/signature warnings
-2. launcher icon is correct
-3. app opens at Ilmgaah login
-4. no browser toolbar is shown after Digital Asset Links verification
-5. login works
-6. admin/teacher/parent navigation works as applicable
-7. Urdu/RTL renders correctly
-8. back button behavior is sane
-9. file/PDF actions work
-10. parent notification permission/delegation works
-11. app survives close/reopen
-12. network outage produces an understandable state
-13. sign-out works
-14. reinstall/update with a newer build signed by the same key works
-
-## Release evidence
-
-For the final shipped APK record:
-
-- Git SHA
-- package ID
-- app version
-- app version code
-- APK SHA-256
-- AAB SHA-256
-- release signing SHA-256 fingerprint
-- Android devices tested
-- Android versions tested
-- `assetlinks.json` URL verified
-- installed app launch/login/notification result
-- release date
-
-## Website install button
-
-Only after the final APK is signed and device-tested:
-
-1. place the approved APK at the intended public download location
-2. add the Ilmgaah website **App Install** button
-3. link it to the final approved artifact
-4. verify download/install on Android
-5. do not link a debug/unsigned/intermediate APK
-
-## Release rule
-
-The APK branch can be developed independently, but the website/PWA manifest changes must be merged into the final Ilmgaah RC and re-run through the full web release gates before production.
+Coordinate all release work through [stop-ship issue #151](https://github.com/Abuhurerakhan0407/madarsa-erp/issues/151). No production deployment, tenant change, membership change or roster write is authorized by this document.

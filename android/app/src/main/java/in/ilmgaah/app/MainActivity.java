@@ -41,9 +41,9 @@ public class MainActivity extends Activity {
     private String surface = "admin";
     private int tenantId = 0;
     private int branchId = 0;
-    private String liveStudents = "تقریباً 350";
+    private String liveStudents = "—";
     private String liveAttendance = "—";
-    private String liveStaff = "30–35";
+    private String liveStaff = "—";
     private String liveAdmissions = "—";
     private int parentChildren = 0;
     private JSONObject guardianPayload;
@@ -1087,10 +1087,10 @@ public class MainActivity extends Activity {
                 JSONObject staff = metrics.optJSONObject("staff");
                 JSONObject admissions = metrics.optJSONObject("admissions");
 
-                if (students != null) {
+                if (students != null && students.has("active") && students.has("total")) {
                     int total = students.optInt("total", 0);
                     int active = students.optInt("active", 0);
-                    if (total > 0) liveStudents = active + " / " + total;
+                    liveStudents = active + " / " + total;
                 }
                 if (attendance != null) {
                     int present = attendance.optInt("present", 0);
@@ -1099,12 +1099,10 @@ public class MainActivity extends Activity {
                             ? present + " / " + totalAttendance
                             : "—";
                 }
-                if (staff != null) {
+                if (staff != null && staff.has("active") && staff.has("total")) {
                     int activeStaff = staff.optInt("active", 0);
                     int totalStaff = staff.optInt("total", 0);
-                    if (totalStaff > 0) {
-                        liveStaff = activeStaff + " / " + totalStaff;
-                    }
+                    liveStaff = activeStaff + " / " + totalStaff;
                 }
                 if (admissions != null) {
                     liveAdmissions = String.valueOf(admissions.optInt("open", 0));
