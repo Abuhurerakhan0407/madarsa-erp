@@ -43,7 +43,12 @@ export function ResetPasswordForm({ initialLocale }: { initialLocale: SupportedL
       if (typeof window === "undefined") return;
 
       const params = new URLSearchParams(window.location.search);
-      const errorParam = params.get("error") || params.get("error_code");
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const errorParam =
+        params.get("error") ||
+        params.get("error_code") ||
+        hashParams.get("error") ||
+        hashParams.get("error_code");
 
       if (errorParam) {
         if (active) setSessionState("invalid_or_expired");
@@ -65,8 +70,19 @@ export function ResetPasswordForm({ initialLocale }: { initialLocale: SupportedL
     }
 
     evaluateSession();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (event === "PASSWORD_RECOVERY" || session) {
+        setSessionState("authenticated");
+      }
+    });
+
     return () => {
       active = false;
+      subscription.unsubscribe();
     };
   }, [supabase]);
 

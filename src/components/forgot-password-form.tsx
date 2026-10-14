@@ -50,7 +50,11 @@ export function ForgotPasswordForm({ initialLocale }: { initialLocale: Supported
     setEmailError(null);
 
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback?next=/reset-password`;
+      const origin =
+        typeof window !== "undefined" && window.location.hostname === "localhost"
+          ? window.location.origin
+          : "https://www.ilmgaah.in";
+      const redirectUrl = `${origin}/auth/callback?next=/reset-password`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         email.trim(),
         { redirectTo: redirectUrl }
