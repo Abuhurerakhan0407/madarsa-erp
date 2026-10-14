@@ -7,7 +7,12 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const destination = safeAuthRedirect(requestUrl.searchParams.get("next"));
 
-  if (!code) {
+  const errorParam = requestUrl.searchParams.get("error") || requestUrl.searchParams.get("error_code");
+
+  if (errorParam || !code) {
+    if (destination.startsWith("/reset-password")) {
+      return NextResponse.redirect(new URL("/reset-password?error=invalid_or_expired", requestUrl.origin));
+    }
     return NextResponse.redirect(new URL("/en?auth=missing_code", requestUrl.origin));
   }
 
@@ -15,6 +20,9 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
+    if (destination.startsWith("/reset-password")) {
+      return NextResponse.redirect(new URL("/reset-password?error=invalid_or_expired", requestUrl.origin));
+    }
     return NextResponse.redirect(new URL("/en?auth=callback_failed", requestUrl.origin));
   }
 

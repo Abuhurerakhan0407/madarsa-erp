@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { safeAuthRedirect } from "@/lib/auth/redirects";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { createClient } from "@/lib/supabase/client";
@@ -34,6 +35,7 @@ const copy = {
     emailRequired: "Enter a valid email address.",
     passwordRequired: "Use 12–128 characters with uppercase, lowercase, number, and symbol.",
     invalidCredentials: "Email or password is incorrect.",
+    forgotPassword: "Forgot password?",
     rateLimited: "Too many attempts. Please wait a moment and try again.",
     genericError: "Unable to sign in. Please try again.",
     language: "Language"
@@ -61,6 +63,7 @@ const copy = {
     emailRequired: "درست ای میل درج کریں۔",
     passwordRequired: "پاس ورڈ 12 سے 128 حروف کا ہو اور اس میں بڑا حرف، چھوٹا حرف، نمبر اور علامت شامل ہو۔",
     invalidCredentials: "ای میل یا پاس ورڈ درست نہیں۔",
+    forgotPassword: "پاس ورڈ بھول گئے؟",
     rateLimited: "بہت زیادہ کوششیں ہوئیں۔ کچھ دیر بعد دوبارہ کوشش کریں۔",
     genericError: "سائن اِن نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
     language: "زبان"
@@ -278,6 +281,14 @@ export function LoginForm({ initialLocale }: { initialLocale: SupportedLocale })
                 <small id="login-password-error" className="field-error">{fieldErrors.password}</small>
               ) : null}
             </label>
+
+            {mode === "signin" ? (
+              <div className="auth-forgot-row">
+                <Link href="/forgot-password" className="auth-forgot-link">
+                  {text.forgotPassword}
+                </Link>
+              </div>
+            ) : null}
 
             {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
 
